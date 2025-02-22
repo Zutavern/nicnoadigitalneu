@@ -22,8 +22,8 @@ export function MainNav() {
             <Link href="/unternehmen" className="text-base font-medium text-muted-foreground hover:text-foreground">
               Unternehmen
             </Link>
-            <Link href="/ressourcen" className="text-base font-medium text-muted-foreground hover:text-foreground">
-              Ressourcen
+            <Link href="/faq" className="text-base font-medium text-muted-foreground hover:text-foreground">
+              FAQ
             </Link>
             <Link href="/preise" className="text-base font-medium text-muted-foreground hover:text-foreground">
               Preise

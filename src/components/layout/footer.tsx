@@ -60,7 +60,7 @@ export function Footer() {
               <li><Link href="/dokumentation" className="hover:text-foreground">Dokumentation</Link></li>
               <li><Link href="/support" className="hover:text-foreground">Support</Link></li>
               <li><Link href="/api" className="hover:text-foreground">API</Link></li>
-              <li><Link href="/community" className="hover:text-foreground">Community</Link></li>
+              <li><Link href="/faq" className="hover:text-foreground">FAQ</Link></li>
               <li><Link href="/status" className="hover:text-foreground">Status</Link></li>
             </ul>
           </div>
