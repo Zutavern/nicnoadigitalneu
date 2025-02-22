@@ -122,7 +122,7 @@ export function Hero() {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Image
-                      src="https://yqzunbubsqmsfsayneeh.supabase.co/storage/v1/object/public/testimonials/sarah-mueller.jpg"
+                      src="https://yqzunbubsqmsfsayneeh.supabase.co/storage/v1/object/public/avatars/placeholder.png"
                       alt="Sarah Müller"
                       width={60}
                       height={60}
@@ -152,7 +152,7 @@ export function Hero() {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Image
-                      src="https://yqzunbubsqmsfsayneeh.supabase.co/storage/v1/object/public/testimonials/markus-weber.jpg"
+                      src="https://yqzunbubsqmsfsayneeh.supabase.co/storage/v1/object/public/avatars/placeholder.png"
                       alt="Markus Weber"
                       width={60}
                       height={60}
@@ -182,7 +182,7 @@ export function Hero() {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Image
-                      src="https://yqzunbubsqmsfsayneeh.supabase.co/storage/v1/object/public/testimonials/julia-wagner.jpg"
+                      src="https://yqzunbubsqmsfsayneeh.supabase.co/storage/v1/object/public/avatars/placeholder.png"
                       alt="Julia Wagner"
                       width={60}
                       height={60}
@@ -212,7 +212,7 @@ export function Hero() {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Image
-                      src="https://yqzunbubsqmsfsayneeh.supabase.co/storage/v1/object/public/testimonials/thomas-klein.jpg"
+                      src="https://yqzunbubsqmsfsayneeh.supabase.co/storage/v1/object/public/avatars/placeholder.png"
                       alt="Thomas Klein"
                       width={60}
                       height={60}
@@ -246,7 +246,7 @@ export function Hero() {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Image
-                      src="https://yqzunbubsqmsfsayneeh.supabase.co/storage/v1/object/public/testimonials/lisa-schmidt.jpg"
+                      src="https://yqzunbubsqmsfsayneeh.supabase.co/storage/v1/object/public/avatars/placeholder.png"
                       alt="Lisa Schmidt"
                       width={60}
                       height={60}
@@ -276,7 +276,7 @@ export function Hero() {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Image
-                      src="https://yqzunbubsqmsfsayneeh.supabase.co/storage/v1/object/public/testimonials/nina-bauer.jpg"
+                      src="https://yqzunbubsqmsfsayneeh.supabase.co/storage/v1/object/public/avatars/placeholder.png"
                       alt="Nina Bauer"
                       width={60}
                       height={60}
@@ -306,7 +306,7 @@ export function Hero() {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Image
-                      src="https://yqzunbubsqmsfsayneeh.supabase.co/storage/v1/object/public/testimonials/michael-fischer.jpg"
+                      src="https://yqzunbubsqmsfsayneeh.supabase.co/storage/v1/object/public/avatars/placeholder.png"
                       alt="Michael Fischer"
                       width={60}
                       height={60}
@@ -336,7 +336,7 @@ export function Hero() {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Image
-                      src="https://yqzunbubsqmsfsayneeh.supabase.co/storage/v1/object/public/testimonials/sophia-berg.jpg"
+                      src="https://yqzunbubsqmsfsayneeh.supabase.co/storage/v1/object/public/avatars/placeholder.png"
                       alt="Sophia Berg"
                       width={60}
                       height={60}
