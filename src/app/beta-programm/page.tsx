@@ -12,8 +12,16 @@ import {
   Rocket,
   Star,
   ArrowRight,
-  Zap
+  Zap,
+  Instagram
 } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const benefits = [
   {
@@ -61,8 +69,9 @@ export default function BetaProgrammPage() {
               <span className="text-primary">Beta-Programms</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Wir suchen 5 innovative Salon-Spaces, die gemeinsam mit uns die Zukunft 
-              des Beauty-Coworkings gestalten möchten.
+              Wir suchen 5 innovative, digital affine Salon-Spaces, die die Chancen der 
+              Digitalisierung erkennen und gemeinsam mit uns die Zukunft des Beauty-Coworkings 
+              gestalten möchten. Zeigen Sie uns Ihre Vision für einen modernen Salon-Space!
             </p>
           </motion.div>
         </div>
@@ -127,17 +136,38 @@ export default function BetaProgrammPage() {
                   <Input placeholder="Name des Salon-Space" />
                 </div>
                 <div className="space-y-2">
-                  <Input type="email" placeholder="E-Mail-Adresse" />
+                  <Input placeholder="Ihr Name" />
                 </div>
                 <div className="space-y-2">
-                  <Input placeholder="Telefonnummer" />
+                  <Input placeholder="Ihre Telefonnummer" type="tel" />
+                </div>
+                <div className="space-y-2">
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Art des Salons" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="friseur">Friseursalon</SelectItem>
+                      <SelectItem value="kosmetik">Kosmetiksalon</SelectItem>
+                      <SelectItem value="andere">Andere</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Input type="email" placeholder="E-Mail-Adresse" />
                 </div>
                 <div className="space-y-2">
                   <Input placeholder="Website (optional)" />
                 </div>
                 <div className="space-y-2">
+                  <div className="relative">
+                    <Instagram className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input className="pl-9" placeholder="Instagram Profil (optional)" />
+                  </div>
+                </div>
+                <div className="space-y-2">
                   <Textarea 
-                    placeholder="Erzählen Sie uns von Ihrem Salon-Space und warum Sie am Beta-Programm teilnehmen möchten"
+                    placeholder="Erzählen Sie uns von Ihrem Salon-Space und Ihrer Vision für die digitale Zukunft"
                     className="min-h-[120px]"
                   />
                 </div>
