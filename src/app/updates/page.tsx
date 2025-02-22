@@ -12,7 +12,6 @@ import {
   ArrowRight,
   Star
 } from 'lucide-react'
-import { Metadata } from "next"
 
 const updates = [
   {
@@ -72,11 +71,6 @@ const itemVariants = {
       duration: 0.5,
     },
   },
-}
-
-export const metadata: Metadata = {
-  title: "Updates | nicnoa",
-  description: "Die neuesten Entwicklungen und Verbesserungen für Ihren Salon-Space.",
 }
 
 export default function UpdatesPage() {

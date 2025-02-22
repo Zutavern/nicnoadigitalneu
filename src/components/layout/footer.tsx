@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Twitter, Linkedin } from 'lucide-react'
+import { Twitter, Linkedin, Heart } from 'lucide-react'
 
 export function Footer() {
   return (
@@ -73,9 +73,10 @@ export function Footer() {
             <Link href="/impressum" className="hover:text-foreground">Impressum</Link>
             <Link href="/agb" className="hover:text-foreground">AGB</Link>
           </div>
-          <p className="text-sm text-muted-foreground">
-            © 2025 NICNOA & CO. DIGITAL. Alle Rechte vorbehalten.
-          </p>
+          <div className="flex flex-col items-end gap-2 text-sm text-muted-foreground">
+            <p>© 2025 NICNOA & CO. DIGITAL GmbH. Alle Rechte vorbehalten.</p>
+            <p>Made with <Heart className="inline-block h-4 w-4 text-red-500 animate-pulse" /> in Munich</p>
+          </div>
         </div>
       </div>
     </footer>

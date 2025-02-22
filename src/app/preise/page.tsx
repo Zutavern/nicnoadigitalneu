@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { MainNav } from '@/components/layout/main-nav'
 import { Button } from '@/components/ui/button'
@@ -25,8 +24,6 @@ const billingOptions = [
 ]
 
 export default function PricingPage() {
-  const [selectedBilling, setSelectedBilling] = useState('monthly')
-
   return (
     <main className="min-h-screen bg-background">
       <MainNav />
@@ -47,30 +44,6 @@ export default function PricingPage() {
               Alle Features, ein Preis - Sie entscheiden nur die Laufzeit.
             </p>
           </motion.div>
-
-          {/* Billing Toggle */}
-          <div className="mt-10">
-            <div className="flex justify-center gap-4 rounded-lg bg-muted p-1">
-              {billingOptions.map((option) => (
-                <button
-                  key={option.id}
-                  onClick={() => setSelectedBilling(option.id)}
-                  className={`relative rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                    selectedBilling === option.id
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {option.name}
-                  {option.discount && (
-                    <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-                      -{option.discount}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 
@@ -83,7 +56,7 @@ export default function PricingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className={`rounded-xl border bg-card p-8 shadow-lg ${
+              className={`relative flex flex-col rounded-xl border bg-card p-8 shadow-lg ${
                 option.recommended
                   ? 'ring-2 ring-primary scale-105'
                   : ''
@@ -119,17 +92,7 @@ export default function PricingPage() {
                 )}
               </div>
 
-              <Button 
-                className={`mb-6 w-full ${
-                  option.recommended
-                    ? 'bg-primary hover:bg-primary/90'
-                    : 'bg-secondary hover:bg-secondary/90'
-                }`}
-              >
-                Jetzt starten
-              </Button>
-
-              <div className="space-y-4">
+              <div className="space-y-4 flex-grow">
                 <p className="font-medium">Alle Features inklusive:</p>
                 <ul className="space-y-3 text-sm">
                   {features.map((feature) => (
@@ -140,6 +103,16 @@ export default function PricingPage() {
                   ))}
                 </ul>
               </div>
+
+              <Button 
+                className={`mt-8 w-full ${
+                  option.recommended
+                    ? 'bg-primary hover:bg-primary/90'
+                    : 'bg-secondary hover:bg-secondary/90'
+                }`}
+              >
+                Jetzt starten
+              </Button>
             </motion.div>
           ))}
         </div>

@@ -15,7 +15,7 @@ export function PasswordProtection() {
   const [countdown, setCountdown] = useState(3)
 
   useEffect(() => {
-    const hasEnteredPassword = localStorage.getItem('passwordEntered')
+    const hasEnteredPassword = sessionStorage.getItem('passwordEntered')
     if (!hasEnteredPassword) {
       setIsVisible(true)
     }
@@ -28,7 +28,7 @@ export function PasswordProtection() {
         setCountdown(countdown - 1)
       }, 1000)
     } else if (countdown === 0) {
-      localStorage.setItem('passwordEntered', 'true')
+      sessionStorage.setItem('passwordEntered', 'true')
       setIsVisible(false)
       setIsLoading(false)
     }
@@ -37,7 +37,7 @@ export function PasswordProtection() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (password === 'zukunft') {
+    if (password === 'kevinmurphy') {
       setError(false)
       setIsLoading(true)
       setShowSparkles(true)
@@ -90,17 +90,15 @@ export function PasswordProtection() {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary/80 via-primary to-primary/80 bg-clip-text text-transparent">
-                NICNOA Dev Preview
+              <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary/80 via-primary to-primary/80 bg-clip-text text-transparent">
+                Willkommen bei NICONOA & CO. DIGITAL
               </h2>
               <div className="space-y-2">
-                <p className="text-lg text-foreground">
-                  🚀 Hey Nico!
+                <p className="text-xl text-foreground">
+                  Lieber Nico,
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  Psst... das geheime Passwort bitte! 
-                  <br />
-                  <span className="text-xs">(Tipp: Es hat was mit der Zukunft zu tun 😉)</span>
+                <p className="text-lg text-muted-foreground">
+                  gib das Passwort für unsere Zukunft ein.
                 </p>
               </div>
             </motion.div>
@@ -157,6 +155,17 @@ export function PasswordProtection() {
             </form>
           </motion.div>
         </div>
+
+        <style jsx global>{`
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+          }
+          .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+          }
+        `}</style>
       </motion.div>
     </AnimatePresence>
   )
