@@ -45,6 +45,7 @@ export default function RegisterPage() {
       toast.success('Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail.')
       router.push('/login')
     } catch (err) {
+      console.error('Registrierung error:', err)
       toast.error('Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.')
     } finally {
       setIsLoading(false)

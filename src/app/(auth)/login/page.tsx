@@ -36,6 +36,7 @@ export default function LoginPage() {
       router.push('/dashboard')
       router.refresh()
     } catch (err) {
+      console.error('Login error:', err)
       toast.error('Login fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.')
     } finally {
       setIsLoading(false)
