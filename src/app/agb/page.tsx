@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
+import { Metadata } from "next";
 
 interface SectionProps {
   title: string
@@ -37,129 +38,78 @@ const Section = ({ title, children }: SectionProps) => {
   )
 }
 
+export const metadata: Metadata = {
+  title: "AGB | nicnoa",
+  description: "Allgemeine Geschäftsbedingungen für die Nutzung der nicnoa Plattform",
+};
+
 export default function AGBPage() {
   return (
-    <div className="container mx-auto px-4 py-12">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h1 className="mb-8 text-4xl font-bold">
-          Allgemeine Geschäftsbedingungen
-        </h1>
-        <p className="mb-8 text-muted-foreground">
-          Stand: Februar 2024
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold mb-8">Allgemeine Geschäftsbedingungen</h1>
+      
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">§1 Geltungsbereich</h2>
+        <p className="mb-4">
+          Diese Allgemeinen Geschäftsbedingungen (&quot;AGB&quot;) regeln die Nutzung der nicnoa-Plattform (&quot;Plattform&quot;) zwischen der nicnoa GmbH (&quot;Anbieter&quot;) und den Nutzern der Plattform (&quot;Nutzer&quot;).
         </p>
+      </section>
 
-        <div className="space-y-4">
-          <Section title="§1 Geltungsbereich">
-            <p>
-              Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle
-              Geschäftsbeziehungen zwischen NICNOA & CO. DIGITAL (nachfolgend
-              "Anbieter") und seinen Kunden (nachfolgend "Nutzer"). Die AGB
-              regeln insbesondere die Nutzung der digitalen Plattform zur
-              Verwaltung von Salon-Coworking-Spaces.
-            </p>
-          </Section>
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">§2 Leistungsbeschreibung</h2>
+        <p className="mb-4">
+          Die Plattform ermöglicht die Vermittlung von Salonarbeitsplätzen zwischen Salonbetreibern (&quot;Vermieter&quot;) und Beautyprofis (&quot;Mieter&quot;). Der Anbieter stellt hierfür die technische Infrastruktur zur Verfügung.
+        </p>
+      </section>
 
-          <Section title="§2 Vertragsgegenstand">
-            <p>
-              Der Anbieter stellt eine digitale Plattform zur Verfügung, die es
-              Nutzern ermöglicht, Salon-Coworking-Spaces zu verwalten,
-              einschließlich der Buchung, Abrechnung und Verwaltung von
-              Arbeitsplätzen. Die genauen Leistungsmerkmale ergeben sich aus der
-              jeweiligen Produktbeschreibung.
-            </p>
-          </Section>
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">§3 Registrierung und Nutzerkonto</h2>
+        <p className="mb-4">
+          Die Nutzung der Plattform erfordert eine Registrierung. Der Nutzer verpflichtet sich, wahrheitsgemäße Angaben zu machen und diese aktuell zu halten. Das Nutzerkonto ist nicht übertragbar.
+        </p>
+      </section>
 
-          <Section title="§3 Vertragsschluss">
-            <p>
-              Der Vertrag kommt durch die Registrierung des Nutzers auf der
-              Plattform und die Annahme durch den Anbieter zustande. Der Anbieter
-              behält sich das Recht vor, Registrierungen ohne Angabe von Gründen
-              abzulehnen.
-            </p>
-          </Section>
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">§4 Pflichten der Nutzer</h2>
+        <p className="mb-4">
+          Nutzer verpflichten sich, die Plattform nicht missbräuchlich zu nutzen und keine rechtswidrigen oder gegen die guten Sitten verstoßenden Inhalte einzustellen.
+        </p>
+      </section>
 
-          <Section title="§4 Pflichten des Nutzers">
-            <p>
-              Der Nutzer verpflichtet sich:
-            </p>
-            <ul className="mt-4 list-inside list-disc space-y-2">
-              <li>Wahrheitsgemäße und vollständige Angaben bei der Registrierung zu machen</li>
-              <li>Seine Zugangsdaten geheim zu halten und vor Missbrauch zu schützen</li>
-              <li>Die Plattform nur im Rahmen der geltenden Gesetze zu nutzen</li>
-              <li>Keine Rechte Dritter zu verletzen</li>
-              <li>Die vereinbarten Entgelte fristgerecht zu zahlen</li>
-            </ul>
-          </Section>
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">§5 Gebühren und Zahlungen</h2>
+        <p className="mb-4">
+          Die Nutzung der Plattform ist für Mieter kostenfrei. Vermieter zahlen eine Provision in Höhe von 10% des Mietpreises. Alle Preise verstehen sich zzgl. der gesetzlichen Mehrwertsteuer.
+        </p>
+      </section>
 
-          <Section title="§5 Preise und Zahlungsbedingungen">
-            <p>
-              Die Preise für die Nutzung der Plattform richten sich nach der
-              jeweils aktuellen Preisliste. Alle Preise verstehen sich zzgl. der
-              gesetzlichen Mehrwertsteuer. Die Zahlung erfolgt per
-              Lastschriftverfahren oder Kreditkarte.
-            </p>
-          </Section>
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">§6 Datenschutz</h2>
+        <p className="mb-4">
+          Der Anbieter verarbeitet personenbezogene Daten gemäß der Datenschutzerklärung. Diese ist jederzeit auf der Plattform einsehbar.
+        </p>
+      </section>
 
-          <Section title="§6 Laufzeit und Kündigung">
-            <p>
-              Der Vertrag wird auf unbestimmte Zeit geschlossen und kann von
-              beiden Seiten mit einer Frist von 30 Tagen zum Monatsende gekündigt
-              werden. Das Recht zur außerordentlichen Kündigung aus wichtigem
-              Grund bleibt unberührt.
-            </p>
-          </Section>
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">§7 Gewährleistung und Haftung</h2>
+        <p className="mb-4">
+          Der Anbieter gewährleistet eine Verfügbarkeit der Plattform von 99%. Die Haftung des Anbieters ist auf Vorsatz und grobe Fahrlässigkeit beschränkt. Dies gilt nicht für die Verletzung von Leben, Körper und Gesundheit.
+        </p>
+      </section>
 
-          <Section title="§7 Gewährleistung und Haftung">
-            <p>
-              Der Anbieter gewährleistet eine Verfügbarkeit der Plattform von
-              99% im Jahresmittel. Die Haftung des Anbieters ist auf Vorsatz und
-              grobe Fahrlässigkeit beschränkt. Dies gilt nicht für die Verletzung
-              von Leben, Körper und Gesundheit.
-            </p>
-          </Section>
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">§8 Änderungen der AGB</h2>
+        <p className="mb-4">
+          Der Anbieter behält sich vor, diese AGB jederzeit zu ändern. Änderungen werden den Nutzern mindestens 4 Wochen vor Inkrafttreten mitgeteilt.
+        </p>
+      </section>
 
-          <Section title="§8 Datenschutz">
-            <p>
-              Der Anbieter verarbeitet personenbezogene Daten der Nutzer gemäß
-              der Datenschutzerklärung und unter Beachtung der geltenden
-              Datenschutzgesetze.
-            </p>
-          </Section>
-
-          <Section title="§9 Änderungen der AGB">
-            <p>
-              Der Anbieter behält sich vor, diese AGB jederzeit zu ändern. Die
-              Nutzer werden über Änderungen rechtzeitig informiert. Widerspricht
-              der Nutzer nicht innerhalb von vier Wochen nach Zugang der
-              Änderungsmitteilung, gelten die geänderten AGB als angenommen.
-            </p>
-          </Section>
-
-          <Section title="§10 Schlussbestimmungen">
-            <p>
-              Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss
-              des UN-Kaufrechts. Gerichtsstand für alle Streitigkeiten ist
-              Berlin, soweit der Nutzer Kaufmann ist.
-            </p>
-          </Section>
-        </div>
-
-        <div className="mt-12 rounded-lg bg-muted p-6">
-          <h2 className="mb-4 text-xl font-semibold">Kontakt</h2>
-          <p className="text-muted-foreground">
-            Bei Fragen zu unseren AGB stehen wir Ihnen gerne zur Verfügung:
-          </p>
-          <p className="mt-4">
-            NICNOA & CO. DIGITAL<br />
-            E-Mail: info@nicnoa.de<br />
-            Telefon: +49 (0) 123 456789
-          </p>
-        </div>
-      </motion.div>
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">§9 Schlussbestimmungen</h2>
+        <p className="mb-4">
+          Es gilt deutsches Recht. Gerichtsstand ist Berlin. Sollten einzelne Bestimmungen unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.
+        </p>
+      </section>
     </div>
-  )
+  );
 } 
