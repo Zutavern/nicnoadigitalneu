@@ -35,7 +35,7 @@ export default function LoginPage() {
       toast.success('Erfolgreich eingeloggt')
       router.push('/dashboard')
       router.refresh()
-    } catch (error) {
+    } catch (err) {
       toast.error('Login fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.')
     } finally {
       setIsLoading(false)

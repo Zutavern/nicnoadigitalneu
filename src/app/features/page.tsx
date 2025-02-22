@@ -2,7 +2,8 @@
 
 import { motion } from 'framer-motion'
 import { MainNav } from '@/components/layout/main-nav'
-import {
+import { Button } from '@/components/ui/button'
+import { 
   Calendar,
   CreditCard,
   Settings,
@@ -11,8 +12,8 @@ import {
   BarChart3,
   Shield,
   Smartphone,
+  LucideIcon
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { FeatureShowcase } from '@/components/sections/feature-showcase'
 
 const features = [
@@ -92,7 +93,7 @@ const FeatureCard = ({
   title,
   description,
 }: {
-  icon: any
+  icon: LucideIcon
   title: string
   description: string
 }) => (
