@@ -122,11 +122,11 @@ export function Hero() {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Image
-                      src="/images/avatar.png"
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent('Sarah Müller')}&background=27272a&color=fff`}
                       alt="Sarah Müller"
                       width={60}
                       height={60}
-                      className="rounded-full object-cover bg-muted"
+                      className="rounded-full object-cover"
                     />
                     <div>
                       <h3 className="font-semibold">Sarah Müller</h3>
@@ -152,11 +152,11 @@ export function Hero() {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Image
-                      src="/images/avatar.png"
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent('Markus Weber')}&background=27272a&color=fff`}
                       alt="Markus Weber"
                       width={60}
                       height={60}
-                      className="rounded-full object-cover bg-muted"
+                      className="rounded-full object-cover"
                     />
                     <div>
                       <h3 className="font-semibold">Markus Weber</h3>
@@ -182,11 +182,11 @@ export function Hero() {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Image
-                      src="/images/avatar.png"
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent('Julia Wagner')}&background=27272a&color=fff`}
                       alt="Julia Wagner"
                       width={60}
                       height={60}
-                      className="rounded-full object-cover bg-muted"
+                      className="rounded-full object-cover"
                     />
                     <div>
                       <h3 className="font-semibold">Julia Wagner</h3>
@@ -212,11 +212,11 @@ export function Hero() {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Image
-                      src="/images/avatar.png"
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent('Thomas Klein')}&background=27272a&color=fff`}
                       alt="Thomas Klein"
                       width={60}
                       height={60}
-                      className="rounded-full object-cover bg-muted"
+                      className="rounded-full object-cover"
                     />
                     <div>
                       <h3 className="font-semibold">Thomas Klein</h3>
@@ -246,11 +246,11 @@ export function Hero() {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Image
-                      src="/images/avatar.png"
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent('Lisa Schmidt')}&background=27272a&color=fff`}
                       alt="Lisa Schmidt"
                       width={60}
                       height={60}
-                      className="rounded-full object-cover bg-muted"
+                      className="rounded-full object-cover"
                     />
                     <div>
                       <h3 className="font-semibold">Lisa Schmidt</h3>
@@ -276,11 +276,11 @@ export function Hero() {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Image
-                      src="/images/avatar.png"
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent('Nina Bauer')}&background=27272a&color=fff`}
                       alt="Nina Bauer"
                       width={60}
                       height={60}
-                      className="rounded-full object-cover bg-muted"
+                      className="rounded-full object-cover"
                     />
                     <div>
                       <h3 className="font-semibold">Nina Bauer</h3>
@@ -306,11 +306,11 @@ export function Hero() {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Image
-                      src="/images/avatar.png"
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent('Michael Fischer')}&background=27272a&color=fff`}
                       alt="Michael Fischer"
                       width={60}
                       height={60}
-                      className="rounded-full object-cover bg-muted"
+                      className="rounded-full object-cover"
                     />
                     <div>
                       <h3 className="font-semibold">Michael Fischer</h3>
@@ -336,11 +336,11 @@ export function Hero() {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Image
-                      src="/images/avatar.png"
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent('Sophia Berg')}&background=27272a&color=fff`}
                       alt="Sophia Berg"
                       width={60}
                       height={60}
-                      className="rounded-full object-cover bg-muted"
+                      className="rounded-full object-cover"
                     />
                     <div>
                       <h3 className="font-semibold">Sophia Berg</h3>
