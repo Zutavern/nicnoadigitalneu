@@ -1,42 +1,4 @@
-'use client'
-
-import { motion } from 'framer-motion'
-import { ChevronDown } from 'lucide-react'
-import { useState } from 'react'
 import { Metadata } from "next";
-
-interface SectionProps {
-  title: string
-  children: React.ReactNode
-}
-
-const Section = ({ title, children }: SectionProps) => {
-  const [isOpen, setIsOpen] = useState(false)
-
-  return (
-    <div className="border-b border-border">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between py-4 text-left"
-      >
-        <h2 className="text-xl font-semibold">{title}</h2>
-        <ChevronDown
-          className={`h-5 w-5 transform transition-transform ${
-            isOpen ? 'rotate-180' : ''
-          }`}
-        />
-      </button>
-      <motion.div
-        initial={false}
-        animate={{ height: isOpen ? 'auto' : 0 }}
-        transition={{ duration: 0.3 }}
-        className="overflow-hidden"
-      >
-        <div className="pb-6 text-muted-foreground">{children}</div>
-      </motion.div>
-    </div>
-  )
-}
 
 export const metadata: Metadata = {
   title: "AGB | nicnoa",
