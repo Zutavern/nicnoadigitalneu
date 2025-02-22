@@ -1,30 +1,68 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export function Hero() {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const supabase = createClient()
-  const imageUrl = supabase
-    .storage
-    .from('hereo')
-    .getPublicUrl('ine_stilvolle_frau_sitzt_entspannt_in_einem_modernen_luxurisen_friseursalon_whrend_ein_charismatisch_0f3cdd9e-3c75-47f6-a902-8f2b7aa78dda.png')
+
+  const images = [
+    {
+      url: 'ine_stilvolle_frau_sitzt_entspannt_in_einem_modernen_luxurisen_friseursalon_whrend_ein_charismatisch_0f3cdd9e-3c75-47f6-a902-8f2b7aa78dda.png',
+      alt: 'Stilvolle Frau im Friseursalon'
+    },
+    {
+      url: 'eine_elegante_stilvolle_frau_sitzt_entspannt_in_einem_modernen_luxurisen_kosmetiksalon_whrend_eine_c_7b405fea-2784-48fe-ae70-2d3bdfaaeaff.png',
+      alt: 'Elegante Frau im Kosmetiksalon'
+    }
+  ]
+
+  const imageUrls = images.map(image => {
+    const { data } = supabase.storage
+      .from('hereo')
+      .getPublicUrl(image.url)
+    return data.publicUrl
+  })
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => 
+        prevIndex === images.length - 1 ? 0 : prevIndex + 1
+      )
+    }, 10000) // Wechsel alle 10 Sekunden
+
+    return () => clearInterval(timer)
+  }, [])
 
   return (
     <section className="relative w-full">
       {/* Background Image */}
       <div className="relative h-[calc(100vh-40px)] max-h-[800px]">
-        <Image
-          src={imageUrl.data.publicUrl}
-          alt="Stilvolle Frau im Friseursalon"
-          fill
-          className="object-cover object-center"
-          priority
-          quality={80}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentImageIndex}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2 }}
+            className="absolute inset-0"
+          >
+            <Image
+              src={imageUrls[currentImageIndex]}
+              alt={images[currentImageIndex].alt}
+              fill
+              className="object-cover object-center"
+              priority
+              quality={90}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
+          </motion.div>
+        </AnimatePresence>
 
         {/* Content */}
         <div className="container relative h-full">
