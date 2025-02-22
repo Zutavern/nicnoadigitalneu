@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 
 export function Hero() {
   const supabase = createClient()
@@ -40,9 +41,11 @@ export function Hero() {
                 Verwaltungsaufwand und schaffen Sie ein professionelles
                 Arbeitsumfeld für selbstständige Stylisten.
               </p>
-              <Button size="lg" className="text-lg">
-                Jetzt Coworking anbieten
-              </Button>
+              <Link href="/registrieren">
+                <Button size="lg" className="text-lg">
+                  Jetzt Coworking anbieten
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
