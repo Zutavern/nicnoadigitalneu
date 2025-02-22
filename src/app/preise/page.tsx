@@ -20,7 +20,7 @@ const features = [
 
 const billingOptions = [
   { id: 'monthly', name: 'Monatlich', price: 99, multiplier: 1 },
-  { id: 'quarterly', name: 'Quartalsweise', price: 249, multiplier: 3, discount: '15%' },
+  { id: 'quarterly', name: 'Quartalsweise', price: 249, multiplier: 3, discount: '15%', recommended: true },
   { id: 'yearly', name: 'Jährlich', price: 799, multiplier: 12, discount: '33%' },
 ]
 
@@ -74,51 +74,74 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Pricing Card */}
+      {/* Pricing Cards */}
       <section className="container pb-16">
-        <div className="mx-auto max-w-2xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="rounded-xl border bg-card p-8 shadow-lg"
-          >
-            <div className="mb-6">
-              <h3 className="text-2xl font-bold">
-                Professional Suite
-              </h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Die komplette Lösung für Ihren Salon-Space
-              </p>
-            </div>
+        <div className="grid gap-8 md:grid-cols-3">
+          {billingOptions.map((option) => (
+            <motion.div
+              key={option.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className={`rounded-xl border bg-card p-8 shadow-lg ${
+                option.recommended
+                  ? 'ring-2 ring-primary scale-105'
+                  : ''
+              }`}
+            >
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold flex items-center justify-between">
+                  Professional Suite
+                  {option.recommended && (
+                    <span className="text-sm font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
+                      Empfohlen
+                    </span>
+                  )}
+                </h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {option.name}
+                </p>
+              </div>
 
-            <div className="mb-6">
-              <p className="flex items-baseline">
-                <span className="text-4xl font-bold">
-                  €{billingOptions.find(opt => opt.id === selectedBilling)?.price}
-                </span>
-                <span className="ml-2 text-sm text-muted-foreground">
-                  /{selectedBilling === 'monthly' ? 'Monat' : selectedBilling === 'quarterly' ? 'Quartal' : 'Jahr'}
-                </span>
-              </p>
-            </div>
+              <div className="mb-6">
+                <p className="flex items-baseline">
+                  <span className="text-4xl font-bold">
+                    €{option.price}
+                  </span>
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    /{option.id === 'monthly' ? 'Monat' : option.id === 'quarterly' ? 'Quartal' : 'Jahr'}
+                  </span>
+                </p>
+                {option.discount && (
+                  <p className="mt-1 text-sm text-primary">
+                    Sie sparen {option.discount}
+                  </p>
+                )}
+              </div>
 
-            <Button className="mb-6 w-full bg-primary hover:bg-primary/90">
-              Jetzt starten
-            </Button>
+              <Button 
+                className={`mb-6 w-full ${
+                  option.recommended
+                    ? 'bg-primary hover:bg-primary/90'
+                    : 'bg-secondary hover:bg-secondary/90'
+                }`}
+              >
+                Jetzt starten
+              </Button>
 
-            <div className="space-y-4">
-              <p className="font-medium">Alle Features inklusive:</p>
-              <ul className="space-y-3 text-sm">
-                {features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </motion.div>
+              <div className="space-y-4">
+                <p className="font-medium">Alle Features inklusive:</p>
+                <ul className="space-y-3 text-sm">
+                  {features.map((feature) => (
+                    <li key={feature} className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </section>
 

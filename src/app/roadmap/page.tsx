@@ -11,7 +11,6 @@ import {
   Layout,
   ChevronRight
 } from 'lucide-react'
-import { Metadata } from "next"
 
 const roadmapItems = [
   {
@@ -70,11 +69,6 @@ const itemVariants = {
       duration: 0.5,
     },
   },
-}
-
-export const metadata: Metadata = {
-  title: "Roadmap | nicnoa",
-  description: "Entdecken Sie die Zukunft des Salon-Managements mit unserer Produktroadmap.",
 }
 
 export default function RoadmapPage() {
