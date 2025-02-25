@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { SupabaseClient } from '@supabase/supabase-js'
+import { SupabaseClient, AuthChangeEvent, Session } from '@supabase/supabase-js'
 
 const Context = createContext<SupabaseClient | undefined>(undefined)
 
@@ -10,8 +10,9 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [supabase] = useState(() => createClient())
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.access_token !== supabase.auth.session()?.access_token) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+      const currentSession = await supabase.auth.getSession()
+      if (session?.access_token !== currentSession.data.session?.access_token) {
         // Reload the page to reset the client state
         window.location.reload()
       }
