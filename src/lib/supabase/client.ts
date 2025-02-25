@@ -1,6 +1,10 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createBrowserClient } from '@supabase/ssr'
+
+let supabase: ReturnType<typeof createBrowserClient> | null = null
 
 export const createClient = () => {
+  if (supabase) return supabase
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -8,8 +12,10 @@ export const createClient = () => {
     throw new Error('Supabase URL and Anon Key must be provided')
   }
 
-  return createClientComponentClient({
+  supabase = createBrowserClient(
     supabaseUrl,
-    supabaseKey,
-  })
+    supabaseKey
+  )
+
+  return supabase
 } 

@@ -7,8 +7,8 @@ export function Footer() {
       <div className="container py-16">
         {/* Top Section */}
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Brand Section */}
-          <div className="space-y-4">
+          {/* Brand Section - Full Width on Mobile */}
+          <div className="col-span-full sm:col-span-2 lg:col-span-1 space-y-4">
             <div className="flex items-center space-x-2">
               <span className="text-xl font-bold tracking-tight">
                 NICNOA <span className="text-primary">&</span> CO.
@@ -29,40 +29,43 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Product Links */}
-          <div className="space-y-4">
-            <h4 className="font-medium">PRODUKT</h4>
-            <ul className="space-y-3 text-sm text-muted-foreground">
-              <li><Link href="/features" className="hover:text-foreground">Features</Link></li>
-              <li><Link href="/preise" className="hover:text-foreground">Preise</Link></li>
-              <li><Link href="/roadmap" className="hover:text-foreground">Roadmap</Link></li>
-              <li><Link href="/updates" className="hover:text-foreground">Updates</Link></li>
-              <li><Link href="/beta-programm" className="hover:text-foreground">Beta-Programm</Link></li>
-            </ul>
-          </div>
+          {/* Menu Sections - Two Columns on Mobile */}
+          <div className="grid grid-cols-2 gap-8 sm:gap-4 col-span-full sm:col-span-2 lg:col-span-3 lg:grid-cols-3">
+            {/* Product Links */}
+            <div className="space-y-4">
+              <h4 className="font-medium">PRODUKT</h4>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                <li><Link href="/features" className="hover:text-foreground">Features</Link></li>
+                <li><Link href="/preise" className="hover:text-foreground">Preise</Link></li>
+                <li><Link href="/roadmap" className="hover:text-foreground">Roadmap</Link></li>
+                <li><Link href="/updates" className="hover:text-foreground">Updates</Link></li>
+                <li><Link href="/beta-programm" className="hover:text-foreground">Beta-Programm</Link></li>
+              </ul>
+            </div>
 
-          {/* Company Links */}
-          <div className="space-y-4">
-            <h4 className="font-medium">UNTERNEHMEN</h4>
-            <ul className="space-y-3 text-sm text-muted-foreground">
-              <li><Link href="/uber-uns" className="hover:text-foreground">Über uns</Link></li>
-              <li><Link href="/partner" className="hover:text-foreground">Partner</Link></li>
-              <li><Link href="/karriere" className="hover:text-foreground">Karriere</Link></li>
-              <li><Link href="/blog" className="hover:text-foreground">Blog</Link></li>
-              <li><Link href="/presse" className="hover:text-foreground">Presse</Link></li>
-            </ul>
-          </div>
+            {/* Company Links */}
+            <div className="space-y-4">
+              <h4 className="font-medium">UNTERNEHMEN</h4>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                <li><Link href="/uber-uns" className="hover:text-foreground">Über uns</Link></li>
+                <li><Link href="/partner" className="hover:text-foreground">Partner</Link></li>
+                <li><Link href="/karriere" className="hover:text-foreground">Karriere</Link></li>
+                <li><Link href="/blog" className="hover:text-foreground">Blog</Link></li>
+                <li><Link href="/presse" className="hover:text-foreground">Presse</Link></li>
+              </ul>
+            </div>
 
-          {/* Resources Links */}
-          <div className="space-y-4">
-            <h4 className="font-medium">RESSOURCEN</h4>
-            <ul className="space-y-3 text-sm text-muted-foreground">
-              <li><Link href="/dokumentation" className="hover:text-foreground">Dokumentation</Link></li>
-              <li><Link href="/support" className="hover:text-foreground">Support</Link></li>
-              <li><Link href="/api" className="hover:text-foreground">API</Link></li>
-              <li><Link href="/faq" className="hover:text-foreground">FAQ</Link></li>
-              <li><Link href="/status" className="hover:text-foreground">Status</Link></li>
-            </ul>
+            {/* Resources Links */}
+            <div className="space-y-4 col-span-2 sm:col-span-1">
+              <h4 className="font-medium">RESSOURCEN</h4>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                <li><Link href="/dokumentation" className="hover:text-foreground">Dokumentation</Link></li>
+                <li><Link href="/support" className="hover:text-foreground">Support</Link></li>
+                <li><Link href="/api" className="hover:text-foreground">API</Link></li>
+                <li><Link href="/faq" className="hover:text-foreground">FAQ</Link></li>
+                <li><Link href="/status" className="hover:text-foreground">Status</Link></li>
+              </ul>
+            </div>
           </div>
         </div>
 
