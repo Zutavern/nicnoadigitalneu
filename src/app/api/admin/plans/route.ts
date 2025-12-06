@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { PlanType, BillingInterval } from '@prisma/client'
+import { PlanType } from '@prisma/client'
 import { getStripe, isStripeConfigured } from '@/lib/stripe-server'
+import { isDemoModeActive, getMockAdminPlans } from '@/lib/mock-data'
 
 // GET /api/admin/plans - Alle Pläne abrufen
 export async function GET(request: Request) {
   try {
+    // Demo-Modus prüfen
+    if (await isDemoModeActive()) {
+      return NextResponse.json(getMockAdminPlans())
+    }
+
     const session = await auth()
     
     if (!session?.user) {
@@ -317,4 +323,3 @@ export async function DELETE(request: Request) {
     )
   }
 }
-

@@ -57,6 +57,11 @@ model User {
   customers     Customer[]
   bookings      Booking[]
   reviewsGiven  Review[]     @relation("ReviewAuthor")
+  
+  // Salon-Stylist Connections
+  salonConnections     SalonStylistConnection[] @relation("StylistConnections")
+  sentInvitations      SalonInvitation[]        @relation("SentInvitations")
+  receivedInvitations  SalonInvitation[]        @relation("ReceivedInvitations")
 
   @@map("users")
 }
@@ -522,10 +527,12 @@ model Salon {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   // Relations
-  owner        User      @relation("SalonOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  chairs       Chair[]
-  reviews      Review[]
-  bookings     Booking[]
+  owner              User                     @relation("SalonOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  chairs             Chair[]
+  reviews            Review[]
+  bookings           Booking[]
+  stylistConnections SalonStylistConnection[]
+  invitations        SalonInvitation[]
 
   @@index([ownerId])
   @@index([city])
@@ -572,6 +579,94 @@ enum RentalStatus {
   CANCELLED   // Storniert
   COMPLETED   // Abgeschlossen
   EXPIRED     // Abgelaufen
+  REJECTED    // Abgelehnt
+  ENDED       // Beendet
+}
+
+// ============================================
+// Salon-Stylist Verbindungen & Einladungen
+// ============================================
+
+enum InvitationStatus {
+  PENDING     // Gesendet, noch offen
+  ACCEPTED    // Angenommen
+  REJECTED    // Abgelehnt
+  EXPIRED     // Abgelaufen (7 Tage)
+  REVOKED     // Vom Salon widerrufen
+}
+
+// Die aktive Verbindung zwischen Salon und Stylist
+model SalonStylistConnection {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  salonId     String    @map("salon_id") @db.Uuid
+  stylistId   String    @map("stylist_id") @db.Uuid
+  
+  // Rolle innerhalb des Salons
+  role        String    @default("CHAIR_RENTER") // CHAIR_RENTER, GUEST
+  
+  // Status
+  isActive    Boolean   @default(true) @map("is_active")
+  
+  // Zeitraum der Zugehörigkeit
+  joinedAt    DateTime  @default(now()) @map("joined_at") @db.Timestamptz
+  leftAt      DateTime? @map("left_at") @db.Timestamptz
+  
+  // Timestamps
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Relations
+  salon   Salon @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  stylist User  @relation("StylistConnections", fields: [stylistId], references: [id], onDelete: Cascade)
+  
+  @@unique([salonId, stylistId])
+  @@index([salonId])
+  @@index([stylistId])
+  @@index([isActive])
+  @@map("salon_stylist_connections")
+}
+
+// Einladungen von Salons an Stylisten
+model SalonInvitation {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  salonId         String           @map("salon_id") @db.Uuid
+  invitedById     String           @map("invited_by_id") @db.Uuid
+  
+  // Eingeladener
+  invitedEmail    String           @map("invited_email") @db.VarChar(255)
+  invitedUserId   String?          @map("invited_user_id") @db.Uuid  // Falls bereits registriert
+  invitedName     String?          @map("invited_name") @db.VarChar(200)
+  
+  // Token (Magic Link + Kurzlink)
+  token           String           @unique
+  shortCode       String           @unique @db.VarChar(8)  // z.B. "ABC12345" für Kurzlink
+  
+  // Status
+  status          InvitationStatus @default(PENDING)
+  expiresAt       DateTime         @map("expires_at") @db.Timestamptz
+  
+  // Tracking
+  message         String?          @db.Text  // Persönliche Nachricht
+  emailSentAt     DateTime?        @map("email_sent_at") @db.Timestamptz
+  viewedAt        DateTime?        @map("viewed_at") @db.Timestamptz
+  respondedAt     DateTime?        @map("responded_at") @db.Timestamptz
+  
+  // Timestamps
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Relations
+  salon       Salon  @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  invitedBy   User   @relation("SentInvitations", fields: [invitedById], references: [id], onDelete: Cascade)
+  invitedUser User?  @relation("ReceivedInvitations", fields: [invitedUserId], references: [id], onDelete: SetNull)
+  
+  @@index([salonId])
+  @@index([invitedEmail])
+  @@index([invitedUserId])
+  @@index([token])
+  @@index([shortCode])
+  @@index([status])
+  @@map("salon_invitations")
 }
 
 model ChairRental {

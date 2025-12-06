@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { UserRole, PaymentType, PaymentStatus } from '@prisma/client'
+import { isDemoModeActive, getMockStylistInvoices } from '@/lib/mock-data'
 
 // Map Payment to Invoice format
 function mapPaymentToInvoice(payment: any) {
@@ -53,6 +54,16 @@ export async function GET(request: Request) {
     const session = await auth()
     if (!session?.user?.id || session.user.role !== UserRole.STYLIST) {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 403 })
+    }
+
+    // Check if demo mode is active
+    const demoMode = await isDemoModeActive()
+    if (demoMode) {
+      return NextResponse.json({
+        invoices: getMockStylistInvoices().invoices,
+        _source: 'demo',
+        _message: 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
+      })
     }
 
     const { searchParams } = new URL(request.url)

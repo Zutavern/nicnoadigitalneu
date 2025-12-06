@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { startOfMonth, subMonths, format } from 'date-fns'
 import { de } from 'date-fns/locale'
+import { isDemoModeActive, getMockStylistAnalytics } from '@/lib/mock-data'
 
 export async function GET(request: Request) {
   try {
@@ -10,6 +11,16 @@ export async function GET(request: Request) {
     
     if (!session?.user) {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
+    }
+
+    // Check if demo mode is active
+    const demoMode = await isDemoModeActive()
+    if (demoMode) {
+      return NextResponse.json({
+        ...getMockStylistAnalytics(),
+        _source: 'demo',
+        _message: 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
+      })
     }
 
     const { searchParams } = new URL(request.url)
@@ -37,9 +48,9 @@ export async function GET(request: Request) {
       },
     })
 
-    // Calculate earnings
-    const currentEarnings = currentBookings.reduce((sum, b) => sum + b.totalPrice, 0)
-    const previousEarnings = previousBookings.reduce((sum, b) => sum + b.totalPrice, 0)
+    // Calculate earnings - totalPrice is a Decimal, convert to number
+    const currentEarnings = currentBookings.reduce((sum, b) => sum + (b.totalPrice?.toNumber() || 0), 0)
+    const previousEarnings = previousBookings.reduce((sum, b) => sum + (b.totalPrice?.toNumber() || 0), 0)
     const earningsChange = previousEarnings > 0 
       ? ((currentEarnings - previousEarnings) / previousEarnings) * 100 
       : 0
@@ -50,8 +61,8 @@ export async function GET(request: Request) {
       : 0
 
     // Get customers
-    const currentCustomerIds = [...new Set(currentBookings.map(b => b.customerId))]
-    const previousCustomerIds = [...new Set(previousBookings.map(b => b.customerId))]
+    const currentCustomerIds = [...new Set(currentBookings.map(b => b.customerId).filter(Boolean))]
+    const previousCustomerIds = [...new Set(previousBookings.map(b => b.customerId).filter(Boolean))]
     const newCustomers = currentCustomerIds.filter(id => !previousCustomerIds.includes(id)).length
 
     // Monthly data for charts (last 6 months)
@@ -69,7 +80,7 @@ export async function GET(request: Request) {
       
       monthlyData.push({
         month: format(monthStart, 'MMM', { locale: de }),
-        earnings: monthBookings.reduce((sum, b) => sum + b.totalPrice, 0),
+        earnings: monthBookings.reduce((sum, b) => sum + (b.totalPrice?.toNumber() || 0), 0),
         bookings: monthBookings.length,
       })
     }
@@ -88,18 +99,31 @@ export async function GET(request: Request) {
       }
       const salon = salonMap.get(salonId)!
       salon.bookings++
-      salon.earnings += booking.totalPrice
+      salon.earnings += booking.totalPrice?.toNumber() || 0
     }
 
     const salonPerformance = Array.from(salonMap.values())
       .sort((a, b) => b.earnings - a.earnings)
       .slice(0, 5)
 
-    // Service breakdown
+    // Service breakdown - use serviceIds instead of services
     const serviceCount = new Map<string, number>()
+    
+    // Collect all service IDs
+    const allServiceIds = currentBookings.flatMap(b => b.serviceIds || [])
+    
+    // Get service names
+    const services = await prisma.service.findMany({
+      where: { id: { in: allServiceIds } },
+      select: { id: true, name: true },
+    })
+    
+    const serviceNameMap = new Map(services.map(s => [s.id, s.name]))
+    
     currentBookings.forEach(booking => {
-      booking.services.forEach(service => {
-        serviceCount.set(service, (serviceCount.get(service) || 0) + 1)
+      (booking.serviceIds || []).forEach(serviceId => {
+        const serviceName = serviceNameMap.get(serviceId) || 'Unbekannt'
+        serviceCount.set(serviceName, (serviceCount.get(serviceName) || 0) + 1)
       })
     })
     

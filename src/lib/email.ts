@@ -59,6 +59,12 @@ const templateComponents: Record<string, () => Promise<{ default: React.FC<any> 
   'new-review-salon': () => import('@/emails/templates/NewReviewSalonEmail'),
   'new-review-stylist': () => import('@/emails/templates/NewReviewStylistEmail'),
   
+  // Salon Invitations
+  'salon-invitation': () => import('@/emails/templates/SalonInvitationEmail'),
+  'salon-invitation-unregistered': () => import('@/emails/templates/SalonInvitationUnregisteredEmail'),
+  'salon-invitation-accepted': () => import('@/emails/templates/SalonInvitationAcceptedEmail'),
+  'salon-invitation-rejected': () => import('@/emails/templates/SalonInvitationRejectedEmail'),
+  
   // Messaging
   'new-message': () => import('@/emails/templates/NewMessageEmail'),
   
@@ -88,7 +94,8 @@ export interface EmailContent {
 export interface SendEmailOptions {
   to: string
   toName?: string
-  templateSlug: string
+  templateSlug?: string
+  template?: string  // Alias für templateSlug (für API-Kompatibilität)
   data: Record<string, any>
   userId?: string
 }
@@ -119,19 +126,27 @@ function replaceVariables(text: string, data: Record<string, any>): string {
 }
 
 // Main email sending function
-export async function sendEmail({ to, toName, templateSlug, data, userId }: SendEmailOptions) {
+export async function sendEmail({ to, toName, templateSlug, template: templateAlias, data, userId }: SendEmailOptions) {
+  // Support both templateSlug and template parameter names
+  const slug = templateSlug || templateAlias
+  
+  if (!slug) {
+    console.error('No template specified')
+    return { success: false, error: 'No template specified' }
+  }
+  
   // Get template from database
-  const template = await prisma.emailTemplate.findUnique({
-    where: { slug: templateSlug }
+  const dbTemplate = await prisma.emailTemplate.findUnique({
+    where: { slug }
   })
 
-  if (!template) {
-    console.error(`Email template '${templateSlug}' not found`)
+  if (!dbTemplate) {
+    console.error(`Email template '${slug}' not found`)
     return { success: false, error: 'Template not found' }
   }
 
-  if (!template.isActive) {
-    console.warn(`Email template '${templateSlug}' is inactive`)
+  if (!dbTemplate.isActive) {
+    console.warn(`Email template '${slug}' is inactive`)
     return { success: false, error: 'Template inactive' }
   }
 
@@ -139,13 +154,13 @@ export async function sendEmail({ to, toName, templateSlug, data, userId }: Send
   const settings = await getEmailSettings()
 
   // Load template component
-  const componentLoader = templateComponents[templateSlug]
+  const componentLoader = templateComponents[slug]
   if (!componentLoader) {
-    console.error(`No component found for template '${templateSlug}'`)
+    console.error(`No component found for template '${slug}'`)
     return { success: false, error: 'Component not found' }
   }
 
-  const templateContent = template.content as EmailContent
+  const templateContent = dbTemplate.content as EmailContent
 
   try {
     // Import and render the email component
@@ -154,18 +169,18 @@ export async function sendEmail({ to, toName, templateSlug, data, userId }: Send
     const emailElement = EmailComponent({
       ...data,
       content: templateContent,
-      logoUrl: template.logoUrl || settings.logoUrl,
-      primaryColor: template.primaryColor || settings.primaryColor,
+      logoUrl: dbTemplate.logoUrl || settings.logoUrl,
+      primaryColor: dbTemplate.primaryColor || settings.primaryColor,
       footerText: settings.footerText,
     }) as ReactElement
 
     const emailHtml = await render(emailElement)
-    const subject = replaceVariables(template.subject, data)
+    const subject = replaceVariables(dbTemplate.subject, data)
 
     // Create log entry
     const emailLog = await prisma.emailLog.create({
       data: {
-        templateId: template.id,
+        templateId: dbTemplate.id,
         userId,
         recipientEmail: to,
         recipientName: toName,
@@ -178,7 +193,7 @@ export async function sendEmail({ to, toName, templateSlug, data, userId }: Send
     // Check if Resend is configured
     if (!resend) {
       console.log(`[Email Preview] Would send "${subject}" to ${to}`)
-      console.log(`[Email Preview] Template: ${templateSlug}`)
+      console.log(`[Email Preview] Template: ${slug}`)
       
       // Update log status
       await prisma.emailLog.update({

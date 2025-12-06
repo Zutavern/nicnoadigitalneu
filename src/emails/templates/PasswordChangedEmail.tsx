@@ -307,3 +307,4 @@ const footerNote: React.CSSProperties = {
 
 export default PasswordChangedEmail
 
+

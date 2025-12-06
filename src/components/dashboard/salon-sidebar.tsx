@@ -19,6 +19,8 @@ import {
   LogOut,
   Building2,
   HelpCircle,
+  Armchair,
+  Gift,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -37,6 +39,7 @@ const menuItems = [
     title: 'Verwaltung',
     items: [
       { label: 'Buchungen', href: '/salon/bookings', icon: Clock },
+      { label: 'Stühle', href: '/salon/chairs', icon: Armchair },
       { label: 'Stylisten', href: '/salon/stylists', icon: Scissors },
       { label: 'Kunden', href: '/salon/customers', icon: Users },
     ],
@@ -53,6 +56,7 @@ const menuItems = [
     items: [
       { label: 'Nachrichten', href: '/salon/messages', icon: MessageSquare },
       { label: 'Bewertungen', href: '/salon/reviews', icon: Star },
+      { label: 'Empfehlungen', href: '/salon/referral', icon: Gift },
     ],
   },
 ]

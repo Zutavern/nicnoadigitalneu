@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { MainNav } from '@/components/layout/main-nav'
+import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { 
   Sparkles, 
@@ -177,6 +178,8 @@ export default function RoadmapPage() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </main>
   )
 } 

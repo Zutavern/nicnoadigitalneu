@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { MainNav } from '@/components/layout/main-nav'
+import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { 
   Rocket,
@@ -173,6 +174,8 @@ export default function UpdatesPage() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </main>
   )
 } 

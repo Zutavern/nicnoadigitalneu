@@ -511,3 +511,4 @@ RESEND_WEBHOOK_SECRET=whsec_xxxxx
 **Dokumentation gepflegt von:** NICNOA Development Team  
 **Letzte Aktualisierung:** 6. Dezember 2025
 
+

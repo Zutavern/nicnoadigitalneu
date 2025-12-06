@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import crypto from 'crypto'
+import { isDemoModeActive, getMockAdminSecurity } from '@/lib/mock-data'
 
 // Helper zum Generieren eines sicheren API-Keys
 function generateApiKey(): { key: string; hash: string; prefix: string } {
@@ -14,6 +15,15 @@ function generateApiKey(): { key: string; hash: string; prefix: string } {
 // GET /api/admin/security/api-keys - Hole alle API-Keys
 export async function GET(request: Request) {
   try {
+    // Demo-Modus prüfen
+    if (await isDemoModeActive()) {
+      const mockData = getMockAdminSecurity()
+      return NextResponse.json({
+        apiKeys: mockData.apiKeys,
+        stats: { total: mockData.apiKeys.length, active: mockData.summary.activeApiKeys, testMode: 0, expired: 0 }
+      })
+    }
+
     const session = await auth()
     
     if (!session?.user) {
@@ -235,4 +245,3 @@ export async function DELETE(request: Request) {
     )
   }
 }
-

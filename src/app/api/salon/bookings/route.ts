@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { isDemoModeActive, getMockSalonBookings } from '@/lib/mock-data'
 
 export async function GET(request: Request) {
   try {
@@ -8,6 +9,16 @@ export async function GET(request: Request) {
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Nicht authentifiziert' }, { status: 401 })
+    }
+
+    // Check if demo mode is active
+    const demoMode = await isDemoModeActive()
+    if (demoMode) {
+      return NextResponse.json({
+        ...getMockSalonBookings(),
+        _source: 'demo',
+        _message: 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
+      })
     }
 
     const { searchParams } = new URL(request.url)

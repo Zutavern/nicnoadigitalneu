@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { clearDemoModeCache } from '@/lib/mock-data'
+import { clearDemoModeCache, isDemoModeActive, getMockAdminSettings } from '@/lib/mock-data'
 
 // GET /api/admin/settings - Hole Platform-Einstellungen
 export async function GET() {
   try {
+    // Demo-Modus prüfen - aber Einstellungen immer von DB laden für Admin
+    // Damit Admin den Demo-Modus ausschalten kann
     const session = await auth()
     
     if (!session?.user) {
@@ -156,4 +158,3 @@ export async function PUT(request: Request) {
     )
   }
 }
-

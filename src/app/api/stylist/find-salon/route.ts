@@ -2,9 +2,15 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { UserRole } from '@prisma/client'
+import { isDemoModeActive, getMockFindSalon } from '@/lib/mock-data'
 
 export async function GET(request: Request) {
   try {
+    // Demo-Modus prüfen
+    if (await isDemoModeActive()) {
+      return NextResponse.json(getMockFindSalon())
+    }
+
     const session = await auth()
     if (!session?.user?.id || session.user.role !== UserRole.STYLIST) {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 403 })
@@ -15,7 +21,7 @@ export async function GET(request: Request) {
     const city = searchParams.get('city')
 
     // Build where clause
-    const whereClause: any = {
+    const whereClause: Record<string, unknown> = {
       isActive: true,
     }
 
@@ -103,4 +109,3 @@ export async function GET(request: Request) {
     )
   }
 }
-

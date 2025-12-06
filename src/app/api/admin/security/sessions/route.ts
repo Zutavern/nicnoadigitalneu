@@ -1,10 +1,21 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { isDemoModeActive, getMockAdminSecurity } from '@/lib/mock-data'
 
 // GET /api/admin/security/sessions - Hole aktive Sessions
 export async function GET(request: Request) {
   try {
+    // Demo-Modus prüfen
+    if (await isDemoModeActive()) {
+      const mockData = getMockAdminSecurity()
+      return NextResponse.json({
+        sessions: mockData.sessions,
+        pagination: { page: 1, limit: 20, total: mockData.sessions.length, totalPages: 1 },
+        stats: { totalActive: mockData.summary.activeSessions }
+      })
+    }
+
     const session = await auth()
     
     if (!session?.user) {
@@ -191,4 +202,3 @@ export async function DELETE(request: Request) {
     )
   }
 }
-

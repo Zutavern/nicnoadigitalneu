@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { MainNav } from '@/components/layout/main-nav'
+import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { 
   Calendar, 
@@ -147,8 +148,11 @@ export default function ProduktPage() {
           </motion.div>
         </div>
       </section>
+
+      <Footer />
     </main>
   )
 }
+
 
 

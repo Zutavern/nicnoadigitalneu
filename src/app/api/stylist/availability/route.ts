@@ -2,9 +2,15 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { UserRole } from '@prisma/client'
+import { isDemoModeActive, getMockStylistAvailability } from '@/lib/mock-data'
 
 export async function GET() {
   try {
+    // Demo-Modus prüfen
+    if (await isDemoModeActive()) {
+      return NextResponse.json(getMockStylistAvailability())
+    }
+
     const session = await auth()
     if (!session?.user?.id || session.user.role !== UserRole.STYLIST) {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 403 })
@@ -67,4 +73,3 @@ export async function PUT(request: Request) {
     )
   }
 }
-

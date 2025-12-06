@@ -1,10 +1,14 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { MainNav } from '@/components/layout/main-nav'
+import { Footer } from '@/components/layout/footer'
 
 export default function ImpressumPage() {
   return (
-    <div className="container mx-auto px-4 py-12">
+    <main className="min-h-screen bg-background">
+      <MainNav />
+      <div className="container mx-auto px-4 py-12 pt-24">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -100,6 +104,8 @@ export default function ImpressumPage() {
           </div>
         </div>
       </motion.div>
-    </div>
+      </div>
+      <Footer />
+    </main>
   )
 } 

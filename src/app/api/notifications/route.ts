@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { isDemoModeActive, getMockNotifications } from '@/lib/mock-data'
 
 // GET /api/notifications - Alle Benachrichtigungen des Users
 export async function GET(request: Request) {
   try {
+    // Demo-Modus prüfen
+    if (await isDemoModeActive()) {
+      return NextResponse.json(getMockNotifications())
+    }
+
     const session = await auth()
 
     if (!session?.user?.id) {
@@ -57,4 +63,3 @@ export async function GET(request: Request) {
     )
   }
 }
-

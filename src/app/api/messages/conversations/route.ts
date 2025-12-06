@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { isDemoModeActive, getMockConversations } from '@/lib/mock-data'
 
 // GET /api/messages/conversations - Alle Konversationen des Users
 export async function GET() {
   try {
+    // Demo-Modus prüfen
+    if (await isDemoModeActive()) {
+      return NextResponse.json(getMockConversations())
+    }
+
     const session = await auth()
 
     if (!session?.user?.id) {
@@ -221,4 +227,3 @@ export async function POST(request: Request) {
     )
   }
 }
-

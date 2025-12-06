@@ -3,10 +3,16 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
+import { isDemoModeActive, getMockAdminUsers } from "@/lib/mock-data"
 
 // GET all users
 export async function GET(request: Request) {
   try {
+    // Demo-Modus prüfen
+    if (await isDemoModeActive()) {
+      return NextResponse.json(getMockAdminUsers())
+    }
+
     const session = await auth()
     
     if (!session?.user || session.user.role !== 'ADMIN') {
@@ -124,4 +130,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ein Fehler ist aufgetreten" }, { status: 500 })
   }
 }
-

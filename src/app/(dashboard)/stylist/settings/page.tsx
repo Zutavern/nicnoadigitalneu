@@ -23,9 +23,225 @@ import {
   Camera,
   Instagram,
   Link2,
-  Lock
+  Lock,
+  CheckCircle2,
+  AlertCircle,
+  Send
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
+import { TwoFactorSettings } from '@/components/settings/two-factor-settings'
+import { toast } from 'sonner'
+
+// Security Tab Component
+function SecurityTab({ session }: { session: any }) {
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [isSendingVerification, setIsSendingVerification] = useState(false)
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  })
+
+  const handleChangePassword = async () => {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error('Die Passwörter stimmen nicht überein')
+      return
+    }
+    if (passwordForm.newPassword.length < 8) {
+      toast.error('Das Passwort muss mindestens 8 Zeichen lang sein')
+      return
+    }
+
+    setIsChangingPassword(true)
+    try {
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success('Passwort erfolgreich geändert')
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      } else {
+        toast.error(data.error || 'Fehler beim Ändern des Passworts')
+      }
+    } catch (error) {
+      toast.error('Netzwerkfehler')
+    } finally {
+      setIsChangingPassword(false)
+    }
+  }
+
+  const handleSendVerification = async () => {
+    setIsSendingVerification(true)
+    try {
+      const response = await fetch('/api/auth/send-verification', {
+        method: 'POST',
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success('Verifizierungs-E-Mail gesendet')
+      } else {
+        toast.error(data.error || 'Fehler beim Senden der E-Mail')
+      }
+    } catch (error) {
+      toast.error('Netzwerkfehler')
+    } finally {
+      setIsSendingVerification(false)
+    }
+  }
+
+  return (
+    <div className="grid gap-6">
+      {/* Email Verification */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-pink-500" />
+              E-Mail-Verifizierung
+            </CardTitle>
+            <CardDescription>
+              Bestätige deine E-Mail-Adresse für zusätzliche Sicherheit
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-pink-500/10 to-purple-500/10 border border-pink-500/20">
+              <div className="flex items-center gap-3">
+                {session?.user?.emailVerified ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-amber-500" />
+                )}
+                <div>
+                  <div className="font-medium">
+                    {session?.user?.emailVerified ? 'E-Mail verifiziert' : 'E-Mail nicht verifiziert'}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {session?.user?.email}
+                  </div>
+                </div>
+              </div>
+              {!session?.user?.emailVerified && (
+                <Button
+                  variant="outline"
+                  onClick={handleSendVerification}
+                  disabled={isSendingVerification}
+                >
+                  {isSendingVerification ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="mr-2 h-4 w-4" />
+                  )}
+                  Verifizieren
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Password Change */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5 text-pink-500" />
+              Passwort ändern
+            </CardTitle>
+            <CardDescription>
+              Aktualisiere dein Passwort regelmäßig
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">Aktuelles Passwort</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                value={passwordForm.currentPassword}
+                onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">Neues Passwort</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Passwort bestätigen</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+              />
+            </div>
+            <Button
+              onClick={handleChangePassword}
+              disabled={isChangingPassword || !passwordForm.currentPassword || !passwordForm.newPassword}
+              className="bg-gradient-to-r from-pink-500 to-rose-500"
+            >
+              {isChangingPassword ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              Passwort ändern
+            </Button>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Two Factor Authentication */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <TwoFactorSettings />
+      </motion.div>
+
+      {/* Danger Zone */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <Card className="border-red-500/30">
+          <CardHeader>
+            <CardTitle className="text-red-500">Gefahrenzone</CardTitle>
+            <CardDescription>
+              Unwiderrufliche Aktionen
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="destructive">
+              Account löschen
+            </Button>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </div>
+  )
+}
 
 export default function StylistSettingsPage() {
   const { data: session, update: updateSession } = useSession()
@@ -493,93 +709,7 @@ export default function StylistSettingsPage() {
 
       {/* Security Tab */}
       {activeTab === 'security' && (
-        <div className="grid gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lock className="h-5 w-5 text-pink-500" />
-                  Passwort ändern
-                </CardTitle>
-                <CardDescription>
-                  Aktualisiere dein Passwort regelmäßig
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Aktuelles Passwort</Label>
-                  <Input id="currentPassword" type="password" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">Neues Passwort</Label>
-                  <Input id="newPassword" type="password" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Passwort bestätigen</Label>
-                  <Input id="confirmPassword" type="password" />
-                </div>
-                <Button className="bg-gradient-to-r from-pink-500 to-rose-500">
-                  Passwort ändern
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-pink-500" />
-                  Zwei-Faktor-Authentifizierung
-                </CardTitle>
-                <CardDescription>
-                  Erhöhe die Sicherheit deines Kontos
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-pink-500/10 to-purple-500/10 border border-pink-500/20">
-                  <div>
-                    <div className="font-medium">2FA aktivieren</div>
-                    <div className="text-sm text-muted-foreground">
-                      Schütze dein Konto mit einem zweiten Faktor
-                    </div>
-                  </div>
-                  <Switch
-                    checked={settings.twoFactorEnabled}
-                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, twoFactorEnabled: checked }))}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <Card className="border-red-500/30">
-              <CardHeader>
-                <CardTitle className="text-red-500">Gefahrenzone</CardTitle>
-                <CardDescription>
-                  Unwiderrufliche Aktionen
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="destructive">
-                  Account löschen
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
+        <SecurityTab session={session} />
       )}
     </div>
   )

@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { isDemoModeActive, getMockAdminEmailTemplates } from '@/lib/mock-data'
 
 // GET - Alle Email Templates abrufen
 export async function GET(request: Request) {
   try {
+    // Demo-Modus prüfen
+    if (await isDemoModeActive()) {
+      return NextResponse.json(getMockAdminEmailTemplates())
+    }
+
     const session = await auth()
     if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
@@ -80,4 +86,3 @@ export async function POST(request: Request) {
     )
   }
 }
-

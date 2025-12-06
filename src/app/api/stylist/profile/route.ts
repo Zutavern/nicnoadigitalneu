@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { isDemoModeActive, getMockStylistProfile } from '@/lib/mock-data'
 
 export async function GET() {
   try {
+    // Demo-Modus prüfen
+    if (await isDemoModeActive()) {
+      return NextResponse.json(getMockStylistProfile())
+    }
+
     const session = await auth()
     
     if (!session?.user?.id) {
@@ -122,4 +128,3 @@ export async function PUT(request: Request) {
     )
   }
 }
-

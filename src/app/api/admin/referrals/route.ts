@@ -2,10 +2,16 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { ReferralStatus } from '@prisma/client'
+import { isDemoModeActive, getMockAdminReferrals } from '@/lib/mock-data'
 
 // GET /api/admin/referrals - Referral Analytics für Admin
 export async function GET(request: Request) {
   try {
+    // Demo-Modus prüfen
+    if (await isDemoModeActive()) {
+      return NextResponse.json(getMockAdminReferrals())
+    }
+
     const session = await auth()
     
     if (!session?.user) {
@@ -108,30 +114,6 @@ export async function GET(request: Request) {
     const registrationRate = totalSent > 0 ? (totalRegistered / totalSent) * 100 : 0
     const conversionRate = totalRegistered > 0 ? (totalConverted / totalRegistered) * 100 : 0
 
-    // Monatliche Trends (letzte 6 Monate)
-    const sixMonthsAgo = new Date()
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
-
-    const monthlyReferrals = await prisma.$queryRaw`
-      SELECT 
-        DATE_TRUNC('month', created_at) as month,
-        COUNT(*) as total,
-        COUNT(CASE WHEN status IN ('REGISTERED', 'CONVERTED', 'REWARDED') THEN 1 END) as registered,
-        COUNT(CASE WHEN status IN ('CONVERTED', 'REWARDED') THEN 1 END) as converted,
-        SUM(total_revenue) as revenue
-      FROM referrals
-      WHERE created_at >= ${sixMonthsAgo}
-      GROUP BY DATE_TRUNC('month', created_at)
-      ORDER BY month DESC
-      LIMIT 6
-    ` as Array<{
-      month: Date
-      total: bigint
-      registered: bigint
-      converted: bigint
-      revenue: number | null
-    }>
-
     // Top Referrer
     const topReferrers = await prisma.userReferralProfile.findMany({
       orderBy: { successfulReferrals: 'desc' },
@@ -191,13 +173,6 @@ export async function GET(request: Request) {
           revenue: Number(roleStats.find(r => r.referrerRole === 'STYLIST')?._sum?.totalRevenue || 0)
         }
       },
-      monthlyTrends: monthlyReferrals.map(m => ({
-        month: m.month,
-        total: Number(m.total),
-        registered: Number(m.registered),
-        converted: Number(m.converted),
-        revenue: Number(m.revenue || 0)
-      })),
       topReferrers: topReferrersWithUsers
     })
   } catch (error) {
@@ -298,4 +273,3 @@ export async function POST(request: Request) {
     )
   }
 }
-

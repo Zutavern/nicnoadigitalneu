@@ -246,3 +246,4 @@ const footerNote: React.CSSProperties = {
 
 export default RentalRejectedEmail
 
+

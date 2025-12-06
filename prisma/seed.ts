@@ -1473,6 +1473,66 @@ async function main() {
       category: 'admin',
       isSystem: true,
     },
+
+    // ============================================
+    // Salon-Invitation Templates
+    // ============================================
+    {
+      slug: 'salon-invitation',
+      name: 'Salon-Einladung (registriert)',
+      description: 'Einladung für registrierte Stylisten, einem Salon beizutreten',
+      subject: '💼 {{inviterName}} lädt Sie zu {{salonName}} ein',
+      content: {
+        headline: 'Einladung zum Salon',
+        body: '{{inviterName}} möchte, dass Sie als Stuhlmieter bei {{salonName}} arbeiten. Klicken Sie auf den Button, um die Einladung anzunehmen oder abzulehnen.',
+        buttonText: 'Einladung ansehen',
+        footer: 'Diese Einladung ist 7 Tage gültig.',
+      },
+      category: 'invitation',
+      isSystem: true,
+    },
+    {
+      slug: 'salon-invitation-unregistered',
+      name: 'Salon-Einladung (nicht registriert)',
+      description: 'Einladung für nicht-registrierte Stylisten',
+      subject: '💼 Sie wurden zu {{salonName}} eingeladen!',
+      content: {
+        headline: 'Werden Sie Teil von {{salonName}}',
+        body: '{{inviterName}} lädt Sie ein, als Stuhlmieter bei {{salonName}} zu arbeiten. Registrieren Sie sich kostenlos auf NICNOA, um die Einladung anzunehmen.',
+        buttonText: 'Jetzt registrieren',
+        footer: 'Nach der Registrierung können Sie die Einladung annehmen.',
+      },
+      category: 'invitation',
+      isSystem: true,
+    },
+    {
+      slug: 'salon-invitation-accepted',
+      name: 'Einladung angenommen',
+      description: 'Benachrichtigung an Salonbesitzer wenn Einladung angenommen wurde',
+      subject: '🎉 {{stylistName}} hat Ihre Einladung angenommen!',
+      content: {
+        headline: 'Einladung angenommen!',
+        body: 'Großartige Neuigkeiten! {{stylistName}} hat Ihre Einladung angenommen und ist jetzt mit {{salonName}} verbunden.',
+        buttonText: 'Stylisten verwalten',
+        footer: 'Heißen Sie Ihren neuen Stuhlmieter willkommen!',
+      },
+      category: 'invitation',
+      isSystem: true,
+    },
+    {
+      slug: 'salon-invitation-rejected',
+      name: 'Einladung abgelehnt',
+      description: 'Benachrichtigung an Salonbesitzer wenn Einladung abgelehnt wurde',
+      subject: 'Einladung wurde abgelehnt',
+      content: {
+        headline: 'Einladung abgelehnt',
+        body: 'Leider wurde Ihre Einladung an {{stylistEmail}} für {{salonName}} abgelehnt.',
+        buttonText: 'Andere Stylisten einladen',
+        footer: 'Sie können jederzeit weitere Stylisten einladen.',
+      },
+      category: 'invitation',
+      isSystem: true,
+    },
   ]
 
   for (const template of emailTemplates) {

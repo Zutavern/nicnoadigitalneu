@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { isDemoModeActive, getMockSalonReviews } from '@/lib/mock-data'
 
 export async function GET() {
   try {
@@ -8,6 +9,16 @@ export async function GET() {
     
     if (!session?.user) {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
+    }
+
+    // Check if demo mode is active
+    const demoMode = await isDemoModeActive()
+    if (demoMode) {
+      return NextResponse.json({
+        ...getMockSalonReviews(),
+        _source: 'demo',
+        _message: 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
+      })
     }
 
     // Find the salon owned by this user

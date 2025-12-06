@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { MainNav } from '@/components/layout/main-nav'
+import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { Heart, Target, Lightbulb, Users } from 'lucide-react'
 import Link from 'next/link'
@@ -195,8 +196,11 @@ export default function UnternehmenPage() {
           </motion.div>
         </div>
       </section>
+
+      <Footer />
     </main>
   )
 }
+
 
 

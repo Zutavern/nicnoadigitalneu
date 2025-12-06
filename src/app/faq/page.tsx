@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, Building2, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MainNav } from '@/components/layout/main-nav'
+import { Footer } from '@/components/layout/footer'
 
 const salonSpaceFAQs = [
   {
@@ -151,6 +152,8 @@ export default function FAQPage() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </main>
   )
 } 

@@ -1,4 +1,6 @@
 import { Metadata } from "next";
+import { MainNav } from '@/components/layout/main-nav'
+import { Footer } from '@/components/layout/footer'
 
 export const metadata: Metadata = {
   title: "AGB | nicnoa",
@@ -7,7 +9,9 @@ export const metadata: Metadata = {
 
 export default function AGBPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <main className="min-h-screen bg-background">
+      <MainNav />
+      <div className="container mx-auto px-4 py-8 pt-24">
       <h1 className="text-4xl font-bold mb-8">Allgemeine Geschäftsbedingungen</h1>
       
       <section className="mb-8">
@@ -72,6 +76,8 @@ export default function AGBPage() {
           Es gilt deutsches Recht. Gerichtsstand ist Berlin. Sollten einzelne Bestimmungen unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.
         </p>
       </section>
-    </div>
+      </div>
+      <Footer />
+    </main>
   );
 } 

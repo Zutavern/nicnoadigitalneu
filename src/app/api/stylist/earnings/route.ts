@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { subMonths, startOfMonth, endOfMonth, format } from 'date-fns'
 import { de } from 'date-fns/locale'
+import { isDemoModeActive, getMockStylistEarnings } from '@/lib/mock-data'
 
 export async function GET(request: Request) {
   try {
@@ -10,6 +11,16 @@ export async function GET(request: Request) {
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Nicht authentifiziert' }, { status: 401 })
+    }
+
+    // Check if demo mode is active
+    const demoMode = await isDemoModeActive()
+    if (demoMode) {
+      return NextResponse.json({
+        ...getMockStylistEarnings(),
+        _source: 'demo',
+        _message: 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
+      })
     }
 
     const { searchParams } = new URL(request.url)

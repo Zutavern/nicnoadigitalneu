@@ -148,3 +148,4 @@ const footerAddress: React.CSSProperties = {
 
 export default EmailLayout
 
+

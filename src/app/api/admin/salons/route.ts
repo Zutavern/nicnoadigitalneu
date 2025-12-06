@@ -2,10 +2,16 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { isDemoModeActive, getMockAdminSalons } from "@/lib/mock-data"
 
 // GET all salons with their owner info
 export async function GET(request: Request) {
   try {
+    // Demo-Modus prüfen
+    if (await isDemoModeActive()) {
+      return NextResponse.json(getMockAdminSalons())
+    }
+
     const session = await auth()
     
     if (!session?.user || session.user.role !== 'ADMIN') {
@@ -181,4 +187,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ein Fehler ist aufgetreten" }, { status: 500 })
   }
 }
-

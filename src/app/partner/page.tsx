@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { MainNav } from '@/components/layout/main-nav'
+import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { 
   ArrowRight,
@@ -212,6 +213,8 @@ export default function PartnerPage() {
           </motion.div>
         </div>
       </section>
+
+      <Footer />
     </main>
   )
 } 

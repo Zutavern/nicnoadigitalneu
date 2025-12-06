@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { isDemoModeActive, getMockAdminServiceCategories } from '@/lib/mock-data'
 
 // GET - Fetch all service categories
 export async function GET() {
   try {
+    // Demo-Modus prüfen
+    if (await isDemoModeActive()) {
+      return NextResponse.json(getMockAdminServiceCategories())
+    }
+
     const session = await auth()
 
     if (!session?.user?.id) {
@@ -81,4 +87,3 @@ export async function POST(request: Request) {
     )
   }
 }
-
