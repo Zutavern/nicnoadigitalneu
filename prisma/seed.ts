@@ -1433,6 +1433,35 @@ async function main() {
       category: 'rental',
       isSystem: true,
     },
+    // Admin Alert Templates
+    {
+      slug: 'high-churn-alert',
+      name: 'Hohe Abwanderungsrate',
+      description: 'Warnung bei erhöhter Kündigungsrate',
+      subject: '⚠️ Churn-Alert: Abwanderungsrate auf {{churnRate}} gestiegen',
+      content: {
+        headline: 'Erhöhte Abwanderung erkannt',
+        body: 'Die Abwanderungsrate ist im Zeitraum {{period}} auf {{churnRate}} gestiegen. Dies erfordert sofortige Aufmerksamkeit.',
+        buttonText: 'Analytics-Dashboard öffnen',
+        footer: 'Automatischer Alert basierend auf Churn-Analyse.',
+      },
+      category: 'admin',
+      isSystem: true,
+    },
+    {
+      slug: 'payment-dispute',
+      name: 'Zahlungsstreit',
+      description: 'Benachrichtigung bei Stripe-Dispute',
+      subject: '🚨 Zahlungsstreit: {{amount}} {{currency}} von {{customerName}}',
+      content: {
+        headline: 'Zahlungsstreit eingegangen',
+        body: 'Kunde {{customerName}} hat einen Zahlungsstreit über {{amount}} eingereicht. Eine Antwort ist vor {{responseDeadline}} erforderlich.',
+        buttonText: 'In Stripe öffnen',
+        footer: 'Beantworte den Dispute rechtzeitig, um Verluste zu vermeiden.',
+      },
+      category: 'admin',
+      isSystem: true,
+    },
   ]
 
   for (const template of emailTemplates) {
