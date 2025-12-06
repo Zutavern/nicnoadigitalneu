@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { writeFile, mkdir } from 'fs/promises'
-import { existsSync } from 'fs'
-import path from 'path'
+import { put } from '@vercel/blob'
 
-// Lokaler Upload - später auf Vercel Blob umstellen
 export async function POST(request: Request) {
   try {
     const session = await auth()
@@ -45,28 +42,19 @@ export async function POST(request: Request) {
       )
     }
 
-    // Erstelle Verzeichnis für den User
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'documents', session.user.id)
-    
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true })
-    }
-
     // Generiere eindeutigen Dateinamen
     const fileExt = file.name.split('.').pop()
     const fileName = `${documentType}-${Date.now()}.${fileExt}`
-    const filePath = path.join(uploadDir, fileName)
+    const blobPath = `documents/${session.user.id}/${fileName}`
 
-    // Schreibe Datei
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    await writeFile(filePath, buffer)
-
-    // Generiere öffentliche URL
-    const url = `/uploads/documents/${session.user.id}/${fileName}`
+    // Upload zu Vercel Blob
+    const blob = await put(blobPath, file, {
+      access: 'public',
+      addRandomSuffix: false,
+    })
 
     return NextResponse.json({ 
-      url,
+      url: blob.url,
       fileName,
       documentType,
       success: true 
@@ -79,4 +67,3 @@ export async function POST(request: Request) {
     )
   }
 }
-
