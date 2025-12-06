@@ -847,6 +847,280 @@ async function main() {
   console.log('✅ Platform Settings seeded (Demo-Modus aktiviert)')
 
   // ============================================
+  // 10.5 Seed Email Templates
+  // ============================================
+
+  const emailTemplates = [
+    // Auth
+    {
+      slug: 'welcome',
+      name: 'Willkommen',
+      description: 'Wird nach der Registrierung gesendet',
+      subject: 'Willkommen bei NICNOA, {{name}}! 🎉',
+      content: {
+        headline: 'Willkommen bei NICNOA!',
+        body: 'vielen Dank für deine Registrierung! Wir freuen uns, dich in unserer Community begrüßen zu dürfen. Entdecke jetzt alle Möglichkeiten, die NICNOA dir bietet.',
+        buttonText: 'Zum Dashboard',
+        footer: 'Bei Fragen stehen wir dir jederzeit zur Verfügung.',
+      },
+      category: 'auth',
+      isSystem: true,
+    },
+    {
+      slug: 'email-verification',
+      name: 'E-Mail Bestätigung',
+      description: 'Verifikationslink für neue Accounts',
+      subject: 'Bitte bestätige deine E-Mail-Adresse',
+      content: {
+        headline: 'E-Mail bestätigen',
+        body: 'um dein Konto zu aktivieren, bestätige bitte deine E-Mail-Adresse, indem du auf den Button unten klickst.',
+        buttonText: 'E-Mail bestätigen',
+        footer: 'Der Link ist 24 Stunden gültig.',
+      },
+      category: 'auth',
+      isSystem: true,
+    },
+    {
+      slug: 'password-reset',
+      name: 'Passwort zurücksetzen',
+      description: 'Link zum Zurücksetzen des Passworts',
+      subject: 'Dein Passwort-Reset-Link',
+      content: {
+        headline: 'Passwort zurücksetzen',
+        body: 'du hast angefordert, dein Passwort zurückzusetzen. Klicke auf den Button unten, um ein neues Passwort zu vergeben.',
+        buttonText: 'Neues Passwort setzen',
+        footer: 'Falls du diese Anfrage nicht gestellt hast, ignoriere diese E-Mail.',
+      },
+      category: 'auth',
+      isSystem: true,
+    },
+    // Onboarding
+    {
+      slug: 'onboarding-submitted',
+      name: 'Onboarding eingereicht (Admin)',
+      description: 'Benachrichtigt Admin über neuen Antrag',
+      subject: 'Neuer Onboarding-Antrag von {{stylistName}}',
+      content: {
+        headline: 'Neuer Onboarding-Antrag',
+        body: 'Ein neuer Stylist hat seinen Onboarding-Antrag eingereicht und wartet auf deine Prüfung.',
+        buttonText: 'Antrag prüfen',
+        footer: 'Bitte prüfe den Antrag zeitnah.',
+      },
+      category: 'onboarding',
+      isSystem: true,
+    },
+    {
+      slug: 'onboarding-approved',
+      name: 'Onboarding genehmigt',
+      description: 'Stylist wurde freigeschaltet',
+      subject: 'Dein Antrag wurde genehmigt! 🎉',
+      content: {
+        headline: 'Herzlichen Glückwunsch!',
+        body: 'großartige Neuigkeiten! Dein Onboarding-Antrag wurde genehmigt. Du kannst jetzt alle Funktionen von NICNOA nutzen und durchstarten.',
+        buttonText: 'Zum Dashboard',
+        footer: 'Wir freuen uns auf eine erfolgreiche Zusammenarbeit!',
+      },
+      category: 'onboarding',
+      isSystem: true,
+    },
+    {
+      slug: 'onboarding-rejected',
+      name: 'Onboarding abgelehnt',
+      description: 'Antrag muss überarbeitet werden',
+      subject: 'Dein Antrag benötigt Überarbeitung',
+      content: {
+        headline: 'Überarbeitung erforderlich',
+        body: 'leider konnten wir deinen Onboarding-Antrag noch nicht freigeben. Bitte überprüfe die folgenden Punkte und reiche deinen Antrag erneut ein.',
+        buttonText: 'Antrag überarbeiten',
+        footer: 'Bei Fragen kannst du uns jederzeit kontaktieren.',
+      },
+      category: 'onboarding',
+      isSystem: true,
+    },
+    // Subscription
+    {
+      slug: 'subscription-activated',
+      name: 'Abo aktiviert',
+      description: 'Bestätigung der Abo-Aktivierung',
+      subject: 'Dein {{planName}}-Abo ist jetzt aktiv! 🚀',
+      content: {
+        headline: 'Abo erfolgreich aktiviert!',
+        body: 'dein {{planName}}-Abonnement ist jetzt aktiv. Du hast jetzt Zugriff auf alle Features deines Plans.',
+        buttonText: 'Jetzt loslegen',
+        footer: 'Vielen Dank für dein Vertrauen!',
+      },
+      category: 'subscription',
+      isSystem: true,
+    },
+    {
+      slug: 'subscription-renewed',
+      name: 'Abo verlängert',
+      description: 'Bestätigung der automatischen Verlängerung',
+      subject: 'Dein Abo wurde erfolgreich verlängert',
+      content: {
+        headline: 'Abo verlängert',
+        body: 'dein Abonnement wurde automatisch verlängert. Die nächste Abrechnung erfolgt am {{nextBillingDate}}.',
+        buttonText: 'Abo verwalten',
+        footer: 'Vielen Dank, dass du NICNOA nutzt!',
+      },
+      category: 'subscription',
+      isSystem: true,
+    },
+    {
+      slug: 'subscription-expiring',
+      name: 'Abo läuft ab',
+      description: 'Erinnerung vor Ablauf',
+      subject: 'Dein Abo läuft bald ab ⏰',
+      content: {
+        headline: 'Abo-Erinnerung',
+        body: 'dein Abonnement läuft am {{expirationDate}} aus. Verlängere jetzt, um weiterhin alle Funktionen nutzen zu können.',
+        buttonText: 'Jetzt verlängern',
+        footer: 'Wir würden dich ungern als Kunden verlieren!',
+      },
+      category: 'subscription',
+      isSystem: true,
+    },
+    {
+      slug: 'subscription-expired',
+      name: 'Abo abgelaufen',
+      description: 'Benachrichtigung nach Ablauf',
+      subject: 'Dein Abo ist abgelaufen',
+      content: {
+        headline: 'Abo abgelaufen',
+        body: 'dein Abonnement ist leider abgelaufen. Reaktiviere es jetzt, um weiterhin alle Funktionen nutzen zu können.',
+        buttonText: 'Abo reaktivieren',
+        footer: 'Deine Daten werden noch 30 Tage gespeichert.',
+      },
+      category: 'subscription',
+      isSystem: true,
+    },
+    {
+      slug: 'payment-failed',
+      name: 'Zahlung fehlgeschlagen',
+      description: 'Benachrichtigung über fehlgeschlagene Zahlung',
+      subject: 'Zahlung fehlgeschlagen - Aktion erforderlich',
+      content: {
+        headline: 'Zahlung fehlgeschlagen',
+        body: 'leider konnten wir die Zahlung von {{amount}} nicht verarbeiten. Bitte aktualisiere deine Zahlungsinformationen.',
+        buttonText: 'Zahlung aktualisieren',
+        footer: 'Um eine Unterbrechung zu vermeiden, handle bitte schnell.',
+      },
+      category: 'subscription',
+      isSystem: true,
+    },
+    {
+      slug: 'invoice-receipt',
+      name: 'Rechnung/Quittung',
+      description: 'Zahlungsbestätigung mit Rechnung',
+      subject: 'Deine Rechnung #{{invoiceNumber}}',
+      content: {
+        headline: 'Zahlungsbestätigung',
+        body: 'vielen Dank für deine Zahlung! Anbei findest du deine Rechnung.',
+        buttonText: 'Rechnung herunterladen',
+        footer: 'Diese E-Mail dient als Zahlungsnachweis.',
+      },
+      category: 'subscription',
+      isSystem: true,
+    },
+    // Referral
+    {
+      slug: 'referral-invitation',
+      name: 'Empfehlungs-Einladung',
+      description: 'Einladung über Referral-Link',
+      subject: '{{referrerName}} lädt dich zu NICNOA ein! 🎁',
+      content: {
+        headline: 'Du wurdest eingeladen!',
+        body: '{{referrerName}} möchte, dass du Teil der NICNOA Community wirst. Als eingeladenes Mitglied erhältst du exklusive Vorteile.',
+        buttonText: 'Kostenlos registrieren',
+        footer: 'Diese Einladung ist 30 Tage gültig.',
+      },
+      category: 'referral',
+      isSystem: true,
+    },
+    {
+      slug: 'referral-success',
+      name: 'Empfehlung erfolgreich',
+      description: 'Belohnung für erfolgreiche Empfehlung',
+      subject: 'Glückwunsch! Du hast eine Belohnung verdient! 🎉',
+      content: {
+        headline: 'Belohnung verdient!',
+        body: '{{referredName}} hat sich dank deiner Empfehlung registriert! Als Dankeschön erhältst du: {{rewardDescription}}',
+        buttonText: 'Mehr Freunde einladen',
+        footer: 'Lade weitere Freunde ein und verdiene mehr!',
+      },
+      category: 'referral',
+      isSystem: true,
+    },
+    // Booking
+    {
+      slug: 'booking-confirmation',
+      name: 'Terminbestätigung',
+      description: 'Bestätigung eines gebuchten Termins',
+      subject: 'Dein Termin am {{bookingDate}} ist bestätigt ✅',
+      content: {
+        headline: 'Termin bestätigt!',
+        body: 'dein Termin für {{serviceName}} bei {{stylistName}} am {{bookingDate}} um {{bookingTime}} Uhr ist bestätigt.',
+        buttonText: 'Termin verwalten',
+        footer: 'Bitte erscheine pünktlich zu deinem Termin.',
+      },
+      category: 'booking',
+      isSystem: true,
+    },
+    {
+      slug: 'booking-reminder',
+      name: 'Terminerinnerung',
+      description: '24h Erinnerung vor dem Termin',
+      subject: 'Erinnerung: Dein Termin morgen um {{bookingTime}} Uhr',
+      content: {
+        headline: 'Morgen ist es soweit!',
+        body: 'wir erinnern dich an deinen Termin für {{serviceName}} bei {{stylistName}} morgen um {{bookingTime}} Uhr.',
+        buttonText: 'Termin ansehen',
+        footer: 'Kannst du nicht kommen? Bitte sage rechtzeitig ab.',
+      },
+      category: 'booking',
+      isSystem: true,
+    },
+    {
+      slug: 'booking-cancelled',
+      name: 'Termin storniert',
+      description: 'Bestätigung einer Stornierung',
+      subject: 'Dein Termin wurde storniert',
+      content: {
+        headline: 'Termin storniert',
+        body: 'dein Termin für {{serviceName}} am {{bookingDate}} wurde storniert.',
+        buttonText: 'Neuen Termin buchen',
+        footer: 'Wir würden uns freuen, dich bald wieder zu sehen!',
+      },
+      category: 'booking',
+      isSystem: true,
+    },
+    // System
+    {
+      slug: 'new-message',
+      name: 'Neue Nachricht',
+      description: 'Benachrichtigung über neue Nachricht',
+      subject: 'Neue Nachricht von {{senderName}}',
+      content: {
+        headline: 'Du hast eine neue Nachricht',
+        body: '{{senderName}} hat dir eine Nachricht geschickt.',
+        buttonText: 'Nachricht lesen',
+        footer: 'Du kannst Nachrichtenbenachrichtigungen in den Einstellungen ändern.',
+      },
+      category: 'system',
+      isSystem: true,
+    },
+  ]
+
+  for (const template of emailTemplates) {
+    await prisma.emailTemplate.upsert({
+      where: { slug: template.slug },
+      update: {},
+      create: template,
+    })
+  }
+  console.log(`✅ Email Templates seeded: ${emailTemplates.length}`)
+
+  // ============================================
   // 11. Seed Security Logs
   // ============================================
 
@@ -1483,6 +1757,7 @@ async function main() {
   console.log(`   ⭐ Reviews: ${reviews.length}`)
   console.log(`   💰 Payments: ${payments.length}`)
   console.log(`   🔧 Platform Settings: 1`)
+  console.log(`   📧 Email Templates: ${emailTemplates.length}`)
   console.log(`   🛡️ Security Logs: ${securityLogs.length}`)
   console.log(`   🔑 API Keys: ${apiKeys.length}`)
   console.log(`   📦 Subscription Plans: ${subscriptionPlans.length}`)

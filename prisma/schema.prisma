@@ -815,6 +815,13 @@ model PlatformSettings {
   smtpFrom        String?  @map("smtp_from") @db.VarChar(255)
   smtpSecure      Boolean  @default(true) @map("smtp_secure")
   
+  // E-Mail Branding
+  emailLogoUrl      String?  @map("email_logo_url")
+  emailPrimaryColor String?  @default("#10b981") @map("email_primary_color") @db.VarChar(20)
+  emailFooterText   String?  @default("© 2025 NICNOA & CO. DIGITAL. Alle Rechte vorbehalten.") @map("email_footer_text") @db.VarChar(500)
+  emailFromName     String?  @default("NICNOA") @map("email_from_name") @db.VarChar(100)
+  emailReplyTo      String?  @map("email_reply_to") @db.VarChar(255)
+  
   // Externe Integrationen
   googleAnalyticsId String? @map("google_analytics_id") @db.VarChar(50)
   
@@ -1014,6 +1021,93 @@ model SubscriptionPlan {
   @@index([planType])
   @@index([isActive])
   @@map("subscription_plans")
+}
+
+// ============================================
+// Email Templates & Logs
+// ============================================
+
+model EmailTemplate {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug            String   @unique @db.VarChar(50) // z.B. "welcome", "password-reset"
+  name            String   @db.VarChar(100)
+  description     String?  @db.Text
+  subject         String   @db.VarChar(255)
+  
+  // Editierbare Texte (JSON für Struktur)
+  content         Json     // { headline, body, buttonText, footer }
+  
+  // Design Overrides (optional, sonst Platform Settings)
+  primaryColor    String?  @map("primary_color") @db.VarChar(7)
+  logoUrl         String?  @map("logo_url")
+  
+  // Kategorie für bessere Organisation
+  category        String   @default("system") @db.VarChar(50) // auth, onboarding, subscription, booking, referral, system
+  
+  // Status
+  isActive        Boolean  @default(true) @map("is_active")
+  isSystem        Boolean  @default(false) @map("is_system") // System-Templates können nicht gelöscht werden
+  
+  // Timestamps
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  sentEmails      EmailLog[]
+
+  @@index([category])
+  @@index([isActive])
+  @@map("email_templates")
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+  BOUNCED
+  DELIVERED
+  OPENED
+  CLICKED
+}
+
+model EmailLog {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  templateId      String      @map("template_id") @db.Uuid
+  userId          String?     @map("user_id") @db.Uuid
+  
+  // Empfänger
+  recipientEmail  String      @map("recipient_email") @db.VarChar(255)
+  recipientName   String?     @map("recipient_name") @db.VarChar(200)
+  
+  // E-Mail Details
+  subject         String      @db.VarChar(255)
+  
+  // Status
+  status          EmailStatus @default(PENDING)
+  errorMessage    String?     @map("error_message") @db.Text
+  
+  // Tracking
+  resendId        String?     @map("resend_id") @db.VarChar(100) // ID von Resend
+  sentAt          DateTime?   @map("sent_at") @db.Timestamptz
+  deliveredAt     DateTime?   @map("delivered_at") @db.Timestamptz
+  openedAt        DateTime?   @map("opened_at") @db.Timestamptz
+  clickedAt       DateTime?   @map("clicked_at") @db.Timestamptz
+  
+  // Zusätzliche Daten für Template-Rendering
+  metadata        Json?
+  
+  // Timestamps
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  template        EmailTemplate @relation(fields: [templateId], references: [id])
+
+  @@index([userId])
+  @@index([templateId])
+  @@index([recipientEmail])
+  @@index([status])
+  @@index([createdAt])
+  @@map("email_logs")
 }
 
 // ============================================

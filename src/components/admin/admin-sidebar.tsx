@@ -19,6 +19,8 @@ import {
   FileCheck,
   Sparkles,
   MessageSquare,
+  Mail,
+  Gift,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -53,7 +55,14 @@ const menuItems = [
     title: 'Kommunikation',
     items: [
       { label: 'Nachrichten', href: '/admin/messaging', icon: MessageSquare },
+      { label: 'E-Mail Templates', href: '/admin/email-templates', icon: Mail },
       { label: 'Benachrichtigungen', href: '/admin/notifications', icon: Bell },
+    ],
+  },
+  {
+    title: 'Marketing',
+    items: [
+      { label: 'Referral-Programm', href: '/admin/referrals', icon: Gift },
     ],
   },
   {
