@@ -25,9 +25,12 @@ model User {
   onboardingCompleted Boolean @default(false) @map("onboarding_completed")
   
   // Security
-  twoFactorEnabled      Boolean   @default(false) @map("two_factor_enabled")
-  passwordResetToken    String?   @map("password_reset_token")
-  passwordResetExpires  DateTime? @map("password_reset_expires") @db.Timestamptz
+  twoFactorEnabled           Boolean   @default(false) @map("two_factor_enabled")
+  twoFactorSecret            String?   @map("two_factor_secret")
+  passwordResetToken         String?   @map("password_reset_token")
+  passwordResetExpires       DateTime? @map("password_reset_expires") @db.Timestamptz
+  emailVerificationToken     String?   @map("email_verification_token")
+  emailVerificationExpires   DateTime? @map("email_verification_expires") @db.Timestamptz
   
   // Stripe Fields
   stripeCustomerId         String?   @unique @map("stripe_customer_id")
