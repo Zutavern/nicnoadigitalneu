@@ -1,0 +1,216 @@
+'use client'
+
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
+import { motion } from 'framer-motion'
+import { ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react'
+
+export function Hero() {
+  return (
+    <section className="relative w-full min-h-[calc(100vh-80px)] flex items-center overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-purple-950">
+        {/* Grid Pattern */}
+        <div 
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px',
+          }}
+        />
+        
+        {/* Gradient Orbs */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 right-1/3 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
+      {/* Content */}
+      <div className="container relative z-10 py-20">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Text Content */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm mb-6"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>Jetzt im Beta-Programm verfügbar</span>
+            </motion.div>
+
+            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl mb-6">
+              Revolutionieren <br />
+              Sie Ihren{' '}
+              <span className="relative">
+                <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+                  Salon-Space
+                </span>
+                <motion.span
+                  className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ delay: 0.8, duration: 0.6 }}
+                />
+              </span>
+            </h1>
+            
+            <p className="text-lg text-slate-300 sm:text-xl mb-8 max-w-xl">
+              Die All-in-One SaaS-Lösung für moderne Salon-Coworking-Spaces.
+              Maximieren Sie Ihre Auslastung, minimieren Sie den
+              Verwaltungsaufwand und schaffen Sie ein professionelles
+              Arbeitsumfeld für selbstständige Stylisten.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-10">
+              <Link href="/registrieren">
+                <Button size="lg" className="text-lg w-full sm:w-auto group bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 border-0">
+                  Jetzt kostenlos starten
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+              <Link href="/produkt">
+                <Button size="lg" variant="outline" className="text-lg w-full sm:w-auto border-slate-700 text-white hover:bg-slate-800">
+                  Produkt entdecken
+                </Button>
+              </Link>
+            </div>
+
+            {/* Trust Indicators */}
+            <div className="flex flex-wrap gap-6 text-sm text-slate-400">
+              {[
+                '14 Tage kostenlos testen',
+                'Keine Kreditkarte erforderlich',
+                'DSGVO-konform',
+              ].map((item, index) => (
+                <motion.div
+                  key={item}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                  className="flex items-center gap-2"
+                >
+                  <CheckCircle2 className="h-4 w-4 text-green-400" />
+                  <span>{item}</span>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Visual Element */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+            className="relative hidden lg:block"
+          >
+            {/* Dashboard Preview */}
+            <div className="relative">
+              {/* Main Card */}
+              <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-6 shadow-2xl">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                      <Sparkles className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">NICNOA Dashboard</h3>
+                      <p className="text-slate-400 text-sm">Salon Overview</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="h-3 w-3 rounded-full bg-red-500" />
+                    <div className="h-3 w-3 rounded-full bg-yellow-500" />
+                    <div className="h-3 w-3 rounded-full bg-green-500" />
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  {[
+                    { label: 'Buchungen', value: '247', change: '+12%' },
+                    { label: 'Auslastung', value: '87%', change: '+5%' },
+                    { label: 'Umsatz', value: '€8.4k', change: '+18%' },
+                  ].map((stat, i) => (
+                    <motion.div
+                      key={stat.label}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.8 + i * 0.1 }}
+                      className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50"
+                    >
+                      <p className="text-slate-400 text-xs mb-1">{stat.label}</p>
+                      <p className="text-white text-xl font-bold">{stat.value}</p>
+                      <span className="text-green-400 text-xs">{stat.change}</span>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Chart Placeholder */}
+                <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/30">
+                  <div className="flex items-end gap-2 h-24">
+                    {[40, 65, 45, 80, 55, 90, 70, 85, 60, 95, 75, 88].map((height, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ height: 0 }}
+                        animate={{ height: `${height}%` }}
+                        transition={{ delay: 1 + i * 0.05, duration: 0.5 }}
+                        className="flex-1 bg-gradient-to-t from-purple-500 to-pink-500 rounded-t-sm"
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Floating Cards */}
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1.2 }}
+                className="absolute -left-8 top-1/4 bg-slate-800/90 backdrop-blur-xl rounded-xl p-4 border border-slate-700/50 shadow-xl"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <CheckCircle2 className="h-4 w-4 text-green-400" />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-medium">Neue Buchung</p>
+                    <p className="text-slate-400 text-xs">Maria S. • 14:30</p>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1.4 }}
+                className="absolute -right-4 bottom-1/4 bg-slate-800/90 backdrop-blur-xl rounded-xl p-4 border border-slate-700/50 shadow-xl"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                    <Sparkles className="h-4 w-4 text-purple-400" />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-medium">+3 Stylisten</p>
+                    <p className="text-slate-400 text-xs">Diese Woche</p>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  )
+}

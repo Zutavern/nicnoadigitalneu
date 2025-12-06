@@ -1,0 +1,1162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// NextAuth.js Models
+// ============================================
+
+model User {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String?
+  email         String    @unique
+  emailVerified DateTime? @map("email_verified") @db.Timestamptz
+  image         String?
+  password      String?
+  role          UserRole  @default(STYLIST)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Onboarding Status
+  onboardingCompleted Boolean @default(false) @map("onboarding_completed")
+  
+  // Security
+  twoFactorEnabled Boolean @default(false) @map("two_factor_enabled")
+  
+  // Stripe Fields
+  stripeCustomerId         String?   @unique @map("stripe_customer_id")
+  stripeSubscriptionId     String?   @unique @map("stripe_subscription_id")
+  stripeSubscriptionStatus String?   @map("stripe_subscription_status")
+  stripePriceId            String?   @map("stripe_price_id")
+  stripeCurrentPeriodEnd   DateTime? @map("stripe_current_period_end") @db.Timestamptz
+  
+  // Relations
+  accounts           Account[]
+  sessions           Session[]
+  profile            UserProfile?
+  salonProfile       SalonProfile?
+  stylistProfile     StylistProfile?
+  stylistOnboarding  StylistOnboarding?
+  
+  // Messaging & Notifications
+  conversationParticipants ConversationParticipant[]
+  sentMessages             Message[]
+  notifications            Notification[]
+  
+  // Business Relations
+  ownedSalons   Salon[]      @relation("SalonOwner")
+  customers     Customer[]
+  bookings      Booking[]
+  reviewsGiven  Review[]     @relation("ReviewAuthor")
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String  @map("user_id") @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id") @db.Uuid
+  expires      DateTime @db.Timestamptz
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime @db.Timestamptz
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================
+// User Roles
+// ============================================
+
+enum UserRole {
+  ADMIN
+  SALON_OWNER
+  STYLIST
+}
+
+enum DocumentStatus {
+  PENDING
+  UPLOADED
+  APPROVED
+  REJECTED
+}
+
+enum OnboardingStatus {
+  IN_PROGRESS
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+// ============================================
+// User Profiles
+// ============================================
+
+model UserProfile {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  phone     String?
+  street    String?
+  city      String?
+  zipCode   String?  @map("zip_code")
+  country   String?  @default("Deutschland")
+  bio       String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model SalonProfile {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String   @unique @map("user_id") @db.Uuid
+  salonName       String   @map("salon_name")
+  street          String?
+  city            String?
+  zipCode         String?  @map("zip_code")
+  country         String?  @default("Deutschland")
+  phone           String?
+  website         String?
+  employeeCount   Int?     @map("employee_count")
+  chairCount      Int?     @map("chair_count")
+  salonSize       Int?     @map("salon_size") // in m²
+  description     String?  @db.Text
+  openingHours    Json?    @map("opening_hours")
+  amenities       String[] @default([])
+  images          String[] @default([])
+  
+  // Notification Settings
+  emailNotifications Boolean @default(true) @map("email_notifications")
+  smsNotifications   Boolean @default(false) @map("sms_notifications")
+  bookingReminders   Boolean @default(true) @map("booking_reminders")
+  marketingEmails    Boolean @default(false) @map("marketing_emails")
+  
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("salon_profiles")
+}
+
+model StylistProfile {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String   @unique @map("user_id") @db.Uuid
+  yearsExperience Int?     @map("years_experience")
+  specialties     String[] @default([])
+  certifications  String[] @default([])
+  portfolio       String[] @default([])
+  hourlyRate      Decimal? @map("hourly_rate") @db.Decimal(10, 2)
+  availability    Json?
+  bio             String?  @db.Text
+  phone           String?
+  street          String?
+  city            String?
+  zipCode         String?  @map("zip_code")
+  
+  // Social Media
+  instagramUrl    String?  @map("instagram_url")
+  tiktokUrl       String?  @map("tiktok_url")
+  websiteUrl      String?  @map("website_url")
+  
+  // Notification Settings
+  emailNotifications Boolean @default(true) @map("email_notifications")
+  smsNotifications   Boolean @default(false) @map("sms_notifications")
+  bookingReminders   Boolean @default(true) @map("booking_reminders")
+  marketingEmails    Boolean @default(false) @map("marketing_emails")
+  newBookingAlert    Boolean @default(true) @map("new_booking_alert")
+  cancellationAlert  Boolean @default(true) @map("cancellation_alert")
+  reviewAlert        Boolean @default(true) @map("review_alert")
+  
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("stylist_profiles")
+}
+
+// ============================================
+// Stylist Onboarding & Compliance
+// ============================================
+
+model StylistOnboarding {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                String   @unique @map("user_id") @db.Uuid
+  
+  // Schritt 1: Geschäftsdaten
+  companyName           String?  @map("company_name")
+  taxId                 String?  @map("tax_id")
+  vatId                 String?  @map("vat_id")
+  businessStreet        String?  @map("business_street")
+  businessCity          String?  @map("business_city")
+  businessZipCode       String?  @map("business_zip_code")
+  
+  // Schritt 2: Compliance Checks
+  ownPhone              Boolean  @default(false) @map("own_phone")
+  ownAppointmentBook    Boolean  @default(false) @map("own_appointment_book")
+  ownCashRegister       Boolean  @default(false) @map("own_cash_register")
+  ownPriceList          Boolean  @default(false) @map("own_price_list")
+  ownBranding           Boolean  @default(false) @map("own_branding")
+  complianceConfirmedAt DateTime? @map("compliance_confirmed_at") @db.Timestamptz
+  
+  // Schritt 3: Dokumente
+  masterCertificateUrl       String?        @map("master_certificate_url")
+  masterCertificateStatus    DocumentStatus @default(PENDING) @map("master_certificate_status")
+  
+  businessRegistrationUrl    String?        @map("business_registration_url")
+  businessRegistrationStatus DocumentStatus @default(PENDING) @map("business_registration_status")
+  
+  liabilityInsuranceUrl      String?        @map("liability_insurance_url")
+  liabilityInsuranceStatus   DocumentStatus @default(PENDING) @map("liability_insurance_status")
+  
+  statusDeterminationUrl     String?        @map("status_determination_url")
+  statusDeterminationStatus  DocumentStatus @default(PENDING) @map("status_determination_status")
+  
+  craftsChamberUrl           String?        @map("crafts_chamber_url")
+  craftsChamberStatus        DocumentStatus @default(PENDING) @map("crafts_chamber_status")
+  
+  // Schritt 4: Finale Bestätigung
+  selfEmploymentDeclaration  Boolean  @default(false) @map("self_employment_declaration")
+  declarationSignedAt        DateTime? @map("declaration_signed_at") @db.Timestamptz
+  
+  // Status Tracking
+  currentStep          Int             @default(1) @map("current_step")
+  onboardingStatus     OnboardingStatus @default(IN_PROGRESS) @map("onboarding_status")
+  adminNotes           String?         @map("admin_notes") @db.Text
+  reviewedAt           DateTime?       @map("reviewed_at") @db.Timestamptz
+  reviewedBy           String?         @map("reviewed_by") @db.Uuid
+  
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("stylist_onboardings")
+}
+
+// ============================================
+// System Models (from Backup)
+// ============================================
+
+model StatusIncident {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String    @db.VarChar(255)
+  status      String    @db.VarChar(20)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @default(now()) @map("updated_at") @db.Timestamptz
+  resolvedAt  DateTime? @map("resolved_at") @db.Timestamptz
+  impact      String    @db.VarChar(20)
+  description String    @db.Text
+
+  @@map("status_incidents")
+}
+
+model StatusMetric {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(255)
+  value     Decimal  @db.Decimal
+  unit      String   @db.VarChar(50)
+  timestamp DateTime @default(now()) @db.Timestamptz
+
+  @@map("status_metrics")
+}
+
+model SystemStatus {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @db.VarChar(255)
+  status      String   @db.VarChar(20)
+  lastUpdated DateTime @default(now()) @map("last_updated") @db.Timestamptz
+  description String?  @db.Text
+
+  @@map("system_status")
+}
+
+model Test {
+  id          BigInt   @id @default(autoincrement())
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  name        String?  @db.Text
+  description String?  @db.Text
+
+  @@map("test")
+}
+
+// ============================================
+// Service Categories & Services (Admin-managed)
+// ============================================
+
+model ServiceCategory {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @db.VarChar(100)
+  slug        String   @unique @db.VarChar(100)
+  description String?  @db.Text
+  icon        String?  @db.VarChar(50) // Icon name for frontend
+  color       String?  @db.VarChar(20) // Color theme
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  services Service[]
+
+  @@map("service_categories")
+}
+
+model Service {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId  String   @map("category_id") @db.Uuid
+  name        String   @db.VarChar(150)
+  slug        String   @unique @db.VarChar(150)
+  description String?  @db.Text
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  category      ServiceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  stylistSkills StylistSkill[]
+  bookings      Booking[]
+
+  @@map("services")
+}
+
+// ============================================
+// Stylist Skills (User's service ratings)
+// ============================================
+
+model StylistSkill {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  serviceId String   @map("service_id") @db.Uuid
+  rating    Int      @default(0) // 1-5 stars
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, serviceId])
+  @@map("stylist_skills")
+}
+
+// ============================================
+// Messaging System
+// ============================================
+
+enum ConversationType {
+  DIRECT  // 1:1 Nachricht
+  GROUP   // Gruppen-Chat
+  SUPPORT // Support-Anfrage
+}
+
+enum ParticipantRole {
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+model Conversation {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type      ConversationType @default(DIRECT)
+  subject   String?          @db.VarChar(255)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String          @map("conversation_id") @db.Uuid
+  userId         String          @map("user_id") @db.Uuid
+  role           ParticipantRole @default(MEMBER)
+  lastReadAt     DateTime?       @map("last_read_at") @db.Timestamptz
+  joinedAt       DateTime        @default(now()) @map("joined_at") @db.Timestamptz
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId  String    @map("conversation_id") @db.Uuid
+  senderId        String    @map("sender_id") @db.Uuid
+  content         String    @db.Text
+  isSystemMessage Boolean   @default(false) @map("is_system_message")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  editedAt        DateTime? @map("edited_at") @db.Timestamptz
+
+  conversation Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User                @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  attachments  MessageAttachment[]
+
+  @@map("messages")
+}
+
+model MessageAttachment {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  messageId String   @map("message_id") @db.Uuid
+  fileName  String   @map("file_name") @db.VarChar(255)
+  fileUrl   String   @map("file_url")
+  fileType  String   @map("file_type") @db.VarChar(50)
+  fileSize  Int      @map("file_size")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("message_attachments")
+}
+
+// ============================================
+// Notification System
+// ============================================
+
+enum NotificationType {
+  ONBOARDING_SUBMITTED   // Stylist hat Onboarding abgeschlossen
+  ONBOARDING_APPROVED    // Admin hat Onboarding genehmigt
+  ONBOARDING_REJECTED    // Admin hat Onboarding abgelehnt
+  NEW_MESSAGE            // Neue Nachricht
+  DOCUMENT_UPLOADED      // Dokument hochgeladen
+  DOCUMENT_APPROVED      // Dokument genehmigt
+  DOCUMENT_REJECTED      // Dokument abgelehnt
+  SUBSCRIPTION_EXPIRING  // Abo läuft bald ab
+  SUBSCRIPTION_EXPIRED   // Abo abgelaufen
+  SYSTEM_ALERT           // System-Benachrichtigung
+  WELCOME                // Willkommens-Nachricht
+}
+
+model Notification {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  type      NotificationType
+  title     String           @db.VarChar(255)
+  message   String           @db.Text
+  link      String?          // z.B. "/admin/onboarding-review"
+  isRead    Boolean          @default(false) @map("is_read")
+  metadata  Json?            // Zusätzliche Daten
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+// ============================================
+// Business Models - Salons & Chair Rentals
+// ============================================
+
+model Salon {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId     String   @map("owner_id") @db.Uuid
+  name        String   @db.VarChar(200)
+  slug        String   @unique @db.VarChar(200)
+  description String?  @db.Text
+  street      String   @db.VarChar(255)
+  city        String   @db.VarChar(100)
+  zipCode     String   @map("zip_code") @db.VarChar(20)
+  country     String   @default("Deutschland") @db.VarChar(100)
+  phone       String?  @db.VarChar(50)
+  email       String?  @db.VarChar(255)
+  website     String?
+  
+  // Öffnungszeiten als JSON
+  openingHours Json? @map("opening_hours")
+  
+  // Ausstattung & Details
+  amenities    String[] @default([])
+  images       String[] @default([])
+  chairCount   Int      @default(0) @map("chair_count")
+  salonSize    Int?     @map("salon_size") // in m²
+  
+  // Status
+  isActive     Boolean  @default(true) @map("is_active")
+  isVerified   Boolean  @default(false) @map("is_verified")
+  
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  owner        User     @relation("SalonOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  chairs       Chair[]
+  reviews      Review[]
+
+  @@index([ownerId])
+  @@index([city])
+  @@index([isActive, isVerified])
+  @@map("salons")
+}
+
+model Chair {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  salonId     String   @map("salon_id") @db.Uuid
+  name        String   @db.VarChar(100)        // z.B. "Platz 1", "Fensterplatz"
+  description String?  @db.Text
+  
+  // Mietpreis
+  dailyRate   Decimal? @map("daily_rate") @db.Decimal(10, 2)
+  weeklyRate  Decimal? @map("weekly_rate") @db.Decimal(10, 2)
+  monthlyRate Decimal? @map("monthly_rate") @db.Decimal(10, 2)
+  
+  // Ausstattung
+  amenities   String[] @default([])
+  images      String[] @default([])
+  
+  // Status
+  isAvailable Boolean  @default(true) @map("is_available")
+  isActive    Boolean  @default(true) @map("is_active")
+  
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  salon    Salon         @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  rentals  ChairRental[]
+
+  @@index([salonId])
+  @@index([isAvailable, isActive])
+  @@map("chairs")
+}
+
+enum RentalStatus {
+  PENDING     // Anfrage gestellt
+  ACTIVE      // Aktiv/Läuft
+  CANCELLED   // Storniert
+  COMPLETED   // Abgeschlossen
+  EXPIRED     // Abgelaufen
+}
+
+model ChairRental {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chairId     String       @map("chair_id") @db.Uuid
+  stylistId   String       @map("stylist_id") @db.Uuid
+  
+  // Zeitraum
+  startDate   DateTime     @map("start_date") @db.Date
+  endDate     DateTime?    @map("end_date") @db.Date
+  
+  // Kosten
+  monthlyRent Decimal      @map("monthly_rent") @db.Decimal(10, 2)
+  deposit     Decimal?     @db.Decimal(10, 2)
+  
+  // Status
+  status      RentalStatus @default(PENDING)
+  
+  // Vertragsdetails
+  contractUrl String?      @map("contract_url")
+  notes       String?      @db.Text
+  
+  // Timestamps
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  chair    Chair    @relation(fields: [chairId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@index([stylistId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@map("chair_rentals")
+}
+
+// ============================================
+// Customers & Bookings
+// ============================================
+
+model Customer {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stylistId String   @map("stylist_id") @db.Uuid
+  
+  // Kontaktdaten
+  firstName String   @map("first_name") @db.VarChar(100)
+  lastName  String   @map("last_name") @db.VarChar(100)
+  email     String?  @db.VarChar(255)
+  phone     String?  @db.VarChar(50)
+  
+  // Notizen
+  notes     String?  @db.Text
+  
+  // Status
+  isActive  Boolean  @default(true) @map("is_active")
+  
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  stylist  User      @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@unique([stylistId, email])
+  @@index([stylistId])
+  @@map("customers")
+}
+
+enum BookingStatus {
+  PENDING      // Termin angefragt
+  CONFIRMED    // Bestätigt
+  IN_PROGRESS  // Läuft gerade
+  COMPLETED    // Abgeschlossen
+  CANCELLED    // Storniert
+  NO_SHOW      // Nicht erschienen
+}
+
+model Booking {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stylistId   String        @map("stylist_id") @db.Uuid
+  customerId  String?       @map("customer_id") @db.Uuid
+  serviceId   String?       @map("service_id") @db.Uuid
+  
+  // Termin
+  startTime   DateTime      @map("start_time") @db.Timestamptz
+  endTime     DateTime      @map("end_time") @db.Timestamptz
+  
+  // Details
+  title       String        @db.VarChar(255)
+  notes       String?       @db.Text
+  
+  // Preis
+  price       Decimal?      @db.Decimal(10, 2)
+  isPaid      Boolean       @default(false) @map("is_paid")
+  
+  // Status
+  status      BookingStatus @default(PENDING)
+  
+  // Timestamps
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  stylist  User      @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  service  Service?  @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+
+  @@index([stylistId])
+  @@index([customerId])
+  @@index([startTime, endTime])
+  @@index([status])
+  @@map("bookings")
+}
+
+// ============================================
+// Reviews & Ratings
+// ============================================
+
+model Review {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Was wird bewertet
+  salonId      String?  @map("salon_id") @db.Uuid
+  stylistId    String?  @map("stylist_id") @db.Uuid
+  
+  // Wer bewertet
+  reviewerId   String?  @map("reviewer_id") @db.Uuid
+  reviewerName String?  @map("reviewer_name") @db.VarChar(100) // Für anonyme Reviews
+  reviewerEmail String? @map("reviewer_email") @db.VarChar(255)
+  
+  // Bewertung
+  rating       Int      // 1-5 Sterne
+  title        String?  @db.VarChar(255)
+  comment      String?  @db.Text
+  
+  // Status
+  isVerified   Boolean  @default(false) @map("is_verified")
+  isPublic     Boolean  @default(true) @map("is_public")
+  
+  // Timestamps
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  salon    Salon? @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  reviewer User?  @relation("ReviewAuthor", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  @@index([salonId])
+  @@index([stylistId])
+  @@index([reviewerId])
+  @@index([rating])
+  @@map("reviews")
+}
+
+// ============================================
+// Payments & Revenue
+// ============================================
+
+enum PaymentStatus {
+  PENDING    // Ausstehend
+  PAID       // Bezahlt
+  OVERDUE    // Überfällig
+  CANCELLED  // Storniert
+  REFUNDED   // Erstattet
+}
+
+enum PaymentType {
+  CHAIR_RENTAL    // Stuhlmiete
+  BOOKING         // Buchung/Termin
+  SUBSCRIPTION    // Abo-Gebühr
+  DEPOSIT         // Kaution
+  OTHER           // Sonstiges
+}
+
+model Payment {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Wer zahlt / wer erhält
+  payerId      String        @map("payer_id") @db.Uuid
+  receiverId   String?       @map("receiver_id") @db.Uuid
+  
+  // Referenz
+  rentalId     String?       @map("rental_id") @db.Uuid
+  
+  // Details
+  type         PaymentType
+  amount       Decimal       @db.Decimal(10, 2)
+  currency     String        @default("EUR") @db.VarChar(3)
+  description  String?       @db.VarChar(500)
+  
+  // Zeitraum (für wiederkehrende Zahlungen)
+  periodStart  DateTime?     @map("period_start") @db.Date
+  periodEnd    DateTime?     @map("period_end") @db.Date
+  dueDate      DateTime?     @map("due_date") @db.Date
+  paidAt       DateTime?     @map("paid_at") @db.Timestamptz
+  
+  // Status
+  status       PaymentStatus @default(PENDING)
+  
+  // Stripe/Payment Provider
+  stripePaymentIntentId String? @unique @map("stripe_payment_intent_id")
+  invoiceUrl            String? @map("invoice_url")
+  
+  // Timestamps
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  rental ChairRental? @relation(fields: [rentalId], references: [id], onDelete: SetNull)
+
+  @@index([payerId])
+  @@index([receiverId])
+  @@index([status])
+  @@index([type])
+  @@index([dueDate])
+  @@map("payments")
+}
+
+// ============================================
+// Platform Settings (Singleton)
+// ============================================
+
+model PlatformSettings {
+  id              String   @id @default("default")
+  
+  // Allgemein
+  companyName     String   @default("NICNOA & CO.") @map("company_name") @db.VarChar(200)
+  supportEmail    String   @default("support@nicnoa.de") @map("support_email") @db.VarChar(255)
+  supportPhone    String?  @map("support_phone") @db.VarChar(50)
+  defaultLanguage String   @default("de") @map("default_language") @db.VarChar(10)
+  timezone        String   @default("Europe/Berlin") @db.VarChar(50)
+  currency        String   @default("EUR") @db.VarChar(3)
+  
+  // Branding
+  logoUrl         String?  @map("logo_url")
+  faviconUrl      String?  @map("favicon_url")
+  primaryColor    String?  @default("#3B82F6") @map("primary_color") @db.VarChar(20)
+  
+  // Billing
+  trialDays       Int      @default(14) @map("trial_days")
+  
+  // SMTP Konfiguration
+  smtpHost        String?  @map("smtp_host") @db.VarChar(255)
+  smtpPort        Int?     @map("smtp_port")
+  smtpUser        String?  @map("smtp_user") @db.VarChar(255)
+  smtpPassword    String?  @map("smtp_password") @db.VarChar(500)
+  smtpFrom        String?  @map("smtp_from") @db.VarChar(255)
+  smtpSecure      Boolean  @default(true) @map("smtp_secure")
+  
+  // Externe Integrationen
+  googleAnalyticsId String? @map("google_analytics_id") @db.VarChar(50)
+  
+  // Demo-Modus (Mock-Daten anstatt echte API-Daten)
+  useDemoMode       Boolean  @default(true) @map("use_demo_mode")
+  demoModeMessage   String?  @default("Demo-Modus aktiv - Es werden Beispieldaten angezeigt") @map("demo_mode_message") @db.VarChar(500)
+  
+  // Timestamps
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("platform_settings")
+}
+
+// ============================================
+// Security & Audit Logs
+// ============================================
+
+enum SecurityEventStatus {
+  SUCCESS
+  FAILED
+  WARNING
+  INFO
+}
+
+enum SecurityEventType {
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+  PASSWORD_CHANGED
+  PASSWORD_RESET
+  TWO_FACTOR_ENABLED
+  TWO_FACTOR_DISABLED
+  API_KEY_CREATED
+  API_KEY_REVOKED
+  SESSION_TERMINATED
+  PERMISSION_CHANGED
+  SETTINGS_CHANGED
+  USER_CREATED
+  USER_DELETED
+  SUSPICIOUS_ACTIVITY
+}
+
+model SecurityLog {
+  id        String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String?             @map("user_id") @db.Uuid
+  userEmail String              @map("user_email") @db.VarChar(255)
+  
+  // Event Details
+  event     SecurityEventType
+  status    SecurityEventStatus @default(SUCCESS)
+  message   String?             @db.Text
+  
+  // Request Details
+  ipAddress String?             @map("ip_address") @db.VarChar(45)
+  userAgent String?             @map("user_agent") @db.Text
+  location  String?             @db.VarChar(255) // z.B. "Berlin, DE"
+  device    String?             @db.VarChar(100) // z.B. "Chrome on MacOS"
+  
+  // Additional Metadata
+  metadata  Json?
+  
+  // Timestamps
+  createdAt DateTime            @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([userId])
+  @@index([event])
+  @@index([status])
+  @@index([createdAt])
+  @@map("security_logs")
+}
+
+// ============================================
+// API Keys for External Integrations
+// ============================================
+
+model ApiKey {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String    @db.VarChar(100)
+  key         String    @unique // Hashed key
+  keyPrefix   String    @map("key_prefix") @db.VarChar(10) // First 8 chars for identification
+  
+  // Permissions
+  permissions String[]  @default([]) // z.B. ["read:users", "write:bookings"]
+  
+  // Status
+  isActive    Boolean   @default(true) @map("is_active")
+  isTestMode  Boolean   @default(false) @map("is_test_mode")
+  
+  // Usage
+  lastUsedAt  DateTime? @map("last_used_at") @db.Timestamptz
+  usageCount  Int       @default(0) @map("usage_count")
+  
+  // Expiration
+  expiresAt   DateTime? @map("expires_at") @db.Timestamptz
+  
+  // Audit
+  createdById String    @map("created_by_id") @db.Uuid
+  
+  // Timestamps
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([isActive])
+  @@index([createdById])
+  @@map("api_keys")
+}
+
+// ============================================
+// Active Sessions (Extended Session Tracking)
+// ============================================
+
+model ActiveSession {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  sessionToken String  @unique @map("session_token")
+  
+  // Device Info
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  userAgent   String?  @map("user_agent") @db.Text
+  device      String?  @db.VarChar(100)
+  browser     String?  @db.VarChar(100)
+  os          String?  @db.VarChar(100)
+  location    String?  @db.VarChar(255)
+  
+  // Status
+  isActive    Boolean  @default(true) @map("is_active")
+  lastActiveAt DateTime @default(now()) @map("last_active_at") @db.Timestamptz
+  
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz
+
+  @@index([userId])
+  @@index([isActive])
+  @@index([lastActiveAt])
+  @@map("active_sessions")
+}
+
+// ============================================
+// Subscription Plans (Abonnement-Pläne)
+// ============================================
+
+enum PlanType {
+  SALON_OWNER  // Für Salon-Besitzer
+  STYLIST      // Für Stuhlmieter
+}
+
+enum BillingInterval {
+  MONTHLY      // Monatlich
+  QUARTERLY    // Quartal (3 Monate)
+  YEARLY       // Jährlich
+}
+
+model SubscriptionPlan {
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Grundinfos
+  name              String          @db.VarChar(100)
+  slug              String          @unique @db.VarChar(100)
+  description       String?         @db.Text
+  
+  // Zielgruppe
+  planType          PlanType        @map("plan_type")
+  
+  // Preise nach Laufzeit
+  priceMonthly      Decimal         @map("price_monthly") @db.Decimal(10, 2)
+  priceQuarterly    Decimal         @map("price_quarterly") @db.Decimal(10, 2)
+  priceYearly       Decimal         @map("price_yearly") @db.Decimal(10, 2)
+  
+  // Stripe IDs für die verschiedenen Intervalle
+  stripePriceMonthly    String?     @map("stripe_price_monthly")
+  stripePriceQuarterly  String?     @map("stripe_price_quarterly")
+  stripePriceYearly     String?     @map("stripe_price_yearly")
+  stripeProductId       String?     @map("stripe_product_id")
+  
+  // Features (JSON Array)
+  features          String[]        @default([])
+  
+  // Limits
+  maxChairs         Int?            @map("max_chairs") // Für Salon Owner
+  maxBookings       Int?            @map("max_bookings") // Pro Monat
+  maxCustomers      Int?            @map("max_customers")
+  
+  // Status
+  isActive          Boolean         @default(true) @map("is_active")
+  isPopular         Boolean         @default(false) @map("is_popular") // Hervorgehoben anzeigen
+  sortOrder         Int             @default(0) @map("sort_order")
+  
+  // Trial
+  trialDays         Int             @default(14) @map("trial_days")
+  
+  // Timestamps
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([planType])
+  @@index([isActive])
+  @@map("subscription_plans")
+}
+
+// ============================================
+// Referral System (Empfehlungssystem)
+// ============================================
+
+enum ReferralStatus {
+  PENDING      // Eingeladen, noch nicht registriert
+  REGISTERED   // Registriert, noch kein Abo
+  CONVERTED    // Hat ein Abo abgeschlossen
+  REWARDED     // Belohnung wurde ausgezahlt
+  EXPIRED      // Abgelaufen
+  CANCELLED    // Storniert
+}
+
+model Referral {
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Wer hat empfohlen?
+  referrerId        String          @map("referrer_id") @db.Uuid
+  referrerEmail     String          @map("referrer_email") @db.VarChar(255)
+  referrerRole      String          @default("STYLIST") @map("referrer_role") @db.VarChar(50) // SALON_OWNER oder STYLIST
+  
+  // Wer wurde empfohlen?
+  referredEmail     String          @map("referred_email") @db.VarChar(255)
+  referredId        String?         @map("referred_id") @db.Uuid // Nach Registrierung
+  referredName      String?         @map("referred_name") @db.VarChar(200)
+  referredRole      String?         @map("referred_role") @db.VarChar(50) // Rolle nach Registrierung
+  
+  // Referral Code (eindeutig pro Einladung)
+  code              String          @unique @db.VarChar(50)
+  
+  // Status
+  status            ReferralStatus  @default(PENDING)
+  
+  // Tracking
+  invitedAt         DateTime        @default(now()) @map("invited_at") @db.Timestamptz
+  registeredAt      DateTime?       @map("registered_at") @db.Timestamptz
+  convertedAt       DateTime?       @map("converted_at") @db.Timestamptz
+  rewardedAt        DateTime?       @map("rewarded_at") @db.Timestamptz
+  expiresAt         DateTime        @map("expires_at") @db.Timestamptz // 30 Tage nach Einladung
+  
+  // Attribution Tracking
+  firstVisitAt      DateTime?       @map("first_visit_at") @db.Timestamptz // Wann der Link geklickt wurde
+  utmSource         String?         @map("utm_source") @db.VarChar(100)
+  utmMedium         String?         @map("utm_medium") @db.VarChar(100)
+  utmCampaign       String?         @map("utm_campaign") @db.VarChar(100)
+  landingPage       String?         @map("landing_page") @db.VarChar(500)
+  
+  // Belohnung
+  rewardType        String?         @map("reward_type") @db.VarChar(50) // z.B. "FREE_MONTH"
+  rewardValue       Decimal?        @map("reward_value") @db.Decimal(10, 2)
+  rewardApplied     Boolean         @default(false) @map("reward_applied")
+  
+  // Umsatz-Tracking (lebenslang)
+  totalRevenue      Decimal         @default(0) @map("total_revenue") @db.Decimal(10, 2)
+  totalCommission   Decimal         @default(0) @map("total_commission") @db.Decimal(10, 2)
+  commissionRate    Decimal         @default(0) @map("commission_rate") @db.Decimal(5, 2) // z.B. 10.00 für 10%
+  lastPurchaseAt    DateTime?       @map("last_purchase_at") @db.Timestamptz
+  
+  // Notizen
+  notes             String?         @db.Text
+  
+  // Timestamps
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([referrerId])
+  @@index([referredId])
+  @@index([referredEmail])
+  @@index([code])
+  @@index([status])
+  @@index([referrerRole])
+  @@map("referrals")
+}
+
+// Referral Rewards - Tracking der Belohnungen
+model ReferralReward {
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Wer bekommt die Belohnung?
+  userId            String          @map("user_id") @db.Uuid
+  
+  // Referral-Bezug
+  referralId        String          @map("referral_id") @db.Uuid
+  
+  // Belohnungsdetails
+  rewardType        String          @map("reward_type") @db.VarChar(50) // FREE_MONTH, CREDIT, DISCOUNT
+  rewardValue       Decimal         @map("reward_value") @db.Decimal(10, 2)
+  description       String          @db.VarChar(500)
+  
+  // Status
+  isApplied         Boolean         @default(false) @map("is_applied")
+  appliedAt         DateTime?       @map("applied_at") @db.Timestamptz
+  
+  // Stripe Credit/Coupon
+  stripeCouponId    String?         @map("stripe_coupon_id")
+  stripeCreditsAdded Decimal?       @map("stripe_credits_added") @db.Decimal(10, 2)
+  
+  // Timestamps
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  expiresAt         DateTime?       @map("expires_at") @db.Timestamptz
+
+  @@index([userId])
+  @@index([referralId])
+  @@index([isApplied])
+  @@map("referral_rewards")
+}
+
+// User Referral Settings
+model UserReferralProfile {
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String          @unique @map("user_id") @db.Uuid
+  
+  // Benutzer-Rolle (für rollenspezifische Belohnungen)
+  userRole          String          @default("STYLIST") @map("user_role") @db.VarChar(50)
+  
+  // Persönlicher Referral-Code (permanent)
+  referralCode      String          @unique @map("referral_code") @db.VarChar(20)
+  
+  // Statistiken
+  totalReferrals    Int             @default(0) @map("total_referrals")
+  successfulReferrals Int           @default(0) @map("successful_referrals")
+  totalEarnings     Decimal         @default(0) @map("total_earnings") @db.Decimal(10, 2)
+  pendingRewards    Int             @default(0) @map("pending_rewards")
+  
+  // Umsatz-Statistiken
+  totalReferredRevenue Decimal      @default(0) @map("total_referred_revenue") @db.Decimal(10, 2)
+  totalCommissionEarned Decimal     @default(0) @map("total_commission_earned") @db.Decimal(10, 2)
+  
+  // Klick-Statistiken
+  totalClicks       Int             @default(0) @map("total_clicks")
+  lastClickAt       DateTime?       @map("last_click_at") @db.Timestamptz
+  
+  // Einstellungen
+  isActive          Boolean         @default(true) @map("is_active")
+  commissionRate    Decimal         @default(10) @map("commission_rate") @db.Decimal(5, 2) // Standard 10%
+  
+  // Timestamps
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([referralCode])
+  @@index([userRole])
+  @@map("user_referral_profiles")
+}
