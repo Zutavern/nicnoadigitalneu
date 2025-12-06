@@ -66,7 +66,7 @@ const faqItems: FAQItem[] = [
   {
     category: 'Profil',
     question: 'Wie aktualisiere ich mein Profil?',
-    answer: 'Unter "Einstellungen" > "Profil" kannst du deine Infos, Bio, Skills und Social-Media-Links bearbeiten. Ein vollständiges Profil hilft dir, mehr Kunden zu gewinnen.'
+    answer: 'Unter "Einstellungen" → "Profil" kannst du deine Infos, Bio, Skills und Social-Media-Links bearbeiten. Ein vollständiges Profil hilft dir, mehr Kunden zu gewinnen.'
   },
   {
     category: 'Profil',
@@ -86,7 +86,7 @@ const faqItems: FAQItem[] = [
   {
     category: 'Sicherheit',
     question: 'Wie schütze ich meinen Account?',
-    answer: 'Aktiviere die Zwei-Faktor-Authentifizierung unter "Einstellungen" > "Sicherheit". Verwende ein starkes Passwort und teile deine Zugangsdaten niemals mit anderen.'
+    answer: 'Aktiviere die Zwei-Faktor-Authentifizierung unter "Einstellungen" → "Sicherheit". Verwende ein starkes Passwort und teile deine Zugangsdaten niemals mit anderen.'
   },
 ]
 
@@ -291,7 +291,7 @@ export default function StylistHelpPage() {
                 <h3 className="font-semibold text-amber-500">Compliance-Tipp</h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   Als selbstständiger Stylist ist es wichtig, alle Dokumente aktuell zu halten. 
-                  Prüfe regelmäßig unter "Profil" > "Dokumente", ob alles vollständig ist.
+                  Prüfe regelmäßig unter &quot;Profil&quot; → &quot;Dokumente&quot;, ob alles vollständig ist.
                 </p>
               </div>
             </div>

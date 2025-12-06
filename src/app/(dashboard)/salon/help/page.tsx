@@ -80,7 +80,7 @@ const faqItems: FAQItem[] = [
   {
     category: 'Sicherheit',
     question: 'Wie aktiviere ich die Zwei-Faktor-Authentifizierung?',
-    answer: 'Gehe zu "Einstellungen" > "Sicherheit" und aktiviere die Zwei-Faktor-Authentifizierung. Folge den Anweisungen, um eine Authenticator-App zu verknüpfen.'
+    answer: 'Gehe zu "Einstellungen" → "Sicherheit" und aktiviere die Zwei-Faktor-Authentifizierung. Folge den Anweisungen, um eine Authenticator-App zu verknüpfen.'
   },
 ]
 
