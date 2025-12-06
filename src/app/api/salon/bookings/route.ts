@@ -11,8 +11,8 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url)
-    const start = searchParams.get('start')
-    const end = searchParams.get('end')
+    const start = searchParams.get('start') || searchParams.get('startDate')
+    const end = searchParams.get('end') || searchParams.get('endDate')
     const status = searchParams.get('status')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     })
 
     if (!salon) {
-      return NextResponse.json({ bookings: [], total: 0 })
+      return NextResponse.json({ bookings: [], total: 0, page: 1, totalPages: 0 })
     }
 
     const where: Record<string, unknown> = {
@@ -66,6 +66,12 @@ export async function GET(request: Request) {
               name: true,
             },
           },
+          service: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
         orderBy: { startTime: 'asc' },
         skip: (page - 1) * limit,
@@ -74,31 +80,40 @@ export async function GET(request: Request) {
       prisma.booking.count({ where }),
     ])
 
-    // Service-Namen abrufen (falls serviceIds vorhanden)
-    const serviceIds = bookings.flatMap(b => b.serviceIds)
-    const services = serviceIds.length > 0
+    // Service-Namen abrufen (für mehrere Services)
+    const allServiceIds = bookings.flatMap(b => b.serviceIds)
+    const services = allServiceIds.length > 0
       ? await prisma.service.findMany({
-          where: { id: { in: serviceIds } },
+          where: { id: { in: allServiceIds } },
           select: { id: true, name: true },
         })
       : []
 
-    const formattedBookings = bookings.map((booking) => ({
-      id: booking.id,
-      customerName: `${booking.customer.firstName} ${booking.customer.lastName}`,
-      customerEmail: booking.customer.email,
-      customerPhone: booking.customer.phone,
-      stylistName: booking.stylist.name,
-      stylistImage: booking.stylist.image,
-      chairName: booking.chair?.name,
-      serviceName: services.find(s => booking.serviceIds.includes(s.id))?.name || 'Service',
-      startTime: booking.startTime,
-      endTime: booking.endTime,
-      totalPrice: booking.totalPrice.toNumber(),
-      status: booking.status,
-      notes: booking.notes,
-      createdAt: booking.createdAt,
-    }))
+    const formattedBookings = bookings.map((booking) => {
+      const serviceNames = booking.serviceIds.length > 0
+        ? services.filter(s => booking.serviceIds.includes(s.id)).map(s => s.name)
+        : booking.service ? [booking.service.name] : []
+
+      return {
+        id: booking.id,
+        customerName: booking.customer 
+          ? `${booking.customer.firstName} ${booking.customer.lastName}` 
+          : 'Unbekannt',
+        customerEmail: booking.customer?.email,
+        customerPhone: booking.customer?.phone,
+        stylistName: booking.stylist.name,
+        stylistImage: booking.stylist.image,
+        chairName: booking.chair?.name,
+        serviceName: serviceNames[0] || booking.title || 'Service',
+        services: serviceNames,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+        totalPrice: booking.totalPrice.toNumber(),
+        status: booking.status,
+        notes: booking.notes,
+        createdAt: booking.createdAt,
+      }
+    })
 
     return NextResponse.json({
       bookings: formattedBookings,

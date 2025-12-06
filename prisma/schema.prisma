@@ -25,7 +25,9 @@ model User {
   onboardingCompleted Boolean @default(false) @map("onboarding_completed")
   
   // Security
-  twoFactorEnabled Boolean @default(false) @map("two_factor_enabled")
+  twoFactorEnabled      Boolean   @default(false) @map("two_factor_enabled")
+  passwordResetToken    String?   @map("password_reset_token")
+  passwordResetExpires  DateTime? @map("password_reset_expires") @db.Timestamptz
   
   // Stripe Fields
   stripeCustomerId         String?   @unique @map("stripe_customer_id")
@@ -517,9 +519,10 @@ model Salon {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   // Relations
-  owner        User     @relation("SalonOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  owner        User      @relation("SalonOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   chairs       Chair[]
   reviews      Review[]
+  bookings     Booking[]
 
   @@index([ownerId])
   @@index([city])
@@ -553,6 +556,7 @@ model Chair {
   // Relations
   salon    Salon         @relation(fields: [salonId], references: [id], onDelete: Cascade)
   rentals  ChairRental[]
+  bookings Booking[]
 
   @@index([salonId])
   @@index([isAvailable, isActive])
@@ -647,7 +651,10 @@ model Booking {
   id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   stylistId   String        @map("stylist_id") @db.Uuid
   customerId  String?       @map("customer_id") @db.Uuid
+  salonId     String?       @map("salon_id") @db.Uuid
+  chairId     String?       @map("chair_id") @db.Uuid
   serviceId   String?       @map("service_id") @db.Uuid
+  serviceIds  String[]      @default([]) @map("service_ids")
   
   // Termin
   startTime   DateTime      @map("start_time") @db.Timestamptz
@@ -658,7 +665,7 @@ model Booking {
   notes       String?       @db.Text
   
   // Preis
-  price       Decimal?      @db.Decimal(10, 2)
+  totalPrice  Decimal       @default(0) @map("total_price") @db.Decimal(10, 2)
   isPaid      Boolean       @default(false) @map("is_paid")
   
   // Status
@@ -671,10 +678,14 @@ model Booking {
   // Relations
   stylist  User      @relation(fields: [stylistId], references: [id], onDelete: Cascade)
   customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  salon    Salon?    @relation(fields: [salonId], references: [id], onDelete: SetNull)
+  chair    Chair?    @relation(fields: [chairId], references: [id], onDelete: SetNull)
   service  Service?  @relation(fields: [serviceId], references: [id], onDelete: SetNull)
 
   @@index([stylistId])
   @@index([customerId])
+  @@index([salonId])
+  @@index([chairId])
   @@index([startTime, endTime])
   @@index([status])
   @@map("bookings")

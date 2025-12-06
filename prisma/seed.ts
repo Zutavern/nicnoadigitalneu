@@ -642,11 +642,14 @@ async function main() {
     id: string
     stylistId: string
     customerId: string | null
+    salonId: string | null
+    chairId: string | null
     serviceId: string | null
+    serviceIds: string[]
     startTime: Date
     endTime: Date
     title: string
-    price: number
+    totalPrice: number
     isPaid: boolean
     status: BookingStatus
   }> = []
@@ -665,7 +668,12 @@ async function main() {
     const startTime = randomDate(threeMonthsAgo, oneMonthAhead)
     const duration = randomInt(30, 180) // 30 min bis 3 Stunden
     const endTime = new Date(startTime.getTime() + duration * 60000)
-    const price = servicePrices[service.slug] || randomInt(25, 100)
+    const totalPrice = servicePrices[service.slug] || randomInt(25, 100)
+    
+    // Zufälliger Salon und Chair
+    const salon = randomItem(salons)
+    const salonChairs = chairsData.filter(c => c.salonId === salon.id)
+    const chair = salonChairs.length > 0 ? randomItem(salonChairs) : null
     
     // Status basierend auf Zeit
     let status: BookingStatus
@@ -681,11 +689,14 @@ async function main() {
       id: `70000000-0000-0000-0000-${String(i).padStart(12, '0')}`,
       stylistId,
       customerId: customer?.id || null,
+      salonId: salon.id,
+      chairId: chair?.id || null,
       serviceId: service.id,
+      serviceIds: [service.id],
       startTime,
       endTime,
       title: service.name,
-      price,
+      totalPrice,
       isPaid: status === BookingStatus.COMPLETED ? Math.random() > 0.2 : false,
       status,
     })

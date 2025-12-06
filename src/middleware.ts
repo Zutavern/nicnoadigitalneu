@@ -19,7 +19,7 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/', '/login', '/registrieren', '/api/auth', '/preise', '/faq', '/features', '/produkt', '/unternehmen', '/uber-uns', '/partner', '/roadmap', '/updates', '/beta-programm', '/agb', '/datenschutz', '/impressum']
+  const publicRoutes = ['/', '/login', '/registrieren', '/passwort-vergessen', '/passwort-zuruecksetzen', '/api/auth', '/preise', '/faq', '/features', '/produkt', '/unternehmen', '/uber-uns', '/partner', '/roadmap', '/updates', '/beta-programm', '/agb', '/datenschutz', '/impressum']
   const isPublicRoute = publicRoutes.some(route => 
     pathname === route || pathname.startsWith('/api/auth')
   )

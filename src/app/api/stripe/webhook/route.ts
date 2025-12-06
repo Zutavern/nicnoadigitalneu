@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { stripe, isStripeConfigured } from '@/lib/stripe-server'
 import { prisma } from '@/lib/prisma'
+import emails from '@/lib/email'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
@@ -85,8 +86,17 @@ export async function POST(req: NextRequest) {
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const userId = session.metadata?.userId
   const subscriptionId = session.subscription as string
+  const planName = session.metadata?.planName || 'Premium'
 
   if (!userId || !subscriptionId) return
+
+  // Get user data
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true, name: true }
+  })
+
+  if (!user) return
 
   // Update user with subscription info
   await prisma.user.update({
@@ -107,6 +117,14 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       link: '/dashboard'
     }
   })
+
+  // Send welcome & subscription email
+  await emails.sendSubscriptionActivated(
+    user.email,
+    user.name || 'Nutzer',
+    planName,
+    userId
+  )
 
   // Log security event
   await prisma.securityLog.create({
@@ -200,6 +218,13 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     }
   })
 
+  // Send subscription expired email
+  await emails.sendSubscriptionExpired(
+    user.email,
+    user.name || 'Nutzer',
+    user.id
+  )
+
   console.log(`Subscription canceled for user ${user.id}`)
 }
 
@@ -215,7 +240,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   if (!user) return
 
   // Update subscription end date
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+  const subscription = await stripe!.subscriptions.retrieve(subscriptionId)
 
   await prisma.user.update({
     where: { id: user.id },
@@ -223,6 +248,20 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
       stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
     },
   })
+
+  // Send invoice receipt email
+  const amount = invoice.amount_paid ? `${(invoice.amount_paid / 100).toFixed(2)} €` : '0,00 €'
+  const invoiceNumber = invoice.number || `INV-${Date.now()}`
+  const invoiceUrl = invoice.hosted_invoice_url || `${process.env.NEXTAUTH_URL}/settings/billing`
+
+  await emails.sendInvoiceReceipt(
+    user.email,
+    user.name || 'Nutzer',
+    invoiceNumber,
+    amount,
+    invoiceUrl,
+    user.id
+  )
 
   console.log(`Invoice paid for user ${user.id}`)
 }
@@ -237,6 +276,8 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   })
 
   if (!user) return
+
+  const amount = invoice.amount_due ? `${(invoice.amount_due / 100).toFixed(2)} €` : 'Unbekannt'
 
   await prisma.user.update({
     where: { id: user.id },
@@ -256,10 +297,20 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     }
   })
 
+  // Send payment failed email to user
+  const retryUrl = `${process.env.NEXTAUTH_URL || 'https://nicnoa.de'}/settings/billing`
+  await emails.sendPaymentFailed(
+    user.email,
+    user.name || 'Nutzer',
+    amount,
+    retryUrl,
+    user.id
+  )
+
   // Notify admins
   const admins = await prisma.user.findMany({
     where: { role: 'ADMIN' },
-    select: { id: true }
+    select: { id: true, email: true, name: true }
   })
 
   for (const admin of admins) {

@@ -8,26 +8,73 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null
 
-// Email templates mapping
+// Email templates mapping - All 44 templates
 const templateComponents: Record<string, () => Promise<{ default: React.FC<any> }>> = {
+  // Auth & Account
   'welcome': () => import('@/emails/templates/WelcomeEmail'),
   'email-verification': () => import('@/emails/templates/EmailVerificationEmail'),
   'password-reset': () => import('@/emails/templates/PasswordResetEmail'),
+  'password-changed': () => import('@/emails/templates/PasswordChangedEmail'),
+  'login-new-device': () => import('@/emails/templates/LoginNewDeviceEmail'),
+  'account-deactivated': () => import('@/emails/templates/AccountDeactivatedEmail'),
+  
+  // Onboarding
   'onboarding-submitted': () => import('@/emails/templates/OnboardingSubmittedEmail'),
   'onboarding-approved': () => import('@/emails/templates/OnboardingApprovedEmail'),
   'onboarding-rejected': () => import('@/emails/templates/OnboardingRejectedEmail'),
+  
+  // Subscription & Payment
   'subscription-activated': () => import('@/emails/templates/SubscriptionActivatedEmail'),
   'subscription-renewed': () => import('@/emails/templates/SubscriptionRenewedEmail'),
   'subscription-expiring': () => import('@/emails/templates/SubscriptionExpiringEmail'),
   'subscription-expired': () => import('@/emails/templates/SubscriptionExpiredEmail'),
   'payment-failed': () => import('@/emails/templates/PaymentFailedEmail'),
+  'payment-received': () => import('@/emails/templates/PaymentReceivedEmail'),
+  'payment-dispute': () => import('@/emails/templates/PaymentDisputeEmail'),
   'invoice-receipt': () => import('@/emails/templates/InvoiceReceiptEmail'),
+  
+  // Referral
   'referral-invitation': () => import('@/emails/templates/ReferralInvitationEmail'),
   'referral-success': () => import('@/emails/templates/ReferralSuccessEmail'),
+  
+  // Booking
   'booking-confirmation': () => import('@/emails/templates/BookingConfirmationEmail'),
   'booking-reminder': () => import('@/emails/templates/BookingReminderEmail'),
   'booking-cancelled': () => import('@/emails/templates/BookingCancelledEmail'),
+  'booking-feedback-request': () => import('@/emails/templates/BookingFeedbackRequestEmail'),
+  'customer-no-show': () => import('@/emails/templates/CustomerNoShowEmail'),
+  
+  // Rental (Chair)
+  'new-rental-request': () => import('@/emails/templates/NewRentalRequestEmail'),
+  'rental-accepted': () => import('@/emails/templates/RentalAcceptedEmail'),
+  'rental-rejected': () => import('@/emails/templates/RentalRejectedEmail'),
+  'rental-application-sent': () => import('@/emails/templates/RentalApplicationSentEmail'),
+  'rental-ending-soon': () => import('@/emails/templates/RentalEndingSoonEmail'),
+  'chair-rental-confirmation': () => import('@/emails/templates/ChairRentalConfirmationEmail'),
+  'chair-vacancy': () => import('@/emails/templates/ChairVacancyEmail'),
+  'rent-payment-due': () => import('@/emails/templates/RentPaymentDueEmail'),
+  'rent-payment-overdue': () => import('@/emails/templates/RentPaymentOverdueEmail'),
+  
+  // Reviews
+  'new-review-salon': () => import('@/emails/templates/NewReviewSalonEmail'),
+  'new-review-stylist': () => import('@/emails/templates/NewReviewStylistEmail'),
+  
+  // Messaging
   'new-message': () => import('@/emails/templates/NewMessageEmail'),
+  
+  // Documents
+  'document-uploaded': () => import('@/emails/templates/DocumentUploadedEmail'),
+  'document-status': () => import('@/emails/templates/DocumentStatusEmail'),
+  
+  // Admin
+  'new-user-registered': () => import('@/emails/templates/NewUserRegisteredEmail'),
+  'security-alert': () => import('@/emails/templates/SecurityAlertEmail'),
+  'high-churn-alert': () => import('@/emails/templates/HighChurnAlertEmail'),
+  
+  // Summaries
+  'daily-summary': () => import('@/emails/templates/DailySummaryEmail'),
+  'weekly-summary': () => import('@/emails/templates/WeeklySummaryEmail'),
+  'monthly-summary': () => import('@/emails/templates/MonthlySummaryEmail'),
 }
 
 export interface EmailContent {
