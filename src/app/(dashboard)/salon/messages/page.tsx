@@ -74,10 +74,11 @@ export default function SalonMessagesPage() {
   useEffect(() => {
     const fetchConversations = async () => {
       try {
-        const response = await fetch('/api/messaging/conversations')
+        const response = await fetch('/api/messages/conversations')
         if (response.ok) {
           const data = await response.json()
-          setConversations(data)
+          // Unterstützt sowohl { conversations: [...] } als auch direkt [...]
+          setConversations(Array.isArray(data) ? data : (data.conversations || []))
         }
       } catch (error) {
         console.error('Error fetching conversations:', error)
@@ -97,13 +98,13 @@ export default function SalonMessagesPage() {
       if (!selectedConversation) return
 
       try {
-        const response = await fetch(`/api/messaging/conversations/${selectedConversation}/messages`)
+        const response = await fetch(`/api/messages/conversations/${selectedConversation}/messages`)
         if (response.ok) {
           const data = await response.json()
           setMessages(data)
           
           // Mark as read
-          await fetch(`/api/messaging/conversations/${selectedConversation}/read`, {
+          await fetch(`/api/messages/conversations/${selectedConversation}/read`, {
             method: 'POST'
           })
         }
@@ -129,7 +130,7 @@ export default function SalonMessagesPage() {
 
     setIsSending(true)
     try {
-      const response = await fetch(`/api/messaging/conversations/${selectedConversation}/messages`, {
+      const response = await fetch(`/api/messages/conversations/${selectedConversation}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: newMessage })

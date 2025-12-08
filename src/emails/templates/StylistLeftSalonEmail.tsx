@@ -190,3 +190,4 @@ const footerNote: React.CSSProperties = {
 export default StylistLeftSalonEmail
 
 
+

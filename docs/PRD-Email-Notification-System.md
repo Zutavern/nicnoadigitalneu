@@ -512,3 +512,4 @@ RESEND_WEBHOOK_SECRET=whsec_xxxxx
 **Letzte Aktualisierung:** 6. Dezember 2025
 
 
+

@@ -103,7 +103,7 @@ export async function PATCH(
   }
 }
 
-// DELETE user
+// DELETE user (Soft Delete - 30 Tage Wiederherstellung möglich)
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -125,11 +125,62 @@ export async function DELETE(
       )
     }
 
-    await prisma.user.delete({
+    // Prüfe ob der User existiert und kein Admin ist
+    const userToDelete = await prisma.user.findUnique({
       where: { id },
+      select: { role: true, isDeleted: true }
     })
 
-    return NextResponse.json({ success: true })
+    if (!userToDelete) {
+      return NextResponse.json({ error: "Benutzer nicht gefunden" }, { status: 404 })
+    }
+
+    if (userToDelete.role === 'ADMIN') {
+      return NextResponse.json(
+        { error: "Admin-Benutzer können nicht gelöscht werden" },
+        { status: 403 }
+      )
+    }
+
+    if (userToDelete.isDeleted) {
+      return NextResponse.json(
+        { error: "Benutzer ist bereits gelöscht" },
+        { status: 400 }
+      )
+    }
+
+    // Soft Delete: isDeleted Flag setzen statt echtem Löschen
+    await prisma.user.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: session.user.id,
+      },
+    })
+
+    // Alle Sessions des Users beenden
+    await prisma.session.deleteMany({
+      where: { userId: id },
+    })
+
+    // Security Log erstellen
+    await prisma.securityLog.create({
+      data: {
+        userId: id,
+        userEmail: 'admin-action',
+        event: 'USER_DELETED',
+        status: 'SUCCESS',
+        message: `Benutzer wurde von Admin (${session.user.email}) gelöscht`,
+        ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
+        userAgent: request.headers.get('user-agent') || 'unknown',
+      },
+    })
+
+    return NextResponse.json({ 
+      success: true,
+      message: 'Benutzer wurde gelöscht und wird in 30 Tagen endgültig entfernt' 
+    })
   } catch (error) {
     console.error("Error deleting user:", error)
     return NextResponse.json({ error: "Ein Fehler ist aufgetreten" }, { status: 500 })

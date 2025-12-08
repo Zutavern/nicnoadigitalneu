@@ -1,46 +1,33 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   Users,
-  Search,
   Plus,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Key,
-  LogIn,
   Building2,
   Scissors,
   Shield,
-  Mail,
-  Calendar,
   CheckCircle2,
-  XCircle,
-  Filter,
-  Download,
-  ChevronLeft,
-  ChevronRight,
+  Loader2,
   Eye,
   EyeOff,
   Check,
   X,
-  Loader2,
-  RefreshCw,
-  AlertCircle,
+  Ban,
+  Trash2,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -49,34 +36,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { toast } from 'sonner'
-
-interface User {
-  id: string
-  name: string | null
-  email: string
-  role: 'ADMIN' | 'SALON_OWNER' | 'STYLIST'
-  emailVerified: string | null
-  onboardingCompleted: boolean
-  createdAt: string
-  image: string | null
-}
-
-interface PaginationInfo {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-}
+import { DataTable } from '@/components/ui/data-table'
+import { createColumns, type User } from './columns'
+import {
+  createDeleteAction,
+  createBlockAction,
+  createUnblockAction,
+  createRestoreAction,
+  type BulkAction,
+} from '@/components/ui/data-table-bulk-actions'
 
 const passwordRequirements = [
   { id: 'length', label: 'Mindestens 8 Zeichen', test: (p: string) => p.length >= 8 },
@@ -88,31 +57,24 @@ const passwordRequirements = [
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
-  const [pagination, setPagination] = useState<PaginationInfo>({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0,
-  })
-  const [searchQuery, setSearchQuery] = useState('')
-  const [roleFilter, setRoleFilter] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [viewDialogOpen, setViewDialogOpen] = useState(false)
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   
-  // Form states
+  // Form state
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    role: 'STYLIST' as User['role'],
+    role: 'STYLIST' as 'ADMIN' | 'SALON_OWNER' | 'STYLIST',
     password: '',
   })
   const [newPassword, setNewPassword] = useState('')
@@ -128,28 +90,14 @@ export default function UsersPage() {
     setError(null)
 
     try {
-      const params = new URLSearchParams({
-        page: pagination.page.toString(),
-        limit: pagination.limit.toString(),
-      })
-      
-      if (searchQuery) {
-        params.append('search', searchQuery)
-      }
-      
-      if (roleFilter !== 'all') {
-        params.append('role', roleFilter)
-      }
-
-      const response = await fetch(`/api/admin/users?${params}`)
+      const response = await fetch('/api/admin/users?limit=100')
       
       if (!response.ok) {
         throw new Error('Fehler beim Laden der Benutzer')
       }
 
       const data = await response.json()
-      setUsers(data.users)
-      setPagination(data.pagination)
+      setUsers(data.users || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten')
       toast.error('Fehler beim Laden der Benutzer')
@@ -157,45 +105,42 @@ export default function UsersPage() {
       setIsLoading(false)
       setIsRefreshing(false)
     }
-  }, [pagination.page, pagination.limit, searchQuery, roleFilter])
+  }, [])
 
-  // Initial load and refetch on filter changes
   useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
 
-  // Debounced search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setPagination(prev => ({ ...prev, page: 1 }))
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [searchQuery])
+  const handleView = (user: User) => {
+    setSelectedUser(user)
+    setViewDialogOpen(true)
+  }
 
-  const getRoleBadge = (role: User['role']) => {
-    switch (role) {
-      case 'ADMIN':
-        return (
-          <Badge variant="default" className="bg-gradient-to-r from-purple-500 to-pink-500">
-            <Shield className="h-3 w-3 mr-1" />
-            Admin
-          </Badge>
-        )
-      case 'SALON_OWNER':
-        return (
-          <Badge variant="outline" className="border-purple-500/50 text-purple-500">
-            <Building2 className="h-3 w-3 mr-1" />
-            Salonbetreiber
-          </Badge>
-        )
-      case 'STYLIST':
-        return (
-          <Badge variant="outline" className="border-orange-500/50 text-orange-500">
-            <Scissors className="h-3 w-3 mr-1" />
-            Stylist
-          </Badge>
-        )
-    }
+  const handleEditClick = (user: User) => {
+    setSelectedUser(user)
+    setFormData({
+      name: user.name || '',
+      email: user.email,
+      role: user.role,
+      password: '',
+    })
+    setEditDialogOpen(true)
+  }
+
+  const handleDeleteClick = (user: User) => {
+    setSelectedUser(user)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleResetPassword = (user: User) => {
+    setSelectedUser(user)
+    setNewPassword('')
+    setPasswordDialogOpen(true)
+  }
+
+  const handleLoginAs = async (user: User) => {
+    toast.info('Diese Funktion wird noch implementiert')
+    console.log('Impersonating user:', user.id)
   }
 
   const handleCreateUser = async () => {
@@ -312,57 +257,95 @@ export default function UsersPage() {
     }
   }
 
-  const handleImpersonate = async (user: User) => {
-    // TODO: Implement proper impersonation via API
-    toast.info('Diese Funktion wird noch implementiert')
-    console.log('Impersonating user:', user.id)
+  // Create columns with callbacks
+  const columns = useMemo(() => createColumns({
+    onView: handleView,
+    onEdit: handleEditClick,
+    onDelete: handleDeleteClick,
+    onResetPassword: handleResetPassword,
+    onLoginAs: handleLoginAs,
+  }), [])
+
+  // Bulk Actions
+  const handleBulkDelete = async (ids: string[], reason?: string) => {
+    const response = await fetch('/api/admin/users/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', ids, reason }),
+    })
+    
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.error || 'Fehler beim Löschen')
+    }
+    
+    const data = await response.json()
+    toast.success(data.message)
+    fetchUsers(true)
   }
 
-  const openEditDialog = (user: User) => {
-    setSelectedUser(user)
-    setFormData({
-      name: user.name || '',
-      email: user.email,
-      role: user.role,
-      password: '',
+  const handleBulkBlock = async (ids: string[], reason?: string) => {
+    const response = await fetch('/api/admin/users/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'block', ids, reason }),
     })
-    setEditDialogOpen(true)
+    
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.error || 'Fehler beim Sperren')
+    }
+    
+    const data = await response.json()
+    toast.success(data.message)
+    fetchUsers(true)
   }
+
+  const handleBulkUnblock = async (ids: string[]) => {
+    const response = await fetch('/api/admin/users/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'unblock', ids }),
+    })
+    
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.error || 'Fehler beim Entsperren')
+    }
+    
+    const data = await response.json()
+    toast.success(data.message)
+    fetchUsers(true)
+  }
+
+  const bulkActions: BulkAction[] = useMemo(() => [
+    createDeleteAction(handleBulkDelete, 'Benutzer'),
+    createBlockAction(handleBulkBlock, 'Benutzer'),
+    createUnblockAction(handleBulkUnblock, 'Benutzer'),
+  ], [])
 
   const isPasswordValid = passwordRequirements.every(req => req.test(newPassword))
   const isCreateFormValid = formData.name && formData.email && formData.password && 
     passwordRequirements.every(req => req.test(formData.password))
 
-  // Calculate stats
-  const totalUsers = pagination.total
+  // Stats
   const salonOwners = users.filter(u => u.role === 'SALON_OWNER').length
   const stylists = users.filter(u => u.role === 'STYLIST').length
+  const admins = users.filter(u => u.role === 'ADMIN').length
   const verifiedUsers = users.filter(u => u.emailVerified).length
-
-  if (isLoading && users.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Lade Benutzer...</p>
-        </div>
-      </div>
-    )
-  }
 
   if (error && users.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-4 text-center">
-          <AlertCircle className="h-12 w-12 text-destructive" />
-          <div>
-            <p className="font-medium">Fehler beim Laden</p>
-            <p className="text-sm text-muted-foreground">{error}</p>
+          <div className="h-12 w-12 rounded-full bg-red-500/10 flex items-center justify-center">
+            <Users className="h-6 w-6 text-red-500" />
           </div>
-          <Button onClick={() => fetchUsers()}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Erneut versuchen
-          </Button>
+          <div>
+            <h3 className="font-semibold">Fehler beim Laden</h3>
+            <p className="text-muted-foreground text-sm">{error}</p>
+          </div>
+          <Button onClick={() => fetchUsers()}>Erneut versuchen</Button>
         </div>
       </div>
     )
@@ -370,39 +353,27 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Users className="h-8 w-8 text-primary" />
+            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+              <Users className="h-5 w-5 text-white" />
+            </div>
             Benutzerverwaltung
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mt-1">
             Verwalten Sie alle Benutzer der Plattform
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => fetchUsers(true)}
-            disabled={isRefreshing}
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Aktualisieren
-          </Button>
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Exportieren
-          </Button>
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Neuer Benutzer
-          </Button>
-        </div>
+        <Button onClick={() => setCreateDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Neuer Benutzer
+        </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -410,7 +381,7 @@ export default function UsersPage() {
                 <Users className="h-5 w-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{totalUsers}</p>
+                <p className="text-2xl font-bold">{users.length}</p>
                 <p className="text-xs text-muted-foreground">Gesamt</p>
               </div>
             </div>
@@ -424,7 +395,7 @@ export default function UsersPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{salonOwners}</p>
-                <p className="text-xs text-muted-foreground">Salonbetreiber</p>
+                <p className="text-xs text-muted-foreground">Salonbesitzer</p>
               </div>
             </div>
           </CardContent>
@@ -432,12 +403,25 @@ export default function UsersPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                <Scissors className="h-5 w-5 text-orange-500" />
+              <div className="h-10 w-10 rounded-lg bg-pink-500/10 flex items-center justify-center">
+                <Scissors className="h-5 w-5 text-pink-500" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stylists}</p>
                 <p className="text-xs text-muted-foreground">Stylisten</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-red-500/10 flex items-center justify-center">
+                <Shield className="h-5 w-5 text-red-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{admins}</p>
+                <p className="text-xs text-muted-foreground">Admins</p>
               </div>
             </div>
           </CardContent>
@@ -457,214 +441,140 @@ export default function UsersPage() {
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* DataTable */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Suchen nach Name oder E-Mail..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Select value={roleFilter} onValueChange={(value) => {
-                setRoleFilter(value)
-                setPagination(prev => ({ ...prev, page: 1 }))
-              }}>
-                <SelectTrigger className="w-[180px]">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Rolle filtern" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Alle Rollen</SelectItem>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
-                  <SelectItem value="SALON_OWNER">Salonbetreiber</SelectItem>
-                  <SelectItem value="STYLIST">Stylist</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+        <CardContent className="p-6">
+          <DataTable
+            columns={columns}
+            data={users}
+            searchKey="userName"
+            searchPlaceholder="Suchen nach Name, E-Mail..."
+            filterableColumns={[
+              {
+                id: 'role',
+                title: 'Rolle',
+                options: [
+                  { label: 'Admin', value: 'ADMIN' },
+                  { label: 'Salonbesitzer', value: 'SALON_OWNER' },
+                  { label: 'Stylist', value: 'STYLIST' },
+                ],
+              },
+              {
+                id: 'status',
+                title: 'Status',
+                options: [
+                  { label: 'Aktiv', value: 'active' },
+                  { label: 'Ausstehend', value: 'pending' },
+                ],
+              },
+              {
+                id: 'emailVerified',
+                title: 'E-Mail',
+                options: [
+                  { label: 'Verifiziert', value: 'verified' },
+                  { label: 'Nicht verifiziert', value: 'unverified' },
+                ],
+              },
+            ]}
+            isLoading={isLoading}
+            onRefresh={() => fetchUsers(true)}
+            initialColumnVisibility={{
+              id: false,
+              email: false,
+            }}
+            exportConfig={{
+              filename: 'benutzer',
+              columns: [
+                { key: 'id', header: 'ID' },
+                { key: 'name', header: 'Name' },
+                { key: 'email', header: 'E-Mail' },
+                { key: 'role', header: 'Rolle', transform: (v) => {
+                  const roles: Record<string, string> = { ADMIN: 'Admin', SALON_OWNER: 'Salonbesitzer', STYLIST: 'Stylist' }
+                  return roles[v as string] || String(v)
+                }},
+                { key: 'emailVerified', header: 'E-Mail verifiziert', transform: (v) => v ? 'Ja' : 'Nein' },
+                { key: 'onboardingCompleted', header: 'Onboarding', transform: (v) => v ? 'Ja' : 'Nein' },
+                { key: 'createdAt', header: 'Registriert am', transform: (v) => v ? new Date(v as string).toLocaleDateString('de-DE') : '' },
+              ],
+            }}
+            bulkActions={bulkActions}
+            idAccessor={(row) => row.id}
+            itemType="Benutzer"
+          />
         </CardContent>
       </Card>
 
-      {/* Users Table */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="text-left p-4 font-medium">Benutzer</th>
-                  <th className="text-left p-4 font-medium">Rolle</th>
-                  <th className="text-left p-4 font-medium">Status</th>
-                  <th className="text-left p-4 font-medium">Registriert</th>
-                  <th className="text-right p-4 font-medium">Aktionen</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                      Keine Benutzer gefunden
-                    </td>
-                  </tr>
-                ) : (
-                  <AnimatePresence>
-                    {users.map((user, index) => (
-                      <motion.tr
-                        key={user.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="border-b hover:bg-muted/30 transition-colors"
-                      >
-                        <td className="p-4">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src={user.image || ''} />
-                              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40">
-                                {user.name?.split(' ').map(n => n[0]).join('') || '?'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{user.name || 'Unbekannt'}</p>
-                              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                                <Mail className="h-3 w-3" />
-                                {user.email}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          {getRoleBadge(user.role)}
-                        </td>
-                        <td className="p-4">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-1.5">
-                              {user.emailVerified ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                              ) : (
-                                <XCircle className="h-4 w-4 text-yellow-500" />
-                              )}
-                              <span className="text-sm">
-                                {user.emailVerified ? 'Verifiziert' : 'Nicht verifiziert'}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              {user.onboardingCompleted ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                              ) : (
-                                <XCircle className="h-4 w-4 text-muted-foreground" />
-                              )}
-                              <span className="text-sm text-muted-foreground">
-                                {user.onboardingCompleted ? 'Onboarding done' : 'Onboarding offen'}
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                            <Calendar className="h-4 w-4" />
-                            {new Date(user.createdAt).toLocaleDateString('de-DE')}
-                          </div>
-                        </td>
-                        <td className="p-4 text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => openEditDialog(user)}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Bearbeiten
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => {
-                                setSelectedUser(user)
-                                setPasswordDialogOpen(true)
-                              }}>
-                                <Key className="mr-2 h-4 w-4" />
-                                Passwort ändern
-                              </DropdownMenuItem>
-                              {user.role !== 'ADMIN' && (
-                                <DropdownMenuItem onClick={() => handleImpersonate(user)}>
-                                  <LogIn className="mr-2 h-4 w-4" />
-                                  Als Benutzer einloggen
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => {
-                                  setSelectedUser(user)
-                                  setDeleteDialogOpen(true)
-                                }}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Löschen
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </AnimatePresence>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          <div className="flex items-center justify-between p-4 border-t">
-            <p className="text-sm text-muted-foreground">
-              {pagination.total} Benutzer gefunden
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                disabled={pagination.page === 1}
-                onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm">
-                Seite {pagination.page} von {pagination.totalPages || 1}
-              </span>
-              <Button
-                variant="outline"
-                size="icon"
-                disabled={pagination.page === pagination.totalPages || pagination.totalPages === 0}
-                onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+      {/* View Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Benutzerdetails</DialogTitle>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
+                  {selectedUser.name?.split(' ').map(n => n[0]).join('') || selectedUser.email[0].toUpperCase()}
+                </div>
+                <div>
+                  <p className="font-medium">{selectedUser.name || 'Kein Name'}</p>
+                  <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Rolle</p>
+                  <Badge className={
+                    selectedUser.role === 'ADMIN' ? 'bg-red-500/10 text-red-500' :
+                    selectedUser.role === 'SALON_OWNER' ? 'bg-purple-500/10 text-purple-500' :
+                    'bg-pink-500/10 text-pink-500'
+                  }>
+                    {selectedUser.role === 'ADMIN' ? 'Admin' :
+                     selectedUser.role === 'SALON_OWNER' ? 'Salonbesitzer' : 'Stylist'}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Status</p>
+                  {selectedUser.onboardingCompleted ? (
+                    <Badge className="bg-green-500/10 text-green-500">Aktiv</Badge>
+                  ) : (
+                    <Badge className="bg-yellow-500/10 text-yellow-500">Ausstehend</Badge>
+                  )}
+                </div>
+                <div>
+                  <p className="text-muted-foreground">E-Mail verifiziert</p>
+                  {selectedUser.emailVerified ? (
+                    <Badge variant="outline" className="text-green-500">Ja</Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-yellow-500">Nein</Badge>
+                  )}
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Registriert</p>
+                  <p className="font-medium">
+                    {new Date(selectedUser.createdAt).toLocaleDateString('de-DE')}
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          )}
+        </DialogContent>
+      </Dialog>
 
-      {/* Create User Dialog */}
+      {/* Create Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Neuer Benutzer</DialogTitle>
             <DialogDescription>
-              Erstellen Sie einen neuen Benutzer auf der Plattform
+              Erstellen Sie einen neuen Benutzer
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="create-name">Name</Label>
               <Input
                 id="create-name"
-                placeholder="Max Mustermann"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
@@ -674,21 +584,23 @@ export default function UsersPage() {
               <Input
                 id="create-email"
                 type="email"
-                placeholder="max@example.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="create-role">Rolle</Label>
-              <Select value={formData.role} onValueChange={(value: User['role']) => setFormData({ ...formData, role: value })}>
+              <Select
+                value={formData.role}
+                onValueChange={(value) => setFormData({ ...formData, role: value as typeof formData.role })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
-                  <SelectItem value="SALON_OWNER">Salonbetreiber</SelectItem>
                   <SelectItem value="STYLIST">Stylist</SelectItem>
+                  <SelectItem value="SALON_OWNER">Salonbesitzer</SelectItem>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -698,32 +610,30 @@ export default function UsersPage() {
                 <Input
                   id="create-password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 />
-                <button
+                <Button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                </Button>
               </div>
               <div className="space-y-1 mt-2">
                 {passwordRequirements.map((req) => (
-                  <div
-                    key={req.id}
-                    className={`flex items-center gap-2 text-xs ${
-                      req.test(formData.password) ? 'text-green-600' : 'text-muted-foreground'
-                    }`}
-                  >
+                  <div key={req.id} className="flex items-center gap-2 text-sm">
                     {req.test(formData.password) ? (
-                      <Check className="h-3 w-3" />
+                      <Check className="h-3 w-3 text-green-500" />
                     ) : (
-                      <X className="h-3 w-3" />
+                      <X className="h-3 w-3 text-muted-foreground" />
                     )}
-                    {req.label}
+                    <span className={req.test(formData.password) ? 'text-green-500' : 'text-muted-foreground'}>
+                      {req.label}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -741,16 +651,16 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit User Dialog */}
+      {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Benutzer bearbeiten</DialogTitle>
             <DialogDescription>
-              Bearbeiten Sie die Benutzerdaten
+              Aktualisieren Sie die Benutzerdaten
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="edit-name">Name</Label>
               <Input
@@ -770,14 +680,17 @@ export default function UsersPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-role">Rolle</Label>
-              <Select value={formData.role} onValueChange={(value: User['role']) => setFormData({ ...formData, role: value })}>
+              <Select
+                value={formData.role}
+                onValueChange={(value) => setFormData({ ...formData, role: value as typeof formData.role })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
-                  <SelectItem value="SALON_OWNER">Salonbetreiber</SelectItem>
                   <SelectItem value="STYLIST">Stylist</SelectItem>
+                  <SelectItem value="SALON_OWNER">Salonbesitzer</SelectItem>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -794,30 +707,16 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Benutzer löschen</DialogTitle>
             <DialogDescription>
-              Sind Sie sicher, dass Sie diesen Benutzer löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
+              Sind Sie sicher, dass Sie "{selectedUser?.name || selectedUser?.email}" löschen möchten?
+              Diese Aktion kann nicht rückgängig gemacht werden.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            {selectedUser && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
-                <Avatar>
-                  <AvatarFallback>
-                    {selectedUser.name?.split(' ').map(n => n[0]).join('') || '?'}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-medium">{selectedUser.name}</p>
-                  <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
-                </div>
-              </div>
-            )}
-          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
               Abbrechen
@@ -830,63 +729,58 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Change Password Dialog */}
+      {/* Password Dialog */}
       <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Passwort ändern</DialogTitle>
+            <DialogTitle>Passwort zurücksetzen</DialogTitle>
             <DialogDescription>
-              Setzen Sie ein neues Passwort für {selectedUser?.name || selectedUser?.email}
+              Setzen Sie das Passwort für "{selectedUser?.name || selectedUser?.email}" zurück
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="new-password">Neues Passwort</Label>
               <div className="relative">
                 <Input
                   id="new-password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                 />
-                <button
+                <Button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                </Button>
               </div>
-            </div>
-            <div className="space-y-2">
-              {passwordRequirements.map((req) => (
-                <div
-                  key={req.id}
-                  className={`flex items-center gap-2 text-xs ${
-                    req.test(newPassword) ? 'text-green-600' : 'text-muted-foreground'
-                  }`}
-                >
-                  {req.test(newPassword) ? (
-                    <Check className="h-3 w-3" />
-                  ) : (
-                    <X className="h-3 w-3" />
-                  )}
-                  {req.label}
-                </div>
-              ))}
+              <div className="space-y-1 mt-2">
+                {passwordRequirements.map((req) => (
+                  <div key={req.id} className="flex items-center gap-2 text-sm">
+                    {req.test(newPassword) ? (
+                      <Check className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <X className="h-3 w-3 text-muted-foreground" />
+                    )}
+                    <span className={req.test(newPassword) ? 'text-green-500' : 'text-muted-foreground'}>
+                      {req.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setPasswordDialogOpen(false)
-              setNewPassword('')
-            }}>
+            <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>
               Abbrechen
             </Button>
             <Button onClick={handleChangePassword} disabled={isSubmitting || !isPasswordValid}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Passwort setzen
+              Passwort ändern
             </Button>
           </DialogFooter>
         </DialogContent>

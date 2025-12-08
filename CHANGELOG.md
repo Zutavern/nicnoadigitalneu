@@ -155,3 +155,4 @@ Die erste vollständige Version der NICNOA-Plattform.
 [1.0.0]: https://github.com/your-org/nicnoa/releases/tag/v1.0.0
 
 
+

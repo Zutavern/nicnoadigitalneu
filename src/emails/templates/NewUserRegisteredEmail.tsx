@@ -330,3 +330,4 @@ const footerNote: React.CSSProperties = {
 export default NewUserRegisteredEmail
 
 
+

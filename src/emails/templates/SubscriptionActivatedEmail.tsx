@@ -167,3 +167,4 @@ const footerNote: React.CSSProperties = {
 export default SubscriptionActivatedEmail
 
 
+

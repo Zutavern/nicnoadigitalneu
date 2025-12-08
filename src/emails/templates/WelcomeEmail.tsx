@@ -1,7 +1,15 @@
-import { Heading, Hr, Text } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import {
+  EmailBadge,
+  EmailHeading,
+  EmailParagraph,
+  EmailDivider,
+  EmailFeatureList,
+  EmailButtonContainer,
+  EmailFooterNote,
+} from '../components/EmailComponents'
 
 interface WelcomeEmailProps {
   userName: string
@@ -27,109 +35,67 @@ export function WelcomeEmail({
 }: WelcomeEmailProps) {
   const bodyText = content.body.replace(/\{\{name\}\}/g, userName)
 
+  const features = [
+    {
+      icon: '✨',
+      title: 'Professionelles Dashboard',
+      description: 'Behalte alle deine Termine, Einnahmen und Statistiken im Blick',
+    },
+    {
+      icon: '📅',
+      title: 'Smart Booking',
+      description: 'Einfache Terminverwaltung für dich und deine Kunden',
+    },
+    {
+      icon: '📊',
+      title: 'Detaillierte Analytics',
+      description: 'Verstehe dein Geschäft mit aussagekräftigen Einblicken',
+    },
+    {
+      icon: '💺',
+      title: 'Stuhlvermietung',
+      description: 'Finde den perfekten Platz oder vermiete deinen eigenen',
+    },
+  ]
+
   return (
     <EmailLayout
-      preview={content.headline}
+      preview={`Willkommen bei NICNOA, ${userName}! 🎉`}
       logoUrl={logoUrl}
       primaryColor={primaryColor}
       footerText={footerText}
     >
-      <Text style={welcomeBadge}>🎉 Willkommen!</Text>
-      
-      <Heading style={heading}>{content.headline}</Heading>
-      
-      <Text style={paragraph}>
+      <EmailBadge variant="success" icon="🎉">
+        Willkommen!
+      </EmailBadge>
+
+      <EmailHeading as="h1">{content.headline}</EmailHeading>
+
+      <EmailParagraph>
         Hallo <strong>{userName}</strong>,
-      </Text>
-      
-      <Text style={paragraph}>{bodyText}</Text>
+      </EmailParagraph>
 
-      <Hr style={divider} />
+      <EmailParagraph>{bodyText}</EmailParagraph>
 
-      <Text style={featuresTitle}>Was dich erwartet:</Text>
-      
-      <Text style={featureItem}>
-        ✨ <strong>Professionelles Dashboard</strong> – Behalte alle deine Termine im Blick
-      </Text>
-      <Text style={featureItem}>
-        📅 <strong>Smart Booking</strong> – Einfache Terminverwaltung für dich und deine Kunden
-      </Text>
-      <Text style={featureItem}>
-        📊 <strong>Analytics</strong> – Verstehe dein Geschäft mit detaillierten Einblicken
-      </Text>
+      <EmailDivider gradient primaryColor={primaryColor} />
 
-      <div style={buttonContainer}>
-        <EmailButton href={dashboardUrl} primaryColor={primaryColor}>
+      <EmailParagraph muted small>
+        <strong>Was dich erwartet:</strong>
+      </EmailParagraph>
+
+      <EmailFeatureList features={features} primaryColor={primaryColor} />
+
+      <EmailButtonContainer>
+        <EmailButton href={dashboardUrl} primaryColor={primaryColor} size="lg">
           {content.buttonText || 'Zum Dashboard'}
         </EmailButton>
-      </div>
+      </EmailButtonContainer>
 
       {content.footer && (
-        <Text style={footerNote}>{content.footer}</Text>
+        <EmailFooterNote>{content.footer}</EmailFooterNote>
       )}
     </EmailLayout>
   )
 }
 
-const welcomeBadge: React.CSSProperties = {
-  backgroundColor: '#ecfdf5',
-  color: '#059669',
-  padding: '8px 16px',
-  borderRadius: '20px',
-  fontSize: '14px',
-  fontWeight: '500',
-  display: 'inline-block',
-  margin: '0 0 20px',
-}
-
-const heading: React.CSSProperties = {
-  color: '#18181b',
-  fontSize: '28px',
-  fontWeight: '700',
-  lineHeight: '36px',
-  margin: '0 0 24px',
-}
-
-const paragraph: React.CSSProperties = {
-  color: '#3f3f46',
-  fontSize: '16px',
-  lineHeight: '26px',
-  margin: '0 0 16px',
-}
-
-const divider: React.CSSProperties = {
-  borderColor: '#e4e4e7',
-  margin: '28px 0',
-}
-
-const featuresTitle: React.CSSProperties = {
-  color: '#18181b',
-  fontSize: '16px',
-  fontWeight: '600',
-  margin: '0 0 16px',
-}
-
-const featureItem: React.CSSProperties = {
-  color: '#52525b',
-  fontSize: '15px',
-  lineHeight: '24px',
-  margin: '0 0 12px',
-  paddingLeft: '4px',
-}
-
-const buttonContainer: React.CSSProperties = {
-  textAlign: 'center',
-  margin: '32px 0 24px',
-}
-
-const footerNote: React.CSSProperties = {
-  color: '#71717a',
-  fontSize: '13px',
-  lineHeight: '20px',
-  textAlign: 'center',
-  margin: '0',
-}
-
 export default WelcomeEmail
-
-

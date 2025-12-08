@@ -120,7 +120,8 @@ function MessagingContent() {
       const response = await fetch('/api/messages/conversations')
       if (response.ok) {
         const data = await response.json()
-        setConversations(data)
+        // Unterstützt sowohl { conversations: [...] } als auch direkt [...]
+        setConversations(Array.isArray(data) ? data : (data.conversations || []))
       }
     } catch (error) {
       console.error('Error fetching conversations:', error)

@@ -19,7 +19,6 @@ import {
   HelpCircle,
   MapPin,
   User,
-  Briefcase,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -45,7 +44,6 @@ const menuItems = [
     title: 'Arbeitsplatz',
     items: [
       { label: 'Aktueller Salon', href: '/stylist/workspace', icon: MapPin },
-      { label: 'Salons finden', href: '/stylist/find-salon', icon: Briefcase },
     ],
   },
   {

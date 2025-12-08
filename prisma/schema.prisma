@@ -24,6 +24,15 @@ model User {
   // Onboarding Status
   onboardingCompleted Boolean @default(false) @map("onboarding_completed")
   
+  // Soft Delete & Blocking
+  isDeleted     Boolean   @default(false) @map("is_deleted")
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz
+  deletedBy     String?   @map("deleted_by") @db.Uuid  // Admin der gelöscht hat
+  isBlocked     Boolean   @default(false) @map("is_blocked")
+  blockedAt     DateTime? @map("blocked_at") @db.Timestamptz
+  blockedBy     String?   @map("blocked_by") @db.Uuid  // Admin der gesperrt hat
+  blockReason   String?   @map("block_reason") @db.Text
+  
   // Security
   twoFactorEnabled           Boolean   @default(false) @map("two_factor_enabled")
   twoFactorSecret            String?   @map("two_factor_secret")
@@ -521,6 +530,15 @@ model Salon {
   // Status
   isActive     Boolean  @default(true) @map("is_active")
   isVerified   Boolean  @default(false) @map("is_verified")
+  
+  // Soft Delete & Blocking
+  isDeleted    Boolean   @default(false) @map("is_deleted")
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz
+  deletedBy    String?   @map("deleted_by") @db.Uuid
+  isBlocked    Boolean   @default(false) @map("is_blocked")
+  blockedAt    DateTime? @map("blocked_at") @db.Timestamptz
+  blockedBy    String?   @map("blocked_by") @db.Uuid
+  blockReason  String?   @map("block_reason") @db.Text
   
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz

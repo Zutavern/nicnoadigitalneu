@@ -104,14 +104,15 @@ export default function StylistWorkspacePage() {
         <Card className="bg-gradient-to-br from-pink-500/10 to-rose-500/10 border-pink-500/20">
           <CardContent className="p-8 text-center">
             <Armchair className="mx-auto h-16 w-16 text-pink-500 mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Finde deinen perfekten Stuhl</h2>
+            <h2 className="text-2xl font-bold mb-2">Warte auf eine Einladung</h2>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Entdecke verfügbare Stühle in Salons in deiner Nähe und starte deine Karriere als selbstständiger Friseur.
+              Salonbesitzer können dich direkt einladen, in ihrem Salon zu arbeiten. 
+              Du erhältst eine Benachrichtigung, sobald eine Einladung eingeht.
             </p>
-            <Button asChild className="bg-gradient-to-r from-pink-500 to-rose-500">
-              <Link href="/stylist/find-salon">
+            <Button asChild variant="outline" className="border-pink-500/30 hover:bg-pink-500/10">
+              <Link href="/stylist/messages">
                 <Building2 className="mr-2 h-4 w-4" />
-                Salons entdecken
+                Nachrichten prüfen
               </Link>
             </Button>
           </CardContent>

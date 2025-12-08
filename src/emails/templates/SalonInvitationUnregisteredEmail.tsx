@@ -265,3 +265,4 @@ const footerNote: React.CSSProperties = {
 export default SalonInvitationUnregisteredEmail
 
 
+

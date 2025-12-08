@@ -147,9 +147,12 @@ export default function AdminServicesPage() {
       const response = await fetch('/api/admin/service-categories')
       if (!response.ok) throw new Error('Fehler beim Laden')
       const data = await response.json()
-      setCategories(data)
+      // Ensure data is always an array
+      const categoriesArray = Array.isArray(data) ? data : data.categories || []
+      setCategories(categoriesArray)
     } catch {
       setError('Kategorien konnten nicht geladen werden')
+      setCategories([])
     } finally {
       setIsLoading(false)
     }

@@ -108,7 +108,8 @@ export default function EmailTemplatesPage() {
       const res = await fetch('/api/admin/email-templates')
       if (!res.ok) throw new Error('Failed to fetch')
       const data = await res.json()
-      setTemplates(data)
+      // Unterstützt sowohl { templates: [...] } als auch direkt [...]
+      setTemplates(Array.isArray(data) ? data : (data.templates || []))
     } catch {
       toast.error('Fehler beim Laden der Templates')
     } finally {
@@ -122,19 +123,22 @@ export default function EmailTemplatesPage() {
 
   // Template auswählen
   const selectTemplate = (template: EmailTemplate) => {
+    // Sicherstellen, dass content existiert (Fallback für Datenbank-Templates ohne content)
+    const content = template.content || { headline: '', body: '', buttonText: '', footer: '' }
+    
     setSelectedTemplate(template)
     setEditedSubject(template.subject)
-    setEditedHeadline(template.content.headline)
-    setEditedBody(template.content.body)
-    setEditedButtonText(template.content.buttonText || '')
-    setEditedFooter(template.content.footer || '')
+    setEditedHeadline(content.headline || '')
+    setEditedBody(content.body || '')
+    setEditedButtonText(content.buttonText || '')
+    setEditedFooter(content.footer || '')
     setEditedPrimaryColor(template.primaryColor || '#10b981')
     setEditedIsActive(template.isActive)
     generatePreview(template.slug, {
-      headline: template.content.headline,
-      body: template.content.body,
-      buttonText: template.content.buttonText,
-      footer: template.content.footer,
+      headline: content.headline || '',
+      body: content.body || '',
+      buttonText: content.buttonText,
+      footer: content.footer,
     })
   }
 

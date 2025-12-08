@@ -1274,15 +1274,13 @@ export function getMockStylistAvailability() {
 // Stylist Workspace Mock Data
 // ============================================
 export function getMockStylistWorkspace() {
+  // Flache Struktur wie ChairRental Interface erwartet
   return {
-    rental: {
-      id: 'rental-demo-001',
-      startDate: getRelativeDate(-90),
-      endDate: getRelativeDate(275),
-      status: 'ACTIVE',
-      monthlyRent: 650,
-      nextPaymentDate: getRelativeDate(15),
-    },
+    id: 'rental-demo-001',
+    status: 'ACTIVE',
+    startDate: getRelativeDate(-90),
+    endDate: getRelativeDate(275),
+    monthlyRate: 650,
     chair: {
       id: 'chair-demo-001',
       name: 'Stuhl 3',
@@ -1298,17 +1296,7 @@ export function getMockStylistWorkspace() {
         name: 'Maria Salonbesitzer',
         image: null,
       },
-      openingHours: {
-        monday: '09:00 - 19:00',
-        tuesday: '09:00 - 19:00',
-        wednesday: '09:00 - 19:00',
-        thursday: '09:00 - 20:00',
-        friday: '09:00 - 19:00',
-        saturday: '09:00 - 16:00',
-        sunday: 'Geschlossen',
-      },
     },
-    amenities: ['WLAN', 'Klimaanlage', 'Pausenraum', 'Küche', 'Parkplatz', 'Handtuch-Service'],
   }
 }
 
@@ -1434,31 +1422,59 @@ export function getMockConversations() {
     conversations: [
       {
         id: 'conv-1',
+        type: 'DIRECT',
+        subject: null,
         participants: [
-          { id: 'p1', name: 'Maria Salonbesitzer', image: null, role: 'SALON_OWNER' },
-          { id: 'p2', name: 'Demo Stylist', image: null, role: 'STYLIST' },
+          { 
+            id: 'cp-1', 
+            userId: '00000000-0000-0000-0000-000000000002',
+            role: 'ADMIN',
+            lastReadAt: null,
+            user: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', email: 'salon@nicnoa.de', image: null, role: 'SALON_OWNER' }
+          },
+          { 
+            id: 'cp-2', 
+            userId: '00000000-0000-0000-0000-000000000001',
+            role: 'MEMBER',
+            lastReadAt: null,
+            user: { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', email: 'admin@nicnoa.de', image: null, role: 'ADMIN' }
+          },
         ],
         lastMessage: {
           id: 'msg-1',
           content: 'Vielen Dank für die schnelle Rückmeldung!',
-          createdAt: getRelativeDate(0, 14, 30),
-          senderId: 'p1',
+          createdAt: getRelativeDate(0, 0, 30),
+          isRead: false,
         },
         unreadCount: 2,
         createdAt: getRelativeDate(-5),
-        updatedAt: getRelativeDate(0, 14, 30),
+        updatedAt: getRelativeDate(0, 0, 30),
       },
       {
         id: 'conv-2',
+        type: 'DIRECT',
+        subject: null,
         participants: [
-          { id: 'p3', name: 'Anna Kundin', image: null, role: 'CUSTOMER' },
-          { id: 'p2', name: 'Demo Stylist', image: null, role: 'STYLIST' },
+          { 
+            id: 'cp-3', 
+            userId: '00000000-0000-0000-0000-000000000003',
+            role: 'MEMBER',
+            lastReadAt: null,
+            user: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', email: 'stylist@nicnoa.de', image: null, role: 'STYLIST' }
+          },
+          { 
+            id: 'cp-4', 
+            userId: '00000000-0000-0000-0000-000000000001',
+            role: 'ADMIN',
+            lastReadAt: null,
+            user: { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', email: 'admin@nicnoa.de', image: null, role: 'ADMIN' }
+          },
         ],
         lastMessage: {
           id: 'msg-2',
           content: 'Können wir den Termin auf 15 Uhr verschieben?',
           createdAt: getRelativeDate(-1, 10, 0),
-          senderId: 'p3',
+          isRead: false,
         },
         unreadCount: 1,
         createdAt: getRelativeDate(-10),
@@ -1466,15 +1482,29 @@ export function getMockConversations() {
       },
       {
         id: 'conv-3',
+        type: 'DIRECT',
+        subject: null,
         participants: [
-          { id: 'p4', name: 'NICNOA Support', image: null, role: 'ADMIN' },
-          { id: 'p2', name: 'Demo Stylist', image: null, role: 'STYLIST' },
+          { 
+            id: 'cp-5', 
+            userId: '00000000-0000-0000-0000-000000000002',
+            role: 'ADMIN',
+            lastReadAt: null,
+            user: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', email: 'salon@nicnoa.de', image: null, role: 'SALON_OWNER' }
+          },
+          { 
+            id: 'cp-6', 
+            userId: '00000000-0000-0000-0000-000000000003',
+            role: 'MEMBER',
+            lastReadAt: null,
+            user: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', email: 'stylist@nicnoa.de', image: null, role: 'STYLIST' }
+          },
         ],
         lastMessage: {
           id: 'msg-3',
           content: 'Willkommen bei NICNOA! Bei Fragen stehen wir dir gerne zur Verfügung.',
           createdAt: getRelativeDate(-7),
-          senderId: 'p4',
+          isRead: true,
         },
         unreadCount: 0,
         createdAt: getRelativeDate(-7),
@@ -1627,64 +1657,84 @@ export function getMockAdminUsers() {
 // Admin Salons Mock Data
 // ============================================
 export function getMockAdminSalons() {
+  // Deutsche Städte und Straßen
+  const cities = ['Berlin', 'Hamburg', 'München', 'Köln', 'Frankfurt', 'Stuttgart', 'Düsseldorf', 'Leipzig', 'Dortmund', 'Essen', 'Bremen', 'Dresden', 'Hannover', 'Nürnberg', 'Duisburg']
+  const streets = ['Hauptstraße', 'Bahnhofstraße', 'Schillerstraße', 'Goethestraße', 'Kirchstraße', 'Gartenstraße', 'Berliner Straße', 'Friedrichstraße', 'Mozartstraße', 'Beethovenstraße', 'Kaiserstraße', 'Marktplatz', 'Am Rathaus', 'Schulstraße', 'Rosenweg']
+  const salonPrefixes = ['Hair', 'Beauty', 'Style', 'Glamour', 'Chic', 'Elegance', 'Modern', 'Classic', 'Urban', 'Trend', 'Premium', 'Luxus', 'Unique', 'Creative', 'Exclusive']
+  const salonSuffixes = ['Studio', 'Lounge', 'Salon', 'Atelier', 'House', 'Lab', 'Zone', 'Space', 'Corner', 'Place']
+  const firstNames = ['Maria', 'Anna', 'Julia', 'Sophie', 'Laura', 'Lisa', 'Sarah', 'Lena', 'Emma', 'Mia', 'Thomas', 'Michael', 'Daniel', 'Stefan', 'Christian', 'Andreas', 'Markus', 'Peter', 'Frank', 'Klaus']
+  const lastNames = ['Müller', 'Schmidt', 'Schneider', 'Fischer', 'Weber', 'Meyer', 'Wagner', 'Becker', 'Schulz', 'Hoffmann', 'Koch', 'Richter', 'Klein', 'Wolf', 'Schröder', 'Neumann', 'Schwarz', 'Braun', 'Zimmermann', 'Hartmann']
+  const subscriptionStatuses = ['active', 'active', 'active', 'active', 'trialing', 'past_due', null]
+  const priceIds = ['price_starter', 'price_professional', 'price_enterprise', null]
+  
+  const generateSalons = () => {
+    const salons = []
+    for (let i = 1; i <= 100; i++) {
+      const firstName = firstNames[Math.floor(Math.random() * firstNames.length)]
+      const lastName = lastNames[Math.floor(Math.random() * lastNames.length)]
+      const city = cities[Math.floor(Math.random() * cities.length)]
+      const street = streets[Math.floor(Math.random() * streets.length)]
+      const prefix = salonPrefixes[Math.floor(Math.random() * salonPrefixes.length)]
+      const suffix = salonSuffixes[Math.floor(Math.random() * salonSuffixes.length)]
+      const onboardingCompleted = Math.random() > 0.15 // 85% completed
+      const chairCount = Math.floor(Math.random() * 8) + 2 // 2-9 chairs
+      const employeeCount = Math.floor(Math.random() * chairCount) + 1
+      const subscriptionStatus = subscriptionStatuses[Math.floor(Math.random() * subscriptionStatuses.length)]
+      const priceId = subscriptionStatus ? priceIds[Math.floor(Math.random() * (priceIds.length - 1))] : null
+      
+      salons.push({
+        id: `salon-${i.toString().padStart(3, '0')}`,
+        userId: `user-salon-${i.toString().padStart(3, '0')}`,
+        salonName: `${prefix} ${suffix} ${city.substring(0, 3)}`,
+        street: `${street} ${Math.floor(Math.random() * 200) + 1}`,
+        city,
+        zipCode: `${Math.floor(Math.random() * 90000) + 10000}`,
+        country: 'Deutschland',
+        phone: `+49 ${Math.floor(Math.random() * 900) + 100} ${Math.floor(Math.random() * 9000000) + 1000000}`,
+        website: Math.random() > 0.3 ? `https://${prefix.toLowerCase()}-${suffix.toLowerCase()}.de` : null,
+        employeeCount,
+        chairCount,
+        salonSize: Math.floor(Math.random() * 150) + 50,
+        description: `Willkommen bei ${prefix} ${suffix} - Ihr Friseur in ${city}`,
+        openingHours: { mo: '09:00-18:00', di: '09:00-18:00', mi: '09:00-18:00', do: '09:00-20:00', fr: '09:00-18:00', sa: '09:00-14:00' },
+        amenities: ['WLAN', 'Klimaanlage', 'Getränke'],
+        images: [],
+        createdAt: getRelativeDate(-Math.floor(Math.random() * 365)),
+        updatedAt: getRelativeDate(-Math.floor(Math.random() * 30)),
+        owner: {
+          id: `user-salon-${i.toString().padStart(3, '0')}`,
+          name: `${firstName} ${lastName}`,
+          email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${prefix.toLowerCase()}.de`,
+          image: null,
+          onboardingCompleted,
+          subscriptionStatus,
+          priceId,
+        },
+      })
+    }
+    return salons
+  }
+  
+  const salons = generateSalons()
+  const activeSalons = salons.filter(s => s.owner.onboardingCompleted).length
+  const totalChairs = salons.reduce((sum, s) => sum + s.chairCount, 0)
+  const totalEmployees = salons.reduce((sum, s) => sum + s.employeeCount, 0)
+  
   return {
-    salons: [
-      {
-        id: 'salon-1',
-        name: 'Hair & Beauty Lounge',
-        ownerName: 'Maria Salonbesitzer',
-        ownerEmail: 'maria@salon.de',
-        city: 'Berlin',
-        address: 'Schönhauser Allee 123',
-        status: 'ACTIVE',
-        totalChairs: 5,
-        occupiedChairs: 4,
-        monthlyRevenue: 2600,
-        rating: 4.8,
-        createdAt: getRelativeDate(-365),
-      },
-      {
-        id: 'salon-2',
-        name: 'Salon Elegance',
-        ownerName: 'Thomas Elegant',
-        ownerEmail: 'thomas@elegance.de',
-        city: 'Berlin',
-        address: 'Kurfürstendamm 45',
-        status: 'ACTIVE',
-        totalChairs: 4,
-        occupiedChairs: 3,
-        monthlyRevenue: 2550,
-        rating: 4.9,
-        createdAt: getRelativeDate(-280),
-      },
-      {
-        id: 'salon-3',
-        name: 'Style Studio',
-        ownerName: 'Julia Kreativ',
-        ownerEmail: 'julia@studio.de',
-        city: 'Berlin',
-        address: 'Friedrichstraße 89',
-        status: 'PENDING',
-        totalChairs: 3,
-        occupiedChairs: 1,
-        monthlyRevenue: 550,
-        rating: 4.6,
-        createdAt: getRelativeDate(-30),
-      },
-    ],
+    salons,
     summary: {
-      totalSalons: 312,
-      activeSalons: 285,
-      pendingSalons: 18,
-      totalChairs: 1456,
-      occupiedChairs: 1124,
-      averageOccupancy: 77.2,
+      totalSalons: salons.length,
+      activeSalons,
+      pendingSalons: salons.length - activeSalons,
+      totalChairs,
+      occupiedChairs: totalEmployees,
+      averageOccupancy: Math.round((totalEmployees / totalChairs) * 100 * 10) / 10,
     },
     pagination: {
       page: 1,
       limit: 20,
-      total: 312,
-      totalPages: 16,
+      total: salons.length,
+      totalPages: Math.ceil(salons.length / 20),
     },
   }
 }
@@ -1693,66 +1743,74 @@ export function getMockAdminSalons() {
 // Admin Stylists Mock Data
 // ============================================
 export function getMockAdminStylists() {
+  const firstNames = ['Sarah', 'Anna', 'Julia', 'Sophie', 'Laura', 'Lisa', 'Emma', 'Mia', 'Lena', 'Marie', 'Nina', 'Eva', 'Clara', 'Lea', 'Hanna', 'Alex', 'Max', 'David', 'Felix', 'Leon']
+  const lastNames = ['Müller', 'Schmidt', 'Schneider', 'Fischer', 'Weber', 'Meyer', 'Wagner', 'Becker', 'Schulz', 'Hoffmann', 'Koch', 'Richter', 'Klein', 'Wolf', 'Schröder', 'Neumann', 'Schwarz', 'Braun', 'Zimmermann', 'Hartmann']
+  const specialtiesPool = ['Herrenschnitte', 'Damenschnitte', 'Colorationen', 'Balayage', 'Highlights', 'Hochsteckfrisuren', 'Extensions', 'Barbering', 'Kinderschnitte', 'Brautstyling', 'Keratin-Behandlung', 'Dauerwelle', 'Styling', 'Afro-Hair', 'Locken-Styling']
+  const certificationsPool = ['Meisterbrief', 'L\'Oréal Colorist', 'Schwarzkopf Expert', 'Wella Master', 'Davines Certified', 'Olaplex Specialist', 'Balayage Expert', 'Barbering Diploma']
+  const subscriptionStatuses = ['active', 'active', 'active', 'active', 'trialing', 'past_due', null]
+  const priceIds = ['price_stylist_basic', 'price_stylist_pro', null]
+  
+  const generateStylists = () => {
+    const stylists = []
+    for (let i = 1; i <= 100; i++) {
+      const firstName = firstNames[Math.floor(Math.random() * firstNames.length)]
+      const lastName = lastNames[Math.floor(Math.random() * lastNames.length)]
+      const yearsExperience = Math.floor(Math.random() * 20) + 1
+      const onboardingCompleted = Math.random() > 0.12 // 88% completed
+      const subscriptionStatus = subscriptionStatuses[Math.floor(Math.random() * subscriptionStatuses.length)]
+      const priceId = subscriptionStatus ? priceIds[Math.floor(Math.random() * (priceIds.length - 1))] : null
+      
+      // Random specialties (2-5)
+      const numSpecialties = Math.floor(Math.random() * 4) + 2
+      const specialties = [...specialtiesPool].sort(() => Math.random() - 0.5).slice(0, numSpecialties)
+      
+      // Random certifications (0-3)
+      const numCerts = Math.floor(Math.random() * 4)
+      const certifications = [...certificationsPool].sort(() => Math.random() - 0.5).slice(0, numCerts)
+      
+      stylists.push({
+        id: `stylist-${i.toString().padStart(3, '0')}`,
+        userId: `user-stylist-${i.toString().padStart(3, '0')}`,
+        yearsExperience,
+        specialties,
+        certifications,
+        portfolio: [],
+        availability: { mo: true, di: true, mi: true, do: true, fr: true, sa: Math.random() > 0.3 },
+        bio: `Erfahrener Friseur mit ${yearsExperience} Jahren Berufserfahrung. Spezialisiert auf ${specialties.slice(0, 2).join(' und ')}.`,
+        createdAt: getRelativeDate(-Math.floor(Math.random() * 365)),
+        updatedAt: getRelativeDate(-Math.floor(Math.random() * 30)),
+        user: {
+          id: `user-stylist-${i.toString().padStart(3, '0')}`,
+          name: `${firstName} ${lastName}`,
+          email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@stylist.de`,
+          image: null,
+          onboardingCompleted,
+          registeredAt: getRelativeDate(-Math.floor(Math.random() * 400)),
+          subscriptionStatus,
+          priceId,
+        },
+      })
+    }
+    return stylists
+  }
+  
+  const stylists = generateStylists()
+  const activeStylists = stylists.filter(s => s.user.onboardingCompleted).length
+  const avgExperience = stylists.reduce((sum, s) => sum + s.yearsExperience, 0) / stylists.length
+  
   return {
-    stylists: [
-      {
-        id: 'stylist-1',
-        name: 'Sarah Müller',
-        email: 'sarah@email.de',
-        phone: '+49 170 5555555',
-        status: 'ACTIVE',
-        salonName: 'Hair & Beauty Lounge',
-        experience: 8,
-        rating: 4.9,
-        totalBookings: 342,
-        monthlyEarnings: 4250,
-        subscriptionStatus: 'active',
-        onboardingStatus: 'APPROVED',
-        createdAt: getRelativeDate(-180),
-      },
-      {
-        id: 'stylist-2',
-        name: 'Alex Schmidt',
-        email: 'alex@email.de',
-        phone: '+49 171 6666666',
-        status: 'ACTIVE',
-        salonName: 'Hair & Beauty Lounge',
-        experience: 5,
-        rating: 4.8,
-        totalBookings: 215,
-        monthlyEarnings: 3200,
-        subscriptionStatus: 'active',
-        onboardingStatus: 'APPROVED',
-        createdAt: getRelativeDate(-120),
-      },
-      {
-        id: 'stylist-3',
-        name: 'Lena Klein',
-        email: 'lena@email.de',
-        phone: '+49 172 7777777',
-        status: 'PENDING',
-        salonName: null,
-        experience: 3,
-        rating: null,
-        totalBookings: 0,
-        monthlyEarnings: 0,
-        subscriptionStatus: 'trialing',
-        onboardingStatus: 'PENDING_REVIEW',
-        createdAt: getRelativeDate(-5),
-      },
-    ],
+    stylists,
     summary: {
-      totalStylists: 892,
-      activeStylists: 756,
-      pendingStylists: 45,
-      averageRating: 4.6,
-      totalMonthlyEarnings: 285600,
+      totalStylists: stylists.length,
+      activeStylists,
+      pendingStylists: stylists.length - activeStylists,
+      averageExperience: Math.round(avgExperience * 10) / 10,
     },
     pagination: {
       page: 1,
       limit: 20,
-      total: 892,
-      totalPages: 45,
+      total: stylists.length,
+      totalPages: Math.ceil(stylists.length / 20),
     },
   }
 }
@@ -1761,62 +1819,76 @@ export function getMockAdminStylists() {
 // Admin Service Categories Mock Data
 // ============================================
 export function getMockAdminServiceCategories() {
-  return {
-    categories: [
-      {
-        id: 'cat-1',
-        name: 'Schneiden',
-        description: 'Alle Arten von Haarschnitten',
-        servicesCount: 8,
-        isActive: true,
-        createdAt: getRelativeDate(-500),
-      },
-      {
-        id: 'cat-2',
-        name: 'Färben',
-        description: 'Colorationen, Strähnen und Tönung',
-        servicesCount: 12,
-        isActive: true,
-        createdAt: getRelativeDate(-500),
-      },
-      {
-        id: 'cat-3',
-        name: 'Styling',
-        description: 'Föhnen, Glätten, Locken',
-        servicesCount: 6,
-        isActive: true,
-        createdAt: getRelativeDate(-500),
-      },
-      {
-        id: 'cat-4',
-        name: 'Behandlung',
-        description: 'Pflege, Kuren und Treatments',
-        servicesCount: 10,
-        isActive: true,
-        createdAt: getRelativeDate(-500),
-      },
-      {
-        id: 'cat-5',
-        name: 'Spezial',
-        description: 'Hochsteckfrisuren, Brautstyling, Extensions',
-        servicesCount: 5,
-        isActive: true,
-        createdAt: getRelativeDate(-500),
-      },
-    ],
-    services: [
-      { id: 's1', name: 'Damenhaarschnitt', categoryId: 'cat-1', price: 55, duration: 45, isActive: true },
-      { id: 's2', name: 'Herrenhaarschnitt', categoryId: 'cat-1', price: 35, duration: 30, isActive: true },
-      { id: 's3', name: 'Kinderhaarschnitt', categoryId: 'cat-1', price: 25, duration: 25, isActive: true },
-      { id: 's4', name: 'Balayage', categoryId: 'cat-2', price: 180, duration: 180, isActive: true },
-      { id: 's5', name: 'Strähnen', categoryId: 'cat-2', price: 90, duration: 90, isActive: true },
-      { id: 's6', name: 'Komplettfärbung', categoryId: 'cat-2', price: 120, duration: 120, isActive: true },
-      { id: 's7', name: 'Föhnen', categoryId: 'cat-3', price: 30, duration: 30, isActive: true },
-      { id: 's8', name: 'Glätten', categoryId: 'cat-3', price: 45, duration: 45, isActive: true },
-      { id: 's9', name: 'Intensivpflege', categoryId: 'cat-4', price: 35, duration: 30, isActive: true },
-      { id: 's10', name: 'Hochsteckfrisur', categoryId: 'cat-5', price: 80, duration: 60, isActive: true },
-    ],
-  }
+  const services = [
+    { id: 's1', name: 'Damenhaarschnitt', categoryId: 'cat-1', slug: 'damenhaarschnitt', description: 'Professioneller Damenhaarschnitt', sortOrder: 1, isActive: true },
+    { id: 's2', name: 'Herrenhaarschnitt', categoryId: 'cat-1', slug: 'herrenhaarschnitt', description: 'Klassischer Herrenhaarschnitt', sortOrder: 2, isActive: true },
+    { id: 's3', name: 'Kinderhaarschnitt', categoryId: 'cat-1', slug: 'kinderhaarschnitt', description: 'Haarschnitt für Kinder', sortOrder: 3, isActive: true },
+    { id: 's4', name: 'Balayage', categoryId: 'cat-2', slug: 'balayage', description: 'Natürliche Strähnen-Technik', sortOrder: 1, isActive: true },
+    { id: 's5', name: 'Strähnen', categoryId: 'cat-2', slug: 'straehnen', description: 'Klassische Strähnen', sortOrder: 2, isActive: true },
+    { id: 's6', name: 'Komplettfärbung', categoryId: 'cat-2', slug: 'komplettfaerbung', description: 'Vollständige Haarfärbung', sortOrder: 3, isActive: true },
+    { id: 's7', name: 'Föhnen', categoryId: 'cat-3', slug: 'foehnen', description: 'Professionelles Föhnen', sortOrder: 1, isActive: true },
+    { id: 's8', name: 'Glätten', categoryId: 'cat-3', slug: 'glaetten', description: 'Haarglättung', sortOrder: 2, isActive: true },
+    { id: 's9', name: 'Intensivpflege', categoryId: 'cat-4', slug: 'intensivpflege', description: 'Tiefenpflege für das Haar', sortOrder: 1, isActive: true },
+    { id: 's10', name: 'Hochsteckfrisur', categoryId: 'cat-5', slug: 'hochsteckfrisur', description: 'Elegante Hochsteckfrisur', sortOrder: 1, isActive: true },
+  ]
+
+  return [
+    {
+      id: 'cat-1',
+      name: 'Schneiden',
+      slug: 'schneiden',
+      description: 'Alle Arten von Haarschnitten',
+      icon: 'scissors',
+      color: 'emerald',
+      sortOrder: 1,
+      isActive: true,
+      services: services.filter(s => s.categoryId === 'cat-1'),
+    },
+    {
+      id: 'cat-2',
+      name: 'Färben',
+      slug: 'faerben',
+      description: 'Colorationen, Strähnen und Tönung',
+      icon: 'palette',
+      color: 'violet',
+      sortOrder: 2,
+      isActive: true,
+      services: services.filter(s => s.categoryId === 'cat-2'),
+    },
+    {
+      id: 'cat-3',
+      name: 'Styling',
+      slug: 'styling',
+      description: 'Föhnen, Glätten, Locken',
+      icon: 'sparkles',
+      color: 'amber',
+      sortOrder: 3,
+      isActive: true,
+      services: services.filter(s => s.categoryId === 'cat-3'),
+    },
+    {
+      id: 'cat-4',
+      name: 'Behandlung',
+      slug: 'behandlung',
+      description: 'Pflege, Kuren und Treatments',
+      icon: 'droplets',
+      color: 'cyan',
+      sortOrder: 4,
+      isActive: true,
+      services: services.filter(s => s.categoryId === 'cat-4'),
+    },
+    {
+      id: 'cat-5',
+      name: 'Spezial',
+      slug: 'spezial',
+      description: 'Hochsteckfrisuren, Brautstyling, Extensions',
+      icon: 'crown',
+      color: 'rose',
+      sortOrder: 5,
+      isActive: true,
+      services: services.filter(s => s.categoryId === 'cat-5'),
+    },
+  ]
 }
 
 // ============================================
@@ -1970,68 +2042,107 @@ export function getMockAdminReferrals() {
 // Admin Onboarding Applications Mock Data
 // ============================================
 export function getMockAdminOnboarding() {
-  return {
-    applications: [
-      {
-        id: 'app-1',
-        userId: 'user-pending-1',
-        userName: 'Lena Klein',
-        userEmail: 'lena@email.de',
-        status: 'PENDING_REVIEW',
-        submittedAt: getRelativeDate(-2),
-        businessData: {
-          companyName: 'Lena Klein Haarstyling',
-          street: 'Musterstraße 45',
-          city: 'Berlin',
-          zipCode: '10245',
-          taxId: 'DE123456789',
-        },
-        documents: [
-          { type: 'MASTER_CERTIFICATE', status: 'UPLOADED', uploadedAt: getRelativeDate(-2) },
-          { type: 'BUSINESS_REGISTRATION', status: 'UPLOADED', uploadedAt: getRelativeDate(-2) },
-          { type: 'LIABILITY_INSURANCE', status: 'UPLOADED', uploadedAt: getRelativeDate(-2) },
-          { type: 'STATUS_DETERMINATION', status: 'PENDING', uploadedAt: null },
-          { type: 'CRAFT_CHAMBER', status: 'UPLOADED', uploadedAt: getRelativeDate(-2) },
-        ],
-        selfEmploymentChecks: 8,
+  return [
+    {
+      id: 'app-1',
+      userId: 'user-pending-1',
+      user: {
+        name: 'Lena Klein',
+        email: 'lena@email.de',
       },
-      {
-        id: 'app-2',
-        userId: 'user-pending-2',
-        userName: 'Max Braun',
-        userEmail: 'max@email.de',
-        status: 'PENDING_REVIEW',
-        submittedAt: getRelativeDate(-5),
-        businessData: {
-          companyName: 'Braun Styling',
-          street: 'Hauptstraße 12',
-          city: 'Hamburg',
-          zipCode: '20095',
-          taxId: 'DE987654321',
-        },
-        documents: [
-          { type: 'MASTER_CERTIFICATE', status: 'UPLOADED', uploadedAt: getRelativeDate(-5) },
-          { type: 'BUSINESS_REGISTRATION', status: 'UPLOADED', uploadedAt: getRelativeDate(-5) },
-          { type: 'LIABILITY_INSURANCE', status: 'UPLOADED', uploadedAt: getRelativeDate(-5) },
-          { type: 'STATUS_DETERMINATION', status: 'UPLOADED', uploadedAt: getRelativeDate(-5) },
-          { type: 'CRAFT_CHAMBER', status: 'UPLOADED', uploadedAt: getRelativeDate(-5) },
-        ],
-        selfEmploymentChecks: 8,
+      companyName: 'Lena Klein Haarstyling',
+      taxId: 'DE123456789',
+      businessStreet: 'Musterstraße 45',
+      businessCity: 'Berlin',
+      businessZipCode: '10245',
+      onboardingStatus: 'PENDING_REVIEW',
+      currentStep: 5,
+      createdAt: getRelativeDate(-10),
+      updatedAt: getRelativeDate(-2),
+      documents: {
+        masterCertificate: { url: '/docs/master-1.pdf', status: 'UPLOADED' },
+        businessRegistration: { url: '/docs/business-1.pdf', status: 'UPLOADED' },
+        liabilityInsurance: { url: '/docs/insurance-1.pdf', status: 'UPLOADED' },
+        statusDetermination: { url: null, status: 'PENDING' },
+        craftsChamber: { url: '/docs/chamber-1.pdf', status: 'UPLOADED' },
       },
-    ],
-    summary: {
-      totalApplications: 45,
-      pendingReview: 12,
-      approved: 28,
-      rejected: 5,
+      compliance: {
+        ownPhone: true,
+        ownAppointmentBook: true,
+        ownCashRegister: true,
+        ownPriceList: true,
+        ownBranding: true,
+      },
+      selfEmploymentDeclaration: true,
+      adminNotes: null,
     },
-    pagination: {
-      page: 1,
-      limit: 20,
-      total: 45,
-      totalPages: 3,
+    {
+      id: 'app-2',
+      userId: 'user-pending-2',
+      user: {
+        name: 'Max Braun',
+        email: 'max@email.de',
+      },
+      companyName: 'Braun Styling',
+      taxId: 'DE987654321',
+      businessStreet: 'Hauptstraße 12',
+      businessCity: 'Hamburg',
+      businessZipCode: '20095',
+      onboardingStatus: 'PENDING_REVIEW',
+      currentStep: 5,
+      createdAt: getRelativeDate(-15),
+      updatedAt: getRelativeDate(-5),
+      documents: {
+        masterCertificate: { url: '/docs/master-2.pdf', status: 'UPLOADED' },
+        businessRegistration: { url: '/docs/business-2.pdf', status: 'UPLOADED' },
+        liabilityInsurance: { url: '/docs/insurance-2.pdf', status: 'UPLOADED' },
+        statusDetermination: { url: '/docs/status-2.pdf', status: 'UPLOADED' },
+        craftsChamber: { url: '/docs/chamber-2.pdf', status: 'UPLOADED' },
+      },
+      compliance: {
+        ownPhone: true,
+        ownAppointmentBook: true,
+        ownCashRegister: true,
+        ownPriceList: true,
+        ownBranding: true,
+      },
+      selfEmploymentDeclaration: true,
+      adminNotes: null,
     },
-  }
+    {
+      id: 'app-3',
+      userId: 'user-approved-1',
+      user: {
+        name: 'Sarah Müller',
+        email: 'sarah@email.de',
+      },
+      companyName: 'Sarah Beauty',
+      taxId: 'DE456789123',
+      businessStreet: 'Schönhauser Allee 45',
+      businessCity: 'Berlin',
+      businessZipCode: '10437',
+      onboardingStatus: 'APPROVED',
+      currentStep: 5,
+      createdAt: getRelativeDate(-30),
+      updatedAt: getRelativeDate(-20),
+      documents: {
+        masterCertificate: { url: '/docs/master-3.pdf', status: 'APPROVED' },
+        businessRegistration: { url: '/docs/business-3.pdf', status: 'APPROVED' },
+        liabilityInsurance: { url: '/docs/insurance-3.pdf', status: 'APPROVED' },
+        statusDetermination: { url: '/docs/status-3.pdf', status: 'APPROVED' },
+        craftsChamber: { url: '/docs/chamber-3.pdf', status: 'APPROVED' },
+      },
+      compliance: {
+        ownPhone: true,
+        ownAppointmentBook: true,
+        ownCashRegister: true,
+        ownPriceList: true,
+        ownBranding: true,
+      },
+      selfEmploymentDeclaration: true,
+      adminNotes: 'Alle Unterlagen vollständig und geprüft.',
+    },
+  ]
 }
 
 // ============================================
@@ -2043,24 +2154,53 @@ export function getMockAdminSecurity() {
       {
         id: 'sess-1',
         userId: 'user-1',
-        userName: 'Sarah Müller',
-        userEmail: 'sarah@email.de',
-        device: 'Chrome on Windows',
+        device: 'Desktop',
+        browser: 'Chrome',
+        os: 'Windows 11',
         ipAddress: '192.168.1.100',
         location: 'Berlin, DE',
-        lastActive: getRelativeDate(0, 10, 0),
+        lastActiveAt: getRelativeDate(0, 0, 10),
+        isActive: true,
         createdAt: getRelativeDate(-7),
+        user: {
+          id: 'user-1',
+          name: 'Sarah Müller',
+          email: 'sarah@email.de',
+        },
       },
       {
         id: 'sess-2',
         userId: 'user-2',
-        userName: 'Maria Salonbesitzer',
-        userEmail: 'maria@salon.de',
-        device: 'Safari on macOS',
+        device: 'Desktop',
+        browser: 'Safari',
+        os: 'macOS',
         ipAddress: '192.168.1.101',
         location: 'Berlin, DE',
-        lastActive: getRelativeDate(0, 9, 30),
+        lastActiveAt: getRelativeDate(0, 0, 30),
+        isActive: true,
         createdAt: getRelativeDate(-1),
+        user: {
+          id: 'user-2',
+          name: 'Maria Salonbesitzer',
+          email: 'maria@salon.de',
+        },
+      },
+      {
+        id: 'sess-3',
+        userId: 'user-3',
+        device: 'Mobile',
+        browser: 'Chrome Mobile',
+        os: 'Android 14',
+        ipAddress: '192.168.1.102',
+        location: 'München, DE',
+        lastActiveAt: getRelativeDate(0, 1, 0),
+        isActive: true,
+        createdAt: getRelativeDate(-3),
+        user: {
+          id: 'user-3',
+          name: 'Max Stylist',
+          email: 'max@stylist.de',
+        },
       },
     ],
     apiKeys: [
@@ -2131,64 +2271,110 @@ export function getMockAdminSecurity() {
 // Admin Email Templates Mock Data
 // ============================================
 export function getMockAdminEmailTemplates() {
+  // Default content für alle Templates
+  const defaultContent = (headline: string, body: string, buttonText: string = 'Jetzt ansehen', footer: string = 'Bei Fragen stehen wir dir jederzeit zur Verfügung.') => ({
+    headline, body, buttonText, footer
+  })
+
+  return [
+    // ============================================
+    // Auth & Account (auth)
+    // ============================================
+    { id: 'tpl-1', slug: 'welcome', name: 'Willkommen', subject: 'Willkommen bei NICNOA, {{name}}! 🎉', description: 'Wird nach der Registrierung gesendet', category: 'auth', isActive: true, isSystem: true, content: defaultContent('Willkommen bei NICNOA!', 'Vielen Dank für deine Registrierung! Wir freuen uns, dich in unserer Community begrüßen zu dürfen.', 'Zum Dashboard'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-30), _count: { sentEmails: 456 } },
+    { id: 'tpl-2', slug: 'email-verification', name: 'E-Mail Bestätigung', subject: 'Bitte bestätige deine E-Mail-Adresse', description: 'Verifikationslink für neue Accounts', category: 'auth', isActive: true, isSystem: true, content: defaultContent('E-Mail bestätigen', 'Um dein Konto zu aktivieren, bestätige bitte deine E-Mail-Adresse.', 'E-Mail bestätigen', 'Der Link ist 24 Stunden gültig.'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-60), _count: { sentEmails: 423 } },
+    { id: 'tpl-3', slug: 'password-reset', name: 'Passwort zurücksetzen', subject: 'Dein Passwort-Reset-Link', description: 'Link zum Zurücksetzen des Passworts', category: 'auth', isActive: true, isSystem: true, content: defaultContent('Passwort zurücksetzen', 'Du hast angefordert, dein Passwort zurückzusetzen. Klicke auf den Button um ein neues Passwort zu vergeben.', 'Neues Passwort setzen', 'Falls du diese Anfrage nicht gestellt hast, ignoriere diese E-Mail.'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-45), _count: { sentEmails: 187 } },
+    { id: 'tpl-4', slug: 'password-changed', name: 'Passwort geändert', subject: 'Dein Passwort wurde geändert', description: 'Bestätigung der Passwortänderung', category: 'auth', isActive: true, isSystem: true, content: defaultContent('Passwort geändert', 'Dein Passwort wurde erfolgreich geändert. Falls du diese Änderung nicht vorgenommen hast, kontaktiere uns sofort.', 'Zum Dashboard'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-40), _count: { sentEmails: 134 } },
+    { id: 'tpl-5', slug: 'login-new-device', name: 'Neues Gerät erkannt', subject: 'Anmeldung von neuem Gerät erkannt', description: 'Sicherheitswarnung bei unbekanntem Gerät', category: 'auth', isActive: true, isSystem: true, content: defaultContent('Neue Anmeldung erkannt', 'Wir haben eine Anmeldung von einem neuen Gerät festgestellt. Falls du das nicht warst, ändere sofort dein Passwort.', 'Aktivität prüfen', 'Deine Sicherheit ist uns wichtig.'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-35), _count: { sentEmails: 89 } },
+    { id: 'tpl-6', slug: 'account-deactivated', name: 'Account deaktiviert', subject: 'Dein NICNOA Account wurde deaktiviert ⚠️', description: 'Benachrichtigung über Account-Deaktivierung', category: 'auth', isActive: true, isSystem: true, content: defaultContent('Account deaktiviert', 'Dein Account wurde deaktiviert. Deine Daten werden noch 30 Tage gespeichert.', 'Account reaktivieren', 'Kontaktiere uns bei Fragen.'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-30), _count: { sentEmails: 12 } },
+    
+    // ============================================
+    // Onboarding (onboarding)
+    // ============================================
+    { id: 'tpl-7', slug: 'onboarding-submitted', name: 'Onboarding eingereicht', subject: 'Neuer Onboarding-Antrag von {{stylistName}}', description: 'Benachrichtigt Admin über neuen Antrag', category: 'onboarding', isActive: true, isSystem: true, content: defaultContent('Neuer Onboarding-Antrag', 'Ein neuer Stylist hat seinen Onboarding-Antrag eingereicht und wartet auf Prüfung.', 'Antrag prüfen', 'Bitte prüfe den Antrag zeitnah.'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-25), _count: { sentEmails: 78 } },
+    { id: 'tpl-8', slug: 'onboarding-approved', name: 'Onboarding genehmigt', subject: 'Dein Antrag wurde genehmigt! 🎉', description: 'Stylist wurde freigeschaltet', category: 'onboarding', isActive: true, isSystem: true, content: defaultContent('Herzlichen Glückwunsch!', 'Dein Onboarding-Antrag wurde genehmigt. Du kannst jetzt alle Funktionen nutzen.', 'Zum Dashboard', 'Wir freuen uns auf eine erfolgreiche Zusammenarbeit!'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-20), _count: { sentEmails: 67 } },
+    { id: 'tpl-9', slug: 'onboarding-rejected', name: 'Onboarding abgelehnt', subject: 'Dein Antrag benötigt Überarbeitung', description: 'Antrag muss überarbeitet werden', category: 'onboarding', isActive: true, isSystem: true, content: defaultContent('Überarbeitung erforderlich', 'Leider konnten wir deinen Antrag noch nicht freigeben. Bitte überprüfe die Punkte und reiche erneut ein.', 'Antrag überarbeiten', 'Bei Fragen kannst du uns jederzeit kontaktieren.'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-15), _count: { sentEmails: 23 } },
+    { id: 'tpl-10', slug: 'document-uploaded', name: 'Dokument hochgeladen', subject: 'Neues Dokument von {{stylistName}}: {{documentType}} 📄', description: 'Stylist hat ein Dokument eingereicht', category: 'onboarding', isActive: true, isSystem: true, content: defaultContent('Neues Dokument', 'Ein neues Dokument wurde hochgeladen und wartet auf Prüfung.', 'Dokument prüfen', 'Prüfe das Dokument zeitnah.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-10), _count: { sentEmails: 156 } },
+    { id: 'tpl-11', slug: 'document-status', name: 'Dokument-Status', subject: 'Dokument {{status}}: {{documentType}}', description: 'Status-Update zu eingereichtem Dokument', category: 'onboarding', isActive: true, isSystem: true, content: defaultContent('Dokument-Update', 'Der Status deines Dokuments wurde aktualisiert.', 'Details ansehen', 'Bei Fragen wende dich an uns.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-8), _count: { sentEmails: 189 } },
+
+    // ============================================
+    // Subscription & Payment (subscription)
+    // ============================================
+    { id: 'tpl-12', slug: 'subscription-activated', name: 'Abo aktiviert', subject: 'Dein {{planName}}-Abo ist jetzt aktiv! 🚀', description: 'Bestätigung der Abo-Aktivierung', category: 'subscription', isActive: true, isSystem: true, content: defaultContent('Abo erfolgreich aktiviert!', 'Dein Abonnement ist jetzt aktiv. Du hast Zugriff auf alle Features.', 'Jetzt loslegen', 'Vielen Dank für dein Vertrauen!'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-20), _count: { sentEmails: 234 } },
+    { id: 'tpl-13', slug: 'subscription-renewed', name: 'Abo verlängert', subject: 'Dein Abo wurde erfolgreich verlängert', description: 'Bestätigung der automatischen Verlängerung', category: 'subscription', isActive: true, isSystem: true, content: defaultContent('Abo verlängert', 'Dein Abonnement wurde automatisch verlängert.', 'Abo verwalten', 'Vielen Dank, dass du NICNOA nutzt!'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-15), _count: { sentEmails: 178 } },
+    { id: 'tpl-14', slug: 'subscription-expiring', name: 'Abo läuft ab', subject: 'Dein Abo läuft bald ab ⏰', description: 'Erinnerung vor Ablauf', category: 'subscription', isActive: true, isSystem: true, content: defaultContent('Abo-Erinnerung', 'Dein Abonnement läuft bald aus. Verlängere jetzt, um weiterhin alle Funktionen zu nutzen.', 'Jetzt verlängern', 'Wir würden dich ungern als Kunden verlieren!'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-10), _count: { sentEmails: 89 } },
+    { id: 'tpl-15', slug: 'subscription-expired', name: 'Abo abgelaufen', subject: 'Dein Abo ist abgelaufen', description: 'Benachrichtigung nach Ablauf', category: 'subscription', isActive: true, isSystem: true, content: defaultContent('Abo abgelaufen', 'Dein Abonnement ist abgelaufen. Reaktiviere es jetzt, um alle Funktionen zu nutzen.', 'Abo reaktivieren', 'Deine Daten werden noch 30 Tage gespeichert.'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-5), _count: { sentEmails: 34 } },
+    { id: 'tpl-16', slug: 'payment-failed', name: 'Zahlung fehlgeschlagen', subject: 'Zahlung fehlgeschlagen - Aktion erforderlich', description: 'Benachrichtigung über fehlgeschlagene Zahlung', category: 'subscription', isActive: true, isSystem: true, content: defaultContent('Zahlung fehlgeschlagen', 'Leider konnten wir die Zahlung nicht verarbeiten. Bitte aktualisiere deine Zahlungsinformationen.', 'Zahlung aktualisieren', 'Handle bitte schnell, um eine Unterbrechung zu vermeiden.'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-8), _count: { sentEmails: 45 } },
+    { id: 'tpl-17', slug: 'payment-received', name: 'Zahlung erhalten', subject: 'Zahlung erhalten: {{amount}} 💰', description: 'Bestätigung eingehender Zahlung', category: 'subscription', isActive: true, isSystem: true, content: defaultContent('Zahlung eingegangen!', 'Deine Zahlung ist erfolgreich eingegangen. Vielen Dank!', 'Zahlungen verwalten', 'Alle Transaktionen findest du im Dashboard.'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-3), _count: { sentEmails: 567 } },
+    { id: 'tpl-18', slug: 'payment-dispute', name: 'Zahlungsstreit', subject: '🚨 Zahlungsstreit: {{amount}} von {{customerName}}', description: 'Benachrichtigung bei Stripe-Dispute', category: 'subscription', isActive: true, isSystem: true, content: defaultContent('Zahlungsstreit eingegangen', 'Ein Kunde hat einen Zahlungsstreit eingereicht. Eine Antwort ist erforderlich.', 'In Stripe öffnen', 'Beantworte den Dispute rechtzeitig.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-5), _count: { sentEmails: 3 } },
+    { id: 'tpl-19', slug: 'invoice-receipt', name: 'Rechnung/Quittung', subject: 'Deine Rechnung #{{invoiceNumber}}', description: 'Zahlungsbestätigung mit Rechnung', category: 'subscription', isActive: true, isSystem: true, content: defaultContent('Zahlungsbestätigung', 'Vielen Dank für deine Zahlung! Anbei findest du deine Rechnung.', 'Rechnung herunterladen', 'Diese E-Mail dient als Zahlungsnachweis.'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-2), _count: { sentEmails: 456 } },
+
+    // ============================================
+    // Booking (booking)
+    // ============================================
+    { id: 'tpl-20', slug: 'booking-confirmation', name: 'Terminbestätigung', subject: 'Dein Termin am {{bookingDate}} ist bestätigt ✅', description: 'Bestätigung eines gebuchten Termins', category: 'booking', isActive: true, isSystem: true, content: defaultContent('Termin bestätigt!', 'Dein Termin wurde erfolgreich bestätigt.', 'Termin verwalten', 'Bitte erscheine pünktlich zu deinem Termin.'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-1), _count: { sentEmails: 1234 } },
+    { id: 'tpl-21', slug: 'booking-reminder', name: 'Terminerinnerung', subject: 'Erinnerung: Dein Termin morgen um {{bookingTime}} Uhr', description: '24h Erinnerung vor dem Termin', category: 'booking', isActive: true, isSystem: true, content: defaultContent('Morgen ist es soweit!', 'Wir erinnern dich an deinen Termin morgen.', 'Termin ansehen', 'Kannst du nicht kommen? Bitte sage rechtzeitig ab.'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-1), _count: { sentEmails: 987 } },
+    { id: 'tpl-22', slug: 'booking-cancelled', name: 'Termin storniert', subject: 'Dein Termin wurde storniert', description: 'Bestätigung einer Stornierung', category: 'booking', isActive: true, isSystem: true, content: defaultContent('Termin storniert', 'Dein Termin wurde storniert.', 'Neuen Termin buchen', 'Wir würden uns freuen, dich bald wieder zu sehen!'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-5), _count: { sentEmails: 156 } },
+    { id: 'tpl-23', slug: 'booking-feedback-request', name: 'Feedback-Anfrage', subject: 'Wie war dein Termin? ⭐', description: 'Bitte um Bewertung nach dem Termin', category: 'booking', isActive: true, isSystem: true, content: defaultContent('Wie war dein Besuch?', 'Wir hoffen, du hattest einen tollen Termin! Teile deine Erfahrung mit uns.', 'Jetzt bewerten', 'Dein Feedback hilft uns, besser zu werden.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-3), _count: { sentEmails: 678 } },
+    { id: 'tpl-24', slug: 'customer-no-show', name: 'Kunde nicht erschienen', subject: 'Kunde nicht erschienen: {{customerName}} ❌', description: 'Benachrichtigung bei No-Show', category: 'booking', isActive: true, isSystem: true, content: defaultContent('Termin verpasst', 'Der Kunde ist nicht zum geplanten Termin erschienen.', 'Buchungen verwalten', 'Erwäge Anzahlungen, um No-Shows zu reduzieren.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-7), _count: { sentEmails: 89 } },
+
+    // ============================================
+    // Rental / Stuhlmiete (rental)
+    // ============================================
+    { id: 'tpl-25', slug: 'new-rental-request', name: 'Neue Mietanfrage', subject: 'Neue Mietanfrage von {{stylistName}} 💺', description: 'Stylist möchte einen Platz mieten', category: 'rental', isActive: true, isSystem: true, content: defaultContent('Neue Mietanfrage', 'Ein Stylist hat Interesse an einem Platz in deinem Salon.', 'Anfrage prüfen', 'Antworte zeitnah, um qualifizierte Stylisten nicht zu verlieren.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-10), _count: { sentEmails: 45 } },
+    { id: 'tpl-26', slug: 'rental-accepted', name: 'Bewerbung angenommen', subject: 'Deine Bewerbung wurde angenommen! 🎉', description: 'Salon-Besitzer hat Mietanfrage akzeptiert', category: 'rental', isActive: true, isSystem: true, content: defaultContent('Willkommen im Team!', 'Deine Bewerbung wurde angenommen. Du kannst jetzt deinen neuen Arbeitsplatz einrichten.', 'Jetzt loslegen', 'Wir freuen uns auf eine erfolgreiche Zusammenarbeit!'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-8), _count: { sentEmails: 34 } },
+    { id: 'tpl-27', slug: 'rental-rejected', name: 'Bewerbung abgelehnt', subject: 'Update zu deiner Bewerbung bei {{salonName}}', description: 'Mietanfrage wurde abgelehnt', category: 'rental', isActive: true, isSystem: true, content: defaultContent('Bewerbung nicht erfolgreich', 'Leider wurde deine Bewerbung nicht angenommen. Es gibt viele andere tolle Salons!', 'Weitere Salons entdecken', 'Optimiere dein Profil für bessere Chancen.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-6), _count: { sentEmails: 12 } },
+    { id: 'tpl-28', slug: 'rental-application-sent', name: 'Bewerbung versendet', subject: 'Deine Bewerbung bei {{salonName}} wurde versendet 📤', description: 'Bestätigung für eingereichte Bewerbung', category: 'rental', isActive: true, isSystem: true, content: defaultContent('Bewerbung eingereicht!', 'Deine Bewerbung wurde erfolgreich versendet. Der Salon-Besitzer wird benachrichtigt.', 'Status verfolgen', 'Du erhältst eine E-Mail, sobald es eine Entscheidung gibt.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-5), _count: { sentEmails: 56 } },
+    { id: 'tpl-29', slug: 'rental-ending-soon', name: 'Mietvertrag endet bald', subject: 'Dein Mietvertrag endet in {{daysRemaining}} Tagen ⏰', description: 'Erinnerung 30 Tage vor Vertragsende', category: 'rental', isActive: true, isSystem: true, content: defaultContent('Vertrag läuft aus', 'Dein Mietvertrag endet bald. Entscheide, ob du verlängern möchtest.', 'Vertrag verlängern', 'Verlängere rechtzeitig, um deinen Platz zu sichern.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-4), _count: { sentEmails: 23 } },
+    { id: 'tpl-30', slug: 'chair-rental-confirmation', name: 'Mietvertrag bestätigt', subject: 'Mietvertrag bestätigt: {{stylistName}} mietet {{chairName}} ✅', description: 'Bestätigung für Salon-Besitzer', category: 'rental', isActive: true, isSystem: true, content: defaultContent('Mietvertrag aktiv!', 'Der Mietvertrag wurde akzeptiert. Das Mietverhältnis beginnt bald.', 'Mietverhältnis verwalten', 'Begrüße deinen neuen Mieter!'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-3), _count: { sentEmails: 34 } },
+    { id: 'tpl-31', slug: 'chair-vacancy', name: 'Stuhl wieder frei', subject: '{{chairName}} ist wieder verfügbar 💺', description: 'Mietvertrag beendet - Platz verfügbar', category: 'rental', isActive: true, isSystem: true, content: defaultContent('Platz wieder frei', 'Der Mietvertrag ist beendet. Der Platz steht für neue Mieter zur Verfügung.', 'Platz verwalten', 'Aktualisiere die Informationen für neue Interessenten.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-2), _count: { sentEmails: 18 } },
+    { id: 'tpl-32', slug: 'rent-payment-due', name: 'Miete fällig', subject: 'Mietzahlung von {{amount}} fällig am {{dueDate}} 💳', description: 'Erinnerung an anstehende Mietzahlung', category: 'rental', isActive: true, isSystem: true, content: defaultContent('Miete fällig', 'Deine monatliche Miete ist bald fällig. Stelle sicher, dass die Zahlung erfolgt.', 'Jetzt bezahlen', 'Pünktliche Zahlungen sichern deinen Platz.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-1), _count: { sentEmails: 145 } },
+    { id: 'tpl-33', slug: 'rent-payment-overdue', name: 'Miete überfällig', subject: '⚠️ Mietzahlung überfällig - {{daysOverdue}} Tage', description: 'Mahnung bei überfälliger Zahlung', category: 'rental', isActive: true, isSystem: true, content: defaultContent('Zahlung überfällig', 'Deine Mietzahlung ist überfällig. Bitte begleiche den Betrag umgehend.', 'Jetzt bezahlen', 'Bei Zahlungsschwierigkeiten kontaktiere uns bitte.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-1), _count: { sentEmails: 23 } },
+
+    // ============================================
+    // Reviews (review)
+    // ============================================
+    { id: 'tpl-34', slug: 'new-review-salon', name: 'Neue Salon-Bewertung', subject: 'Neue {{rating}}-Sterne Bewertung für {{salonName}} ⭐', description: 'Kunde hat den Salon bewertet', category: 'review', isActive: true, isSystem: true, content: defaultContent('Neue Bewertung erhalten!', 'Ein Kunde hat eine neue Bewertung für deinen Salon hinterlassen.', 'Bewertung ansehen', 'Bewertungen helfen neuen Kunden, dich zu finden.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-5), _count: { sentEmails: 234 } },
+    { id: 'tpl-35', slug: 'new-review-stylist', name: 'Neue Stylist-Bewertung', subject: 'Neue {{rating}}-Sterne Bewertung ⭐', description: 'Kunde hat den Stylisten bewertet', category: 'review', isActive: true, isSystem: true, content: defaultContent('Du wurdest bewertet!', 'Ein Kunde hat eine neue Bewertung für dich hinterlassen.', 'Bewertung ansehen', 'Gute Bewertungen bringen mehr Kunden!'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-4), _count: { sentEmails: 345 } },
+
+    // ============================================
+    // Referral (referral)
+    // ============================================
+    { id: 'tpl-36', slug: 'referral-invitation', name: 'Empfehlungs-Einladung', subject: '{{referrerName}} lädt dich zu NICNOA ein! 🎁', description: 'Einladung über Referral-Link', category: 'referral', isActive: true, isSystem: true, content: defaultContent('Du wurdest eingeladen!', 'Ein Freund möchte, dass du Teil der NICNOA Community wirst. Als eingeladenes Mitglied erhältst du Vorteile.', 'Kostenlos registrieren', 'Diese Einladung ist 30 Tage gültig.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-10), _count: { sentEmails: 123 } },
+    { id: 'tpl-37', slug: 'referral-success', name: 'Empfehlung erfolgreich', subject: 'Glückwunsch! Du hast eine Belohnung verdient! 🎉', description: 'Belohnung für erfolgreiche Empfehlung', category: 'referral', isActive: true, isSystem: true, content: defaultContent('Belohnung verdient!', 'Dank deiner Empfehlung hat sich jemand registriert! Als Dankeschön erhältst du eine Belohnung.', 'Mehr Freunde einladen', 'Lade weitere Freunde ein und verdiene mehr!'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-8), _count: { sentEmails: 67 } },
+
+    // ============================================
+    // Salon Invitations (invitation)
+    // ============================================
+    { id: 'tpl-38', slug: 'salon-invitation', name: 'Salon-Einladung (registriert)', subject: '💼 {{inviterName}} lädt Sie zu {{salonName}} ein', description: 'Einladung für registrierte Stylisten', category: 'invitation', isActive: true, isSystem: true, content: defaultContent('Einladung zum Salon', 'Sie wurden eingeladen, als Stuhlmieter zu arbeiten. Klicken Sie auf den Button, um zu antworten.', 'Einladung ansehen', 'Diese Einladung ist 7 Tage gültig.'), createdAt: getRelativeDate(-30), updatedAt: getRelativeDate(-5), _count: { sentEmails: 45 } },
+    { id: 'tpl-39', slug: 'salon-invitation-unregistered', name: 'Salon-Einladung (nicht registriert)', subject: '💼 Sie wurden zu {{salonName}} eingeladen!', description: 'Einladung für nicht-registrierte Stylisten', category: 'invitation', isActive: true, isSystem: true, content: defaultContent('Werden Sie Teil des Teams', 'Sie wurden eingeladen, als Stuhlmieter zu arbeiten. Registrieren Sie sich kostenlos, um die Einladung anzunehmen.', 'Jetzt registrieren', 'Nach der Registrierung können Sie die Einladung annehmen.'), createdAt: getRelativeDate(-30), updatedAt: getRelativeDate(-4), _count: { sentEmails: 23 } },
+    { id: 'tpl-40', slug: 'salon-invitation-accepted', name: 'Einladung angenommen', subject: '🎉 {{stylistName}} hat Ihre Einladung angenommen!', description: 'Benachrichtigung wenn Einladung angenommen wurde', category: 'invitation', isActive: true, isSystem: true, content: defaultContent('Einladung angenommen!', 'Großartige Neuigkeiten! Die Einladung wurde angenommen.', 'Stylisten verwalten', 'Heißen Sie Ihren neuen Stuhlmieter willkommen!'), createdAt: getRelativeDate(-30), updatedAt: getRelativeDate(-3), _count: { sentEmails: 34 } },
+    { id: 'tpl-41', slug: 'salon-invitation-rejected', name: 'Einladung abgelehnt', subject: 'Einladung wurde abgelehnt', description: 'Benachrichtigung wenn Einladung abgelehnt wurde', category: 'invitation', isActive: true, isSystem: true, content: defaultContent('Einladung abgelehnt', 'Leider wurde Ihre Einladung abgelehnt.', 'Andere Stylisten einladen', 'Sie können jederzeit weitere Stylisten einladen.'), createdAt: getRelativeDate(-30), updatedAt: getRelativeDate(-2), _count: { sentEmails: 12 } },
+    { id: 'tpl-42', slug: 'stylist-left-salon', name: 'Stylist verlässt Salon', subject: '{{stylistName}} hat den Salon verlassen', description: 'Benachrichtigung wenn Stylist kündigt', category: 'invitation', isActive: true, isSystem: true, content: defaultContent('Stylist hat gekündigt', 'Ein Stylist hat den Salon verlassen. Der Platz ist wieder verfügbar.', 'Platz verwalten', 'Suchen Sie nach einem neuen Mieter.'), createdAt: getRelativeDate(-30), updatedAt: getRelativeDate(-1), _count: { sentEmails: 8 } },
+
+    // ============================================
+    // System & Messaging (system)
+    // ============================================
+    { id: 'tpl-43', slug: 'new-message', name: 'Neue Nachricht', subject: 'Neue Nachricht von {{senderName}}', description: 'Benachrichtigung über neue Nachricht', category: 'system', isActive: true, isSystem: true, content: defaultContent('Du hast eine neue Nachricht', 'Jemand hat dir eine Nachricht geschickt.', 'Nachricht lesen', 'Du kannst Nachrichtenbenachrichtigungen in den Einstellungen ändern.'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-1), _count: { sentEmails: 789 } },
+    { id: 'tpl-44', slug: 'security-alert', name: 'Sicherheitswarnung', subject: '🚨 Sicherheitswarnung: {{alertType}}', description: 'Benachrichtigung bei Sicherheitsvorfällen', category: 'system', isActive: true, isSystem: true, content: defaultContent('Sicherheitswarnung', 'Es wurde ein Sicherheitsvorfall erkannt, der deine Aufmerksamkeit erfordert.', 'Details ansehen', 'Bei kritischen Vorfällen handele sofort.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-5), _count: { sentEmails: 12 } },
+
+    // ============================================
+    // Admin Reports (admin)
+    // ============================================
+    { id: 'tpl-45', slug: 'daily-summary', name: 'Tagesbericht', subject: 'Tagesbericht {{date}}: {{totalRevenue}} Umsatz 📊', description: 'Täglicher Report für Administratoren', category: 'admin', isActive: true, isSystem: true, content: defaultContent('Tagesbericht', 'Hier ist dein täglicher Überblick über die Plattform-Aktivitäten.', 'Dashboard öffnen', 'Automatischer täglicher Report.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-1), _count: { sentEmails: 90 } },
+    { id: 'tpl-46', slug: 'weekly-summary', name: 'Wochenbericht', subject: 'Dein Wochenbericht: {{weekRange}} 📅', description: 'Wöchentliche Zusammenfassung', category: 'admin', isActive: true, isSystem: true, content: defaultContent('Wochenrückblick', 'Hier ist dein Überblick über die vergangene Woche.', 'Zum Dashboard', 'Setze dir Ziele für die kommende Woche!'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-1), _count: { sentEmails: 45 } },
+    { id: 'tpl-47', slug: 'monthly-summary', name: 'Monatsbericht', subject: 'Dein Monatsbericht für {{month}} {{year}} 📊', description: 'Monatliche Zusammenfassung', category: 'admin', isActive: true, isSystem: true, content: defaultContent('Monatsbericht', 'Hier ist dein Überblick über den vergangenen Monat. Analysiere deine Performance.', 'Bericht ansehen', 'Detaillierte Analysen findest du im Dashboard.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-1), _count: { sentEmails: 12 } },
+    { id: 'tpl-48', slug: 'new-user-registered', name: 'Neuer Nutzer registriert', subject: 'Neuer Nutzer: {{newUserName}} ({{userRole}}) 👤', description: 'Benachrichtigung über neue Registrierung', category: 'admin', isActive: true, isSystem: true, content: defaultContent('Neue Registrierung', 'Ein neuer Nutzer hat sich auf der Plattform registriert.', 'Nutzer ansehen', 'Prüfe ggf. das Profil des neuen Nutzers.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-1), _count: { sentEmails: 234 } },
+    { id: 'tpl-49', slug: 'high-churn-alert', name: 'Hohe Abwanderungsrate', subject: '⚠️ Churn-Alert: Abwanderungsrate auf {{churnRate}} gestiegen', description: 'Warnung bei erhöhter Kündigungsrate', category: 'admin', isActive: true, isSystem: true, content: defaultContent('Erhöhte Abwanderung erkannt', 'Die Abwanderungsrate ist gestiegen. Dies erfordert sofortige Aufmerksamkeit.', 'Analytics-Dashboard öffnen', 'Automatischer Alert basierend auf Churn-Analyse.'), createdAt: getRelativeDate(-30), updatedAt: getRelativeDate(-5), _count: { sentEmails: 3 } },
+  ]
+}
+
+export function getMockEmailBrandingSettings() {
   return {
-    templates: [
-      {
-        id: 'tpl-1',
-        name: 'welcome',
-        subject: 'Willkommen bei NICNOA!',
-        description: 'Begrüßungs-E-Mail für neue Benutzer',
-        isActive: true,
-        lastModified: getRelativeDate(-30),
-      },
-      {
-        id: 'tpl-2',
-        name: 'password-reset',
-        subject: 'Passwort zurücksetzen',
-        description: 'E-Mail zum Zurücksetzen des Passworts',
-        isActive: true,
-        lastModified: getRelativeDate(-60),
-      },
-      {
-        id: 'tpl-3',
-        name: 'booking-confirmation',
-        subject: 'Buchungsbestätigung',
-        description: 'Bestätigung für neue Buchungen',
-        isActive: true,
-        lastModified: getRelativeDate(-45),
-      },
-      {
-        id: 'tpl-4',
-        name: 'booking-reminder',
-        subject: 'Terminerinnerung',
-        description: 'Erinnerung vor anstehenden Terminen',
-        isActive: true,
-        lastModified: getRelativeDate(-45),
-      },
-      {
-        id: 'tpl-5',
-        name: 'subscription-activated',
-        subject: 'Abonnement aktiviert',
-        description: 'Bestätigung der Abo-Aktivierung',
-        isActive: true,
-        lastModified: getRelativeDate(-90),
-      },
-      {
-        id: 'tpl-6',
-        name: 'payment-failed',
-        subject: 'Zahlungsproblem',
-        description: 'Benachrichtigung bei fehlgeschlagener Zahlung',
-        isActive: true,
-        lastModified: getRelativeDate(-90),
-      },
-    ],
-    brandingSettings: {
-      logoUrl: null,
-      primaryColor: '#ec4899',
-      companyName: 'NICNOA',
-      supportEmail: 'support@nicnoa.de',
-      footerText: '© 2024 NICNOA. Alle Rechte vorbehalten.',
-    },
+    logoUrl: null,
+    primaryColor: '#ec4899',
+    companyName: 'NICNOA',
+    supportEmail: 'support@nicnoa.de',
+    footerText: '© 2024 NICNOA. Alle Rechte vorbehalten.',
   }
 }
 

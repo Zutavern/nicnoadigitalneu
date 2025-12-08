@@ -123,48 +123,79 @@ export default function SecurityPage() {
     fetchLogs()
   }, [logFilter])
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (retryCount = 0) => {
     setIsLoadingLogs(true)
     try {
       const statusParam = logFilter !== 'all' ? `&status=${logFilter.toUpperCase()}` : ''
       const res = await fetch(`/api/admin/security/logs?limit=50${statusParam}`)
-      if (!res.ok) throw new Error('Failed to fetch logs')
+      if (!res.ok) {
+        // Retry auf 5xx Fehler
+        if (res.status >= 500 && retryCount < 2) {
+          await new Promise(r => setTimeout(r, 1000))
+          return fetchLogs(retryCount + 1)
+        }
+        throw new Error(`Failed to fetch logs: ${res.status}`)
+      }
       const data = await res.json()
-      setLogs(data.logs)
-      setLogStats(data.stats)
+      setLogs(data.logs || [])
+      setLogStats(data.stats || { successCount: 0, failedCount: 0, warningCount: 0 })
     } catch (error) {
       console.error('Error fetching logs:', error)
-      toast.error('Fehler beim Laden der Logs')
+      // Nur Toast zeigen, wenn es kein Retry war
+      if (retryCount === 0) {
+        toast.error('Fehler beim Laden der Logs')
+      }
+      // Setze leere Daten im Fehlerfall
+      setLogs([])
+      setLogStats({ successCount: 0, failedCount: 0, warningCount: 0 })
     } finally {
       setIsLoadingLogs(false)
     }
   }
 
-  const fetchSessions = async () => {
+  const fetchSessions = async (retryCount = 0) => {
     setIsLoadingSessions(true)
     try {
       const res = await fetch('/api/admin/security/sessions')
-      if (!res.ok) throw new Error('Failed to fetch sessions')
+      if (!res.ok) {
+        if (res.status >= 500 && retryCount < 2) {
+          await new Promise(r => setTimeout(r, 1000))
+          return fetchSessions(retryCount + 1)
+        }
+        throw new Error(`Failed to fetch sessions: ${res.status}`)
+      }
       const data = await res.json()
-      setSessions(data.sessions)
+      setSessions(data.sessions || [])
     } catch (error) {
       console.error('Error fetching sessions:', error)
-      toast.error('Fehler beim Laden der Sessions')
+      if (retryCount === 0) {
+        toast.error('Fehler beim Laden der Sessions')
+      }
+      setSessions([])
     } finally {
       setIsLoadingSessions(false)
     }
   }
 
-  const fetchApiKeys = async () => {
+  const fetchApiKeys = async (retryCount = 0) => {
     setIsLoadingKeys(true)
     try {
       const res = await fetch('/api/admin/security/api-keys')
-      if (!res.ok) throw new Error('Failed to fetch API keys')
+      if (!res.ok) {
+        if (res.status >= 500 && retryCount < 2) {
+          await new Promise(r => setTimeout(r, 1000))
+          return fetchApiKeys(retryCount + 1)
+        }
+        throw new Error(`Failed to fetch API keys: ${res.status}`)
+      }
       const data = await res.json()
-      setApiKeys(data.apiKeys)
+      setApiKeys(data.apiKeys || [])
     } catch (error) {
       console.error('Error fetching API keys:', error)
-      toast.error('Fehler beim Laden der API-Schlüssel')
+      if (retryCount === 0) {
+        toast.error('Fehler beim Laden der API-Schlüssel')
+      }
+      setApiKeys([])
     } finally {
       setIsLoadingKeys(false)
     }
@@ -252,14 +283,21 @@ export default function SecurityPage() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Intl.DateTimeFormat('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(dateString))
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'N/A'
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return 'Ungültiges Datum'
+      return new Intl.DateTimeFormat('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(date)
+    } catch {
+      return 'N/A'
+    }
   }
 
   const getStatusBadge = (status: string) => {

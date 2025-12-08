@@ -118,7 +118,8 @@ export default function OnboardingReviewPage() {
       const res = await fetch('/api/admin/onboarding')
       if (res.ok) {
         const data = await res.json()
-        setApplications(data)
+        // Unterstützt sowohl { applications: [...] } als auch direkt [...]
+        setApplications(Array.isArray(data) ? data : (data.applications || []))
       }
     } catch (error) {
       console.error('Error fetching applications:', error)

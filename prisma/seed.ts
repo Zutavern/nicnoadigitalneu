@@ -2166,6 +2166,207 @@ async function main() {
   console.log(`✅ ${referralRewards.length} Referral Rewards seeded`)
 
   // ============================================
+  // 14. Seed Test Conversations & Messages
+  // ============================================
+
+  const conversations = [
+    // Admin <-> Salon Owner
+    {
+      id: 'c0000000-0000-0000-0000-000000000001',
+      type: 'DIRECT' as const,
+      subject: null,
+    },
+    // Admin <-> Stylist
+    {
+      id: 'c0000000-0000-0000-0000-000000000002',
+      type: 'DIRECT' as const,
+      subject: null,
+    },
+    // Salon Owner <-> Stylist
+    {
+      id: 'c0000000-0000-0000-0000-000000000003',
+      type: 'DIRECT' as const,
+      subject: null,
+    },
+    // Gruppenkonversation: Salon Team
+    {
+      id: 'c0000000-0000-0000-0000-000000000004',
+      type: 'GROUP' as const,
+      subject: 'Salon Team Besprechung',
+    },
+  ]
+
+  for (const conv of conversations) {
+    await prisma.conversation.upsert({
+      where: { id: conv.id },
+      update: conv,
+      create: conv,
+    })
+  }
+
+  // Conversation Participants
+  const participants = [
+    // Konversation 1: Admin <-> Salon Owner
+    { conversationId: 'c0000000-0000-0000-0000-000000000001', userId: '00000000-0000-0000-0000-000000000001', role: 'ADMIN' as const },
+    { conversationId: 'c0000000-0000-0000-0000-000000000001', userId: '00000000-0000-0000-0000-000000000002', role: 'MEMBER' as const },
+    // Konversation 2: Admin <-> Stylist
+    { conversationId: 'c0000000-0000-0000-0000-000000000002', userId: '00000000-0000-0000-0000-000000000001', role: 'ADMIN' as const },
+    { conversationId: 'c0000000-0000-0000-0000-000000000002', userId: '00000000-0000-0000-0000-000000000003', role: 'MEMBER' as const },
+    // Konversation 3: Salon Owner <-> Stylist
+    { conversationId: 'c0000000-0000-0000-0000-000000000003', userId: '00000000-0000-0000-0000-000000000002', role: 'ADMIN' as const },
+    { conversationId: 'c0000000-0000-0000-0000-000000000003', userId: '00000000-0000-0000-0000-000000000003', role: 'MEMBER' as const },
+    // Konversation 4: Gruppenkonversation
+    { conversationId: 'c0000000-0000-0000-0000-000000000004', userId: '00000000-0000-0000-0000-000000000002', role: 'ADMIN' as const },
+    { conversationId: 'c0000000-0000-0000-0000-000000000004', userId: '00000000-0000-0000-0000-000000000003', role: 'MEMBER' as const },
+    { conversationId: 'c0000000-0000-0000-0000-000000000004', userId: '00000000-0000-0000-0000-000000000020', role: 'MEMBER' as const },
+  ]
+
+  for (const p of participants) {
+    await prisma.conversationParticipant.upsert({
+      where: { 
+        conversationId_userId: { 
+          conversationId: p.conversationId, 
+          userId: p.userId 
+        } 
+      },
+      update: p,
+      create: p,
+    })
+  }
+
+  // Messages
+  const messages = [
+    // Konversation 1: Admin <-> Salon Owner
+    {
+      id: 'f0000000-0000-0000-0000-000000000001',
+      conversationId: 'c0000000-0000-0000-0000-000000000001',
+      senderId: '00000000-0000-0000-0000-000000000001', // Admin
+      content: 'Willkommen bei NICNOA! Bei Fragen zur Plattform stehe ich Ihnen gerne zur Verfügung.',
+      isSystemMessage: false,
+      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+    },
+    {
+      id: 'f0000000-0000-0000-0000-000000000002',
+      conversationId: 'c0000000-0000-0000-0000-000000000001',
+      senderId: '00000000-0000-0000-0000-000000000002', // Salon Owner
+      content: 'Vielen Dank! Ich habe eine Frage zu den Stuhlmieten. Wie funktioniert die automatische Abrechnung?',
+      isSystemMessage: false,
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    },
+    {
+      id: 'f0000000-0000-0000-0000-000000000003',
+      conversationId: 'c0000000-0000-0000-0000-000000000001',
+      senderId: '00000000-0000-0000-0000-000000000001', // Admin
+      content: 'Die Abrechnung erfolgt automatisch am Ende jedes Monats. Sie können die Details unter Einstellungen > Abrechnung einsehen.',
+      isSystemMessage: false,
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    },
+
+    // Konversation 2: Admin <-> Stylist
+    {
+      id: 'f0000000-0000-0000-0000-000000000004',
+      conversationId: 'c0000000-0000-0000-0000-000000000002',
+      senderId: '00000000-0000-0000-0000-000000000001', // Admin
+      content: 'Herzlich willkommen auf der NICNOA Plattform! Ihr Onboarding wurde erfolgreich abgeschlossen.',
+      isSystemMessage: false,
+      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+    },
+    {
+      id: 'f0000000-0000-0000-0000-000000000005',
+      conversationId: 'c0000000-0000-0000-0000-000000000002',
+      senderId: '00000000-0000-0000-0000-000000000003', // Stylist
+      content: 'Danke! Ich freue mich auf die Zusammenarbeit. Wie finde ich am besten einen passenden Salon?',
+      isSystemMessage: false,
+      createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+    },
+    {
+      id: 'f0000000-0000-0000-0000-000000000006',
+      conversationId: 'c0000000-0000-0000-0000-000000000002',
+      senderId: '00000000-0000-0000-0000-000000000001', // Admin
+      content: 'Unter "Salon finden" können Sie verfügbare Salons in Ihrer Nähe durchsuchen und Anfragen senden.',
+      isSystemMessage: false,
+      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+    },
+
+    // Konversation 3: Salon Owner <-> Stylist
+    {
+      id: 'f0000000-0000-0000-0000-000000000007',
+      conversationId: 'c0000000-0000-0000-0000-000000000003',
+      senderId: '00000000-0000-0000-0000-000000000002', // Salon Owner
+      content: 'Hallo! Ich habe Ihre Bewerbung gesehen. Wann hätten Sie Zeit für ein persönliches Gespräch?',
+      isSystemMessage: false,
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    },
+    {
+      id: 'f0000000-0000-0000-0000-000000000008',
+      conversationId: 'c0000000-0000-0000-0000-000000000003',
+      senderId: '00000000-0000-0000-0000-000000000003', // Stylist
+      content: 'Guten Tag! Ich hätte am Mittwoch oder Donnerstag ab 14 Uhr Zeit. Was würde Ihnen besser passen?',
+      isSystemMessage: false,
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    },
+    {
+      id: 'f0000000-0000-0000-0000-000000000009',
+      conversationId: 'c0000000-0000-0000-0000-000000000003',
+      senderId: '00000000-0000-0000-0000-000000000002', // Salon Owner
+      content: 'Mittwoch um 15 Uhr wäre perfekt! Ich schicke Ihnen die Adresse.',
+      isSystemMessage: false,
+      createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
+    },
+    {
+      id: 'f0000000-0000-0000-0000-000000000010',
+      conversationId: 'c0000000-0000-0000-0000-000000000003',
+      senderId: '00000000-0000-0000-0000-000000000003', // Stylist
+      content: 'Super, das passt mir! Bis Mittwoch dann. 👋',
+      isSystemMessage: false,
+      createdAt: new Date(Date.now() - 10 * 60 * 60 * 1000),
+    },
+
+    // Konversation 4: Gruppenkonversation
+    {
+      id: 'f0000000-0000-0000-0000-000000000011',
+      conversationId: 'c0000000-0000-0000-0000-000000000004',
+      senderId: '00000000-0000-0000-0000-000000000002', // Salon Owner
+      content: 'Hallo Team! Kurze Info: Am Samstag ist eine Fortbildung geplant. Bitte gebt mir Bescheid, wer teilnehmen kann.',
+      isSystemMessage: false,
+      createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
+    },
+    {
+      id: 'f0000000-0000-0000-0000-000000000012',
+      conversationId: 'c0000000-0000-0000-0000-000000000004',
+      senderId: '00000000-0000-0000-0000-000000000003', // Stylist
+      content: 'Ich bin dabei! Um welche Uhrzeit geht es los?',
+      isSystemMessage: false,
+      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
+    },
+    {
+      id: 'f0000000-0000-0000-0000-000000000013',
+      conversationId: 'c0000000-0000-0000-0000-000000000004',
+      senderId: '00000000-0000-0000-0000-000000000020', // Sarah Müller
+      content: 'Ich kann leider nicht, habe schon Kundentermine. 😔',
+      isSystemMessage: false,
+      createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
+    },
+    {
+      id: 'f0000000-0000-0000-0000-000000000014',
+      conversationId: 'c0000000-0000-0000-0000-000000000004',
+      senderId: '00000000-0000-0000-0000-000000000002', // Salon Owner
+      content: 'Kein Problem Sarah! Die Fortbildung startet um 10 Uhr. Wir machen danach noch ein gemeinsames Mittagessen. 🍕',
+      isSystemMessage: false,
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+    },
+  ]
+
+  for (const msg of messages) {
+    await prisma.message.upsert({
+      where: { id: msg.id },
+      update: msg,
+      create: msg,
+    })
+  }
+  console.log(`✅ ${conversations.length} Conversations & ${messages.length} Messages seeded`)
+
+  // ============================================
   // Summary
   // ============================================
 
@@ -2188,6 +2389,8 @@ async function main() {
   console.log(`   🤝 Referral Profiles: ${referralProfiles.length}`)
   console.log(`   🎁 Referrals: ${referrals.length}`)
   console.log(`   💎 Referral Rewards: ${referralRewards.length}`)
+  console.log(`   💬 Conversations: ${conversations.length}`)
+  console.log(`   📨 Messages: ${messages.length}`)
   console.log('=' .repeat(50))
   console.log('\n🔐 Test Logins (Password: test123):')
   console.log('   Admin:   admin@nicnoa.de')

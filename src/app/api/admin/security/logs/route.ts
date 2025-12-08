@@ -1,10 +1,26 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { isDemoModeActive, getMockAdminSecurity } from '@/lib/mock-data'
 
 // GET /api/admin/security/logs - Hole Security Logs
 export async function GET(request: Request) {
   try {
+    // Demo-Modus prüfen
+    if (await isDemoModeActive()) {
+      const mockData = getMockAdminSecurity()
+      return NextResponse.json({
+        logs: mockData.logs,
+        pagination: { page: 1, limit: 50, total: mockData.logs.length, totalPages: 1 },
+        stats: {
+          successCount: mockData.logs.filter(l => l.status === 'SUCCESS').length,
+          failedCount: mockData.logs.filter(l => l.status === 'FAILED').length,
+          warningCount: mockData.logs.filter(l => l.status === 'WARNING').length,
+          infoCount: mockData.logs.filter(l => l.status === 'INFO').length,
+        }
+      })
+    }
+
     const session = await auth()
     
     if (!session?.user) {
