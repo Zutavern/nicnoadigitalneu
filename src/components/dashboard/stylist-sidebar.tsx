@@ -19,6 +19,7 @@ import {
   HelpCircle,
   MapPin,
   User,
+  HandshakeIcon,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -59,6 +60,12 @@ const menuItems = [
       { label: 'Mein Profil', href: '/stylist/profile', icon: User },
       { label: 'Bewertungen', href: '/stylist/reviews', icon: Star },
       { label: 'Nachrichten', href: '/stylist/messages', icon: MessageSquare },
+    ],
+  },
+  {
+    title: 'Extras',
+    items: [
+      { label: 'Partner & Vorteile', href: '/dashboard/partners', icon: HandshakeIcon },
     ],
   },
 ]
@@ -187,7 +194,10 @@ export function StylistSidebar() {
           {!collapsed && <span>Hilfe</span>}
         </Link>
         <button
-          onClick={() => signOut({ callbackUrl: '/' })}
+          onClick={() => {
+            const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+            signOut({ callbackUrl: `${baseUrl}/` })
+          }}
           className={cn(
             "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-all",
             collapsed && "justify-center"

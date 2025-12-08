@@ -94,7 +94,10 @@ export function AdminHeader() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => signOut({ callbackUrl: '/' })}
+              onClick={() => {
+                const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+                signOut({ callbackUrl: `${baseUrl}/` })
+              }}
               className="text-destructive focus:text-destructive cursor-pointer"
             >
               <LogOut className="mr-2 h-4 w-4" />

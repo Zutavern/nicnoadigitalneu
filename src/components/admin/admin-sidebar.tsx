@@ -21,10 +21,21 @@ import {
   MessageSquare,
   Mail,
   Gift,
+  AlertTriangle,
+  HandshakeIcon,
+  Quote,
+  Globe,
+  FileText,
+  ChevronDown,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { signOut } from 'next-auth/react'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 
 const menuItems = [
   {
@@ -66,10 +77,31 @@ const menuItems = [
     ],
   },
   {
+    title: 'Public Pages',
+    items: [
+      {
+        label: 'CMS',
+        icon: FileText,
+        children: [
+          {
+            label: 'Seiten',
+            icon: Globe,
+            children: [
+              { label: 'FAQ', href: '/admin/faqs', icon: HelpCircle },
+              { label: 'Testimonials', href: '/admin/testimonials', icon: Quote },
+              { label: 'Partner & Vorteile', href: '/admin/partners', icon: HandshakeIcon },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
     title: 'System',
     items: [
       { label: 'Einstellungen', href: '/admin/settings', icon: Settings },
       { label: 'Sicherheit', href: '/admin/security', icon: Shield },
+      { label: 'Fehlermeldungen', href: '/admin/error-messages', icon: AlertTriangle },
     ],
   },
 ]
@@ -78,6 +110,10 @@ export function AdminSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    'cms': false,
+    'seiten': false,
+  })
 
   // Prevent hydration mismatch by waiting for mount
   useEffect(() => {
@@ -153,12 +189,116 @@ export function AdminSidebar() {
               </h3>
             )}
             <ul className="space-y-1">
-              {section.items.map((item) => {
+              {section.items.map((item, itemIndex) => {
+                // Check if item has children (nested menu)
+                if (item.children && !collapsed) {
+                  return (
+                    <li key={`${sectionIndex}-${itemIndex}`}>
+                      <Collapsible
+                        open={openSections[item.label.toLowerCase()] || false}
+                        onOpenChange={(open) => {
+                          setOpenSections(prev => ({
+                            ...prev,
+                            [item.label.toLowerCase()]: open
+                          }))
+                        }}
+                      >
+                        <CollapsibleTrigger
+                          className={cn(
+                            "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all text-muted-foreground hover:bg-muted hover:text-foreground",
+                            collapsed && "justify-center"
+                          )}
+                        >
+                          <item.icon className={cn("h-5 w-5 flex-shrink-0", collapsed && "mx-auto")} />
+                          {!collapsed && (
+                            <>
+                              <span className="flex-1 text-left">{item.label}</span>
+                              <ChevronDown className={cn(
+                                "h-4 w-4 transition-transform",
+                                openSections[item.label.toLowerCase()] && "rotate-180"
+                              )} />
+                            </>
+                          )}
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-1 space-y-1 pl-4">
+                          {item.children.map((child, childIndex) => {
+                            // Check if child has children (third level)
+                            if (child.children) {
+                              return (
+                                <Collapsible
+                                  key={`${sectionIndex}-${itemIndex}-${childIndex}`}
+                                  open={openSections[child.label.toLowerCase()] || false}
+                                  onOpenChange={(open) => {
+                                    setOpenSections(prev => ({
+                                      ...prev,
+                                      [child.label.toLowerCase()]: open
+                                    }))
+                                  }}
+                                >
+                                  <CollapsibleTrigger
+                                    className={cn(
+                                      "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    )}
+                                  >
+                                    <child.icon className="h-4 w-4 flex-shrink-0" />
+                                    <span className="flex-1 text-left">{child.label}</span>
+                                    <ChevronDown className={cn(
+                                      "h-4 w-4 transition-transform",
+                                      openSections[child.label.toLowerCase()] && "rotate-180"
+                                    )} />
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent className="mt-1 space-y-1 pl-4">
+                                    {child.children.map((grandchild, grandchildIndex) => {
+                                      const isActive = pathname === grandchild.href
+                                      return (
+                                        <Link
+                                          key={`${sectionIndex}-${itemIndex}-${childIndex}-${grandchildIndex}`}
+                                          href={grandchild.href}
+                                          className={cn(
+                                            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all",
+                                            isActive
+                                              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                          )}
+                                        >
+                                          <grandchild.icon className="h-4 w-4 flex-shrink-0" />
+                                          <span>{grandchild.label}</span>
+                                        </Link>
+                                      )
+                                    })}
+                                  </CollapsibleContent>
+                                </Collapsible>
+                              )
+                            }
+                            // Regular child item (no further nesting)
+                            const isActive = pathname === child.href
+                            return (
+                              <Link
+                                key={`${sectionIndex}-${itemIndex}-${childIndex}`}
+                                href={child.href}
+                                className={cn(
+                                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all",
+                                  isActive
+                                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                )}
+                              >
+                                <child.icon className="h-4 w-4 flex-shrink-0" />
+                                <span>{child.label}</span>
+                              </Link>
+                            )
+                          })}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </li>
+                  )
+                }
+                // Regular item (no children)
                 const isActive = pathname === item.href
                 return (
-                  <li key={item.href}>
+                  <li key={item.href || `${sectionIndex}-${itemIndex}`}>
                     <Link
-                      href={item.href}
+                      href={item.href || '#'}
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all",
                         isActive
@@ -190,7 +330,10 @@ export function AdminSidebar() {
           {!collapsed && <span>Hilfe & Support</span>}
         </Link>
         <button
-          onClick={() => signOut({ callbackUrl: '/' })}
+          onClick={() => {
+            const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+            signOut({ callbackUrl: `${baseUrl}/` })
+          }}
           className={cn(
             "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-all",
             collapsed && "justify-center"

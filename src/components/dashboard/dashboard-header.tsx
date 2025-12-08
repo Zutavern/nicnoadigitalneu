@@ -89,7 +89,10 @@ export function DashboardHeader({ baseUrl, accentColor = 'primary' }: DashboardH
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive cursor-pointer"
-              onClick={() => signOut({ callbackUrl: '/' })}
+              onClick={() => {
+                const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+                signOut({ callbackUrl: `${baseUrl}/` })
+              }}
             >
               <LogOut className="mr-2 h-4 w-4" />
               Abmelden

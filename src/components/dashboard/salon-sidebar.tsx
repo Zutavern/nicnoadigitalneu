@@ -21,6 +21,7 @@ import {
   HelpCircle,
   Armchair,
   Gift,
+  HandshakeIcon,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -57,6 +58,12 @@ const menuItems = [
       { label: 'Nachrichten', href: '/salon/messages', icon: MessageSquare },
       { label: 'Bewertungen', href: '/salon/reviews', icon: Star },
       { label: 'Empfehlungen', href: '/salon/referral', icon: Gift },
+    ],
+  },
+  {
+    title: 'Extras',
+    items: [
+      { label: 'Partner & Vorteile', href: '/dashboard/partners', icon: HandshakeIcon },
     ],
   },
 ]
@@ -185,7 +192,10 @@ export function SalonSidebar() {
           {!collapsed && <span>Hilfe</span>}
         </Link>
         <button
-          onClick={() => signOut({ callbackUrl: '/' })}
+          onClick={() => {
+            const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+            signOut({ callbackUrl: `${baseUrl}/` })
+          }}
           className={cn(
             "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-all",
             collapsed && "justify-center"

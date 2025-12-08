@@ -956,11 +956,210 @@ model PlatformSettings {
   useDemoMode       Boolean  @default(true) @map("use_demo_mode")
   demoModeMessage   String?  @default("Demo-Modus aktiv - Es werden Beispieldaten angezeigt") @map("demo_mode_message") @db.VarChar(500)
   
+  // Sicherheit
+  passwordProtectionEnabled Boolean @default(true) @map("password_protection_enabled")
+  
   // Timestamps
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("platform_settings")
+}
+
+// ============================================
+// Error Messages (Witzige Fehlermeldungen)
+// ============================================
+
+model ErrorMessage {
+  id          String   @id @db.VarChar(50)
+  errorType   String   @map("error_type") @db.VarChar(50) // '404', '500', '403', '401', etc.
+  message     String   @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([errorType, isActive])
+  @@map("error_messages")
+}
+
+// ============================================
+// Job Postings & Applications
+// ============================================
+
+model JobPosting {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String   @db.VarChar(200)
+  slug        String   @unique @db.VarChar(255)
+  category    String   @db.VarChar(50) // 'IT-Development', 'Operations', 'Finance'
+  description String   @db.Text
+  requirements String  @db.Text
+  benefits    String?  @db.Text
+  location    String   @default("München (Remote)") @db.VarChar(100)
+  type        String   @default("Vollzeit") @db.VarChar(50) // Vollzeit, Teilzeit, etc.
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  applications JobApplication[]
+
+  @@index([category, isActive])
+  @@index([slug])
+  @@map("job_postings")
+}
+
+model JobApplication {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  jobId       String?  @map("job_id") @db.Uuid // Optional für Initiativbewerbungen
+  firstName   String   @map("first_name") @db.VarChar(100)
+  lastName    String   @map("last_name") @db.VarChar(100)
+  email       String   @db.VarChar(255)
+  phone       String?  @db.VarChar(50)
+  coverLetter String?  @map("cover_letter") @db.Text
+  cvUrl       String   @map("cv_url") // Vercel Blob URL
+  cvFileName  String   @map("cv_file_name") @db.VarChar(255)
+  status      ApplicationStatus @default(PENDING)
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  job JobPosting? @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([status])
+  @@map("job_applications")
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWED
+  INTERVIEW
+  REJECTED
+  ACCEPTED
+}
+
+// ============================================
+// Partner & Deals
+// ============================================
+
+model Partner {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @db.VarChar(200)
+  slug        String   @unique @db.VarChar(255)
+  category    String   @db.VarChar(50) // 'tools', 'booking', 'finance'
+  description String   @db.Text
+  offer       String   @db.Text
+  code        String?  @db.VarChar(100)
+  instructions String  @db.Text // JSON array as string
+  link        String   @db.VarChar(500)
+  isHighlight Boolean  @default(false) @map("is_highlight")
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  logoUrl     String?  @map("logo_url") @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([category, isActive])
+  @@index([isActive, sortOrder])
+  @@map("partners")
+}
+
+model PartnerPageConfig {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // Hero Section
+  heroBadgeText     String?  @map("hero_badge_text") @db.VarChar(100)
+  heroTitle         String   @map("hero_title") @db.Text
+  heroDescription   String?  @map("hero_description") @db.Text
+  heroFeature1Text  String?  @map("hero_feature_1_text") @db.VarChar(100)
+  heroFeature2Text  String?  @map("hero_feature_2_text") @db.VarChar(100)
+  heroFeature3Text  String?  @map("hero_feature_3_text") @db.VarChar(100)
+  
+  // Partner Card CTA
+  cardCtaText       String?  @map("card_cta_text") @db.VarChar(200)
+  cardCtaLink       String?  @default("/registrieren") @map("card_cta_link") @db.VarChar(200)
+  cardCtaButtonText String?  @default("Jetzt Mitglied werden") @map("card_cta_button_text") @db.VarChar(100)
+  
+  // CTA Section
+  ctaTitle          String?  @map("cta_title") @db.Text
+  ctaDescription    String?  @map("cta_description") @db.Text
+  ctaButton1Text    String?  @default("Jetzt registrieren") @map("cta_button_1_text") @db.VarChar(100)
+  ctaButton1Link    String?  @default("/registrieren") @map("cta_button_1_link") @db.VarChar(200)
+  ctaButton2Text    String?  @default("Preise ansehen") @map("cta_button_2_text") @db.VarChar(100)
+  ctaButton2Link    String?  @default("/preise") @map("cta_button_2_link") @db.VarChar(200)
+  
+  // Meta
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("partner_page_config")
+}
+
+// ============================================
+// Testimonials
+// ============================================
+
+model Testimonial {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @db.VarChar(200)
+  role        String   @db.VarChar(50) // 'STYLIST' oder 'SALON_OWNER'
+  text        String   @db.Text
+  imageUrl    String?  @map("image_url") @db.VarChar(500)
+  company     String?  @db.VarChar(200) // Optional: Salon-Name
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([role, isActive, sortOrder])
+  @@map("testimonials")
+}
+
+// ============================================
+// FAQs
+// ============================================
+
+model FAQ {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question    String   @db.Text
+  answer      String   @db.Text
+  category    String?  @db.VarChar(100) // Optional: z.B. 'Buchungen', 'Finanzen', etc.
+  role        String   @db.VarChar(50) // 'STYLIST' oder 'SALON_OWNER'
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([role, isActive, sortOrder])
+  @@index([category, role, isActive])
+  @@map("faqs")
+}
+
+model FAQPageConfig {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // Hero Section
+  heroBadgeText     String?  @map("hero_badge_text") @db.VarChar(100)
+  heroTitle         String   @map("hero_title") @db.Text
+  heroDescription   String?  @map("hero_description") @db.Text
+  
+  // FAQ Section Header
+  sectionTitle      String?  @map("section_title") @db.Text
+  sectionDescription String? @map("section_description") @db.Text
+  
+  // Tab Labels
+  salonTabLabel     String   @default("Für Salon-Space Betreiber") @map("salon_tab_label") @db.VarChar(100)
+  stylistTabLabel   String   @default("Für Stuhlmieter") @map("stylist_tab_label") @db.VarChar(100)
+  
+  // Contact Section
+  contactText       String?  @map("contact_text") @db.Text
+  contactLinkText   String?  @default("Support-Team") @map("contact_link_text") @db.VarChar(100)
+  contactLinkUrl    String?  @default("/support") @map("contact_link_url") @db.VarChar(200)
+  
+  // Meta
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("faq_page_config")
 }
 
 // ============================================

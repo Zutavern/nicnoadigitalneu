@@ -1,8 +1,27 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import { FileQuestion, Home, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
 export default function NotFound() {
+  const [errorMessage, setErrorMessage] = useState('Die angeforderte Seite existiert nicht oder wurde verschoben.')
+
+  useEffect(() => {
+    // Hole zufällige Fehlermeldung
+    fetch('/api/error-messages/404')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.message) {
+          setErrorMessage(data.message)
+        }
+      })
+      .catch(() => {
+        // Fallback bleibt bestehen
+      })
+  }, [])
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="max-w-md w-full mx-auto p-8">
@@ -14,7 +33,7 @@ export default function NotFound() {
           <h1 className="text-6xl font-bold text-primary mb-2">404</h1>
           <h2 className="text-2xl font-semibold mb-2">Seite nicht gefunden</h2>
           <p className="text-muted-foreground mb-6">
-            Die angeforderte Seite existiert nicht oder wurde verschoben.
+            {errorMessage}
           </p>
           
           <div className="flex flex-col sm:flex-row gap-3 justify-center">

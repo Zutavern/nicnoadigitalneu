@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -12,9 +12,23 @@ export default function Error({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const [errorMessage, setErrorMessage] = useState('Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.')
+
   useEffect(() => {
     // Log error to an error reporting service
     console.error('Application error:', error)
+
+    // Hole zufällige Fehlermeldung
+    fetch('/api/error-messages/500')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.message) {
+          setErrorMessage(data.message)
+        }
+      })
+      .catch(() => {
+        // Fallback bleibt bestehen
+      })
   }, [error])
 
   return (
@@ -27,7 +41,7 @@ export default function Error({
           
           <h1 className="text-2xl font-bold mb-2">Etwas ist schiefgelaufen</h1>
           <p className="text-muted-foreground mb-6">
-            Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.
+            {errorMessage}
           </p>
           
           {error.digest && (

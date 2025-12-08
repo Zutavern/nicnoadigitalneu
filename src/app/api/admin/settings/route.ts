@@ -84,7 +84,9 @@ export async function PUT(request: Request) {
       googleAnalyticsId,
       // Demo-Modus
       useDemoMode,
-      demoModeMessage
+      demoModeMessage,
+      // Sicherheit
+      passwordProtectionEnabled
     } = body
 
     // Aktualisiere Einstellungen (upsert für Singleton)
@@ -111,6 +113,9 @@ export async function PUT(request: Request) {
     // Demo-Modus
     if (useDemoMode !== undefined) updateData.useDemoMode = useDemoMode
     if (demoModeMessage !== undefined) updateData.demoModeMessage = demoModeMessage
+    
+    // Sicherheit
+    if (passwordProtectionEnabled !== undefined) updateData.passwordProtectionEnabled = passwordProtectionEnabled
     
     // SMTP-Passwort nur aktualisieren wenn nicht Platzhalter
     if (smtpPassword !== undefined && smtpPassword !== '••••••••') {

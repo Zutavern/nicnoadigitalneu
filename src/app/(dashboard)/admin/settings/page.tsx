@@ -18,6 +18,8 @@ import {
   Loader2,
   FlaskConical,
   AlertTriangle,
+  Lock,
+  Shield,
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -56,6 +58,7 @@ interface PlatformSettings {
   googleAnalyticsId: string | null
   useDemoMode: boolean
   demoModeMessage: string | null
+  passwordProtectionEnabled: boolean
 }
 
 export default function SettingsPage() {
@@ -81,6 +84,7 @@ export default function SettingsPage() {
   const [googleAnalyticsId, setGoogleAnalyticsId] = useState('')
   const [useDemoMode, setUseDemoMode] = useState(true)
   const [demoModeMessage, setDemoModeMessage] = useState('Demo-Modus aktiv - Es werden Beispieldaten angezeigt')
+  const [passwordProtectionEnabled, setPasswordProtectionEnabled] = useState(true)
 
   useEffect(() => {
     fetchSettings()
@@ -110,6 +114,7 @@ export default function SettingsPage() {
       setGoogleAnalyticsId(data.googleAnalyticsId || '')
       setUseDemoMode(data.useDemoMode ?? true)
       setDemoModeMessage(data.demoModeMessage || 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt')
+      setPasswordProtectionEnabled(data.passwordProtectionEnabled ?? true)
     } catch (error) {
       console.error('Error fetching settings:', error)
       toast.error('Fehler beim Laden der Einstellungen')
@@ -141,6 +146,7 @@ export default function SettingsPage() {
           googleAnalyticsId: googleAnalyticsId || null,
           useDemoMode,
           demoModeMessage: demoModeMessage || null,
+          passwordProtectionEnabled,
         }),
       })
       
@@ -265,11 +271,12 @@ export default function SettingsPage() {
       </motion.div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="general">Allgemein</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="billing">Abrechnung</TabsTrigger>
           <TabsTrigger value="email">E-Mail</TabsTrigger>
+          <TabsTrigger value="security">Sicherheit</TabsTrigger>
           <TabsTrigger value="integrations">Integrationen</TabsTrigger>
         </TabsList>
 
@@ -624,6 +631,65 @@ export default function SettingsPage() {
                   <Mail className="mr-2 h-4 w-4" />
                   Test-E-Mail senden
                 </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+
+        {/* Security Settings */}
+        <TabsContent value="security" className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  Sicherheitseinstellungen
+                </CardTitle>
+                <CardDescription>Plattform-weite Sicherheitskonfiguration</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
+                  <div className="flex items-start gap-4">
+                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Lock className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-1">Passwort-Schutz</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Aktiviert einen Session-basierten Passwort-Schutz für alle Benutzer beim ersten Seitenaufruf.
+                        Das Passwort muss einmalig pro Browser-Session eingegeben werden.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="text-sm font-medium">
+                        {passwordProtectionEnabled ? 'Aktiviert' : 'Deaktiviert'}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Session-Schutz
+                      </span>
+                    </div>
+                    <Switch
+                      checked={passwordProtectionEnabled}
+                      onCheckedChange={setPasswordProtectionEnabled}
+                      className="data-[state=checked]:bg-primary"
+                    />
+                  </div>
+                </div>
+                
+                {passwordProtectionEnabled && (
+                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                    <p className="text-sm text-muted-foreground">
+                      <strong>Hinweis:</strong> Der Passwort-Schutz ist aktiviert. Alle Benutzer müssen beim ersten Seitenaufruf 
+                      einer neuen Browser-Session das Zugangspasswort eingeben. Das Passwort wird in der Session gespeichert 
+                      und muss nicht erneut eingegeben werden, solange der Browser-Tab geöffnet bleibt.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
