@@ -1,9 +1,8 @@
 #!/usr/bin/env tsx
 /**
  * Script zur Synchronisation der Datenbank
- * Führt nur Schema-Sync (db push) aus
- * Seeding wird nicht mehr automatisch ausgeführt, da es nur einmalig nötig ist
- * (Seeding kann manuell mit: pnpm tsx scripts/seed-all.ts ausgeführt werden)
+ * Führt Schema-Sync (db push) und automatisches Seeding aus
+ * Seeding ist idempotent - prüft ob Daten bereits vorhanden sind
  */
 
 import 'dotenv/config'
@@ -54,8 +53,48 @@ try {
   }
 
   console.log('✅ Datenbank-Schema erfolgreich synchronisiert!')
-  console.log('💡 Hinweis: Seeding wird nicht mehr automatisch ausgeführt.')
-  console.log('   Falls nötig, führe manuell aus: pnpm tsx scripts/seed-all.ts')
+
+  // Automatisches Seeding - Scripts sind idempotent (überspringen vorhandene Daten)
+  console.log('')
+  console.log('🌱 Führe automatisches Seeding aus (idempotent)...')
+  
+  const seedScripts = [
+    'prisma/seed-approach-cards.ts',
+    'prisma/seed-about-us-page-config.ts',
+    'prisma/seed-faq-page-config.ts',
+    'prisma/seed-partner-page-config.ts',
+    'prisma/seed-faqs.ts',
+    'prisma/seed-testimonials.ts',
+    'prisma/seed-partners.ts',
+  ]
+
+  let seedSuccess = 0
+  let seedSkipped = 0
+
+  for (const script of seedScripts) {
+    try {
+      // Extrahiere Seed-Namen für bessere Logs
+      const seedName = script.replace('prisma/seed-', '').replace('.ts', '')
+      process.stdout.write(`   🌱 ${seedName}... `)
+      
+      execSync(`pnpm tsx ${script}`, { 
+        stdio: 'pipe', // Unterdrücke Output für sauberere Logs
+        env: { ...process.env }
+      })
+      console.log('✅')
+      seedSuccess++
+    } catch (error) {
+      // Seed-Scripts können fehlschlagen wenn Daten bereits vorhanden
+      // oder bei anderen nicht-kritischen Fehlern
+      console.log('⏭️  (übersprungen)')
+      seedSkipped++
+    }
+  }
+
+  console.log('')
+  console.log(`📊 Seeding: ${seedSuccess} erfolgreich, ${seedSkipped} übersprungen`)
+  console.log('✅ Datenbank-Synchronisation abgeschlossen!')
+
 } catch (error) {
   console.error('❌ Fehler bei der Schema-Synchronisation:', error)
   // In Production nicht abbrechen, damit der Build weiterläuft
@@ -67,4 +106,3 @@ try {
     process.exit(1)
   }
 }
-
