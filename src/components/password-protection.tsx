@@ -130,27 +130,25 @@ export function PasswordProtection() {
               background: 'linear-gradient(135deg, #0a0a0f 0%, #0f1419 25%, #121827 50%, #0d1117 75%, #0a0a0f 100%)',
             }}
           >
-            {/* Animierte Partikel/Sterne im Hintergrund */}
+            {/* Animierte Partikel/Sterne im Hintergrund - feste Positionen für Hydration */}
             <div className="absolute inset-0 overflow-hidden">
-              {[...Array(20)].map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="absolute w-1 h-1 bg-blue-400/30 rounded-full"
-                  style={{
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 100}%`,
-                  }}
-                  animate={{
-                    opacity: [0.2, 0.8, 0.2],
-                    scale: [1, 1.5, 1],
-                  }}
-                  transition={{
-                    duration: 2 + Math.random() * 3,
-                    repeat: Infinity,
-                    delay: Math.random() * 2,
-                  }}
-                />
-              ))}
+              {/* Partikel mit festen Positionen */}
+              <motion.div className="absolute w-1 h-1 bg-blue-400/30 rounded-full" style={{ left: '10%', top: '15%' }} animate={{ opacity: [0.2, 0.8, 0.2], scale: [1, 1.5, 1] }} transition={{ duration: 3, repeat: Infinity, delay: 0 }} />
+              <motion.div className="absolute w-1 h-1 bg-blue-400/30 rounded-full" style={{ left: '25%', top: '80%' }} animate={{ opacity: [0.2, 0.8, 0.2], scale: [1, 1.5, 1] }} transition={{ duration: 4, repeat: Infinity, delay: 0.5 }} />
+              <motion.div className="absolute w-1 h-1 bg-blue-400/30 rounded-full" style={{ left: '45%', top: '25%' }} animate={{ opacity: [0.2, 0.8, 0.2], scale: [1, 1.5, 1] }} transition={{ duration: 2.5, repeat: Infinity, delay: 1 }} />
+              <motion.div className="absolute w-1 h-1 bg-blue-400/30 rounded-full" style={{ left: '70%', top: '60%' }} animate={{ opacity: [0.2, 0.8, 0.2], scale: [1, 1.5, 1] }} transition={{ duration: 3.5, repeat: Infinity, delay: 0.3 }} />
+              <motion.div className="absolute w-1 h-1 bg-blue-400/30 rounded-full" style={{ left: '85%', top: '10%' }} animate={{ opacity: [0.2, 0.8, 0.2], scale: [1, 1.5, 1] }} transition={{ duration: 4.5, repeat: Infinity, delay: 1.5 }} />
+              <motion.div className="absolute w-1 h-1 bg-blue-400/30 rounded-full" style={{ left: '15%', top: '45%' }} animate={{ opacity: [0.2, 0.8, 0.2], scale: [1, 1.5, 1] }} transition={{ duration: 3, repeat: Infinity, delay: 0.8 }} />
+              <motion.div className="absolute w-1 h-1 bg-blue-400/30 rounded-full" style={{ left: '55%', top: '85%' }} animate={{ opacity: [0.2, 0.8, 0.2], scale: [1, 1.5, 1] }} transition={{ duration: 2, repeat: Infinity, delay: 1.2 }} />
+              <motion.div className="absolute w-1 h-1 bg-blue-400/30 rounded-full" style={{ left: '90%', top: '40%' }} animate={{ opacity: [0.2, 0.8, 0.2], scale: [1, 1.5, 1] }} transition={{ duration: 3.8, repeat: Infinity, delay: 0.2 }} />
+              <motion.div className="absolute w-1 h-1 bg-blue-400/30 rounded-full" style={{ left: '35%', top: '55%' }} animate={{ opacity: [0.2, 0.8, 0.2], scale: [1, 1.5, 1] }} transition={{ duration: 4.2, repeat: Infinity, delay: 1.8 }} />
+              <motion.div className="absolute w-1 h-1 bg-blue-400/30 rounded-full" style={{ left: '60%', top: '20%' }} animate={{ opacity: [0.2, 0.8, 0.2], scale: [1, 1.5, 1] }} transition={{ duration: 2.8, repeat: Infinity, delay: 0.6 }} />
+              <motion.div className="absolute w-1 h-1 bg-blue-400/30 rounded-full" style={{ left: '5%', top: '70%' }} animate={{ opacity: [0.2, 0.8, 0.2], scale: [1, 1.5, 1] }} transition={{ duration: 3.2, repeat: Infinity, delay: 1.1 }} />
+              <motion.div className="absolute w-1 h-1 bg-blue-400/30 rounded-full" style={{ left: '80%', top: '75%' }} animate={{ opacity: [0.2, 0.8, 0.2], scale: [1, 1.5, 1] }} transition={{ duration: 4, repeat: Infinity, delay: 0.4 }} />
+              <motion.div className="absolute w-1.5 h-1.5 bg-blue-300/20 rounded-full" style={{ left: '20%', top: '30%' }} animate={{ opacity: [0.1, 0.6, 0.1], scale: [1, 1.3, 1] }} transition={{ duration: 5, repeat: Infinity, delay: 0.7 }} />
+              <motion.div className="absolute w-1.5 h-1.5 bg-indigo-400/20 rounded-full" style={{ left: '75%', top: '90%' }} animate={{ opacity: [0.1, 0.6, 0.1], scale: [1, 1.3, 1] }} transition={{ duration: 4.5, repeat: Infinity, delay: 1.4 }} />
+              <motion.div className="absolute w-0.5 h-0.5 bg-blue-200/40 rounded-full" style={{ left: '40%', top: '5%' }} animate={{ opacity: [0.3, 1, 0.3], scale: [1, 1.8, 1] }} transition={{ duration: 2.2, repeat: Infinity, delay: 0.9 }} />
+              <motion.div className="absolute w-0.5 h-0.5 bg-blue-200/40 rounded-full" style={{ left: '95%', top: '55%' }} animate={{ opacity: [0.3, 1, 0.3], scale: [1, 1.8, 1] }} transition={{ duration: 2.6, repeat: Infinity, delay: 1.6 }} />
             </div>
 
             {/* Große blaue Glow-Effekte */}
