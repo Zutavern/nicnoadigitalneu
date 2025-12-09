@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { getIconComponent } from '@/lib/icon-mapping'
 
 interface AboutUsPageConfig {
   heroBadgeText: string
@@ -41,28 +42,28 @@ interface AboutUsPageConfig {
   missionDescription: string
   approachTitle: string
   approachDescription: string
-  approach1Title: string
-  approach1Description: string
-  approach2Title: string
-  approach2Description: string
-  approach3Title: string
-  approach3Description: string
-  approach4Title: string
-  approach4Description: string
   whyTitle: string
   whyDescription: string
   whyButtonText: string
   whyButtonLink: string
 }
 
-const approachIcons = [Target, ShieldCheck, Scaling, Sparkles]
+interface ApproachCard {
+  id: string
+  title: string
+  description: string
+  iconName: string | null
+  sortOrder: number
+}
 
 export default function UberUnsPage() {
   const [config, setConfig] = useState<AboutUsPageConfig | null>(null)
+  const [approachCards, setApproachCards] = useState<ApproachCard[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     fetchConfig()
+    fetchApproachCards()
   }, [])
 
   const fetchConfig = async () => {
@@ -76,6 +77,18 @@ export default function UberUnsPage() {
       console.error('Error fetching config:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchApproachCards = async () => {
+    try {
+      const res = await fetch('/api/approach-cards')
+      if (res.ok) {
+        const data = await res.json()
+        setApproachCards(data)
+      }
+    } catch (error) {
+      console.error('Error fetching approach cards:', error)
     }
   }
 
@@ -101,42 +114,18 @@ export default function UberUnsPage() {
     missionDescription: 'Unser Antrieb ist es, innovative und effiziente Lösungen zu schaffen, die das Management von Salon-Spaces vereinfachen und die Zusammenarbeit in der Beauty-Branche fördern.',
     approachTitle: 'Unser Ansatz',
     approachDescription: 'Wie wir arbeiten und was uns auszeichnet',
-    approach1Title: 'Praxisnah validiert',
-    approach1Description: 'Wir haben unsere Konzepte zunächst offline getestet und bewiesen, dass sie in der realen Welt funktionieren – bevor wir sie digital skaliert haben.',
-    approach2Title: 'Rechtssicherheit & Automatisierung',
-    approach2Description: 'Automatisierte Verträge und integrierte Compliance-Standards schaffen Sicherheit bei allen Mietprozessen.',
-    approach3Title: 'Skalierbarkeit & Flexibilität',
-    approach3Description: 'Unsere Plattform passt sich an individuelle Anforderungen an, ob Einzelunternehmer, KMU oder Großunternehmen.',
-    approach4Title: 'Benutzerfreundlichkeit',
-    approach4Description: 'Ein intuitives Design und durchdachte Workflows machen die Verwaltung und Vermietung von Flächen so einfach wie möglich.',
     whyTitle: 'Warum wir tun, was wir tun',
     whyDescription: 'Wir sind fest davon überzeugt, dass moderne Salon-Spaces und intelligente Ressourcennutzung der Schlüssel zum Erfolg in der Beauty-Branche sind. Gemeinsam gestalten wir die Zukunft des Salon-Managements.',
     whyButtonText: 'Jetzt durchstarten',
     whyButtonLink: '/registrieren',
   }
 
-  const approaches = [
-    {
-      icon: approachIcons[0],
-      title: pageConfig.approach1Title,
-      description: pageConfig.approach1Description,
-    },
-    {
-      icon: approachIcons[1],
-      title: pageConfig.approach2Title,
-      description: pageConfig.approach2Description,
-    },
-    {
-      icon: approachIcons[2],
-      title: pageConfig.approach3Title,
-      description: pageConfig.approach3Description,
-    },
-    {
-      icon: approachIcons[3],
-      title: pageConfig.approach4Title,
-      description: pageConfig.approach4Description,
-    },
-  ].filter(a => a.title && a.description)
+  // Kacheln aus der API laden
+  const approaches = approachCards.map((card) => ({
+    icon: getIconComponent(card.iconName),
+    title: card.title,
+    description: card.description,
+  }))
 
   if (isLoading) {
     return (
@@ -199,6 +188,8 @@ export default function UberUnsPage() {
                   alt={pageConfig.team1Name || 'Team Member 1'}
                   fill
                   className="object-cover"
+                  loading="lazy"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
@@ -245,6 +236,8 @@ export default function UberUnsPage() {
                   alt={pageConfig.team2Name || 'Team Member 2'}
                   fill
                   className="object-cover"
+                  loading="lazy"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">

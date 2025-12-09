@@ -1193,17 +1193,9 @@ model AboutUsPageConfig {
   missionTitle      String?  @map("mission_title") @db.Text
   missionDescription String? @map("mission_description") @db.Text
   
-  // Approach Section
+  // Approach Section Header (nur Titel und Beschreibung, Kacheln separat)
   approachTitle     String?  @map("approach_title") @db.Text
   approachDescription String? @map("approach_description") @db.Text
-  approach1Title    String?  @map("approach_1_title") @db.VarChar(200)
-  approach1Description String? @map("approach_1_description") @db.Text
-  approach2Title    String?  @map("approach_2_title") @db.VarChar(200)
-  approach2Description String? @map("approach_2_description") @db.Text
-  approach3Title    String?  @map("approach_3_title") @db.VarChar(200)
-  approach3Description String? @map("approach_3_description") @db.Text
-  approach4Title    String?  @map("approach_4_title") @db.VarChar(200)
-  approach4Description String? @map("approach_4_description") @db.Text
   
   // Why Section
   whyTitle          String?  @map("why_title") @db.Text
@@ -1216,6 +1208,21 @@ model AboutUsPageConfig {
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("about_us_page_config")
+}
+
+model ApproachCard {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title             String   @db.VarChar(200)
+  description       String   @db.Text
+  iconName          String?  @map("icon_name") @db.VarChar(50) // z.B. "Target", "ShieldCheck", etc.
+  sortOrder         Int      @default(0) @map("sort_order")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("approach_cards")
+  @@index([sortOrder])
+  @@index([isActive])
 }
 
 // ============================================

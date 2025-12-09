@@ -16,13 +16,37 @@ import {
   ShieldCheck,
   Scaling,
   Sparkles,
+  Plus,
+  Edit2,
+  Trash2,
+  GripVertical,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react'
+import { getIconComponent, iconNames } from '@/lib/icon-mapping'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Switch } from '@/components/ui/switch'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -50,21 +74,20 @@ interface AboutUsPageConfig {
   missionDescription: string
   approachTitle: string
   approachDescription: string
-  approach1Title: string
-  approach1Description: string
-  approach2Title: string
-  approach2Description: string
-  approach3Title: string
-  approach3Description: string
-  approach4Title: string
-  approach4Description: string
   whyTitle: string
   whyDescription: string
   whyButtonText: string
   whyButtonLink: string
 }
 
-const approachIcons = [Target, ShieldCheck, Scaling, Sparkles]
+interface ApproachCard {
+  id: string
+  title: string
+  description: string
+  iconName: string | null
+  sortOrder: number
+  isActive: boolean
+}
 
 export default function AboutUsAdminPage() {
   const [pageConfig, setPageConfig] = useState<AboutUsPageConfig>({
@@ -89,14 +112,6 @@ export default function AboutUsAdminPage() {
     missionDescription: '',
     approachTitle: '',
     approachDescription: '',
-    approach1Title: '',
-    approach1Description: '',
-    approach2Title: '',
-    approach2Description: '',
-    approach3Title: '',
-    approach3Description: '',
-    approach4Title: '',
-    approach4Description: '',
     whyTitle: '',
     whyDescription: '',
     whyButtonText: 'Jetzt durchstarten',
@@ -107,9 +122,21 @@ export default function AboutUsAdminPage() {
   const [showPreview, setShowPreview] = useState(true)
   const [uploadingImage1, setUploadingImage1] = useState(false)
   const [uploadingImage2, setUploadingImage2] = useState(false)
+  const [approachCards, setApproachCards] = useState<ApproachCard[]>([])
+  const [isLoadingCards, setIsLoadingCards] = useState(false)
+  const [editCardDialogOpen, setEditCardDialogOpen] = useState(false)
+  const [currentCard, setCurrentCard] = useState<Partial<ApproachCard>>({
+    title: '',
+    description: '',
+    iconName: 'Target',
+    sortOrder: 0,
+    isActive: true,
+  })
+  const [isEditingCard, setIsEditingCard] = useState(false)
 
   useEffect(() => {
     fetchPageConfig()
+    fetchApproachCards()
   }, [])
 
   const fetchPageConfig = async () => {
@@ -192,28 +219,145 @@ export default function AboutUsAdminPage() {
     }
   }
 
-  const approaches = [
-    {
-      icon: approachIcons[0],
-      title: pageConfig.approach1Title,
-      description: pageConfig.approach1Description,
-    },
-    {
-      icon: approachIcons[1],
-      title: pageConfig.approach2Title,
-      description: pageConfig.approach2Description,
-    },
-    {
-      icon: approachIcons[2],
-      title: pageConfig.approach3Title,
-      description: pageConfig.approach3Description,
-    },
-    {
-      icon: approachIcons[3],
-      title: pageConfig.approach4Title,
-      description: pageConfig.approach4Description,
-    },
-  ].filter((a) => a.title && a.description)
+  const fetchApproachCards = async () => {
+    try {
+      setIsLoadingCards(true)
+      const res = await fetch('/api/admin/approach-cards')
+      if (res.ok) {
+        const data = await res.json()
+        setApproachCards(data)
+      }
+    } catch (error) {
+      console.error('Error fetching cards:', error)
+      toast.error('Fehler beim Laden der Kacheln')
+    } finally {
+      setIsLoadingCards(false)
+    }
+  }
+
+  const handleSaveCard = async () => {
+    try {
+      if (!currentCard.title || !currentCard.description) {
+        toast.error('Titel und Beschreibung sind erforderlich')
+        return
+      }
+
+      if (isEditingCard && currentCard.id) {
+        // Update
+        const res = await fetch(`/api/admin/approach-cards/${currentCard.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(currentCard),
+        })
+
+        if (res.ok) {
+          toast.success('Kachel erfolgreich aktualisiert')
+          setEditCardDialogOpen(false)
+          setCurrentCard({ title: '', description: '', iconName: 'Target', sortOrder: 0, isActive: true })
+          setIsEditingCard(false)
+          await fetchApproachCards()
+        } else {
+          const error = await res.json()
+          toast.error(error.error || 'Fehler beim Aktualisieren')
+        }
+      } else {
+        // Create
+        const maxSortOrder = approachCards.length > 0 
+          ? Math.max(...approachCards.map(c => c.sortOrder)) + 1 
+          : 0
+        
+        const res = await fetch('/api/admin/approach-cards', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...currentCard,
+            sortOrder: maxSortOrder,
+          }),
+        })
+
+        if (res.ok) {
+          toast.success('Kachel erfolgreich erstellt')
+          setEditCardDialogOpen(false)
+          setCurrentCard({ title: '', description: '', iconName: 'Target', sortOrder: 0, isActive: true })
+          setIsEditingCard(false)
+          await fetchApproachCards()
+        } else {
+          const error = await res.json()
+          toast.error(error.error || 'Fehler beim Erstellen')
+        }
+      }
+    } catch (error) {
+      console.error('Error saving card:', error)
+      toast.error('Fehler beim Speichern der Kachel')
+    }
+  }
+
+  const handleEditCard = (card: ApproachCard) => {
+    setCurrentCard(card)
+    setIsEditingCard(true)
+    setEditCardDialogOpen(true)
+  }
+
+  const handleDeleteCard = async (id: string) => {
+    if (!confirm('Möchten Sie diese Kachel wirklich löschen?')) return
+
+    try {
+      const res = await fetch(`/api/admin/approach-cards/${id}`, {
+        method: 'DELETE',
+      })
+
+      if (res.ok) {
+        toast.success('Kachel erfolgreich gelöscht')
+        await fetchApproachCards()
+      } else {
+        const error = await res.json()
+        toast.error(error.error || 'Fehler beim Löschen')
+      }
+    } catch (error) {
+      console.error('Error deleting card:', error)
+      toast.error('Fehler beim Löschen der Kachel')
+    }
+  }
+
+  const handleMoveCard = async (id: string, direction: 'up' | 'down') => {
+    const cardIndex = approachCards.findIndex(c => c.id === id)
+    if (cardIndex === -1) return
+
+    const newIndex = direction === 'up' ? cardIndex - 1 : cardIndex + 1
+    if (newIndex < 0 || newIndex >= approachCards.length) return
+
+    const updatedCards = [...approachCards]
+    const temp = updatedCards[cardIndex].sortOrder
+    updatedCards[cardIndex].sortOrder = updatedCards[newIndex].sortOrder
+    updatedCards[newIndex].sortOrder = temp
+
+    // Update in DB
+    try {
+      const res = await fetch('/api/admin/approach-cards', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cards: updatedCards }),
+      })
+
+      if (res.ok) {
+        await fetchApproachCards()
+      } else {
+        toast.error('Fehler beim Verschieben')
+      }
+    } catch (error) {
+      console.error('Error moving card:', error)
+      toast.error('Fehler beim Verschieben der Kachel')
+    }
+  }
+
+  // Kacheln aus der API für Preview
+  const approaches = approachCards
+    .filter((card) => card.isActive)
+    .map((card) => ({
+      icon: getIconComponent(card.iconName),
+      title: card.title,
+      description: card.description,
+    }))
 
   return (
     <div className="space-y-6">
@@ -229,6 +373,7 @@ export default function AboutUsAdminPage() {
       <Tabs defaultValue="config" className="space-y-6">
         <TabsList>
           <TabsTrigger value="config">Konfiguration</TabsTrigger>
+          <TabsTrigger value="cards">Kacheln</TabsTrigger>
           <TabsTrigger value="preview">Vorschau</TabsTrigger>
         </TabsList>
 
@@ -575,11 +720,11 @@ export default function AboutUsAdminPage() {
             </Card>
           </div>
 
-          {/* Approach Section */}
+          {/* Approach Section Header */}
           <Card>
             <CardHeader>
-              <CardTitle>Ansatz-Bereich</CardTitle>
-              <CardDescription>Vier Ansätze/Features</CardDescription>
+              <CardTitle>Ansatz-Bereich Header</CardTitle>
+              <CardDescription>Überschrift für den Kachel-Bereich (Kacheln werden separat verwaltet)</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -604,36 +749,6 @@ export default function AboutUsAdminPage() {
                   placeholder="z.B. Wie wir arbeiten und was uns auszeichnet"
                   rows={2}
                 />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[1, 2, 3, 4].map((num) => (
-                  <div key={num} className="space-y-2 p-4 border rounded-lg">
-                    <Label>Ansatz {num}</Label>
-                    <Input
-                      value={pageConfig[`approach${num}Title` as keyof AboutUsPageConfig] as string}
-                      onChange={(e) =>
-                        setPageConfig((prev) => ({
-                          ...prev,
-                          [`approach${num}Title`]: e.target.value,
-                        }))
-                      }
-                      placeholder={`Titel ${num}`}
-                    />
-                    <Textarea
-                      value={
-                        pageConfig[`approach${num}Description` as keyof AboutUsPageConfig] as string
-                      }
-                      onChange={(e) =>
-                        setPageConfig((prev) => ({
-                          ...prev,
-                          [`approach${num}Description`]: e.target.value,
-                        }))
-                      }
-                      placeholder={`Beschreibung ${num}`}
-                      rows={3}
-                    />
-                  </div>
-                ))}
               </div>
             </CardContent>
           </Card>
@@ -710,6 +825,203 @@ export default function AboutUsAdminPage() {
               )}
             </Button>
           </div>
+        </TabsContent>
+
+        {/* Kacheln Tab */}
+        <TabsContent value="cards" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Ansatz-Kacheln</CardTitle>
+                  <CardDescription>
+                    Verwalten Sie die Kacheln im Ansatz-Bereich. Sie können die Reihenfolge ändern, bearbeiten und neue hinzufügen.
+                  </CardDescription>
+                </div>
+                <Button
+                  onClick={() => {
+                    setCurrentCard({ title: '', description: '', iconName: 'Target', sortOrder: 0, isActive: true })
+                    setIsEditingCard(false)
+                    setEditCardDialogOpen(true)
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Neue Kachel
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoadingCards ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : approachCards.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground mb-4">Noch keine Kacheln vorhanden</p>
+                  <Button
+                    onClick={() => {
+                      setCurrentCard({ title: '', description: '', iconName: 'Target', sortOrder: 0, isActive: true })
+                      setIsEditingCard(false)
+                      setEditCardDialogOpen(true)
+                    }}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Erste Kachel erstellen
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {approachCards.map((card, index) => {
+                    const Icon = getIconComponent(card.iconName)
+                    return (
+                      <div
+                        key={card.id}
+                        className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleMoveCard(card.id, 'up')}
+                            disabled={index === 0}
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleMoveCard(card.id, 'down')}
+                            disabled={index === approachCards.length - 1}
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-start gap-3">
+                            <div className="rounded-lg bg-primary/10 p-2.5 flex-shrink-0">
+                              <Icon className="h-5 w-5 text-primary" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-semibold">{card.title}</h3>
+                                <Badge variant={card.isActive ? 'default' : 'secondary'}>
+                                  {card.isActive ? 'Aktiv' : 'Inaktiv'}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground">{card.description}</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Icon: {card.iconName || 'Kein Icon'} | Position: {card.sortOrder}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditCard(card)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteCard(card.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Edit Card Dialog */}
+          <Dialog open={editCardDialogOpen} onOpenChange={setEditCardDialogOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>
+                  {isEditingCard ? 'Kachel bearbeiten' : 'Neue Kachel erstellen'}
+                </DialogTitle>
+                <DialogDescription>
+                  Erstellen oder bearbeiten Sie eine Ansatz-Kachel
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cardTitle">Titel</Label>
+                  <Input
+                    id="cardTitle"
+                    value={currentCard.title}
+                    onChange={(e) =>
+                      setCurrentCard((prev) => ({ ...prev, title: e.target.value }))
+                    }
+                    placeholder="z.B. Praxisnah validiert"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cardDescription">Beschreibung</Label>
+                  <Textarea
+                    id="cardDescription"
+                    value={currentCard.description}
+                    onChange={(e) =>
+                      setCurrentCard((prev) => ({ ...prev, description: e.target.value }))
+                    }
+                    placeholder="Beschreibung der Kachel..."
+                    rows={4}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cardIcon">Icon</Label>
+                  <Select
+                    value={currentCard.iconName || 'Target'}
+                    onValueChange={(value) =>
+                      setCurrentCard((prev) => ({ ...prev, iconName: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {iconNames.map((iconName) => {
+                        const Icon = getIconComponent(iconName)
+                        return (
+                          <SelectItem key={iconName} value={iconName}>
+                            <div className="flex items-center gap-2">
+                              <Icon className="h-4 w-4" />
+                              <span>{iconName}</span>
+                            </div>
+                          </SelectItem>
+                        )
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="cardActive"
+                    checked={currentCard.isActive !== false}
+                    onCheckedChange={(checked) =>
+                      setCurrentCard((prev) => ({ ...prev, isActive: checked }))
+                    }
+                  />
+                  <Label htmlFor="cardActive">Aktiv</Label>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditCardDialogOpen(false)}>
+                  Abbrechen
+                </Button>
+                <Button onClick={handleSaveCard}>
+                  <Save className="mr-2 h-4 w-4" />
+                  {isEditingCard ? 'Aktualisieren' : 'Erstellen'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="preview" className="space-y-6">
@@ -910,29 +1222,35 @@ export default function AboutUsAdminPage() {
                       )}
                     </motion.div>
                     <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-                      {approaches.map((approach, index) => {
-                        const Icon = approach.icon
-                        return (
-                          <motion.div
-                            key={index}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: index * 0.1 }}
-                            className="group relative rounded-xl border bg-card p-6 hover:shadow-lg transition-shadow"
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="rounded-lg bg-primary/10 p-2.5 flex-shrink-0">
-                                <Icon className="h-5 w-5 text-primary" />
+                      {approaches.length > 0 ? (
+                        approaches.map((approach, index) => {
+                          const Icon = approach.icon
+                          return (
+                            <motion.div
+                              key={index}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.5, delay: index * 0.1 }}
+                              className="group relative rounded-xl border bg-card p-6 hover:shadow-lg transition-shadow"
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="rounded-lg bg-primary/10 p-2.5 flex-shrink-0">
+                                  <Icon className="h-5 w-5 text-primary" />
+                                </div>
+                                <div className="space-y-2">
+                                  <h3 className="text-lg font-semibold leading-tight">{approach.title}</h3>
+                                  <p className="text-sm text-muted-foreground">{approach.description}</p>
+                                </div>
                               </div>
-                              <div className="space-y-2">
-                                <h3 className="text-lg font-semibold leading-tight">{approach.title}</h3>
-                                <p className="text-sm text-muted-foreground">{approach.description}</p>
-                              </div>
-                            </div>
-                            <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-primary/10 group-hover:ring-primary/20 transition-all" />
-                          </motion.div>
-                        )
-                      })}
+                              <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-primary/10 group-hover:ring-primary/20 transition-all" />
+                            </motion.div>
+                          )
+                        })
+                      ) : (
+                        <div className="col-span-full text-center py-8 text-muted-foreground">
+                          Keine aktiven Kacheln vorhanden. Bitte erstellen Sie Kacheln im Tab "Kacheln".
+                        </div>
+                      )}
                     </div>
                   </section>
                 )}
