@@ -111,24 +111,6 @@ export function BlogPostContent({ post, relatedPosts }: BlogPostContentProps) {
     })
   }
 
-  const handleShare = async () => {
-    const url = window.location.href
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: post.title,
-          text: post.excerpt || '',
-          url,
-        })
-      } catch (error) {
-        // User cancelled
-      }
-    } else {
-      await navigator.clipboard.writeText(url)
-      toast.success('Link kopiert!')
-    }
-  }
-
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -338,47 +320,7 @@ export function BlogPostContent({ post, relatedPosts }: BlogPostContentProps) {
               <Card>
                 <CardContent className="pt-6">
                   <h3 className="font-bold mb-4">Teilen</h3>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" onClick={handleShare}>
-                      <Share2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      asChild
-                    >
-                      <a
-                        href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Linkedin className="h-4 w-4" />
-                      </a>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      asChild
-                    >
-                      <a
-                        href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}&text=${encodeURIComponent(post.title)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Twitter className="h-4 w-4" />
-                      </a>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={async () => {
-                        await navigator.clipboard.writeText(window.location.href)
-                        toast.success('Link kopiert!')
-                      }}
-                    >
-                      <LinkIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <ShareButtons post={post} />
                 </CardContent>
               </Card>
 
@@ -480,6 +422,88 @@ export function BlogPostContent({ post, relatedPosts }: BlogPostContentProps) {
           <ChevronUp className="h-5 w-5" />
         </motion.button>
       )}
+    </div>
+  )
+}
+
+// Share buttons component that handles client-side URL
+function ShareButtons({ post }: { post: BlogPost }) {
+  const [currentUrl, setCurrentUrl] = useState('')
+
+  useEffect(() => {
+    setCurrentUrl(window.location.href)
+  }, [])
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: post.title,
+          text: post.excerpt || '',
+          url: currentUrl,
+        })
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Teilen fehlgeschlagen:', error)
+        }
+      }
+    } else {
+      await navigator.clipboard.writeText(currentUrl)
+      toast.success('Link kopiert!')
+    }
+  }
+
+  const handleCopyLink = async () => {
+    await navigator.clipboard.writeText(currentUrl)
+    toast.success('Link kopiert!')
+  }
+
+  // Don't render share links until we have the URL (to avoid hydration mismatch)
+  if (!currentUrl) {
+    return (
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="icon" disabled>
+          <Share2 className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="icon" disabled>
+          <Linkedin className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="icon" disabled>
+          <Twitter className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="icon" disabled>
+          <LinkIcon className="h-4 w-4" />
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Button variant="outline" size="icon" onClick={handleShare}>
+        <Share2 className="h-4 w-4" />
+      </Button>
+      <Button variant="outline" size="icon" asChild>
+        <a
+          href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Linkedin className="h-4 w-4" />
+        </a>
+      </Button>
+      <Button variant="outline" size="icon" asChild>
+        <a
+          href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(post.title)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Twitter className="h-4 w-4" />
+        </a>
+      </Button>
+      <Button variant="outline" size="icon" onClick={handleCopyLink}>
+        <LinkIcon className="h-4 w-4" />
+      </Button>
     </div>
   )
 }
