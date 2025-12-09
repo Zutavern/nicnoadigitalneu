@@ -27,6 +27,11 @@ import {
   Globe,
   FileText,
   ChevronDown,
+  Newspaper,
+  PenSquare,
+  FolderOpen,
+  UserCircle,
+  Tags,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -93,6 +98,16 @@ const menuItems = [
               { label: 'Über uns', href: '/admin/about-us', icon: Users },
             ],
           },
+          {
+            label: 'Blog',
+            icon: Newspaper,
+            children: [
+              { label: 'Alle Beiträge', href: '/admin/blog/posts', icon: PenSquare },
+              { label: 'Kategorien', href: '/admin/blog/categories', icon: FolderOpen },
+              { label: 'Autoren', href: '/admin/blog/authors', icon: UserCircle },
+              { label: 'Tags', href: '/admin/blog/tags', icon: Tags },
+            ],
+          },
         ],
       },
     ],
@@ -114,6 +129,7 @@ export function AdminSidebar() {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     'cms': false,
     'seiten': false,
+    'blog': false,
   })
 
   // Prevent hydration mismatch by waiting for mount
