@@ -78,6 +78,7 @@ export function TiptapEditor({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         codeBlock: false,
