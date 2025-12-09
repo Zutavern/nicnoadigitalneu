@@ -4,6 +4,7 @@ import "./globals.css";
 import { CookieBanner } from "@/components/cookie-banner";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { ThemeColorProvider } from "@/components/providers/theme-color-provider";
 import { PasswordProtection } from "@/components/password-protection";
 
 const geistSans = Geist({
@@ -38,6 +39,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <ThemeColorProvider />
           <SessionProvider>
             <PasswordProtection />
             {children}
