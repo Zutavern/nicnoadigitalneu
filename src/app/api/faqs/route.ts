@@ -32,44 +32,10 @@ export async function GET(request: Request) {
           ],
         })
       } else {
-        // Fallback: Use raw SQL query
-        if (role && (role === 'STYLIST' || role === 'SALON_OWNER')) {
-          if (category) {
-            faqs = await prisma.$queryRaw`
-              SELECT 
-                id, question, answer, category, role,
-                is_active as "isActive", sort_order as "sortOrder",
-                created_at as "createdAt", updated_at as "updatedAt"
-              FROM faqs 
-              WHERE is_active = true AND role = ${role} AND category = ${category}
-              ORDER BY sort_order ASC, created_at DESC
-            ` as any[]
-          } else {
-            faqs = await prisma.$queryRaw`
-              SELECT 
-                id, question, answer, category, role,
-                is_active as "isActive", sort_order as "sortOrder",
-                created_at as "createdAt", updated_at as "updatedAt"
-              FROM faqs 
-              WHERE is_active = true AND role = ${role}
-              ORDER BY sort_order ASC, created_at DESC
-            ` as any[]
-          }
-        } else {
-          faqs = await prisma.$queryRaw`
-            SELECT 
-              id, question, answer, category, role,
-              is_active as "isActive", sort_order as "sortOrder",
-              created_at as "createdAt", updated_at as "updatedAt"
-            FROM faqs 
-            WHERE is_active = true
-            ORDER BY sort_order ASC, created_at DESC
-          ` as any[]
-        }
+        throw new Error('FAQ model not found, using raw SQL')
       }
-    } catch (error: any) {
-      console.error('Error in FAQ query:', error)
-      // Final fallback
+    } catch (modelError) {
+      // Fallback: Use raw SQL query
       try {
         if (role && (role === 'STYLIST' || role === 'SALON_OWNER')) {
           if (category) {
@@ -104,12 +70,10 @@ export async function GET(request: Request) {
             ORDER BY sort_order ASC, created_at DESC
           ` as any[]
         }
-      } catch (rawError) {
+      } catch (rawError: any) {
         console.error('Raw query also failed:', rawError)
-        return NextResponse.json(
-          { error: 'Fehler beim Laden der FAQs' },
-          { status: 500 }
-        )
+        // Return empty array instead of error to prevent page crash
+        faqs = []
       }
     }
 
@@ -125,10 +89,8 @@ export async function GET(request: Request) {
     return NextResponse.json(formattedFAQs)
   } catch (error) {
     console.error('Error fetching FAQs:', error)
-    return NextResponse.json(
-      { error: 'Fehler beim Laden der FAQs' },
-      { status: 500 }
-    )
+    // Return empty array instead of error to prevent page crash
+    return NextResponse.json([])
   }
 }
 

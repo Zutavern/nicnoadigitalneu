@@ -49,16 +49,25 @@ export default function FAQPage() {
     try {
       const [faqsRes, configRes] = await Promise.all([
         Promise.all([
-          fetch('/api/faqs?role=SALON_OWNER'),
-          fetch('/api/faqs?role=STYLIST'),
+          fetch('/api/faqs?role=SALON_OWNER').catch(err => {
+            console.error('Error fetching SALON_OWNER FAQs:', err)
+            return { ok: false, json: async () => [] }
+          }),
+          fetch('/api/faqs?role=STYLIST').catch(err => {
+            console.error('Error fetching STYLIST FAQs:', err)
+            return { ok: false, json: async () => [] }
+          }),
         ]),
-        fetch('/api/faq-page-config'),
+        fetch('/api/faq-page-config').catch(err => {
+          console.error('Error fetching FAQ page config:', err)
+          return { ok: false, json: async () => null }
+        }),
       ])
 
       const [salonRes, stylistRes] = faqsRes
-      const salonData = salonRes.ok ? await salonRes.json() : []
-      const stylistData = stylistRes.ok ? await stylistRes.json() : []
-      const configData = configRes.ok ? await configRes.json() : null
+      const salonData = salonRes.ok ? await salonRes.json().catch(() => []) : []
+      const stylistData = stylistRes.ok ? await stylistRes.json().catch(() => []) : []
+      const configData = configRes.ok ? await configRes.json().catch(() => null) : null
 
       setFaqs({
         SALON_OWNER: Array.isArray(salonData) ? salonData : [],
@@ -67,6 +76,12 @@ export default function FAQPage() {
       setConfig(configData)
     } catch (error) {
       console.error('Error fetching data:', error)
+      // Setze leere Daten als Fallback
+      setFaqs({
+        SALON_OWNER: [],
+        STYLIST: [],
+      })
+      setConfig(null)
     } finally {
       setIsLoading(false)
     }
