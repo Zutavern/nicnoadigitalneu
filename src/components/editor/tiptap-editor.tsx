@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Bold,
   Italic,
@@ -48,6 +49,7 @@ import {
   Highlighter,
   FileCode,
   Loader2,
+  FileCode2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -75,6 +77,8 @@ export function TiptapEditor({
   const [youtubeUrl, setYoutubeUrl] = useState('')
   const [youtubeDialogOpen, setYoutubeDialogOpen] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [htmlContent, setHtmlContent] = useState('')
+  const [htmlDialogOpen, setHtmlDialogOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const editor = useEditor({
@@ -208,6 +212,20 @@ export function TiptapEditor({
     setYoutubeUrl('')
     setYoutubeDialogOpen(false)
   }, [editor, youtubeUrl])
+
+  const insertHtml = useCallback(() => {
+    if (!editor || !htmlContent.trim()) return
+    
+    // Füge HTML an aktueller Cursor-Position ein
+    editor.chain().focus().insertContent(htmlContent, {
+      parseOptions: {
+        preserveWhitespace: false,
+      },
+    }).run()
+    
+    setHtmlContent('')
+    setHtmlDialogOpen(false)
+  }, [editor, htmlContent])
 
   if (!editor) {
     return (
@@ -521,6 +539,43 @@ export function TiptapEditor({
                 </div>
                 <Button onClick={addYoutube} className="w-full" disabled={!youtubeUrl}>
                   Video einfügen
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* HTML Import Dialog */}
+          <Dialog open={htmlDialogOpen} onOpenChange={setHtmlDialogOpen}>
+            <DialogTrigger asChild>
+              <ToolbarButton title="HTML einfügen">
+                <FileCode2 className="h-4 w-4" />
+              </ToolbarButton>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>HTML einfügen</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="html-content">HTML-Code</Label>
+                  <Textarea
+                    id="html-content"
+                    placeholder="<h2>Überschrift</h2>
+<p>Füge hier deinen <strong>HTML-Code</strong> ein...</p>
+<ul>
+  <li>Punkt 1</li>
+  <li>Punkt 2</li>
+</ul>"
+                    value={htmlContent}
+                    onChange={(e) => setHtmlContent(e.target.value)}
+                    className="min-h-[200px] font-mono text-sm"
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Unterstützte Tags: h1-h3, p, strong, em, u, s, a, ul, ol, li, blockquote, code, pre, img, hr
+                </p>
+                <Button onClick={insertHtml} className="w-full" disabled={!htmlContent.trim()}>
+                  HTML einfügen
                 </Button>
               </div>
             </DialogContent>
