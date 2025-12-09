@@ -1,0 +1,77 @@
+#!/usr/bin/expect -f
+set timeout 60
+
+# Hole Werte von Vercel
+exec vercel env pull .env.vercel.temp --environment=production >/dev/null 2>&1
+
+set database_url ""
+set direct_database_url ""
+
+if {[file exists .env.vercel.temp]} {
+    catch {set database_url [exec bash -c {grep "^DATABASE_URL=" .env.vercel.temp 2>/dev/null | head -1 | cut -d'=' -f2- | tr -d '"' | tr -d "'"}]}
+    catch {set direct_database_url [exec bash -c {grep "^DIRECT_DATABASE_URL=" .env.vercel.temp 2>/dev/null | head -1 | cut -d'=' -f2- | tr -d '"' | tr -d "'"}]}
+    exec rm -f .env.vercel.temp
+}
+
+if {[string length $database_url] == 0 || [string length $direct_database_url] == 0} {
+    puts "❌ Werte nicht gefunden - hole von Vercel API..."
+    exit 1
+}
+
+puts "🔧 Aktualisiere DATABASE_URL..."
+
+spawn vercel env update DATABASE_URL production
+expect {
+    "What's the new value" {
+        send "$database_url\r"
+        exp_continue
+    }
+    "Which Environments" {
+        send "production,build\r"
+        exp_continue
+    }
+    "Add.*to which Environments" {
+        send "production,build\r"
+        exp_continue
+    }
+    "Are you sure" {
+        send "yes\r"
+        exp_continue
+    }
+    timeout {
+        puts "⚠️  Timeout"
+        exit 1
+    }
+    eof
+}
+
+puts ""
+puts "🔧 Aktualisiere DIRECT_DATABASE_URL..."
+
+spawn vercel env update DIRECT_DATABASE_URL production
+expect {
+    "What's the new value" {
+        send "$direct_database_url\r"
+        exp_continue
+    }
+    "Which Environments" {
+        send "production,build\r"
+        exp_continue
+    }
+    "Add.*to which Environments" {
+        send "production,build\r"
+        exp_continue
+    }
+    "Are you sure" {
+        send "yes\r"
+        exp_continue
+    }
+    timeout {
+        puts "⚠️  Timeout"
+        exit 1
+    }
+    eof
+}
+
+puts ""
+puts "✅ Fertig!"

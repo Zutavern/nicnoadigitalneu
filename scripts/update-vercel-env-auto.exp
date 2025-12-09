@@ -1,0 +1,95 @@
+#!/usr/bin/expect -f
+# Automatisiertes Update der Vercel Environment-Variablen für Build
+
+set timeout 30
+
+# Prüfe verschiedene Varianten
+set database_url ""
+set direct_database_url ""
+
+# Versuche DATABASE_URL direkt
+catch {set database_url [exec bash -c {grep "^DATABASE_URL=" .env.local 2>/dev/null | head -1 | cut -d'=' -f2- | tr -d '"' | tr -d "'"}]}
+
+# Falls nicht gefunden, versuche nicnoa_DATABASE_URL
+if {[string length $database_url] == 0} {
+    catch {set database_url [exec bash -c {grep "^nicnoa_DATABASE_URL=" .env.local 2>/dev/null | head -1 | cut -d'=' -f2- | tr -d '"' | tr -d "'"}]}
+}
+
+# Versuche DIRECT_DATABASE_URL
+catch {set direct_database_url [exec bash -c {grep "^DIRECT_DATABASE_URL=" .env.local 2>/dev/null | head -1 | cut -d'=' -f2- | tr -d '"' | tr -d "'"}]}
+
+# Falls nicht gefunden, hole von Vercel
+if {[string length $database_url] == 0 || [string length $direct_database_url] == 0} {
+    puts "📥 Hole Werte von Vercel..."
+    exec vercel env pull .env.vercel.tmp --environment=production >/dev/null 2>&1
+    if {[file exists .env.vercel.tmp]} {
+        if {[string length $database_url] == 0} {
+            catch {set database_url [exec bash -c {grep "^DATABASE_URL=" .env.vercel.tmp 2>/dev/null | head -1 | cut -d'=' -f2- | tr -d '"' | tr -d "'"}]}
+        }
+        if {[string length $direct_database_url] == 0} {
+            catch {set direct_database_url [exec bash -c {grep "^DIRECT_DATABASE_URL=" .env.vercel.tmp 2>/dev/null | head -1 | cut -d'=' -f2- | tr -d '"' | tr -d "'"}]}
+        }
+        exec rm -f .env.vercel.tmp
+    }
+}
+
+if {[string length $database_url] == 0 || [string length $direct_database_url] == 0} {
+    puts "❌ DATABASE_URL oder DIRECT_DATABASE_URL nicht gefunden"
+    puts "   Versuche manuell: vercel env update DATABASE_URL production"
+    exit 1
+}
+
+puts "✅ Werte gefunden"
+puts "🔧 Aktualisiere DATABASE_URL für Production + Build..."
+
+spawn vercel env update DATABASE_URL production
+expect {
+    "What's the new value of DATABASE_URL?" {
+        send "$database_url\r"
+        exp_continue
+    }
+    "Which Environments should it be available for?" {
+        send "production,build\r"
+        exp_continue
+    }
+    "Add DATABASE_URL to which Environments?" {
+        send "production,build\r"
+        exp_continue
+    }
+    timeout {
+        puts "⚠️  Timeout bei DATABASE_URL Update"
+        exit 1
+    }
+    eof
+}
+
+puts ""
+puts "🔧 Aktualisiere DIRECT_DATABASE_URL für Production + Build..."
+
+spawn vercel env update DIRECT_DATABASE_URL production
+expect {
+    "What's the new value of DIRECT_DATABASE_URL?" {
+        send "$direct_database_url\r"
+        exp_continue
+    }
+    "Which Environments should it be available for?" {
+        send "production,build\r"
+        exp_continue
+    }
+    "Add DIRECT_DATABASE_URL to which Environments?" {
+        send "production,build\r"
+        exp_continue
+    }
+    timeout {
+        puts "⚠️  Timeout bei DIRECT_DATABASE_URL Update"
+        exit 1
+    }
+    eof
+}
+
+puts ""
+puts "✅ Fertig! Prüfe die Konfiguration:"
+exec vercel env ls | grep -E "^ DATABASE_URL|^ DIRECT_DATABASE_URL" | head -2
+
+puts ""
+puts "📋 Sollte jetzt 'Production, Build' zeigen"
