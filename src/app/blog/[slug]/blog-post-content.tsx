@@ -338,31 +338,71 @@ export function BlogPostContent({ post, relatedPosts }: BlogPostContentProps) {
                 font-style: italic;
               }
               
-              /* Blockquotes - Magazine Style */
+              /* Blockquotes - Premium Magazine Style */
               .article-content blockquote {
                 position: relative;
-                margin: 2.5rem 0;
-                padding: 2rem 2rem 2rem 2.5rem;
-                background: linear-gradient(135deg, hsl(var(--muted) / 0.5), hsl(var(--muted) / 0.3));
-                border-left: 4px solid hsl(var(--primary));
-                border-radius: 0 1rem 1rem 0;
-                font-style: italic;
-                font-size: 1.1rem;
+                margin: 3rem 0;
+                padding: 2.5rem 2.5rem 2.5rem 3.5rem;
+                background: linear-gradient(
+                  135deg,
+                  hsl(var(--primary) / 0.08) 0%,
+                  hsl(var(--primary) / 0.03) 50%,
+                  hsl(var(--muted) / 0.2) 100%
+                );
+                border: none;
+                border-radius: 1.5rem;
+                font-style: normal;
+                font-size: 1.25rem;
+                line-height: 1.7;
+                color: hsl(var(--foreground));
+                box-shadow: 
+                  0 4px 6px -1px hsl(var(--primary) / 0.1),
+                  0 2px 4px -2px hsl(var(--primary) / 0.1),
+                  inset 0 0 0 1px hsl(var(--primary) / 0.1);
               }
               
+              /* Large decorative quote mark */
               .article-content blockquote::before {
                 content: '"';
                 position: absolute;
-                top: 0.5rem;
-                left: 0.75rem;
-                font-size: 3rem;
-                color: hsl(var(--primary) / 0.3);
-                font-family: Georgia, serif;
+                top: -0.5rem;
+                left: 1.5rem;
+                font-size: 6rem;
+                font-family: Georgia, 'Times New Roman', serif;
+                font-weight: 700;
+                color: hsl(var(--primary) / 0.15);
                 line-height: 1;
+                pointer-events: none;
+              }
+              
+              /* Accent bar on the left */
+              .article-content blockquote::after {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 1.5rem;
+                bottom: 1.5rem;
+                width: 5px;
+                background: linear-gradient(
+                  180deg,
+                  hsl(var(--primary)) 0%,
+                  hsl(var(--primary) / 0.5) 100%
+                );
+                border-radius: 3px;
               }
               
               .article-content blockquote p {
                 margin-bottom: 0;
+                position: relative;
+                z-index: 1;
+                font-weight: 500;
+              }
+              
+              .article-content blockquote p:first-child::first-letter {
+                float: none;
+                font-size: inherit;
+                padding: 0;
+                color: inherit;
               }
               
               /* Lists */
@@ -486,7 +526,20 @@ export function BlogPostContent({ post, relatedPosts }: BlogPostContentProps) {
               
               /* Dark mode adjustments */
               .dark .article-content blockquote {
-                background: linear-gradient(135deg, hsl(var(--muted) / 0.3), hsl(var(--muted) / 0.15));
+                background: linear-gradient(
+                  135deg,
+                  hsl(var(--primary) / 0.12) 0%,
+                  hsl(var(--primary) / 0.05) 50%,
+                  hsl(var(--muted) / 0.15) 100%
+                );
+                box-shadow: 
+                  0 4px 6px -1px hsl(var(--primary) / 0.15),
+                  0 2px 4px -2px hsl(var(--primary) / 0.1),
+                  inset 0 0 0 1px hsl(var(--primary) / 0.15);
+              }
+              
+              .dark .article-content blockquote::before {
+                color: hsl(var(--primary) / 0.25);
               }
               
               .dark .article-content pre {
