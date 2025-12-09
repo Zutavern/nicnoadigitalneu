@@ -290,8 +290,8 @@ function LoginForm() {
             </Button>
           </form>
 
-          {/* Quick Login Buttons (Dev Mode) */}
-          {process.env.NODE_ENV === 'development' && (
+          {/* Quick Login Buttons (Dev Mode) - Steuerbar via Umgebungsvariable */}
+          {(process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_SHOW_DEV_LOGIN === 'true') && (
             <>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
