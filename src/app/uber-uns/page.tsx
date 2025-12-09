@@ -85,10 +85,15 @@ export default function UberUnsPage() {
       const res = await fetch('/api/approach-cards')
       if (res.ok) {
         const data = await res.json()
-        setApproachCards(data)
+        console.log('✅ Approach Cards geladen:', data)
+        setApproachCards(Array.isArray(data) ? data : [])
+      } else {
+        console.error('❌ Error fetching approach cards:', res.status)
+        setApproachCards([])
       }
     } catch (error) {
-      console.error('Error fetching approach cards:', error)
+      console.error('❌ Error fetching approach cards:', error)
+      setApproachCards([])
     }
   }
 
@@ -120,12 +125,15 @@ export default function UberUnsPage() {
     whyButtonLink: '/registrieren',
   }
 
-  // Kacheln aus der API laden
-  const approaches = approachCards.map((card) => ({
-    icon: getIconComponent(card.iconName),
-    title: card.title,
-    description: card.description,
-  }))
+  // Kacheln aus der API laden - nur aktive Kacheln mit Icon
+  const approaches = approachCards
+    .filter((card) => card.iconName) // Nur Kacheln mit Icon
+    .sort((a, b) => a.sortOrder - b.sortOrder) // Nach sortOrder sortieren
+    .map((card) => ({
+      icon: getIconComponent(card.iconName),
+      title: card.title,
+      description: card.description,
+    }))
 
   if (isLoading) {
     return (
@@ -344,29 +352,35 @@ export default function UberUnsPage() {
             </p>
           )}
         </motion.div>
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-          {approaches.map((approach, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className="group relative rounded-xl border bg-card p-6 hover:shadow-lg transition-shadow"
-            >
-              <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-primary/10 p-2.5 flex-shrink-0">
-                  <approach.icon className="h-5 w-5 text-primary" />
+        {approaches.length > 0 ? (
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            {approaches.map((approach, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="group relative rounded-xl border bg-card p-6 hover:shadow-lg transition-shadow"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="rounded-lg bg-primary/10 p-2.5 flex-shrink-0">
+                    <approach.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold leading-tight">{approach.title}</h3>
+                    <p className="text-sm text-muted-foreground">{approach.description}</p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold leading-tight">{approach.title}</h3>
-                  <p className="text-sm text-muted-foreground">{approach.description}</p>
-                </div>
-              </div>
-              <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-primary/10 group-hover:ring-primary/20 transition-all" />
-            </motion.div>
-          ))}
-        </div>
+                <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-primary/10 group-hover:ring-primary/20 transition-all" />
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Keine Kacheln verfügbar</p>
+          </div>
+        )}
       </section>
 
       {/* Why Section */}
