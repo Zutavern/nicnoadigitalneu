@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && tsx scripts/sync-db.ts && next build",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint",
@@ -12,7 +12,8 @@
     "db:push": "prisma db push",
     "db:pull": "prisma db pull",
     "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:sync": "tsx scripts/sync-db.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
