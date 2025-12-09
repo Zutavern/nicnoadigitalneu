@@ -84,12 +84,15 @@ cp .env.example .env.local
 Konfiguriere die Variablen:
 
 ```env
-# Database
-# Option A: Neon (empfohlen)
-DATABASE_URL="postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require"
+# Database (Neon empfohlen - auch für lokale Entwicklung)
+# Pooled Connection (für Serverless/Runtime)
+DATABASE_URL="postgresql://user:pass@ep-xxx-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require"
 
-# Option B: Lokale PostgreSQL
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/nicnoa"
+# Direct Connection (für Migrationen/Prisma)
+DIRECT_DATABASE_URL="postgresql://user:pass@ep-xxx.eu-central-1.aws.neon.tech/neondb?sslmode=require"
+
+# Hinweis: Beide URLs sollten auf die gleiche Neon-Datenbank zeigen
+# Unterschied: Pooled (mit -pooler) für Production, Direct für Build/Migrationen
 
 # Authentication
 NEXTAUTH_URL="http://localhost:3000"

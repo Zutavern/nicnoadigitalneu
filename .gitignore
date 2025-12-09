@@ -41,3 +41,4 @@ next-env.d.ts
 # uploads (für lokale Entwicklung)
 /public/uploads/documents
 *.backup
+.env.vercel

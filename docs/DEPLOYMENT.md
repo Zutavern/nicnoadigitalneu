@@ -294,16 +294,20 @@ vercel env add NEXTAUTH_SECRET
 vercel env add STRIPE_SECRET_KEY
 # ...
 
+# WICHTIG: DATABASE_URL für Build aktivieren!
+# Während des Prompts "Build" auswählen, nicht nur "Production"
 # Oder via Dashboard:
 # Project → Settings → Environment Variables
+# → DATABASE_URL bearbeiten → "Build" aktivieren
+# → DIRECT_DATABASE_URL bearbeiten → "Build" aktivieren
 ```
 
 ### Vollständige Liste
 
 | Variable | Beschreibung | Umgebung |
 |----------|--------------|----------|
-| `DATABASE_URL` | Neon Pooled Connection | Production |
-| `DIRECT_DATABASE_URL` | Neon Direct Connection | Production |
+| `DATABASE_URL` | Neon Pooled Connection | Production, **Build** |
+| `DIRECT_DATABASE_URL` | Neon Direct Connection | Production, **Build** |
 | `NEXTAUTH_URL` | App URL | Production |
 | `NEXTAUTH_SECRET` | Auth Secret (32+ Zeichen) | All |
 | `STRIPE_SECRET_KEY` | Stripe Secret Key | Production |
