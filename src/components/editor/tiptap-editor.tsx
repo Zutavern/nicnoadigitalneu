@@ -174,37 +174,7 @@ export function TiptapEditor({
     editorProps: {
       attributes: {
         class: cn(
-          'prose prose-lg dark:prose-invert max-w-none focus:outline-none min-h-[400px] px-4 py-3',
-          // Headings
-          'prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground',
-          'prose-h1:text-3xl prose-h1:mt-8 prose-h1:mb-4 prose-h1:leading-tight prose-h1:border-b prose-h1:border-border prose-h1:pb-3',
-          'prose-h2:text-2xl prose-h2:mt-6 prose-h2:mb-3 prose-h2:leading-snug',
-          'prose-h3:text-xl prose-h3:mt-5 prose-h3:mb-2 prose-h3:leading-snug prose-h3:text-foreground/90',
-          // Paragraphs
-          'prose-p:leading-relaxed prose-p:text-muted-foreground prose-p:mb-4',
-          // Links
-          'prose-a:text-primary prose-a:underline prose-a:font-medium',
-          // Blockquotes
-          'prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:pl-4 prose-blockquote:py-1 prose-blockquote:my-6 prose-blockquote:italic prose-blockquote:text-muted-foreground prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:pr-3',
-          // Code
-          'prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono',
-          'prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-lg prose-pre:my-6',
-          // Images
-          'prose-img:rounded-lg prose-img:shadow-lg prose-img:my-6',
-          // Text formatting
-          'prose-strong:text-foreground prose-strong:font-semibold',
-          'prose-em:text-muted-foreground',
-          // Lists
-          'prose-ul:my-4 prose-ul:space-y-1',
-          'prose-ol:my-4 prose-ol:space-y-1',
-          'prose-li:text-muted-foreground prose-li:leading-relaxed',
-          // Horizontal rule
-          'prose-hr:my-8 prose-hr:border-border',
-          // Custom spacing rules
-          '[&>*:first-child]:mt-0',
-          '[&>ul+p]:mt-6 [&>ol+p]:mt-6',
-          '[&>p+ul]:mt-3 [&>p+ol]:mt-3',
-          '[&>ul+h2]:mt-8 [&>ol+h2]:mt-8 [&>ul+h3]:mt-6 [&>ol+h3]:mt-6',
+          'tiptap-editor-content focus:outline-none min-h-[400px] px-6 py-4',
           editorClassName
         ),
       },
