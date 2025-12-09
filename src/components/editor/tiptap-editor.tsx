@@ -175,13 +175,36 @@ export function TiptapEditor({
       attributes: {
         class: cn(
           'prose prose-lg dark:prose-invert max-w-none focus:outline-none min-h-[400px] px-4 py-3',
-          'prose-headings:font-bold prose-headings:tracking-tight',
-          'prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl',
-          'prose-p:leading-relaxed',
-          'prose-a:text-primary prose-a:underline',
-          'prose-blockquote:border-l-4 prose-blockquote:border-primary/50 prose-blockquote:pl-4 prose-blockquote:italic',
-          'prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm',
-          'prose-img:rounded-lg prose-img:shadow-lg',
+          // Headings
+          'prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground',
+          'prose-h1:text-3xl prose-h1:mt-8 prose-h1:mb-4 prose-h1:leading-tight prose-h1:border-b prose-h1:border-border prose-h1:pb-3',
+          'prose-h2:text-2xl prose-h2:mt-6 prose-h2:mb-3 prose-h2:leading-snug',
+          'prose-h3:text-xl prose-h3:mt-5 prose-h3:mb-2 prose-h3:leading-snug prose-h3:text-foreground/90',
+          // Paragraphs
+          'prose-p:leading-relaxed prose-p:text-muted-foreground prose-p:mb-4',
+          // Links
+          'prose-a:text-primary prose-a:underline prose-a:font-medium',
+          // Blockquotes
+          'prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:pl-4 prose-blockquote:py-1 prose-blockquote:my-6 prose-blockquote:italic prose-blockquote:text-muted-foreground prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:pr-3',
+          // Code
+          'prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono',
+          'prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-lg prose-pre:my-6',
+          // Images
+          'prose-img:rounded-lg prose-img:shadow-lg prose-img:my-6',
+          // Text formatting
+          'prose-strong:text-foreground prose-strong:font-semibold',
+          'prose-em:text-muted-foreground',
+          // Lists
+          'prose-ul:my-4 prose-ul:space-y-1',
+          'prose-ol:my-4 prose-ol:space-y-1',
+          'prose-li:text-muted-foreground prose-li:leading-relaxed',
+          // Horizontal rule
+          'prose-hr:my-8 prose-hr:border-border',
+          // Custom spacing rules
+          '[&>*:first-child]:mt-0',
+          '[&>ul+p]:mt-6 [&>ol+p]:mt-6',
+          '[&>p+ul]:mt-3 [&>p+ol]:mt-3',
+          '[&>ul+h2]:mt-8 [&>ol+h2]:mt-8 [&>ul+h3]:mt-6 [&>ol+h3]:mt-6',
           editorClassName
         ),
       },
@@ -651,12 +674,32 @@ export function TiptapEditor({
                     </Button>
                     
                     {showHtmlPreview && (
-                      <div className="rounded-lg border bg-muted/30 p-4">
-                        <Label className="text-xs text-muted-foreground mb-2 block">
+                      <div className="rounded-lg border bg-muted/30 p-4 max-h-[300px] overflow-y-auto">
+                        <Label className="text-xs text-muted-foreground mb-3 block">
                           So wird das HTML interpretiert:
                         </Label>
                         <div 
-                          className="prose prose-sm dark:prose-invert max-w-none"
+                          className="prose prose-sm dark:prose-invert max-w-none
+                            prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground
+                            prose-h1:text-2xl prose-h1:mt-6 prose-h1:mb-3 prose-h1:leading-tight prose-h1:border-b prose-h1:border-border prose-h1:pb-2
+                            prose-h2:text-xl prose-h2:mt-5 prose-h2:mb-2 prose-h2:leading-snug
+                            prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2 prose-h3:leading-snug prose-h3:text-foreground/90
+                            prose-p:leading-relaxed prose-p:text-muted-foreground prose-p:mb-3
+                            prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-a:font-medium
+                            prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:pl-4 prose-blockquote:py-1 prose-blockquote:my-4 prose-blockquote:italic prose-blockquote:text-muted-foreground prose-blockquote:bg-muted/50 prose-blockquote:rounded-r-lg prose-blockquote:pr-3
+                            prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono
+                            prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-lg prose-pre:my-4 prose-pre:text-xs
+                            prose-img:rounded-lg prose-img:shadow-md prose-img:my-4
+                            prose-strong:text-foreground prose-strong:font-semibold
+                            prose-em:text-muted-foreground
+                            prose-ul:my-3 prose-ul:space-y-1
+                            prose-ol:my-3 prose-ol:space-y-1
+                            prose-li:text-muted-foreground prose-li:leading-relaxed
+                            prose-hr:my-6 prose-hr:border-border
+                            [&>*:first-child]:mt-0
+                            [&>ul+p]:mt-4 [&>ol+p]:mt-4
+                            [&>p+ul]:mt-2 [&>p+ol]:mt-2
+                            [&>ul+h2]:mt-6 [&>ol+h2]:mt-6 [&>ul+h3]:mt-5 [&>ol+h3]:mt-5"
                           dangerouslySetInnerHTML={{ __html: htmlContent }}
                         />
                       </div>

@@ -232,16 +232,27 @@ export function BlogPostContent({ post, relatedPosts }: BlogPostContentProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
               className="prose prose-lg dark:prose-invert max-w-none
-                prose-headings:font-bold prose-headings:tracking-tight
-                prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl
-                prose-p:leading-relaxed prose-p:text-muted-foreground
-                prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-                prose-blockquote:border-l-4 prose-blockquote:border-primary/50 prose-blockquote:pl-6 prose-blockquote:italic prose-blockquote:text-muted-foreground
-                prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none
-                prose-pre:bg-zinc-900 prose-pre:text-zinc-100
-                prose-img:rounded-xl prose-img:shadow-lg
-                prose-strong:text-foreground
-                prose-li:text-muted-foreground"
+                prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground
+                prose-h1:text-4xl prose-h1:mt-12 prose-h1:mb-6 prose-h1:leading-tight prose-h1:border-b prose-h1:border-border prose-h1:pb-4
+                prose-h2:text-3xl prose-h2:mt-10 prose-h2:mb-5 prose-h2:leading-snug
+                prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-4 prose-h3:leading-snug prose-h3:text-foreground/90
+                prose-p:leading-relaxed prose-p:text-muted-foreground prose-p:mb-6
+                prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-a:font-medium
+                prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:pl-6 prose-blockquote:py-2 prose-blockquote:my-8 prose-blockquote:italic prose-blockquote:text-muted-foreground prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:pr-4
+                prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-code:font-mono
+                prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:my-8
+                prose-img:rounded-xl prose-img:shadow-lg prose-img:my-8
+                prose-strong:text-foreground prose-strong:font-semibold
+                prose-em:text-muted-foreground
+                prose-ul:my-6 prose-ul:space-y-2
+                prose-ol:my-6 prose-ol:space-y-2
+                prose-li:text-muted-foreground prose-li:leading-relaxed prose-li:pl-2
+                prose-hr:my-12 prose-hr:border-border
+                [&>*:first-child]:mt-0
+                [&>ul+p]:mt-8 [&>ol+p]:mt-8
+                [&>p+ul]:mt-4 [&>p+ol]:mt-4
+                [&>ul+h2]:mt-12 [&>ol+h2]:mt-12 [&>ul+h3]:mt-10 [&>ol+h3]:mt-10
+                [&>blockquote+p]:mt-8 [&>blockquote+h2]:mt-12 [&>blockquote+h3]:mt-10"
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
 
