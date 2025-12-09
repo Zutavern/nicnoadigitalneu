@@ -1,6 +1,6 @@
 'use client'
 
-import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
+import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
@@ -526,46 +526,6 @@ export function TiptapEditor({
           </Dialog>
         </div>
       </div>
-
-      {/* Bubble Menu for selected text */}
-      <BubbleMenu
-        editor={editor}
-        tippyOptions={{ duration: 100 }}
-        className="bg-background border rounded-lg shadow-lg p-1 flex gap-0.5"
-      >
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          isActive={editor.isActive('bold')}
-          size="sm"
-        >
-          <Bold className="h-3 w-3" />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          isActive={editor.isActive('italic')}
-          size="sm"
-        >
-          <Italic className="h-3 w-3" />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-          isActive={editor.isActive('underline')}
-          size="sm"
-        >
-          <UnderlineIcon className="h-3 w-3" />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => {
-            const previousUrl = editor.getAttributes('link').href
-            setLinkUrl(previousUrl || '')
-            setLinkDialogOpen(true)
-          }}
-          isActive={editor.isActive('link')}
-          size="sm"
-        >
-          <LinkIcon className="h-3 w-3" />
-        </ToolbarButton>
-      </BubbleMenu>
 
       {/* Editor Content */}
       <EditorContent editor={editor} />
