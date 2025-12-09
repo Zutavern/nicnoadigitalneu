@@ -1,6 +1,12 @@
+import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
+import { Pool } from 'pg'
 
-const prisma = new PrismaClient()
+const connectionString = process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL
+const pool = new Pool({ connectionString })
+const adapter = new PrismaPg(pool)
+const prisma = new PrismaClient({ adapter })
 
 async function main() {
   console.log('🌱 Seeding Blog data...')
@@ -378,24 +384,26 @@ async function main() {
   }
 
   // Create Blog Page Config
-  await prisma.blogPageConfig.upsert({
-    where: { id: 'default-config' },
-    update: {},
-    create: {
-      id: 'default-config',
-      heroBadgeText: 'NICNOA Blog',
-      heroTitle: 'Insights für die Beauty-Branche',
-      heroDescription: 'Entdecke Tipps, Trends und Expertenwissen für Salonbesitzer und Stylisten.',
-      featuredTitle: 'Featured Story',
-      showCategoryFilter: true,
-      allCategoriesLabel: 'Alle Artikel',
-      newsletterTitle: 'Bleib auf dem Laufenden',
-      newsletterDescription: 'Erhalte die neuesten Tipps und Insights direkt in dein Postfach.',
-      newsletterButtonText: 'Newsletter abonnieren',
-    },
-  })
+  const existingConfig = await prisma.blogPageConfig.findFirst()
+  if (!existingConfig) {
+    await prisma.blogPageConfig.create({
+      data: {
+        heroBadgeText: 'NICNOA Blog',
+        heroTitle: 'Insights für die Beauty-Branche',
+        heroDescription: 'Entdecke Tipps, Trends und Expertenwissen für Salonbesitzer und Stylisten.',
+        featuredTitle: 'Featured Story',
+        showCategoryFilter: true,
+        allCategoriesLabel: 'Alle Artikel',
+        newsletterTitle: 'Bleib auf dem Laufenden',
+        newsletterDescription: 'Erhalte die neuesten Tipps und Insights direkt in dein Postfach.',
+        newsletterButtonText: 'Newsletter abonnieren',
+      },
+    })
+    console.log('✅ Blog Page Config created')
+  } else {
+    console.log('✅ Blog Page Config already exists')
+  }
 
-  console.log('✅ Blog Page Config created')
   console.log('🎉 Blog seeding completed!')
 }
 
