@@ -180,3 +180,4 @@ export function FAQContent({ faqs, config }: FAQContentProps) {
   )
 }
 
+

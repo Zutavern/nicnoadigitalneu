@@ -19,6 +19,7 @@ const seedScripts = [
   'prisma/seed-faqs.ts',
   'prisma/seed-testimonials.ts',
   'prisma/seed-partners.ts',
+  'prisma/seed-blog.ts',
 ]
 
 let successCount = 0
@@ -48,4 +49,5 @@ console.log(`   ⏭️  Übersprungen: ${skipCount}`)
 console.log(`   ❌ Fehler: ${errorCount}`)
 console.log('')
 console.log('✅ Seeding abgeschlossen!')
+
 

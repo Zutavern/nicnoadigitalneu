@@ -42,3 +42,4 @@ echo ""
 echo "💡 Hinweis: Prüfe im Vercel Dashboard, ob die Variablen für 'Build' aktiviert sind!"
 echo "   https://vercel.com/daniels-projects-c316ea43/nicnoa/settings/environment-variables"
 
+

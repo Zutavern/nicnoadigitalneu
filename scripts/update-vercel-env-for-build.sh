@@ -42,3 +42,4 @@ echo "📋 Sollte jetzt 'Production, Build' zeigen (nicht nur 'Production')"
 echo ""
 echo "🚀 Nächstes Deployment wird automatisch Build-Variablen verwenden"
 
+

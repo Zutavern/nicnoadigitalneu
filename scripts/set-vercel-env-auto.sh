@@ -82,3 +82,4 @@ echo "⚠️  WICHTIG: 'Build' muss noch aktiviert werden!"
 echo "   Gehe zu: https://vercel.com/daniels-projects-c316ea43/nicnoa/settings/environment-variables"
 echo "   → Für jede Variable: Edit → Build aktivieren → Save"
 
+

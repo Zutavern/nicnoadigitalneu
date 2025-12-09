@@ -313,3 +313,4 @@ export function PartnerContent({ partners, config }: PartnerContentProps) {
   )
 }
 
+

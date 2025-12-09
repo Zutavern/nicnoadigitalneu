@@ -41,3 +41,4 @@ echo ""
 echo "📋 Sollte jetzt 'Production, Build' zeigen"
 echo "   Falls nicht, wiederhole den Vorgang und wähle 'build' zusätzlich"
 
+

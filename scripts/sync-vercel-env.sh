@@ -47,3 +47,4 @@ echo "   3. Oder verwende: vercel env add <NAME> --scope production preview deve
 echo ""
 echo "🔗 Dashboard: https://vercel.com/daniels-projects-c316ea43/nicnoa/settings/environment-variables"
 
+

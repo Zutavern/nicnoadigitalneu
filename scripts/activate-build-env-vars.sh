@@ -93,3 +93,4 @@ echo "   https://vercel.com/daniels-projects-c316ea43/nicnoa/settings/environmen
 echo ""
 echo "🚀 Starte einen neuen Deployment, um die Änderungen zu testen."
 
+
