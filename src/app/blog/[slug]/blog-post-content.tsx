@@ -225,36 +225,278 @@ export function BlogPostContent({ post, relatedPosts }: BlogPostContentProps) {
 
         {/* Content Layout */}
         <div className="container mx-auto px-4 pb-16">
-          <div className="grid gap-12 lg:grid-cols-[1fr_300px]">
-            {/* Main Content */}
+          <div className="grid gap-12 lg:grid-cols-[1fr_320px]">
+            {/* Main Content - Professional Magazine Style */}
             <motion.article
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="prose prose-lg dark:prose-invert max-w-none
-                prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground
-                prose-h1:text-4xl prose-h1:mt-12 prose-h1:mb-6 prose-h1:leading-tight prose-h1:border-b prose-h1:border-border prose-h1:pb-4
-                prose-h2:text-3xl prose-h2:mt-10 prose-h2:mb-5 prose-h2:leading-snug
-                prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-4 prose-h3:leading-snug prose-h3:text-foreground/90
-                prose-p:leading-relaxed prose-p:text-muted-foreground prose-p:mb-6
-                prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-a:font-medium
-                prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:pl-6 prose-blockquote:py-2 prose-blockquote:my-8 prose-blockquote:italic prose-blockquote:text-muted-foreground prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:pr-4
-                prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-code:font-mono
-                prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:my-8
-                prose-img:rounded-xl prose-img:shadow-lg prose-img:my-8
-                prose-strong:text-foreground prose-strong:font-semibold
-                prose-em:text-muted-foreground
-                prose-ul:my-6 prose-ul:space-y-2
-                prose-ol:my-6 prose-ol:space-y-2
-                prose-li:text-muted-foreground prose-li:leading-relaxed prose-li:pl-2
-                prose-hr:my-12 prose-hr:border-border
-                [&>*:first-child]:mt-0
-                [&>ul+p]:mt-8 [&>ol+p]:mt-8
-                [&>p+ul]:mt-4 [&>p+ol]:mt-4
-                [&>ul+h2]:mt-12 [&>ol+h2]:mt-12 [&>ul+h3]:mt-10 [&>ol+h3]:mt-10
-                [&>blockquote+p]:mt-8 [&>blockquote+h2]:mt-12 [&>blockquote+h3]:mt-10"
+              className="article-content"
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
+            
+            {/* Article Content Styles */}
+            <style jsx global>{`
+              .article-content {
+                font-family: 'Georgia', 'Times New Roman', serif;
+                font-size: 1.125rem;
+                line-height: 1.8;
+                color: hsl(var(--muted-foreground));
+              }
+              
+              /* First paragraph - larger intro text */
+              .article-content > p:first-of-type {
+                font-size: 1.25rem;
+                line-height: 1.7;
+                color: hsl(var(--foreground));
+                font-weight: 400;
+              }
+              
+              /* Drop cap for first letter */
+              .article-content > p:first-of-type::first-letter {
+                float: left;
+                font-size: 4rem;
+                line-height: 0.8;
+                padding-right: 0.75rem;
+                padding-top: 0.25rem;
+                font-weight: 700;
+                color: hsl(var(--primary));
+                font-family: 'Inter', system-ui, sans-serif;
+              }
+              
+              /* Headings */
+              .article-content h1,
+              .article-content h2,
+              .article-content h3 {
+                font-family: 'Inter', system-ui, sans-serif;
+                font-weight: 700;
+                color: hsl(var(--foreground));
+                letter-spacing: -0.025em;
+              }
+              
+              .article-content h1 {
+                font-size: 2.5rem;
+                margin-top: 3.5rem;
+                margin-bottom: 1.5rem;
+                line-height: 1.2;
+                padding-bottom: 1rem;
+                border-bottom: 2px solid hsl(var(--border));
+              }
+              
+              .article-content h2 {
+                font-size: 1.875rem;
+                margin-top: 3rem;
+                margin-bottom: 1.25rem;
+                line-height: 1.3;
+                position: relative;
+                padding-left: 1rem;
+              }
+              
+              .article-content h2::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 0.25rem;
+                bottom: 0.25rem;
+                width: 4px;
+                background: hsl(var(--primary));
+                border-radius: 2px;
+              }
+              
+              .article-content h3 {
+                font-size: 1.5rem;
+                margin-top: 2.5rem;
+                margin-bottom: 1rem;
+                line-height: 1.4;
+                color: hsl(var(--foreground) / 0.9);
+              }
+              
+              /* Paragraphs */
+              .article-content p {
+                margin-bottom: 1.75rem;
+              }
+              
+              /* Links */
+              .article-content a {
+                color: hsl(var(--primary));
+                text-decoration: none;
+                border-bottom: 1px solid hsl(var(--primary) / 0.3);
+                transition: all 0.2s ease;
+              }
+              
+              .article-content a:hover {
+                border-bottom-color: hsl(var(--primary));
+              }
+              
+              /* Strong & Emphasis */
+              .article-content strong {
+                font-weight: 600;
+                color: hsl(var(--foreground));
+              }
+              
+              .article-content em {
+                font-style: italic;
+              }
+              
+              /* Blockquotes - Magazine Style */
+              .article-content blockquote {
+                position: relative;
+                margin: 2.5rem 0;
+                padding: 2rem 2rem 2rem 2.5rem;
+                background: linear-gradient(135deg, hsl(var(--muted) / 0.5), hsl(var(--muted) / 0.3));
+                border-left: 4px solid hsl(var(--primary));
+                border-radius: 0 1rem 1rem 0;
+                font-style: italic;
+                font-size: 1.1rem;
+              }
+              
+              .article-content blockquote::before {
+                content: '"';
+                position: absolute;
+                top: 0.5rem;
+                left: 0.75rem;
+                font-size: 3rem;
+                color: hsl(var(--primary) / 0.3);
+                font-family: Georgia, serif;
+                line-height: 1;
+              }
+              
+              .article-content blockquote p {
+                margin-bottom: 0;
+              }
+              
+              /* Lists */
+              .article-content ul,
+              .article-content ol {
+                margin: 1.75rem 0;
+                padding-left: 0;
+                list-style: none;
+              }
+              
+              .article-content ul li,
+              .article-content ol li {
+                position: relative;
+                padding-left: 2rem;
+                margin-bottom: 0.75rem;
+                line-height: 1.7;
+              }
+              
+              .article-content ul li::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 0.65rem;
+                width: 8px;
+                height: 8px;
+                background: hsl(var(--primary));
+                border-radius: 50%;
+              }
+              
+              .article-content ol {
+                counter-reset: list-counter;
+              }
+              
+              .article-content ol li {
+                counter-increment: list-counter;
+              }
+              
+              .article-content ol li::before {
+                content: counter(list-counter);
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 1.5rem;
+                height: 1.5rem;
+                background: hsl(var(--primary));
+                color: hsl(var(--primary-foreground));
+                border-radius: 50%;
+                font-size: 0.75rem;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: 'Inter', system-ui, sans-serif;
+              }
+              
+              /* Code */
+              .article-content code {
+                background: hsl(var(--muted));
+                padding: 0.2rem 0.5rem;
+                border-radius: 0.375rem;
+                font-size: 0.9em;
+                font-family: 'JetBrains Mono', 'Fira Code', monospace;
+              }
+              
+              .article-content pre {
+                background: #1a1a2e;
+                color: #e4e4e7;
+                padding: 1.5rem;
+                border-radius: 1rem;
+                margin: 2rem 0;
+                overflow-x: auto;
+                font-size: 0.9rem;
+                line-height: 1.6;
+              }
+              
+              .article-content pre code {
+                background: transparent;
+                padding: 0;
+                font-size: inherit;
+              }
+              
+              /* Images */
+              .article-content img {
+                border-radius: 1rem;
+                margin: 2.5rem 0;
+                box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.15);
+              }
+              
+              /* Horizontal Rule */
+              .article-content hr {
+                border: none;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent);
+                margin: 3rem 0;
+              }
+              
+              /* First child no margin top */
+              .article-content > *:first-child {
+                margin-top: 0;
+              }
+              
+              /* Spacing after lists */
+              .article-content ul + p,
+              .article-content ol + p {
+                margin-top: 2rem;
+              }
+              
+              .article-content ul + h2,
+              .article-content ol + h2 {
+                margin-top: 3.5rem;
+              }
+              
+              .article-content ul + h3,
+              .article-content ol + h3 {
+                margin-top: 3rem;
+              }
+              
+              .article-content blockquote + p {
+                margin-top: 2rem;
+              }
+              
+              /* Dark mode adjustments */
+              .dark .article-content blockquote {
+                background: linear-gradient(135deg, hsl(var(--muted) / 0.3), hsl(var(--muted) / 0.15));
+              }
+              
+              .dark .article-content pre {
+                background: #0d0d14;
+              }
+              
+              .dark .article-content img {
+                box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4);
+              }
+            `}</style>
 
             {/* Sidebar */}
             <aside className="space-y-8 lg:sticky lg:top-24 lg:self-start">
