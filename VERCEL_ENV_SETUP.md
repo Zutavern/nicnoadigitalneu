@@ -1,46 +1,130 @@
-# Vercel Environment-Variablen Setup
+# Vercel Environment Variables Setup
 
-## Problem
-DATABASE_URL und DIRECT_DATABASE_URL sind aktuell nur für "Production" (Runtime) aktiviert, nicht für "Build".
+## 🚨 KRITISCHES PROBLEM
 
-## Lösung
+Die Datenbank funktioniert lokal, aber nicht auf Vercel, weil die Environment-Variablen **nicht für 'Build' aktiviert** sind!
 
-### Option 1: Über Vercel Dashboard (Empfohlen)
+## 📋 Benötigte Environment-Variablen
 
-1. Öffne: https://vercel.com/dashboard
-2. Projekt "nicnoa" auswählen
-3. Settings → Environment Variables
-4. Für jede Variable:
-   - `DATABASE_URL` → Bearbeiten → ✅ "Build" aktivieren
-   - `DIRECT_DATABASE_URL` → Bearbeiten → ✅ "Build" aktivieren
-5. Speichern
+### ✅ Database (KRITISCH für Build!)
+- `DATABASE_URL` - **MUSS für Build aktiviert sein!**
+- `DIRECT_DATABASE_URL` - **MUSS für Build aktiviert sein!**
 
-### Option 2: Über CLI
+### ✅ NextAuth
+- `AUTH_SECRET` oder `NEXTAUTH_SECRET` - **MUSS für Build aktiviert sein!**
+- `NEXTAUTH_URL` - **MUSS für Build aktiviert sein!**
+
+### ✅ OAuth (Optional, aber empfohlen)
+- `GOOGLE_CLIENT_ID` - **FEHLT auf Vercel!**
+- `GOOGLE_CLIENT_SECRET` - **FEHLT auf Vercel!**
+- `LINKEDIN_CLIENT_ID` - **FEHLT auf Vercel!**
+- `LINKEDIN_CLIENT_SECRET` - **FEHLT auf Vercel!**
+
+### ✅ Vercel Blob
+- `BLOB_READ_WRITE_TOKEN` - **FEHLT auf Vercel!** (aktuell: `blob_READ_WRITE_TOKEN` - falscher Name!)
+
+## 🔧 Lösung: Environment-Variablen für 'Build' aktivieren
+
+### Schritt 1: Gehe zum Vercel Dashboard
+https://vercel.com/daniels-projects-c316ea43/nicnoa/settings/environment-variables
+
+### Schritt 2: Für jede Variable 'Build' aktivieren
+
+Für **jede** der folgenden Variablen:
+1. Klicke auf **"Edit"** (oder das Stift-Symbol)
+2. Aktiviere das Häkchen bei **"Build"**
+3. Klicke auf **"Save"**
+
+**KRITISCH - Diese müssen für Build aktiviert sein:**
+- ✅ `DATABASE_URL`
+- ✅ `DIRECT_DATABASE_URL`
+- ✅ `AUTH_SECRET`
+- ✅ `NEXTAUTH_SECRET`
+- ✅ `NEXTAUTH_URL`
+
+**Optional, aber empfohlen:**
+- `BLOB_READ_WRITE_TOKEN` (korrigiere zuerst den Namen!)
+
+## 🔧 Fehlende Variablen setzen
+
+### BLOB_READ_WRITE_TOKEN korrigieren
+
+1. Gehe zu: https://vercel.com/daniels-projects-c316ea43/nicnoa/settings/environment-variables
+2. Finde `blob_READ_WRITE_TOKEN`
+3. Klicke auf "Edit"
+4. Kopiere den Wert
+5. Lösche `blob_READ_WRITE_TOKEN`
+6. Erstelle neue Variable `BLOB_READ_WRITE_TOKEN` mit dem kopierten Wert
+7. Aktiviere für: Production, Preview, Development, **Build**
+
+### OAuth Variablen setzen
+
+Falls du OAuth verwendest, setze diese Variablen:
 
 ```bash
-# DATABASE_URL für Build aktivieren
-vercel env update DATABASE_URL production
-# Während des Prompts:
-# - Value: (bestehenden Wert beibehalten)
-# - Environments: Production, Build (beide auswählen!)
+# Google OAuth
+vercel env add GOOGLE_CLIENT_ID
+vercel env add GOOGLE_CLIENT_SECRET
 
-# DIRECT_DATABASE_URL für Build aktivieren
-vercel env update DIRECT_DATABASE_URL production
-# Während des Prompts:
-# - Value: (bestehenden Wert beibehalten)
-# - Environments: Production, Build (beide auswählen!)
+# LinkedIn OAuth
+vercel env add LINKEDIN_CLIENT_ID
+vercel env add LINKEDIN_CLIENT_SECRET
 ```
 
-## Prüfung
+**WICHTIG:** Wähle für alle: Production, Preview, Development, **Build**
 
+## 📋 Prüfen ob alles korrekt ist
+
+### Lokal prüfen:
 ```bash
-# Prüfe ob Build aktiviert ist
-vercel env ls | grep DATABASE_URL
-# Sollte "Production, Build" zeigen (nicht nur "Production")
+./scripts/check-vercel-env.sh
 ```
 
-## Nach dem Update
+### Vercel prüfen:
+```bash
+vercel env ls
+```
 
-1. Neues Deployment triggern (Push zu main)
-2. Build-Logs prüfen ob sync-db.ts erfolgreich läuft
-3. APIs testen ob Daten geladen werden
+### Prüfe ob Variablen für Build aktiviert sind:
+1. Gehe zum Dashboard
+2. Prüfe jede Variable einzeln
+3. Stelle sicher, dass "Build" aktiviert ist
+
+## 🚀 Nach dem Setup
+
+1. **Neues Deployment starten:**
+   ```bash
+   vercel --prod
+   ```
+
+2. **Prüfe die Build-Logs:**
+   ```bash
+   vercel logs <deployment-url>
+   ```
+
+3. **Prüfe ob die Datenbank funktioniert:**
+   - Gehe zur Production-URL
+   - Prüfe ob die App lädt
+   - Prüfe ob API-Routes funktionieren
+
+## ⚠️ WICHTIGE HINWEISE
+
+1. **Build vs. Runtime:**
+   - Variablen für "Build" sind während des Builds verfügbar (z.B. `prisma generate`)
+   - Variablen für "Production/Preview/Development" sind nur zur Laufzeit verfügbar
+
+2. **DATABASE_URL während Build:**
+   - Wird benötigt für `prisma generate` und `prisma db push`
+   - Ohne Build-Aktivierung schlägt der Build fehl!
+
+3. **Sicherheit:**
+   - Alle Variablen sind verschlüsselt
+   - Nur für Build aktivieren, wenn wirklich nötig
+   - Für sensible Daten: Nur Production/Preview, nicht Development
+
+## 📞 Hilfe
+
+Falls Probleme auftreten:
+1. Prüfe die Build-Logs: `vercel logs <deployment-url>`
+2. Prüfe die Environment-Variablen: `vercel env ls`
+3. Prüfe ob alle Variablen für Build aktiviert sind (Dashboard)
