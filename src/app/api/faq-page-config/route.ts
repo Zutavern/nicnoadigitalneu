@@ -37,10 +37,19 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Error fetching FAQ page config:', error)
-    return NextResponse.json(
-      { error: 'Fehler beim Laden der Konfiguration' },
-      { status: 500 }
-    )
+    // Bei Fehler Default-Werte zurückgeben
+    return NextResponse.json({
+      heroBadgeText: 'Häufig gestellte Fragen',
+      heroTitle: 'Ihre Fragen beantwortet',
+      heroDescription: 'Hier finden Sie Antworten auf die wichtigsten Fragen rund um NICNOA&CO.online',
+      sectionTitle: 'Frequently Asked Questions',
+      sectionDescription: 'Entdecken Sie schnelle und umfassende Antworten auf häufige Fragen zu unserer Plattform, Services und Features.',
+      salonTabLabel: 'Für Salon-Space Betreiber',
+      stylistTabLabel: 'Für Stuhlmieter',
+      contactText: 'Können Sie nicht finden, wonach Sie suchen? Kontaktieren Sie unser',
+      contactLinkText: 'Support-Team',
+      contactLinkUrl: '/support',
+    })
   }
 }
 

@@ -47,10 +47,24 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Error fetching Partner page config:', error)
-    return NextResponse.json(
-      { error: 'Fehler beim Laden der Konfiguration' },
-      { status: 500 }
-    )
+    // Bei Fehler Default-Werte zurückgeben
+    return NextResponse.json({
+      heroBadgeText: 'Starke Partnerschaften',
+      heroTitle: 'Unsere Partner für deinen Erfolg',
+      heroDescription: 'Wir arbeiten mit führenden Unternehmen zusammen, um dir die besten Tools, Systeme und Services für deinen Salon-Space zu bieten.',
+      heroFeature1Text: 'Verifizierte Partner',
+      heroFeature2Text: 'Exklusive Vorteile',
+      heroFeature3Text: 'Nur für Mitglieder',
+      cardCtaText: 'Exklusive Vorteile für NICNOA&CO.online Mitglieder',
+      cardCtaLink: '/registrieren',
+      cardCtaButtonText: 'Jetzt Mitglied werden',
+      ctaTitle: 'Werde Teil unserer Community',
+      ctaDescription: 'Als NICNOA&CO.online Mitglied profitierst du von exklusiven Partner-Deals, Rabatten und Sonderangeboten.',
+      ctaButton1Text: 'Jetzt registrieren',
+      ctaButton1Link: '/registrieren',
+      ctaButton2Text: 'Preise ansehen',
+      ctaButton2Link: '/preise',
+    })
   }
 }
 

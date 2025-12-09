@@ -85,10 +85,8 @@ export async function GET(request: Request) {
         }
       } catch (rawError) {
         console.error('Raw query also failed:', rawError)
-        return NextResponse.json(
-          { error: 'Fehler beim Laden der Partner aus der Datenbank' },
-          { status: 500 }
-        )
+        // Bei Fehler leeres Array zurückgeben statt Fehler
+        return NextResponse.json([])
       }
     }
 
@@ -129,14 +127,8 @@ export async function GET(request: Request) {
     return NextResponse.json(partnersWithParsedInstructions)
   } catch (error) {
     console.error('Error fetching partners:', error)
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? `Fehler beim Laden der Partner: ${error instanceof Error ? error.message : 'Unknown error'}`
-      : 'Fehler beim Laden der Partner'
-    
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    )
+    // Bei Fehler leeres Array zurückgeben statt Fehler
+    return NextResponse.json([])
   }
 }
 

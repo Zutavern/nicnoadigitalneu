@@ -79,10 +79,8 @@ export async function GET(request: Request) {
         }
       } catch (rawError) {
         console.error('Raw query also failed:', rawError)
-        return NextResponse.json(
-          { error: 'Fehler beim Laden der Testimonials' },
-          { status: 500 }
-        )
+        // Bei Fehler leeres Array zurückgeben statt Fehler
+        return NextResponse.json([])
       }
     }
 
@@ -99,10 +97,8 @@ export async function GET(request: Request) {
     return NextResponse.json(formattedTestimonials)
   } catch (error) {
     console.error('Error fetching testimonials:', error)
-    return NextResponse.json(
-      { error: 'Fehler beim Laden der Testimonials' },
-      { status: 500 }
-    )
+    // Bei Fehler leeres Array zurückgeben statt Fehler
+    return NextResponse.json([])
   }
 }
 

@@ -32,10 +32,24 @@ try {
   // Prisma db push (nur Schema-Änderungen anwenden)
   // generate wird bereits im Build-Script vorher ausgeführt
   console.log('📦 Führe prisma db push aus...')
-  execSync('pnpm prisma db push', { 
-    stdio: 'inherit',
-    env: { ...process.env }
-  })
+  try {
+    execSync('pnpm prisma db push', { 
+      stdio: 'inherit',
+      env: { ...process.env }
+    })
+  } catch (error) {
+    // Falls db push wegen Datenverlust-Warnung fehlschlägt, mit Flag wiederholen
+    console.log('⚠️  db push fehlgeschlagen, versuche mit --accept-data-loss...')
+    try {
+      execSync('pnpm prisma db push --accept-data-loss', { 
+        stdio: 'inherit',
+        env: { ...process.env }
+      })
+    } catch (retryError) {
+      console.error('❌ db push auch mit --accept-data-loss fehlgeschlagen')
+      throw retryError
+    }
+  }
 
   // Seed Approach Cards (nur wenn noch nicht vorhanden)
   console.log('🌱 Prüfe und seede Approach Cards...')

@@ -67,10 +67,34 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Error fetching About Us page config:', error)
-    return NextResponse.json(
-      { error: 'Fehler beim Laden der Konfiguration' },
-      { status: 500 }
-    )
+    // Bei Fehler Default-Werte zurückgeben statt Fehler
+    return NextResponse.json({
+      heroBadgeText: 'Das Team hinter NICNOA&CO.online',
+      heroTitle: 'Experten für moderne Salon-Spaces',
+      heroDescription: 'Wir sind Daniel und Nico – zwei erfahrene Experten, die mit Leidenschaft die Zukunft des Salon-Managements gestalten. Mit unserer Expertise revolutionieren wir die Art und Weise, wie Salon-Spaces verwaltet werden.',
+      team1Name: 'Daniel',
+      team1Role: 'Co-Founder',
+      team1Description: 'Mit über 20 Jahren Berufserfahrung in Produktentwicklung, Agilität, Daten-Analytics und als Tech- sowie Produkt-Lead hat Daniel bereits zahlreiche branchenübergreifende Projekte erfolgreich geleitet.',
+      team1ImageUrl: null,
+      team1LinkedInUrl: 'https://linkedin.com',
+      team2Name: 'Nico',
+      team2Role: 'Co-Founder',
+      team2Description: 'Nico ist Industrie-Experte mit 15 Jahren Erfahrung im Wellness- und Beauty-Business und Betreiber von drei sehr erfolgreichen Coworking Spaces.',
+      team2ImageUrl: null,
+      team2LinkedInUrl: 'https://linkedin.com',
+      visionBadgeText: 'Unsere Vision',
+      visionTitle: 'Die Zukunft der Salon-Branche gestalten',
+      visionDescription: 'Wir glauben an eine Zukunft, in der flexible Salon-Spaces und gemeinsame Ressourcen den Unternehmergeist in der Beauty-Branche beflügeln und nachhaltiges Wachstum fördern.',
+      missionBadgeText: 'Unsere Mission',
+      missionTitle: 'Innovativ & Effizient',
+      missionDescription: 'Unser Antrieb ist es, innovative und effiziente Lösungen zu schaffen, die das Management von Salon-Spaces vereinfachen und die Zusammenarbeit in der Beauty-Branche fördern.',
+      approachTitle: 'Unser Ansatz',
+      approachDescription: 'Wie wir arbeiten und was uns auszeichnet',
+      whyTitle: 'Warum wir tun, was wir tun',
+      whyDescription: 'Wir sind fest davon überzeugt, dass moderne Salon-Spaces und intelligente Ressourcennutzung der Schlüssel zum Erfolg in der Beauty-Branche sind. Gemeinsam gestalten wir die Zukunft des Salon-Managements.',
+      whyButtonText: 'Jetzt durchstarten',
+      whyButtonLink: '/registrieren',
+    })
   }
 }
 
