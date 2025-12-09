@@ -9,7 +9,24 @@ import { execSync } from 'child_process'
 
 const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1'
 
+// Prüfe ob DATABASE_URL gesetzt ist
+const hasDatabaseUrl = !!(process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL)
+if (!hasDatabaseUrl) {
+  console.error('❌ DATABASE_URL oder DIRECT_DATABASE_URL nicht gesetzt!')
+  if (isProduction) {
+    console.error('⚠️  Build läuft weiter, aber Datenbank-Synchronisation wird übersprungen')
+  } else {
+    process.exit(1)
+  }
+}
+
 console.log(`🔄 Synchronisiere Datenbank (${isProduction ? 'Production' : 'Development'})...`)
+if (hasDatabaseUrl) {
+  console.log('✅ DATABASE_URL gefunden')
+} else {
+  console.log('⚠️  Keine DATABASE_URL - überspringe Synchronisation')
+  process.exit(0)
+}
 
 try {
   // Prisma db push (nur Schema-Änderungen anwenden)
@@ -46,7 +63,11 @@ try {
 } catch (error) {
   console.error('❌ Fehler bei der Synchronisation:', error)
   // In Production nicht abbrechen, damit der Build weiterläuft
-  if (!isProduction) {
+  // Aber logge den Fehler deutlich
+  if (isProduction) {
+    console.error('⚠️  WARNUNG: Datenbank-Synchronisation fehlgeschlagen, aber Build läuft weiter')
+    console.error('⚠️  Bitte manuell synchronisieren mit: pnpm tsx scripts/sync-production-db.ts')
+  } else {
     process.exit(1)
   }
 }
