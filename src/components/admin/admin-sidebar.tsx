@@ -90,6 +90,7 @@ const menuItems = [
               { label: 'FAQ', href: '/admin/faqs', icon: HelpCircle },
               { label: 'Testimonials', href: '/admin/testimonials', icon: Quote },
               { label: 'Partner & Vorteile', href: '/admin/partners', icon: HandshakeIcon },
+              { label: 'Über uns', href: '/admin/about-us', icon: Users },
             ],
           },
         ],
@@ -128,7 +129,7 @@ export function AdminSidebar() {
         <div className="flex h-16 items-center justify-between border-b px-4">
           <div className="flex items-center">
             <span className="text-lg font-bold">
-              NICNOA <span className="text-primary">&</span> CO.
+              NICNOA<span className="text-primary">&CO</span><span className="text-primary">.online</span>
             </span>
           </div>
         </div>
@@ -149,7 +150,7 @@ export function AdminSidebar() {
           {!collapsed && (
             <div className="flex items-center">
               <span className="text-lg font-bold">
-                NICNOA <span className="text-primary">&</span> CO.
+                NICNOA<span className="text-primary">&CO</span><span className="text-primary">.online</span>
               </span>
             </div>
           )}

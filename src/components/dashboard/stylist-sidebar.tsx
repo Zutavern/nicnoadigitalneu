@@ -107,7 +107,7 @@ export function StylistSidebar() {
               className="flex items-center"
             >
               <span className="text-lg font-bold">
-                NICNOA <span className="text-primary">&</span> CO.
+                NICNOA<span className="text-primary">&CO</span><span className="text-primary">.online</span>
               </span>
             </motion.div>
           )}

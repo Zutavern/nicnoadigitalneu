@@ -114,7 +114,7 @@ async function getEmailSettings(): Promise<EmailSettings> {
   return {
     logoUrl: settings?.emailLogoUrl || settings?.logoUrl || undefined,
     primaryColor: settings?.emailPrimaryColor || '#10b981',
-    footerText: settings?.emailFooterText || '© 2025 NICNOA & CO. DIGITAL. Alle Rechte vorbehalten.',
+    footerText: settings?.emailFooterText || '© 2025 NICNOA&CO.online. Alle Rechte vorbehalten.',
     fromName: settings?.emailFromName || 'NICNOA',
     replyTo: settings?.emailReplyTo || settings?.supportEmail || undefined,
   }

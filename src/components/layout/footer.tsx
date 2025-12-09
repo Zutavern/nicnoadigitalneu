@@ -11,9 +11,8 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <span className="text-xl font-bold tracking-tight">
-                NICNOA <span className="text-primary">&</span> CO.
+                NICNOA<span className="text-primary">&CO</span><span className="text-primary">.online</span>
               </span>
-              <span className="text-sm font-medium text-muted-foreground">DIGITAL</span>
             </div>
             <p className="text-sm text-muted-foreground">
               Revolutionieren Sie die Art und Weise, wie Salon-Spaces verwaltet werden. 
@@ -74,7 +73,7 @@ export function Footer() {
             <Link href="/agb" className="hover:text-foreground">AGB</Link>
           </div>
           <p className="text-sm text-muted-foreground">
-            © 2025 NICNOA & CO. DIGITAL. Alle Rechte vorbehalten.
+            © 2025 NICNOA&CO.online. Alle Rechte vorbehalten.
           </p>
         </div>
       </div>

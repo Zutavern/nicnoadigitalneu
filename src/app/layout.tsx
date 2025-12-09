@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NICNOA & CO. DIGITAL",
+  title: "NICNOA&CO.online",
   description: "Die All-in-One SaaS-Lösung für moderne Salon-Coworking-Spaces.",
 };
 

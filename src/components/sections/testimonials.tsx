@@ -116,7 +116,7 @@ export function Testimonials() {
           </h2>
           
           <p className="text-center mt-5 text-muted-foreground opacity-75">
-            Erfahren Sie, wie NICNOA & Co. das Leben von Stylisten und Salonbesitzern verändert
+            Erfahren Sie, wie NICNOA&CO.online das Leben von Stylisten und Salonbesitzern verändert
           </p>
         </motion.div>
 

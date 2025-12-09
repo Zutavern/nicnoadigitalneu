@@ -1162,6 +1162,62 @@ model FAQPageConfig {
   @@map("faq_page_config")
 }
 
+model AboutUsPageConfig {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // Hero Section
+  heroBadgeText     String?  @map("hero_badge_text") @db.VarChar(100)
+  heroTitle         String   @map("hero_title") @db.Text
+  heroDescription   String?  @map("hero_description") @db.Text
+  
+  // Team Member 1 (Daniel)
+  team1Name         String?  @map("team_1_name") @db.VarChar(100)
+  team1Role         String?  @map("team_1_role") @db.VarChar(100)
+  team1Description  String?  @map("team_1_description") @db.Text
+  team1ImageUrl     String?  @map("team_1_image_url") @db.VarChar(500)
+  team1LinkedInUrl  String?  @map("team_1_linkedin_url") @db.VarChar(500)
+  
+  // Team Member 2 (Nico)
+  team2Name         String?  @map("team_2_name") @db.VarChar(100)
+  team2Role         String?  @map("team_2_role") @db.VarChar(100)
+  team2Description  String?  @map("team_2_description") @db.Text
+  team2ImageUrl     String?  @map("team_2_image_url") @db.VarChar(500)
+  team2LinkedInUrl  String?  @map("team_2_linkedin_url") @db.VarChar(500)
+  
+  // Vision Section
+  visionBadgeText   String?  @map("vision_badge_text") @db.VarChar(100)
+  visionTitle       String?  @map("vision_title") @db.Text
+  visionDescription String? @map("vision_description") @db.Text
+  
+  // Mission Section
+  missionBadgeText  String?  @map("mission_badge_text") @db.VarChar(100)
+  missionTitle      String?  @map("mission_title") @db.Text
+  missionDescription String? @map("mission_description") @db.Text
+  
+  // Approach Section
+  approachTitle     String?  @map("approach_title") @db.Text
+  approachDescription String? @map("approach_description") @db.Text
+  approach1Title    String?  @map("approach_1_title") @db.VarChar(200)
+  approach1Description String? @map("approach_1_description") @db.Text
+  approach2Title    String?  @map("approach_2_title") @db.VarChar(200)
+  approach2Description String? @map("approach_2_description") @db.Text
+  approach3Title    String?  @map("approach_3_title") @db.VarChar(200)
+  approach3Description String? @map("approach_3_description") @db.Text
+  approach4Title    String?  @map("approach_4_title") @db.VarChar(200)
+  approach4Description String? @map("approach_4_description") @db.Text
+  
+  // Why Section
+  whyTitle          String?  @map("why_title") @db.Text
+  whyDescription   String?  @map("why_description") @db.Text
+  whyButtonText     String?  @default("Jetzt durchstarten") @map("why_button_text") @db.VarChar(100)
+  whyButtonLink     String?  @default("/registrieren") @map("why_button_link") @db.VarChar(200)
+  
+  // Meta
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("about_us_page_config")
+}
+
 // ============================================
 // Security & Audit Logs
 // ============================================

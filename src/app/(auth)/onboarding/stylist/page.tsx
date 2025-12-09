@@ -354,7 +354,7 @@ export default function StylistOnboardingPage() {
           </motion.div>
           
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-white via-emerald-100 to-teal-200 bg-clip-text text-transparent">
-            Willkommen bei NICNOA & Co.
+            Willkommen bei NICNOA&CO.online
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Lass uns dein Business starten. In nur wenigen Schritten bist du startklar.

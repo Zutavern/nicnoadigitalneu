@@ -19,7 +19,7 @@ export async function GET() {
       return NextResponse.json({
         heroBadgeText: 'Häufig gestellte Fragen',
         heroTitle: 'Ihre Fragen beantwortet',
-        heroDescription: 'Hier finden Sie Antworten auf die wichtigsten Fragen rund um NICNOA & CO. DIGITAL',
+        heroDescription: 'Hier finden Sie Antworten auf die wichtigsten Fragen rund um NICNOA&CO.online',
         sectionTitle: 'Frequently Asked Questions',
         sectionDescription: 'Entdecken Sie schnelle und umfassende Antworten auf häufige Fragen zu unserer Plattform, Services und Features.',
         salonTabLabel: 'Für Salon-Space Betreiber',

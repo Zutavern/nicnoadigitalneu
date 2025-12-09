@@ -11,9 +11,8 @@ export function MainNav() {
         <div className="flex items-center">
           <Link href="/" className="flex items-center space-x-2">
             <span className="text-xl font-bold tracking-tight text-foreground">
-              NICNOA <span className="text-primary">&</span> CO.
+              NICNOA<span className="text-primary">&CO</span><span className="text-primary">.online</span>
             </span>
-            <span className="text-sm font-medium text-muted-foreground">DIGITAL</span>
           </Link>
           <div className="hidden md:flex md:gap-8 md:ml-24">
             <Link href="/produkt" className="text-base font-medium text-muted-foreground hover:text-foreground">

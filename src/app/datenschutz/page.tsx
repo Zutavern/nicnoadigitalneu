@@ -59,7 +59,7 @@ export default function DatenschutzPage() {
         <div className="space-y-4">
           <Section title="1. Verantwortlicher">
             <p>
-              NICNOA & CO. DIGITAL<br />
+              NICNOA&CO.online<br />
               Musterstraße 123<br />
               12345 Berlin<br />
               Deutschland<br />

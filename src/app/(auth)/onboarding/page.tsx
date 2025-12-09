@@ -444,7 +444,7 @@ export default function OnboardingPage() {
           </motion.div>
           
           <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-white via-emerald-100 to-teal-200 bg-clip-text text-transparent">
-            Willkommen bei NICNOA & CO. 👋
+            Willkommen bei NICNOA&CO.online 👋
           </h1>
           <p className="text-muted-foreground">
             {isSalonOwner ? 'Vervollständige dein Salon-Profil' : 'Zeig uns, was du drauf hast!'}

@@ -170,7 +170,7 @@ export default function FeaturesPage() {
                 Bereit für die Zukunft des Salon-Managements?
               </h2>
               <p className="mb-8 text-muted-foreground">
-                Starten Sie jetzt mit NICNOA & CO. DIGITAL und revolutionieren Sie
+                Starten Sie jetzt mit NICNOA&CO.online und revolutionieren Sie
                 Ihren Salon-Space.
               </p>
               <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">

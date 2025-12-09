@@ -27,7 +27,7 @@ export function EmailLayout({
   preview,
   logoUrl,
   primaryColor = '#10b981',
-  footerText = '© 2025 NICNOA & CO. DIGITAL. Alle Rechte vorbehalten.',
+  footerText = '© 2025 NICNOA&CO.online. Alle Rechte vorbehalten.',
   showSocialLinks = true,
   children,
 }: EmailLayoutProps) {
@@ -77,7 +77,7 @@ export function EmailLayout({
             <Section style={header}>
               <Img
                 src={logoUrl || defaultLogo}
-                alt="NICNOA & CO. DIGITAL"
+                alt="NICNOA&CO.online"
                 width={180}
                 height={48}
                 style={logo}
@@ -129,7 +129,7 @@ export function EmailLayout({
               <Hr style={footerDivider} />
 
               {/* Company Info */}
-              <Text style={companyName}>NICNOA & CO. DIGITAL</Text>
+              <Text style={companyName}>NICNOA&CO.online</Text>
               <Text style={tagline}>Die Plattform für moderne Friseure</Text>
 
               {/* Footer Links */}
@@ -156,7 +156,7 @@ export function EmailLayout({
 
               {/* Address */}
               <Text style={addressText}>
-                NICNOA & CO. DIGITAL GmbH • Musterstraße 123 • 10115 Berlin
+                NICNOA&CO.online GmbH • Musterstraße 123 • 10115 Berlin
               </Text>
 
               {/* Unsubscribe Note */}

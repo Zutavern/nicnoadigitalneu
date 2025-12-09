@@ -956,7 +956,7 @@ export default function PartnersPage() {
                       <Input
                         value={pageConfig.cardCtaText || ''}
                         onChange={(e) => setPageConfig({ ...pageConfig, cardCtaText: e.target.value })}
-                        placeholder="z.B. Exklusive Vorteile für NICNOA Mitglieder"
+                        placeholder="z.B. Exklusive Vorteile für NICNOA&CO.online Mitglieder"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">

@@ -62,7 +62,7 @@ export default function UnternehmenPage() {
               <span className="text-primary">Salon-Coworking</span>
             </h1>
             <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-              NICNOA & CO. DIGITAL wurde gegründet, um die Art und Weise zu verändern, 
+              NICNOA&CO.online wurde gegründet, um die Art und Weise zu verändern, 
               wie Salon-Spaces betrieben werden. Unsere Mission: Mehr Zeit für das, was zählt – Ihre Kunden.
             </p>
           </motion.div>
@@ -85,7 +85,7 @@ export default function UnternehmenPage() {
               Kunden glücklich zu machen.
             </p>
             <p>
-              Aus dieser Erkenntnis entstand NICNOA & CO. DIGITAL. Eine Plattform, die speziell 
+              Aus dieser Erkenntnis entstand NICNOA&CO.online. Eine Plattform, die speziell 
               für die Bedürfnisse moderner Salon-Coworking-Spaces entwickelt wurde.
             </p>
             <p>
@@ -143,7 +143,7 @@ export default function UnternehmenPage() {
         >
           <h2 className="mb-4 text-3xl font-bold">Das Team</h2>
           <p className="text-muted-foreground">
-            Die Menschen hinter NICNOA & CO. DIGITAL
+            Die Menschen hinter NICNOA&CO.online
           </p>
         </motion.div>
 

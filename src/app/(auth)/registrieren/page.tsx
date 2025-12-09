@@ -118,7 +118,7 @@ export default function RegisterPage() {
         >
           <Link href="/" className="flex items-center space-x-2 mb-8">
             <span className="text-3xl font-bold tracking-tight">
-              NICNOA <span className="text-primary">&</span> CO.
+              NICNOA<span className="text-primary">&CO</span><span className="text-primary">.online</span>
             </span>
             <span className="text-lg font-medium text-muted-foreground">DIGITAL</span>
           </Link>
@@ -165,7 +165,7 @@ export default function RegisterPage() {
             <div className="lg:hidden mb-8">
               <Link href="/" className="flex items-center justify-center space-x-2">
                 <span className="text-2xl font-bold tracking-tight">
-                  NICNOA <span className="text-primary">&</span> CO.
+                  NICNOA<span className="text-primary">&CO</span><span className="text-primary">.online</span>
                 </span>
               </Link>
             </div>

@@ -34,7 +34,7 @@ async function main() {
     ) VALUES (
       'Häufig gestellte Fragen',
       'Ihre Fragen beantwortet',
-      'Hier finden Sie Antworten auf die wichtigsten Fragen rund um NICNOA & CO. DIGITAL',
+      'Hier finden Sie Antworten auf die wichtigsten Fragen rund um NICNOA&CO.online',
       'Frequently Asked Questions',
       'Entdecken Sie schnelle und umfassende Antworten auf häufige Fragen zu unserer Plattform, Services und Features.',
       'Für Salon-Space Betreiber',

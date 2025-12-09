@@ -244,7 +244,7 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
             <Scissors className="h-4 w-4" />
-            <span className="text-sm font-medium">NICNOA & CO.</span>
+            <span className="text-sm font-medium">NICNOA&CO.online</span>
           </div>
           <h1 className="text-3xl md:text-4xl font-bold">
             Einladung zum Salon

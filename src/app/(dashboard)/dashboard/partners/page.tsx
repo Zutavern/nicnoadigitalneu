@@ -119,7 +119,7 @@ export default function PartnersPage() {
           <div>
             <h1 className="text-3xl font-bold">Partner & Vorteile</h1>
             <p className="text-muted-foreground">
-              Exklusive Rabatte und Angebote für NICNOA Mitglieder
+              Exklusive Rabatte und Angebote für NICNOA&CO.online Mitglieder
             </p>
           </div>
         </div>

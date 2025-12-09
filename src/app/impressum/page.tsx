@@ -21,7 +21,7 @@ export default function ImpressumPage() {
           <div className="rounded-lg bg-card p-6 shadow-sm">
             <h2 className="mb-4 text-2xl font-semibold">Angaben gemäß § 5 TMG</h2>
             <p className="text-muted-foreground">
-              NICNOA & CO. DIGITAL<br />
+              NICNOA&CO.online<br />
               Musterstraße 123<br />
               12345 Berlin<br />
               Deutschland
@@ -62,7 +62,7 @@ export default function ImpressumPage() {
             </h2>
             <p className="text-muted-foreground">
               Max Mustermann<br />
-              NICNOA & CO. DIGITAL<br />
+              NICNOA&CO.online<br />
               Musterstraße 123<br />
               12345 Berlin
             </p>
