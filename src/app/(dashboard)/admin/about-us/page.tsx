@@ -145,10 +145,47 @@ export default function AboutUsAdminPage() {
       const res = await fetch('/api/admin/about-us-page-config')
       if (res.ok) {
         const data = await res.json()
-        setPageConfig(data)
+        console.log('✅ Page Config geladen:', data)
+        // Merge mit Default-Werten, um sicherzustellen, dass alle Felder vorhanden sind
+        setPageConfig({
+          heroBadgeText: data.heroBadgeText || '',
+          heroTitle: data.heroTitle || '',
+          heroDescription: data.heroDescription || '',
+          team1Name: data.team1Name || '',
+          team1Role: data.team1Role || '',
+          team1Description: data.team1Description || '',
+          team1ImageUrl: data.team1ImageUrl || null,
+          team1LinkedInUrl: data.team1LinkedInUrl || '',
+          team2Name: data.team2Name || '',
+          team2Role: data.team2Role || '',
+          team2Description: data.team2Description || '',
+          team2ImageUrl: data.team2ImageUrl || null,
+          team2LinkedInUrl: data.team2LinkedInUrl || '',
+          visionBadgeText: data.visionBadgeText || '',
+          visionTitle: data.visionTitle || '',
+          visionDescription: data.visionDescription || '',
+          missionBadgeText: data.missionBadgeText || '',
+          missionTitle: data.missionTitle || '',
+          missionDescription: data.missionDescription || '',
+          approachTitle: data.approachTitle || '',
+          approachDescription: data.approachDescription || '',
+          whyTitle: data.whyTitle || '',
+          whyDescription: data.whyDescription || '',
+          whyButtonText: data.whyButtonText || 'Jetzt durchstarten',
+          whyButtonLink: data.whyButtonLink || '/registrieren',
+        })
+      } else {
+        const error = await res.json().catch(() => ({ error: 'Unbekannter Fehler' }))
+        console.error('❌ Error fetching config:', res.status, error)
+        // Verwende Default-Werte wenn API fehlschlägt
+        if (res.status === 403) {
+          toast.error('Nicht berechtigt - bitte einloggen')
+        } else {
+          toast.error('Fehler beim Laden der Konfiguration')
+        }
       }
     } catch (error) {
-      console.error('Error fetching config:', error)
+      console.error('❌ Error fetching config:', error)
       toast.error('Fehler beim Laden der Konfiguration')
     } finally {
       setIsLoadingConfig(false)
@@ -225,11 +262,22 @@ export default function AboutUsAdminPage() {
       const res = await fetch('/api/admin/approach-cards')
       if (res.ok) {
         const data = await res.json()
-        setApproachCards(data)
+        console.log('✅ Approach Cards geladen:', data)
+        setApproachCards(Array.isArray(data) ? data : [])
+      } else {
+        const error = await res.json().catch(() => ({ error: 'Unbekannter Fehler' }))
+        console.error('❌ Error fetching cards:', res.status, error)
+        if (res.status === 403) {
+          toast.error('Nicht berechtigt - bitte einloggen')
+        } else {
+          toast.error('Fehler beim Laden der Kacheln')
+        }
+        setApproachCards([])
       }
     } catch (error) {
-      console.error('Error fetching cards:', error)
+      console.error('❌ Error fetching cards:', error)
       toast.error('Fehler beim Laden der Kacheln')
+      setApproachCards([])
     } finally {
       setIsLoadingCards(false)
     }
