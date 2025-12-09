@@ -11,7 +11,7 @@ import TextAlign from '@tiptap/extension-text-align'
 import Highlight from '@tiptap/extension-highlight'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { common, createLowlight } from 'lowlight'
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -50,6 +50,8 @@ import {
   FileCode,
   Loader2,
   FileCode2,
+  AlertTriangle,
+  Eye,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -79,7 +81,50 @@ export function TiptapEditor({
   const [isUploading, setIsUploading] = useState(false)
   const [htmlContent, setHtmlContent] = useState('')
   const [htmlDialogOpen, setHtmlDialogOpen] = useState(false)
+  const [showHtmlPreview, setShowHtmlPreview] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Unterstützte Tags Liste
+  const supportedTags = ['h1', 'h2', 'h3', 'p', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del', 
+    'a', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'img', 'hr', 'br', 'mark', 'span']
+  
+  // HTML Validierung und Warnung
+  const htmlValidation = useMemo(() => {
+    if (!htmlContent.trim()) return { isValid: true, warnings: [], unsupportedTags: [] }
+    
+    // Finde alle HTML-Tags im Content
+    const tagRegex = /<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/gi
+    const foundTags = new Set<string>()
+    let match
+    
+    while ((match = tagRegex.exec(htmlContent)) !== null) {
+      foundTags.add(match[1].toLowerCase())
+    }
+    
+    // Prüfe auf nicht unterstützte Tags
+    const unsupportedTags = Array.from(foundTags).filter(tag => !supportedTags.includes(tag))
+    
+    const warnings: string[] = []
+    if (unsupportedTags.length > 0) {
+      warnings.push(`Folgende Tags werden ignoriert: ${unsupportedTags.map(t => `<${t}>`).join(', ')}`)
+    }
+    
+    // Prüfe auf div/section/article (häufige Fehler)
+    if (unsupportedTags.includes('div') || unsupportedTags.includes('section') || unsupportedTags.includes('article')) {
+      warnings.push('Tipp: <div>, <section> und <article> werden in <p> umgewandelt oder ignoriert.')
+    }
+    
+    // Prüfe auf table (nicht unterstützt ohne Extension)
+    if (unsupportedTags.includes('table') || unsupportedTags.includes('tr') || unsupportedTags.includes('td')) {
+      warnings.push('Tipp: Tabellen sind nicht unterstützt. Verwende stattdessen Listen.')
+    }
+    
+    return {
+      isValid: unsupportedTags.length === 0,
+      warnings,
+      unsupportedTags
+    }
+  }, [htmlContent])
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -545,13 +590,18 @@ export function TiptapEditor({
           </Dialog>
 
           {/* HTML Import Dialog */}
-          <Dialog open={htmlDialogOpen} onOpenChange={setHtmlDialogOpen}>
+          <Dialog open={htmlDialogOpen} onOpenChange={(open) => {
+            setHtmlDialogOpen(open)
+            if (!open) {
+              setShowHtmlPreview(false)
+            }
+          }}>
             <DialogTrigger asChild>
               <ToolbarButton title="HTML einfügen">
                 <FileCode2 className="h-4 w-4" />
               </ToolbarButton>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>HTML einfügen</DialogTitle>
               </DialogHeader>
@@ -571,11 +621,59 @@ export function TiptapEditor({
                     className="min-h-[200px] font-mono text-sm"
                   />
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Unterstützte Tags: h1-h3, p, strong, em, u, s, a, ul, ol, li, blockquote, code, pre, img, hr
-                </p>
-                <Button onClick={insertHtml} className="w-full" disabled={!htmlContent.trim()}>
-                  HTML einfügen
+                
+                {/* Warnungen für nicht unterstützte Tags */}
+                {htmlValidation.warnings.length > 0 && (
+                  <div className="rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-4 space-y-2">
+                    <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400 font-medium">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span>Hinweis zur HTML-Kompatibilität</span>
+                    </div>
+                    <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1 ml-6 list-disc">
+                      {htmlValidation.warnings.map((warning, idx) => (
+                        <li key={idx}>{warning}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {/* Vorschau Toggle */}
+                {htmlContent.trim() && (
+                  <div className="space-y-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowHtmlPreview(!showHtmlPreview)}
+                      className="w-full"
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      {showHtmlPreview ? 'Vorschau ausblenden' : 'Vorschau anzeigen'}
+                    </Button>
+                    
+                    {showHtmlPreview && (
+                      <div className="rounded-lg border bg-muted/30 p-4">
+                        <Label className="text-xs text-muted-foreground mb-2 block">
+                          So wird das HTML interpretiert:
+                        </Label>
+                        <div 
+                          className="prose prose-sm dark:prose-invert max-w-none"
+                          dangerouslySetInnerHTML={{ __html: htmlContent }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-lg">
+                  <strong>Unterstützte Tags:</strong> h1-h3, p, strong/b, em/i, u, s/strike/del, a, ul, ol, li, blockquote, code, pre, img, hr, br, mark
+                </div>
+                
+                <Button 
+                  onClick={insertHtml} 
+                  className="w-full" 
+                  disabled={!htmlContent.trim()}
+                >
+                  {htmlValidation.warnings.length > 0 ? 'Trotzdem einfügen' : 'HTML einfügen'}
                 </Button>
               </div>
             </DialogContent>
