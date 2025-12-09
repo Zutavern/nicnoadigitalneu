@@ -59,6 +59,61 @@ try {
     console.log('⚠️ About Us Page Config Seed übersprungen (möglicherweise bereits vorhanden)')
   }
 
+  // Seed FAQ Page Config (nur wenn noch nicht vorhanden)
+  console.log('🌱 Prüfe und seede FAQ Page Config...')
+  try {
+    execSync('pnpm tsx prisma/seed-faq-page-config.ts', { 
+      stdio: 'inherit',
+      env: { ...process.env }
+    })
+  } catch (error) {
+    console.log('⚠️ FAQ Page Config Seed übersprungen (möglicherweise bereits vorhanden)')
+  }
+
+  // Seed Partner Page Config (nur wenn noch nicht vorhanden)
+  console.log('🌱 Prüfe und seede Partner Page Config...')
+  try {
+    execSync('pnpm tsx prisma/seed-partner-page-config.ts', { 
+      stdio: 'inherit',
+      env: { ...process.env }
+    })
+  } catch (error) {
+    console.log('⚠️ Partner Page Config Seed übersprungen (möglicherweise bereits vorhanden)')
+  }
+
+  // Seed FAQs (nur wenn noch nicht vorhanden)
+  console.log('🌱 Prüfe und seede FAQs...')
+  try {
+    execSync('pnpm tsx prisma/seed-faqs.ts', { 
+      stdio: 'inherit',
+      env: { ...process.env }
+    })
+  } catch (error) {
+    console.log('⚠️ FAQs Seed übersprungen (möglicherweise bereits vorhanden)')
+  }
+
+  // Seed Testimonials (nur wenn noch nicht vorhanden)
+  console.log('🌱 Prüfe und seede Testimonials...')
+  try {
+    execSync('pnpm tsx prisma/seed-testimonials.ts', { 
+      stdio: 'inherit',
+      env: { ...process.env }
+    })
+  } catch (error) {
+    console.log('⚠️ Testimonials Seed übersprungen (möglicherweise bereits vorhanden)')
+  }
+
+  // Seed Partners (nur wenn noch nicht vorhanden)
+  console.log('🌱 Prüfe und seede Partners...')
+  try {
+    execSync('pnpm tsx prisma/seed-partners.ts', { 
+      stdio: 'inherit',
+      env: { ...process.env }
+    })
+  } catch (error) {
+    console.log('⚠️ Partners Seed übersprungen (möglicherweise bereits vorhanden)')
+  }
+
   console.log('✅ Datenbank erfolgreich synchronisiert!')
 } catch (error) {
   console.error('❌ Fehler bei der Synchronisation:', error)
