@@ -2371,3 +2371,156 @@ model LegalSection {
   @@index([pageType, isActive, sortOrder])
   @@map("legal_sections")
 }
+
+// ==========================================
+// BETA-PROGRAMM PAGE CMS (Lead-Generierung)
+// ==========================================
+
+model BetaPageConfig {
+  id                    String   @id @default("default") @db.VarChar(50)
+  
+  // Hero Section
+  heroBadgeText         String?  @map("hero_badge_text") @db.VarChar(100)
+  heroTitle             String   @map("hero_title") @db.VarChar(300)
+  heroTitleHighlight    String?  @map("hero_title_highlight") @db.VarChar(100)
+  heroDescription       String?  @map("hero_description") @db.Text
+  heroCtaPrimaryText    String?  @map("hero_cta_primary_text") @db.VarChar(50)
+  heroCtaPrimaryLink    String?  @map("hero_cta_primary_link") @db.VarChar(200)
+  heroCtaSecondaryText  String?  @map("hero_cta_secondary_text") @db.VarChar(50)
+  heroCtaSecondaryLink  String?  @map("hero_cta_secondary_link") @db.VarChar(200)
+  
+  // Requirements Section
+  requirementsTitle     String?  @map("requirements_title") @db.VarChar(100)
+  requirementsDescription String? @map("requirements_description") @db.Text
+  
+  // Timeline Section
+  timelineTitle         String?  @map("timeline_title") @db.VarChar(100)
+  timelineDescription   String?  @map("timeline_description") @db.Text
+  
+  // CTA Section
+  ctaTitle              String?  @map("cta_title") @db.VarChar(200)
+  ctaDescription        String?  @map("cta_description") @db.Text
+  ctaButtonText         String?  @map("cta_button_text") @db.VarChar(50)
+  ctaButtonLink         String?  @map("cta_button_link") @db.VarChar(200)
+  
+  // SEO
+  metaTitle             String?  @map("meta_title") @db.VarChar(70)
+  metaDescription       String?  @map("meta_description") @db.VarChar(160)
+  
+  // Timestamps
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Relations
+  benefits              BetaBenefit[]
+  requirements          BetaRequirement[]
+  timelineItems         BetaTimelineItem[]
+  
+  @@map("beta_page_config")
+}
+
+model BetaBenefit {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  icon        String   @db.VarChar(50)
+  title       String   @db.VarChar(100)
+  description String   @db.Text
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  config      BetaPageConfig? @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId    String?  @default("default") @map("config_id") @db.VarChar(50)
+  
+  @@index([isActive, sortOrder])
+  @@map("beta_benefits")
+}
+
+model BetaRequirement {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  text        String   @db.VarChar(300)
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  config      BetaPageConfig? @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId    String?  @default("default") @map("config_id") @db.VarChar(50)
+  
+  @@index([isActive, sortOrder])
+  @@map("beta_requirements")
+}
+
+model BetaTimelineItem {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  date        String   @db.VarChar(50)
+  title       String   @db.VarChar(100)
+  description String   @db.Text
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  config      BetaPageConfig? @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId    String?  @default("default") @map("config_id") @db.VarChar(50)
+  
+  @@index([isActive, sortOrder])
+  @@map("beta_timeline_items")
+}
+
+// ==========================================
+// UPDATES/CHANGELOG PAGE CMS (Transparenz)
+// ==========================================
+
+model UpdatesPageConfig {
+  id                    String   @id @default("default") @db.VarChar(50)
+  
+  // Hero Section
+  heroBadgeText         String?  @map("hero_badge_text") @db.VarChar(100)
+  heroTitle             String   @map("hero_title") @db.VarChar(300)
+  heroTitleHighlight    String?  @map("hero_title_highlight") @db.VarChar(100)
+  heroDescription       String?  @map("hero_description") @db.Text
+  
+  // Newsletter CTA Section
+  ctaTitle              String?  @map("cta_title") @db.VarChar(200)
+  ctaDescription        String?  @map("cta_description") @db.Text
+  ctaButtonText         String?  @map("cta_button_text") @db.VarChar(50)
+  ctaButtonLink         String?  @map("cta_button_link") @db.VarChar(200)
+  
+  // SEO
+  metaTitle             String?  @map("meta_title") @db.VarChar(70)
+  metaDescription       String?  @map("meta_description") @db.VarChar(160)
+  
+  // Timestamps
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  @@map("updates_page_config")
+}
+
+model ChangelogEntry {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Content
+  date        DateTime @db.Date
+  category    String   @db.VarChar(50)
+  icon        String   @db.VarChar(50)
+  title       String   @db.VarChar(150)
+  description String   @db.Text
+  
+  // Display Options
+  isHighlight Boolean  @default(false) @map("is_highlight")
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  @@index([isActive, sortOrder])
+  @@index([date])
+  @@map("changelog_entries")
+}

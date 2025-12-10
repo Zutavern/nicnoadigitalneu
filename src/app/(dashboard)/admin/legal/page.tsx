@@ -14,6 +14,8 @@ import {
   Scale,
   ChevronDown,
   ExternalLink,
+  Globe,
+  Search,
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -418,8 +420,11 @@ export default function LegalAdminPage() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>SEO-Einstellungen</CardTitle>
-                    <CardDescription>Meta-Daten für Suchmaschinen</CardDescription>
+                    <CardTitle className="flex items-center gap-2">
+                      <Globe className="h-5 w-5" />
+                      SEO-Einstellungen
+                    </CardTitle>
+                    <CardDescription>Optimieren Sie die Sichtbarkeit in Suchmaschinen</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
@@ -433,9 +438,12 @@ export default function LegalAdminPage() {
                         placeholder={`z.B. ${pageTypeConfig[activePageType].label} | NICNOA`}
                         maxLength={70}
                       />
-                      <p className="text-xs text-muted-foreground">
-                        {(pageConfig.metaTitle || '').length}/70 Zeichen
-                      </p>
+                      <div className="flex justify-between">
+                        <p className="text-xs text-muted-foreground">Leer lassen für automatischen Titel</p>
+                        <p className={`text-xs ${(pageConfig.metaTitle || '').length > 60 ? 'text-amber-500' : 'text-muted-foreground'}`}>
+                          {(pageConfig.metaTitle || '').length}/70
+                        </p>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="metaDescription">Meta-Beschreibung</Label>
@@ -449,9 +457,31 @@ export default function LegalAdminPage() {
                         rows={2}
                         maxLength={160}
                       />
-                      <p className="text-xs text-muted-foreground">
-                        {(pageConfig.metaDescription || '').length}/160 Zeichen
-                      </p>
+                      <div className="flex justify-between">
+                        <p className="text-xs text-muted-foreground">Ideal sind 120-160 Zeichen</p>
+                        <p className={`text-xs ${(pageConfig.metaDescription || '').length > 150 ? 'text-amber-500' : (pageConfig.metaDescription || '').length < 120 ? 'text-muted-foreground' : 'text-green-500'}`}>
+                          {(pageConfig.metaDescription || '').length}/160
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Google Preview */}
+                    <div className="mt-6 p-4 bg-muted/30 rounded-lg border">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Search className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-sm font-medium">Google-Vorschau</p>
+                      </div>
+                      <div className="space-y-1 font-sans">
+                        <p className="text-[#1a0dab] text-lg hover:underline cursor-pointer truncate">
+                          {pageConfig.metaTitle || `${pageTypeConfig[activePageType].label} | NICNOA`}
+                        </p>
+                        <p className="text-[#006621] text-sm">
+                          nicnoa.de › {activePageType.toLowerCase()}
+                        </p>
+                        <p className="text-sm text-[#545454] line-clamp-2">
+                          {pageConfig.metaDescription || pageConfig.heroDescription || pageTypeConfig[activePageType].description}
+                        </p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
