@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { MainNav } from '@/components/layout/main-nav'
 import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
+import { GlowingEffect } from '@/components/ui/glowing-effect'
 import { 
   Linkedin,
   Users,
@@ -41,6 +42,15 @@ interface AboutUsPageConfig {
   whyDescription: string
   whyButtonText: string
   whyButtonLink: string
+  // Glow Effect Settings
+  glowEffectEnabled?: boolean
+  glowEffectSpread?: number
+  glowEffectProximity?: number
+  glowEffectBorderWidth?: number
+  glowUseDesignSystem?: boolean
+  glowUseGradient?: boolean
+  glowCustomPrimary?: string | null
+  glowCustomSecondary?: string | null
 }
 
 interface ApproachCard {
@@ -281,18 +291,34 @@ export function UberUnsContent({ config, approachCards }: UberUnsContentProps) {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="group relative rounded-xl border bg-card p-6 hover:shadow-lg transition-shadow"
+                className="h-full"
               >
-                <div className="flex items-start gap-3">
-                  <div className="rounded-lg bg-primary/10 p-2.5 flex-shrink-0">
-                    <approach.icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-semibold leading-tight">{approach.title}</h3>
-                    <p className="text-sm text-muted-foreground">{approach.description}</p>
+                <div className="relative h-full rounded-2xl">
+                  {/* Outer container for glow effect */}
+                  <div className="relative h-full rounded-[1.25rem] p-0.5 md:p-1">
+                    <GlowingEffect
+                      spread={config.glowEffectSpread ?? 40}
+                      glow={config.glowEffectEnabled ?? true}
+                      disabled={!config.glowEffectEnabled}
+                      proximity={config.glowEffectProximity ?? 64}
+                      borderWidth={config.glowEffectBorderWidth ?? 3}
+                      glowColor={config.glowUseDesignSystem ? undefined : config.glowCustomPrimary || undefined}
+                      glowColorSecondary={config.glowUseDesignSystem ? undefined : config.glowCustomSecondary || undefined}
+                      useGradient={config.glowUseGradient ?? true}
+                    />
+                    <div className="group relative h-full rounded-xl border bg-card/80 backdrop-blur-sm p-6 hover:shadow-lg transition-shadow">
+                      <div className="flex items-start gap-3">
+                        <div className="rounded-lg bg-primary/10 p-2.5 flex-shrink-0">
+                          <approach.icon className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-semibold leading-tight">{approach.title}</h3>
+                          <p className="text-sm text-muted-foreground">{approach.description}</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-primary/10 group-hover:ring-primary/20 transition-all" />
               </motion.div>
             ))}
           </div>

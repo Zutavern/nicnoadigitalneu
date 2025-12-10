@@ -187,6 +187,15 @@ interface ProductPageConfig {
   autoPlayInterval?: number
   showDots?: boolean
   showArrows?: boolean
+  // Glow Effect Settings
+  glowEffectEnabled?: boolean
+  glowEffectSpread?: number
+  glowEffectProximity?: number
+  glowEffectBorderWidth?: number
+  glowUseDesignSystem?: boolean
+  glowUseGradient?: boolean
+  glowCustomPrimary?: string | null
+  glowCustomSecondary?: string | null
 }
 
 interface CategoryAnimation {
@@ -1240,6 +1249,131 @@ export default function ProductCMSPage() {
                             </div>
                           </div>
                         </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Glow Effect Card */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                        Glow-Effekt auf Feature-Kacheln
+                      </CardTitle>
+                      <CardDescription>
+                        Ein leuchtender Rahmeneffekt, der dem Mauszeiger folgt
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label>Glow-Effekt aktivieren</Label>
+                          <p className="text-xs text-muted-foreground">Leuchtender Rahmen folgt dem Mauszeiger</p>
+                        </div>
+                        <Switch
+                          checked={config.glowEffectEnabled ?? true}
+                          onCheckedChange={(v) => updateConfig('glowEffectEnabled', v)}
+                        />
+                      </div>
+
+                      {config.glowEffectEnabled !== false && (
+                        <>
+                          <Separator />
+
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label>Spread (Ausbreitung): {config.glowEffectSpread ?? 40}%</Label>
+                              </div>
+                              <Slider
+                                value={[config.glowEffectSpread ?? 40]}
+                                onValueChange={([v]) => updateConfig('glowEffectSpread', v)}
+                                min={20}
+                                max={80}
+                                step={5}
+                              />
+                              <p className="text-xs text-muted-foreground">Größe des leuchtenden Bereichs</p>
+                            </div>
+
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label>Proximity (Nähe): {config.glowEffectProximity ?? 64}px</Label>
+                              </div>
+                              <Slider
+                                value={[config.glowEffectProximity ?? 64]}
+                                onValueChange={([v]) => updateConfig('glowEffectProximity', v)}
+                                min={32}
+                                max={128}
+                                step={8}
+                              />
+                              <p className="text-xs text-muted-foreground">Wie nah die Maus sein muss, um den Effekt auszulösen</p>
+                            </div>
+
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label>Border-Breite: {config.glowEffectBorderWidth ?? 3}px</Label>
+                              </div>
+                              <Slider
+                                value={[config.glowEffectBorderWidth ?? 3]}
+                                onValueChange={([v]) => updateConfig('glowEffectBorderWidth', v)}
+                                min={1}
+                                max={6}
+                                step={1}
+                              />
+                              <p className="text-xs text-muted-foreground">Breite des leuchtenden Rahmens</p>
+                            </div>
+                          </div>
+
+                          <Separator />
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label>Gradient-Effekt verwenden</Label>
+                              <p className="text-xs text-muted-foreground">Farbverlauf statt einzelner Farbe</p>
+                            </div>
+                            <Switch
+                              checked={config.glowUseGradient ?? true}
+                              onCheckedChange={(v) => updateConfig('glowUseGradient', v)}
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label>Design-System Farben für Glow</Label>
+                              <p className="text-xs text-muted-foreground">Verwendet --glow-primary und --glow-secondary aus dem Design-System</p>
+                            </div>
+                            <Switch
+                              checked={config.glowUseDesignSystem ?? true}
+                              onCheckedChange={(v) => updateConfig('glowUseDesignSystem', v)}
+                            />
+                          </div>
+
+                          {!config.glowUseDesignSystem && (
+                            <div className="space-y-4 p-4 rounded-lg border bg-muted/50">
+                              <Label className="text-sm font-medium">Custom Glow-Farben</Label>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs">Primäre Glow-Farbe</Label>
+                                  <Input
+                                    type="color"
+                                    value={config.glowCustomPrimary || '#3d9970'}
+                                    onChange={(e) => updateConfig('glowCustomPrimary', e.target.value)}
+                                    className="h-10"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs">Sekundäre Glow-Farbe</Label>
+                                  <Input
+                                    type="color"
+                                    value={config.glowCustomSecondary || '#e08c52'}
+                                    onChange={(e) => updateConfig('glowCustomSecondary', e.target.value)}
+                                    className="h-10"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </>
                       )}
                     </CardContent>
                   </Card>

@@ -1,84 +1,85 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { auth } from '@/lib/auth'
 
-// GET - Hole Karriere-Seiten-Konfiguration
+export const dynamic = 'force-dynamic'
+
+// GET - Career Page Konfiguration abrufen (Admin)
 export async function GET() {
   try {
-    const session = await auth()
-    if (!session?.user || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 })
+    let config = await prisma.careerPageConfig.findUnique({
+      where: { id: 'default' },
+    })
+
+    if (!config) {
+      config = await prisma.careerPageConfig.create({
+        data: {
+          id: 'default',
+          heroBadgeText: 'Wir suchen dich!',
+          heroTitle: 'Werde Teil unseres Teams',
+          heroDescription: 'Wir sind ein junges, dynamisches Startup in München und suchen talentierte Menschen, die mit uns die Zukunft der Salon-Branche gestalten wollen.',
+          glowEffectEnabled: true,
+          glowEffectSpread: 40,
+          glowEffectProximity: 64,
+          glowEffectBorderWidth: 3,
+          glowUseDesignSystem: true,
+          glowUseGradient: true,
+        },
+      })
     }
 
-    // Hole aus PlatformSettings
-    const settings = await prisma.platformSettings.findFirst()
-    
-    // Extrahiere Karriere-Konfiguration aus den Settings
-    const careerConfig = settings?.careerPageConfig as Record<string, unknown> || {}
-
-    return NextResponse.json({
-      heroBadgeText: careerConfig.heroBadgeText || 'Wir suchen dich!',
-      heroTitle: careerConfig.heroTitle || 'Karriere bei NICNOA&CO.online',
-      heroDescription: careerConfig.heroDescription || 'Werde Teil unseres Teams und gestalte die Zukunft der Friseurbranche mit uns.',
-      heroFeature1Text: careerConfig.heroFeature1Text || 'Remote-First',
-      heroFeature2Text: careerConfig.heroFeature2Text || 'Startup-Kultur',
-      heroFeature3Text: careerConfig.heroFeature3Text || 'Faire Bezahlung',
-      noJobsTitle: careerConfig.noJobsTitle || 'Aktuell keine offenen Stellen',
-      noJobsDescription: careerConfig.noJobsDescription || 'Aber wir freuen uns über Initiativbewerbungen!',
-      ctaTitle: careerConfig.ctaTitle || 'Bereit für deinen nächsten Karriereschritt?',
-      ctaDescription: careerConfig.ctaDescription || 'Wir bieten dir ein spannendes Umfeld, in dem du wachsen und dich entwickeln kannst.',
-      ctaButtonText: careerConfig.ctaButtonText || 'Initiativbewerbung',
-      ctaButtonLink: careerConfig.ctaButtonLink || '/karriere/initiativ',
-      initiativeTitle: careerConfig.initiativeTitle || 'Initiativbewerbung',
-      initiativeDescription: careerConfig.initiativeDescription || 'Du hast kein passendes Stellenangebot gefunden? Bewirb dich trotzdem bei uns!',
-      initiativeButtonText: careerConfig.initiativeButtonText || 'Jetzt initiativ bewerben',
-    })
+    return NextResponse.json(config)
   } catch (error) {
     console.error('Error fetching career page config:', error)
     return NextResponse.json(
-      { error: 'Fehler beim Laden der Karriere-Konfiguration' },
+      { error: 'Fehler beim Laden der Konfiguration' },
       { status: 500 }
     )
   }
 }
 
-// PUT - Speichere Karriere-Seiten-Konfiguration
+// PUT - Career Page Konfiguration aktualisieren (Admin)
 export async function PUT(request: Request) {
   try {
     const session = await auth()
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Nicht authentifiziert' }, { status: 401 })
+    }
+    
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 })
     }
 
-    const body = await request.json()
+    const data = await request.json()
 
-    // Hole oder erstelle PlatformSettings
-    let settings = await prisma.platformSettings.findFirst()
-    
-    if (!settings) {
-      settings = await prisma.platformSettings.create({
-        data: {
-          platformName: 'NICNOA&CO.online',
-          careerPageConfig: body,
-        },
-      })
-    } else {
-      settings = await prisma.platformSettings.update({
-        where: { id: settings.id },
-        data: {
-          careerPageConfig: body,
-        },
-      })
-    }
+    const config = await prisma.careerPageConfig.upsert({
+      where: { id: 'default' },
+      update: {
+        heroBadgeText: data.heroBadgeText,
+        heroTitle: data.heroTitle,
+        heroDescription: data.heroDescription,
+        glowEffectEnabled: data.glowEffectEnabled,
+        glowEffectSpread: data.glowEffectSpread,
+        glowEffectProximity: data.glowEffectProximity,
+        glowEffectBorderWidth: data.glowEffectBorderWidth,
+        glowUseDesignSystem: data.glowUseDesignSystem,
+        glowUseGradient: data.glowUseGradient,
+        glowCustomPrimary: data.glowCustomPrimary,
+        glowCustomSecondary: data.glowCustomSecondary,
+      },
+      create: {
+        id: 'default',
+        ...data,
+      },
+    })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json(config)
   } catch (error) {
-    console.error('Error saving career page config:', error)
+    console.error('Error updating career page config:', error)
     return NextResponse.json(
-      { error: 'Fehler beim Speichern der Karriere-Konfiguration' },
+      { error: 'Fehler beim Speichern der Konfiguration' },
       { status: 500 }
     )
   }
 }
-
-

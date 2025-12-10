@@ -38,6 +38,15 @@ interface PartnerPageConfig {
   ctaButton1Link: string
   ctaButton2Text: string
   ctaButton2Link: string
+  // Glow Effect Settings
+  glowEffectEnabled?: boolean
+  glowEffectSpread?: number
+  glowEffectProximity?: number
+  glowEffectBorderWidth?: number
+  glowUseDesignSystem?: boolean
+  glowUseGradient?: boolean
+  glowCustomPrimary?: string | null
+  glowCustomSecondary?: string | null
 }
 
 async function getPartners(): Promise<Partner[]> {
@@ -85,6 +94,13 @@ async function getPartnerPageConfig(): Promise<PartnerPageConfig> {
     ctaButton1Link: '/registrieren',
     ctaButton2Text: 'Preise ansehen',
     ctaButton2Link: '/preise',
+    // Glow Effect Defaults
+    glowEffectEnabled: true,
+    glowEffectSpread: 40,
+    glowEffectProximity: 64,
+    glowEffectBorderWidth: 3,
+    glowUseDesignSystem: true,
+    glowUseGradient: true,
   }
 
   try {
@@ -106,6 +122,15 @@ async function getPartnerPageConfig(): Promise<PartnerPageConfig> {
         ctaButton1Link: config.ctaButton1Link || defaultConfig.ctaButton1Link,
         ctaButton2Text: config.ctaButton2Text || defaultConfig.ctaButton2Text,
         ctaButton2Link: config.ctaButton2Link || defaultConfig.ctaButton2Link,
+        // Glow Effect
+        glowEffectEnabled: config.glowEffectEnabled ?? defaultConfig.glowEffectEnabled,
+        glowEffectSpread: config.glowEffectSpread ?? defaultConfig.glowEffectSpread,
+        glowEffectProximity: config.glowEffectProximity ?? defaultConfig.glowEffectProximity,
+        glowEffectBorderWidth: config.glowEffectBorderWidth ?? defaultConfig.glowEffectBorderWidth,
+        glowUseDesignSystem: config.glowUseDesignSystem ?? defaultConfig.glowUseDesignSystem,
+        glowUseGradient: config.glowUseGradient ?? defaultConfig.glowUseGradient,
+        glowCustomPrimary: config.glowCustomPrimary,
+        glowCustomSecondary: config.glowCustomSecondary,
       }
     }
   } catch (error) {

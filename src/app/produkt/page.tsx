@@ -6,6 +6,7 @@ import { MainNav } from '@/components/layout/main-nav'
 import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { GlowingEffect } from '@/components/ui/glowing-effect'
 import { 
   Calendar, 
   Users, 
@@ -373,39 +374,57 @@ export default function ProduktPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className={`group relative rounded-xl border bg-card/50 backdrop-blur-sm p-6 transition-all hover:border-primary/30 hover:shadow-lg ${
-                  feature.isHighlight ? 'border-primary/20 ring-1 ring-primary/10' : ''
+                className={`group relative rounded-2xl border bg-card/50 backdrop-blur-sm transition-all hover:shadow-lg ${
+                  feature.isHighlight ? 'border-primary/20 ring-1 ring-primary/10' : 'border-border/50'
                 }`}
               >
-                {feature.isHighlight && (
-                  <div className="absolute -top-3 right-4">
-                    <Badge className="bg-primary text-primary-foreground">
-                      <Star className="h-3 w-3 mr-1 fill-current" />
-                      Highlight
-                    </Badge>
+                {/* Outer container for glow effect with padding */}
+                <div className="relative h-full rounded-[1.25rem] p-0.5 md:p-1">
+                  {/* Glowing Effect - Follows mouse cursor, uses design system colors */}
+                  <GlowingEffect
+                    spread={config.glowEffectSpread ?? 40}
+                    glow={config.glowEffectEnabled ?? true}
+                    disabled={!config.glowEffectEnabled}
+                    proximity={config.glowEffectProximity ?? 64}
+                    borderWidth={config.glowEffectBorderWidth ?? 3}
+                    glowColor={config.glowUseDesignSystem ? undefined : config.glowCustomPrimary || undefined}
+                    glowColorSecondary={config.glowUseDesignSystem ? undefined : config.glowCustomSecondary || undefined}
+                    useGradient={config.glowUseGradient ?? true}
+                  />
+                  
+                  {/* Inner content container */}
+                  <div className="relative h-full rounded-xl bg-background/80 backdrop-blur-sm p-6">
+                    {feature.isHighlight && (
+                      <div className="absolute -top-3 right-4">
+                        <Badge className="bg-primary text-primary-foreground">
+                          <Star className="h-3 w-3 mr-1 fill-current" />
+                          Highlight
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    <div
+                      className="mb-4 inline-flex rounded-lg p-3 group-hover:scale-110 transition-transform"
+                      style={{ backgroundColor: `${getPrimaryColor()}15` }}
+                    >
+                      <IconComponent className="h-6 w-6 text-primary" />
+                    </div>
+                    
+                    <h3 className="mb-2 text-xl font-semibold group-hover:text-primary transition-colors">
+                      {feature.title}
+                    </h3>
+                    
+                    <p className="text-muted-foreground">
+                      {feature.description}
+                    </p>
+                    
+                    {config.showFeatureCategories && (
+                      <Badge variant="outline" className="mt-4 text-xs">
+                        {categoryLabels[feature.category] || feature.category}
+                      </Badge>
+                    )}
                   </div>
-                )}
-                
-                <div
-                  className="mb-4 inline-flex rounded-lg p-3 group-hover:scale-110 transition-transform"
-                  style={{ backgroundColor: `${getPrimaryColor()}15` }}
-                >
-                  <IconComponent className="h-6 w-6 text-primary" />
                 </div>
-                
-                <h3 className="mb-2 text-xl font-semibold group-hover:text-primary transition-colors">
-                  {feature.title}
-                </h3>
-                
-                <p className="text-muted-foreground">
-                  {feature.description}
-                </p>
-                
-                {config.showFeatureCategories && (
-                  <Badge variant="outline" className="mt-4 text-xs">
-                    {categoryLabels[feature.category] || feature.category}
-                  </Badge>
-                )}
               </motion.div>
             )
           })}

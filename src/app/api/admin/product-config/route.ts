@@ -45,6 +45,13 @@ export async function GET() {
           featuresSectionTitle: 'Unsere Features',
           featuresSectionDescription: 'Entdecken Sie alle Funktionen, die NICNOA zu Ihrer idealen Lösung machen.',
           showFeatureCategories: true,
+          // Glow Effect Settings
+          glowEffectEnabled: true,
+          glowEffectSpread: 40,
+          glowEffectProximity: 64,
+          glowEffectBorderWidth: 3,
+          glowUseDesignSystem: true,
+          glowUseGradient: true,
           // Category Showcase
           showCategoryShowcase: true,
           categoryShowcaseTitle: 'Entdecken Sie unsere Funktionen',
@@ -151,6 +158,16 @@ export async function PUT(request: Request) {
         featuresSectionTitle: data.featuresSectionTitle,
         featuresSectionDescription: data.featuresSectionDescription,
         showFeatureCategories: data.showFeatureCategories,
+        
+        // Glow Effect Settings
+        glowEffectEnabled: data.glowEffectEnabled,
+        glowEffectSpread: data.glowEffectSpread,
+        glowEffectProximity: data.glowEffectProximity,
+        glowEffectBorderWidth: data.glowEffectBorderWidth,
+        glowUseDesignSystem: data.glowUseDesignSystem,
+        glowUseGradient: data.glowUseGradient,
+        glowCustomPrimary: data.glowCustomPrimary,
+        glowCustomSecondary: data.glowCustomSecondary,
         
         // Category Showcase
         showCategoryShowcase: data.showCategoryShowcase,

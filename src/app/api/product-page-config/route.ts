@@ -45,6 +45,13 @@ export async function GET() {
           featuresSectionTitle: 'Unsere Features',
           featuresSectionDescription: 'Entdecken Sie alle Funktionen, die NICNOA zu Ihrer idealen Lösung machen.',
           showFeatureCategories: true,
+          // Glow Effect Settings
+          glowEffectEnabled: true,
+          glowEffectSpread: 40,
+          glowEffectProximity: 64,
+          glowEffectBorderWidth: 3,
+          glowUseDesignSystem: true,
+          glowUseGradient: true,
           bottomCtaTitle: 'Bereit für die Zukunft Ihres Salons?',
           bottomCtaDescription: 'Starten Sie noch heute und erleben Sie, wie NICNOA Ihren Arbeitsalltag revolutioniert.',
           bottomCtaButtonText: 'Jetzt kostenlos testen',

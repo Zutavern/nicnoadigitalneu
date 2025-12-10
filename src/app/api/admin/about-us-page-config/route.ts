@@ -42,6 +42,15 @@ export async function GET() {
         whyDescription: 'Wir sind fest davon überzeugt, dass moderne Salon-Spaces und intelligente Ressourcennutzung der Schlüssel zum Erfolg in der Beauty-Branche sind. Gemeinsam gestalten wir die Zukunft des Salon-Managements.',
         whyButtonText: 'Jetzt durchstarten',
         whyButtonLink: '/registrieren',
+        // Glow Effect Defaults
+        glowEffectEnabled: true,
+        glowEffectSpread: 40,
+        glowEffectProximity: 64,
+        glowEffectBorderWidth: 3,
+        glowUseDesignSystem: true,
+        glowUseGradient: true,
+        glowCustomPrimary: null,
+        glowCustomSecondary: null,
       })
     }
 
@@ -73,6 +82,15 @@ export async function GET() {
       whyDescription: c.why_description,
       whyButtonText: c.why_button_text,
       whyButtonLink: c.why_button_link,
+      // Glow Effect
+      glowEffectEnabled: c.glow_effect_enabled ?? true,
+      glowEffectSpread: c.glow_effect_spread ?? 40,
+      glowEffectProximity: c.glow_effect_proximity ?? 64,
+      glowEffectBorderWidth: c.glow_effect_border_width ?? 3,
+      glowUseDesignSystem: c.glow_use_design_system ?? true,
+      glowUseGradient: c.glow_use_gradient ?? true,
+      glowCustomPrimary: c.glow_custom_primary,
+      glowCustomSecondary: c.glow_custom_secondary,
     })
   } catch (error) {
     console.error('Error fetching About Us page config:', error)
@@ -119,6 +137,15 @@ export async function PUT(request: Request) {
       whyDescription,
       whyButtonText,
       whyButtonLink,
+      // Glow Effect
+      glowEffectEnabled,
+      glowEffectSpread,
+      glowEffectProximity,
+      glowEffectBorderWidth,
+      glowUseDesignSystem,
+      glowUseGradient,
+      glowCustomPrimary,
+      glowCustomSecondary,
     } = body
 
     if (!heroTitle) {
@@ -162,6 +189,14 @@ export async function PUT(request: Request) {
           why_description = ${whyDescription || null},
           why_button_text = ${whyButtonText || 'Jetzt durchstarten'},
           why_button_link = ${whyButtonLink || '/registrieren'},
+          glow_effect_enabled = ${glowEffectEnabled ?? true},
+          glow_effect_spread = ${glowEffectSpread ?? 40},
+          glow_effect_proximity = ${glowEffectProximity ?? 64},
+          glow_effect_border_width = ${glowEffectBorderWidth ?? 3},
+          glow_use_design_system = ${glowUseDesignSystem ?? true},
+          glow_use_gradient = ${glowUseGradient ?? true},
+          glow_custom_primary = ${glowCustomPrimary || null},
+          glow_custom_secondary = ${glowCustomSecondary || null},
           updated_at = NOW()
         WHERE id = ${existing[0].id}
       `
@@ -176,6 +211,8 @@ export async function PUT(request: Request) {
           mission_badge_text, mission_title, mission_description,
           approach_title, approach_description,
           why_title, why_description, why_button_text, why_button_link,
+          glow_effect_enabled, glow_effect_spread, glow_effect_proximity, glow_effect_border_width,
+          glow_use_design_system, glow_use_gradient, glow_custom_primary, glow_custom_secondary,
           created_at, updated_at
         ) VALUES (
           ${heroBadgeText || null}, ${heroTitle}, ${heroDescription || null},
@@ -185,6 +222,8 @@ export async function PUT(request: Request) {
           ${missionBadgeText || null}, ${missionTitle || null}, ${missionDescription || null},
           ${approachTitle || null}, ${approachDescription || null},
           ${whyTitle || null}, ${whyDescription || null}, ${whyButtonText || 'Jetzt durchstarten'}, ${whyButtonLink || '/registrieren'},
+          ${glowEffectEnabled ?? true}, ${glowEffectSpread ?? 40}, ${glowEffectProximity ?? 64}, ${glowEffectBorderWidth ?? 3},
+          ${glowUseDesignSystem ?? true}, ${glowUseGradient ?? true}, ${glowCustomPrimary || null}, ${glowCustomSecondary || null},
           NOW(), NOW()
         )
       `

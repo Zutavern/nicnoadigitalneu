@@ -36,6 +36,15 @@ interface AboutUsPageConfig {
   whyDescription: string
   whyButtonText: string
   whyButtonLink: string
+  // Glow Effect Settings
+  glowEffectEnabled?: boolean
+  glowEffectSpread?: number
+  glowEffectProximity?: number
+  glowEffectBorderWidth?: number
+  glowUseDesignSystem?: boolean
+  glowUseGradient?: boolean
+  glowCustomPrimary?: string | null
+  glowCustomSecondary?: string | null
 }
 
 interface ApproachCard {
@@ -73,6 +82,13 @@ async function getAboutUsConfig(): Promise<AboutUsPageConfig> {
     whyDescription: 'Wir sind fest davon überzeugt, dass moderne Salon-Spaces und intelligente Ressourcennutzung der Schlüssel zum Erfolg in der Beauty-Branche sind. Gemeinsam gestalten wir die Zukunft des Salon-Managements.',
     whyButtonText: 'Jetzt durchstarten',
     whyButtonLink: '/registrieren',
+    // Glow Effect Defaults
+    glowEffectEnabled: true,
+    glowEffectSpread: 40,
+    glowEffectProximity: 64,
+    glowEffectBorderWidth: 3,
+    glowUseDesignSystem: true,
+    glowUseGradient: true,
   }
 
   try {
@@ -104,6 +120,15 @@ async function getAboutUsConfig(): Promise<AboutUsPageConfig> {
         whyDescription: config.whyDescription || defaultConfig.whyDescription,
         whyButtonText: config.whyButtonText || defaultConfig.whyButtonText,
         whyButtonLink: config.whyButtonLink || defaultConfig.whyButtonLink,
+        // Glow Effect
+        glowEffectEnabled: config.glowEffectEnabled ?? defaultConfig.glowEffectEnabled,
+        glowEffectSpread: config.glowEffectSpread ?? defaultConfig.glowEffectSpread,
+        glowEffectProximity: config.glowEffectProximity ?? defaultConfig.glowEffectProximity,
+        glowEffectBorderWidth: config.glowEffectBorderWidth ?? defaultConfig.glowEffectBorderWidth,
+        glowUseDesignSystem: config.glowUseDesignSystem ?? defaultConfig.glowUseDesignSystem,
+        glowUseGradient: config.glowUseGradient ?? defaultConfig.glowUseGradient,
+        glowCustomPrimary: config.glowCustomPrimary,
+        glowCustomSecondary: config.glowCustomSecondary,
       }
     }
   } catch (error) {

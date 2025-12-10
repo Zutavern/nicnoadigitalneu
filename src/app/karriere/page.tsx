@@ -7,6 +7,7 @@ import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { GlowingEffect } from '@/components/ui/glowing-effect'
 import {
   Tabs,
   TabsContent,
@@ -38,6 +39,17 @@ interface Job {
   location: string
   type: string
   description: string
+}
+
+interface CareerConfig {
+  glowEffectEnabled?: boolean
+  glowEffectSpread?: number
+  glowEffectProximity?: number
+  glowEffectBorderWidth?: number
+  glowUseDesignSystem?: boolean
+  glowUseGradient?: boolean
+  glowCustomPrimary?: string | null
+  glowCustomSecondary?: string | null
 }
 
 const categories = [
@@ -83,9 +95,18 @@ export default function KarrierePage() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('IT-Development')
+  const [config, setConfig] = useState<CareerConfig>({
+    glowEffectEnabled: true,
+    glowEffectSpread: 40,
+    glowEffectProximity: 64,
+    glowEffectBorderWidth: 3,
+    glowUseDesignSystem: true,
+    glowUseGradient: true,
+  })
 
   useEffect(() => {
     fetchJobs()
+    fetchConfig()
   }, [])
 
   const fetchJobs = async () => {
@@ -98,6 +119,18 @@ export default function KarrierePage() {
       console.error('Error fetching jobs:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchConfig = async () => {
+    try {
+      const res = await fetch('/api/career-page-config')
+      if (res.ok) {
+        const data = await res.json()
+        setConfig(data)
+      }
+    } catch (error) {
+      console.error('Error fetching config:', error)
     }
   }
 
@@ -260,34 +293,49 @@ export default function KarrierePage() {
                             transition={{ delay: index * 0.1 }}
                             className="h-full"
                           >
-                            <Card className="h-full hover:shadow-lg transition-shadow group flex flex-col">
-                              <CardContent className="p-6 flex flex-col flex-1">
-                                <div className="mb-4">
-                                  <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
-                                    {job.title}
-                                  </h3>
-                                  <div className="flex flex-wrap gap-2">
-                                    <Badge variant="outline" className="text-xs">
-                                      <MapPin className="h-3 w-3 mr-1" />
-                                      {job.location}
-                                    </Badge>
-                                    <Badge variant="outline" className="text-xs">
-                                      <Clock className="h-3 w-3 mr-1" />
-                                      {job.type}
-                                    </Badge>
-                                  </div>
-                                </div>
-                                <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-1">
-                                  {job.description.replace(/[#*]/g, '').substring(0, 150)}...
-                                </p>
-                                <Button asChild className="w-full group-hover:bg-primary/90 mt-auto">
-                                  <Link href={`/karriere/${job.slug}`}>
-                                    Mehr erfahren
-                                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                                  </Link>
-                                </Button>
-                              </CardContent>
-                            </Card>
+                            <div className="relative h-full rounded-2xl">
+                              {/* Outer container for glow effect */}
+                              <div className="relative h-full rounded-[1.25rem] p-0.5 md:p-1">
+                                <GlowingEffect
+                                  spread={config.glowEffectSpread ?? 40}
+                                  glow={config.glowEffectEnabled ?? true}
+                                  disabled={!config.glowEffectEnabled}
+                                  proximity={config.glowEffectProximity ?? 64}
+                                  borderWidth={config.glowEffectBorderWidth ?? 3}
+                                  glowColor={config.glowUseDesignSystem ? undefined : config.glowCustomPrimary || undefined}
+                                  glowColorSecondary={config.glowUseDesignSystem ? undefined : config.glowCustomSecondary || undefined}
+                                  useGradient={config.glowUseGradient ?? true}
+                                />
+                                <Card className="h-full hover:shadow-lg transition-shadow group flex flex-col bg-background/80 backdrop-blur-sm">
+                                  <CardContent className="p-6 flex flex-col flex-1">
+                                    <div className="mb-4">
+                                      <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
+                                        {job.title}
+                                      </h3>
+                                      <div className="flex flex-wrap gap-2">
+                                        <Badge variant="outline" className="text-xs">
+                                          <MapPin className="h-3 w-3 mr-1" />
+                                          {job.location}
+                                        </Badge>
+                                        <Badge variant="outline" className="text-xs">
+                                          <Clock className="h-3 w-3 mr-1" />
+                                          {job.type}
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-1">
+                                      {job.description.replace(/[#*]/g, '').substring(0, 150)}...
+                                    </p>
+                                    <Button asChild className="w-full group-hover:bg-primary/90 mt-auto">
+                                      <Link href={`/karriere/${job.slug}`}>
+                                        Mehr erfahren
+                                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                                      </Link>
+                                    </Button>
+                                  </CardContent>
+                                </Card>
+                              </div>
+                            </div>
                           </motion.div>
                         ))}
                       </div>

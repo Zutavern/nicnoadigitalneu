@@ -7,6 +7,7 @@ import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { GlowingEffect } from '@/components/ui/glowing-effect'
 import {
   ArrowRight,
   HandshakeIcon,
@@ -47,6 +48,15 @@ interface PartnerPageConfig {
   ctaButton1Link: string
   ctaButton2Text: string
   ctaButton2Link: string
+  // Glow Effect Settings
+  glowEffectEnabled?: boolean
+  glowEffectSpread?: number
+  glowEffectProximity?: number
+  glowEffectBorderWidth?: number
+  glowUseDesignSystem?: boolean
+  glowUseGradient?: boolean
+  glowCustomPrimary?: string | null
+  glowCustomSecondary?: string | null
 }
 
 interface PartnerContentProps {
@@ -203,61 +213,76 @@ export function PartnerContent({ partners, config }: PartnerContentProps) {
                     transition={{ delay: index * 0.05 }}
                     className="h-full"
                   >
-                    <Card className="h-full flex flex-col group hover:shadow-lg transition-all hover:border-primary/20">
-                      <CardContent className="p-6 flex flex-col flex-1">
-                        {/* Logo */}
-                        <div className="flex items-center justify-center h-16 w-full mb-4">
-                          <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center border border-primary/20">
-                            <div className="text-2xl font-bold text-primary">
-                              {partner.name.split(' ').map(word => word[0]).join('')}
+                    <div className="relative h-full rounded-2xl">
+                      {/* Outer container for glow effect */}
+                      <div className="relative h-full rounded-[1.25rem] p-0.5 md:p-1">
+                        <GlowingEffect
+                          spread={config.glowEffectSpread ?? 40}
+                          glow={config.glowEffectEnabled ?? true}
+                          disabled={!config.glowEffectEnabled}
+                          proximity={config.glowEffectProximity ?? 64}
+                          borderWidth={config.glowEffectBorderWidth ?? 3}
+                          glowColor={config.glowUseDesignSystem ? undefined : config.glowCustomPrimary || undefined}
+                          glowColorSecondary={config.glowUseDesignSystem ? undefined : config.glowCustomSecondary || undefined}
+                          useGradient={config.glowUseGradient ?? true}
+                        />
+                        <Card className="h-full flex flex-col group hover:shadow-lg transition-all bg-background/80 backdrop-blur-sm">
+                          <CardContent className="p-6 flex flex-col flex-1">
+                            {/* Logo */}
+                            <div className="flex items-center justify-center h-16 w-full mb-4">
+                              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center border border-primary/20">
+                                <div className="text-2xl font-bold text-primary">
+                                  {partner.name.split(' ').map(word => word[0]).join('')}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
 
-                        {/* Title */}
-                        <h3 className="text-lg font-bold mb-3 text-center line-clamp-2 min-h-[3.5rem] flex items-center justify-center">
-                          {partner.name}
-                        </h3>
+                            {/* Title */}
+                            <h3 className="text-lg font-bold mb-3 text-center line-clamp-2 min-h-[3.5rem] flex items-center justify-center">
+                              {partner.name}
+                            </h3>
 
-                        {/* Description */}
-                        <p className="text-sm text-muted-foreground text-center mb-6 line-clamp-3 flex-1">
-                          {partner.description}
-                        </p>
+                            {/* Description */}
+                            <p className="text-sm text-muted-foreground text-center mb-6 line-clamp-3 flex-1">
+                              {partner.description}
+                            </p>
 
-                        {/* Benefits Preview */}
-                        <div className="mb-6">
-                          <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Gift className="h-4 w-4 text-primary" />
-                              <span className="text-xs font-semibold text-primary">Exklusives Angebot</span>
+                            {/* Benefits Preview */}
+                            <div className="mb-6">
+                              <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Gift className="h-4 w-4 text-primary" />
+                                  <span className="text-xs font-semibold text-primary">Exklusives Angebot</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground line-clamp-2">
+                                  {partner.offer}
+                                </p>
+                              </div>
                             </div>
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              {partner.offer}
-                            </p>
-                          </div>
-                        </div>
 
-                        {/* CTA */}
-                        <div className="pt-4 border-t mt-auto">
-                          {config.cardCtaText && (
-                            <p className="text-xs text-center text-muted-foreground mb-3">
-                              {config.cardCtaText}
-                            </p>
-                          )}
-                          <Button
-                            asChild
-                            variant="outline"
-                            className="w-full"
-                            size="sm"
-                          >
-                            <Link href={config.cardCtaLink || '/registrieren'}>
-                              {config.cardCtaButtonText || 'Jetzt Mitglied werden'}
-                              <ArrowRight className="ml-2 h-3 w-3" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                            {/* CTA */}
+                            <div className="pt-4 border-t mt-auto">
+                              {config.cardCtaText && (
+                                <p className="text-xs text-center text-muted-foreground mb-3">
+                                  {config.cardCtaText}
+                                </p>
+                              )}
+                              <Button
+                                asChild
+                                variant="outline"
+                                className="w-full"
+                                size="sm"
+                              >
+                                <Link href={config.cardCtaLink || '/registrieren'}>
+                                  {config.cardCtaButtonText || 'Jetzt Mitglied werden'}
+                                  <ArrowRight className="ml-2 h-3 w-3" />
+                                </Link>
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </div>
                   </motion.div>
                 )
               })}

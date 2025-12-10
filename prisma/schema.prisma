@@ -1089,6 +1089,35 @@ model Partner {
   @@map("partners")
 }
 
+// ============================================
+// Career Page Config
+// ============================================
+
+model CareerPageConfig {
+  id                String   @id @default("default")
+  
+  // Hero Section
+  heroBadgeText     String?  @default("Wir suchen dich!") @map("hero_badge_text") @db.VarChar(100)
+  heroTitle         String   @default("Werde Teil unseres Teams") @map("hero_title") @db.Text
+  heroDescription   String?  @map("hero_description") @db.Text
+  
+  // Glow Effect Settings (für Job Cards)
+  glowEffectEnabled     Boolean  @default(true) @map("glow_effect_enabled")
+  glowEffectSpread      Int      @default(40) @map("glow_effect_spread")
+  glowEffectProximity   Int      @default(64) @map("glow_effect_proximity")
+  glowEffectBorderWidth Int      @default(3) @map("glow_effect_border_width")
+  glowUseDesignSystem   Boolean  @default(true) @map("glow_use_design_system")
+  glowUseGradient       Boolean  @default(true) @map("glow_use_gradient")
+  glowCustomPrimary     String?  @map("glow_custom_primary") @db.VarChar(50)
+  glowCustomSecondary   String?  @map("glow_custom_secondary") @db.VarChar(50)
+
+  // Meta
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("career_page_config")
+}
+
 model PartnerPageConfig {
   id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   // Hero Section
@@ -1112,6 +1141,16 @@ model PartnerPageConfig {
   ctaButton2Text    String?  @default("Preise ansehen") @map("cta_button_2_text") @db.VarChar(100)
   ctaButton2Link    String?  @default("/preise") @map("cta_button_2_link") @db.VarChar(200)
   
+  // Glow Effect Settings
+  glowEffectEnabled     Boolean  @default(true) @map("glow_effect_enabled")
+  glowEffectSpread      Int      @default(40) @map("glow_effect_spread")
+  glowEffectProximity   Int      @default(64) @map("glow_effect_proximity")
+  glowEffectBorderWidth Int      @default(3) @map("glow_effect_border_width")
+  glowUseDesignSystem   Boolean  @default(true) @map("glow_use_design_system")
+  glowUseGradient       Boolean  @default(true) @map("glow_use_gradient")
+  glowCustomPrimary     String?  @map("glow_custom_primary") @db.VarChar(50)
+  glowCustomSecondary   String?  @map("glow_custom_secondary") @db.VarChar(50)
+
   // Meta
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -1228,7 +1267,17 @@ model AboutUsPageConfig {
   whyDescription   String?  @map("why_description") @db.Text
   whyButtonText     String?  @default("Jetzt durchstarten") @map("why_button_text") @db.VarChar(100)
   whyButtonLink     String?  @default("/registrieren") @map("why_button_link") @db.VarChar(200)
-  
+
+  // Glow Effect Settings (für Approach Cards)
+  glowEffectEnabled     Boolean  @default(true) @map("glow_effect_enabled")
+  glowEffectSpread      Int      @default(40) @map("glow_effect_spread")
+  glowEffectProximity   Int      @default(64) @map("glow_effect_proximity")
+  glowEffectBorderWidth Int      @default(3) @map("glow_effect_border_width")
+  glowUseDesignSystem   Boolean  @default(true) @map("glow_use_design_system")
+  glowUseGradient       Boolean  @default(true) @map("glow_use_gradient")
+  glowCustomPrimary     String?  @map("glow_custom_primary") @db.VarChar(50)
+  glowCustomSecondary   String?  @map("glow_custom_secondary") @db.VarChar(50)
+
   // Meta
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -2101,6 +2150,16 @@ model ProductPageConfig {
   featuresSectionTitle  String?  @default("Unsere Features") @map("features_section_title") @db.VarChar(200)
   featuresSectionDescription String? @map("features_section_description") @db.Text
   showFeatureCategories Boolean  @default(true) @map("show_feature_categories")
+  
+  // Feature Card Glow Effect Settings
+  glowEffectEnabled     Boolean  @default(true) @map("glow_effect_enabled")
+  glowEffectSpread      Int      @default(40) @map("glow_effect_spread")        // Blur radius
+  glowEffectProximity   Int      @default(64) @map("glow_effect_proximity")     // How close mouse needs to be
+  glowEffectBorderWidth Int      @default(3) @map("glow_effect_border_width")   // Border glow width
+  glowUseDesignSystem   Boolean  @default(true) @map("glow_use_design_system")  // Use design system colors
+  glowUseGradient       Boolean  @default(true) @map("glow_use_gradient")       // Use gradient or single color
+  glowCustomPrimary     String?  @map("glow_custom_primary") @db.VarChar(50)    // Custom primary glow color
+  glowCustomSecondary   String?  @map("glow_custom_secondary") @db.VarChar(50)  // Custom secondary glow color
   
   // Stats Section (optional)
   showStats             Boolean  @default(false) @map("show_stats")
