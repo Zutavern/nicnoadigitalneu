@@ -37,6 +37,9 @@ import {
   UserPlus,
   Package,
   MapIcon,
+  Rocket,
+  RefreshCw,
+  Scale,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -106,6 +109,9 @@ const menuItems = [
               { label: 'Karriere', href: '/admin/career', icon: Briefcase },
               { label: 'Presse', href: '/admin/press', icon: Newspaper },
               { label: 'Roadmap', href: '/admin/roadmap', icon: MapIcon },
+              { label: 'Beta-Programm', href: '/admin/beta', icon: Rocket },
+              { label: 'Updates', href: '/admin/updates', icon: RefreshCw },
+              { label: 'Rechtliches', href: '/admin/legal', icon: Scale },
             ],
           },
           {
