@@ -57,7 +57,7 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
   const columns = splitIntoColumns(currentTestimonials)
 
   return (
-    <section className="bg-background border-t my-20 relative overflow-hidden">
+    <section id="testimonials" className="bg-background my-20 relative overflow-hidden scroll-mt-20">
       <div className="container z-10 mx-auto">
         {/* Header */}
         <motion.div

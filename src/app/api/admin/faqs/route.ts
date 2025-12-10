@@ -77,6 +77,7 @@ export async function GET(request: Request) {
       category: faq.category || null,
       role: faq.role,
       isActive: faq.isActive !== undefined ? faq.isActive : (faq.is_active !== undefined ? faq.is_active : true),
+      showOnHomepage: faq.showOnHomepage !== undefined ? faq.showOnHomepage : (faq.show_on_homepage !== undefined ? faq.show_on_homepage : false),
       sortOrder: faq.sortOrder || faq.sort_order || 0,
       createdAt: faq.createdAt || faq.created_at,
       updatedAt: faq.updatedAt || faq.updated_at,
@@ -112,6 +113,7 @@ export async function POST(request: Request) {
       category,
       role,
       isActive = true,
+      showOnHomepage = false,
       sortOrder = 0,
     } = body
 
@@ -145,15 +147,16 @@ export async function POST(request: Request) {
             category: category || null,
             role,
             isActive,
+            showOnHomepage,
             sortOrder,
           },
         })
       } else {
         // Fallback: Use raw SQL
         const result = await prisma.$queryRaw`
-          INSERT INTO faqs (question, answer, category, role, is_active, sort_order)
-          VALUES (${question}, ${answer}, ${category || null}, ${role}, ${isActive}, ${sortOrder})
-          RETURNING id, question, answer, category, role, is_active as "isActive", sort_order as "sortOrder", created_at as "createdAt", updated_at as "updatedAt"
+          INSERT INTO faqs (question, answer, category, role, is_active, show_on_homepage, sort_order)
+          VALUES (${question}, ${answer}, ${category || null}, ${role}, ${isActive}, ${showOnHomepage}, ${sortOrder})
+          RETURNING id, question, answer, category, role, is_active as "isActive", show_on_homepage as "showOnHomepage", sort_order as "sortOrder", created_at as "createdAt", updated_at as "updatedAt"
         ` as any[]
         faq = result[0]
       }
@@ -162,9 +165,9 @@ export async function POST(request: Request) {
       // Fallback: Use raw SQL
       try {
         const result = await prisma.$queryRaw`
-          INSERT INTO faqs (question, answer, category, role, is_active, sort_order)
-          VALUES (${question}, ${answer}, ${category || null}, ${role}, ${isActive}, ${sortOrder})
-          RETURNING id, question, answer, category, role, is_active as "isActive", sort_order as "sortOrder", created_at as "createdAt", updated_at as "updatedAt"
+          INSERT INTO faqs (question, answer, category, role, is_active, show_on_homepage, sort_order)
+          VALUES (${question}, ${answer}, ${category || null}, ${role}, ${isActive}, ${showOnHomepage}, ${sortOrder})
+          RETURNING id, question, answer, category, role, is_active as "isActive", show_on_homepage as "showOnHomepage", sort_order as "sortOrder", created_at as "createdAt", updated_at as "updatedAt"
         ` as any[]
         faq = result[0]
       } catch (rawError) {
@@ -207,6 +210,7 @@ export async function PUT(request: Request) {
       category,
       role,
       isActive,
+      showOnHomepage,
       sortOrder,
     } = body
 
@@ -238,6 +242,7 @@ export async function PUT(request: Request) {
         if (category !== undefined) updateData.category = category || null
         if (role !== undefined) updateData.role = role
         if (isActive !== undefined) updateData.isActive = isActive
+        if (showOnHomepage !== undefined) updateData.showOnHomepage = showOnHomepage
         if (sortOrder !== undefined) updateData.sortOrder = sortOrder
 
         faq = await FAQModel.update({
@@ -269,6 +274,9 @@ export async function PUT(request: Request) {
         if (isActive !== undefined) {
           updates.push(`is_active = ${isActive}`)
         }
+        if (showOnHomepage !== undefined) {
+          updates.push(`show_on_homepage = ${showOnHomepage}`)
+        }
         if (sortOrder !== undefined) {
           updates.push(`sort_order = ${sortOrder}`)
         }
@@ -278,7 +286,7 @@ export async function PUT(request: Request) {
           UPDATE faqs 
           SET ${updates.join(', ')}
           WHERE id = '${id}'
-          RETURNING id, question, answer, category, role, is_active as "isActive", sort_order as "sortOrder", created_at as "createdAt", updated_at as "updatedAt"
+          RETURNING id, question, answer, category, role, is_active as "isActive", show_on_homepage as "showOnHomepage", sort_order as "sortOrder", created_at as "createdAt", updated_at as "updatedAt"
         `
         
         const result = await prisma.$queryRawUnsafe(query) as any[]

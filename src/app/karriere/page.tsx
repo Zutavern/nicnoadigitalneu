@@ -23,6 +23,10 @@ import {
   Sparkles,
   Rocket,
   Heart,
+  Palette,
+  Target,
+  Megaphone,
+  TrendingUp,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -44,15 +48,33 @@ const categories = [
     color: 'blue',
   },
   {
+    value: 'Design',
+    label: 'Design',
+    icon: Palette,
+    color: 'pink',
+  },
+  {
+    value: 'Product',
+    label: 'Product',
+    icon: Target,
+    color: 'orange',
+  },
+  {
     value: 'Operations',
     label: 'Operations',
     icon: Users,
     color: 'green',
   },
   {
-    value: 'Finance',
-    label: 'Finance',
-    icon: DollarSign,
+    value: 'Marketing',
+    label: 'Marketing',
+    icon: Megaphone,
+    color: 'yellow',
+  },
+  {
+    value: 'Sales',
+    label: 'Sales',
+    icon: TrendingUp,
     color: 'purple',
   },
 ]
@@ -193,7 +215,7 @@ export default function KarrierePage() {
             </div>
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-8">
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 mb-8 h-auto gap-2">
                 {categories.map((category) => {
                   const Icon = category.icon
                   const jobCount = getJobsByCategory(category.value).length
@@ -236,30 +258,29 @@ export default function KarrierePage() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: index * 0.1 }}
+                            className="h-full"
                           >
-                            <Card className="h-full hover:shadow-lg transition-shadow group">
-                              <CardContent className="p-6">
-                                <div className="flex items-start justify-between mb-4">
-                                  <div className="flex-1">
-                                    <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
-                                      {job.title}
-                                    </h3>
-                                    <div className="flex flex-wrap gap-2 mb-4">
-                                      <Badge variant="outline" className="text-xs">
-                                        <MapPin className="h-3 w-3 mr-1" />
-                                        {job.location}
-                                      </Badge>
-                                      <Badge variant="outline" className="text-xs">
-                                        <Clock className="h-3 w-3 mr-1" />
-                                        {job.type}
-                                      </Badge>
-                                    </div>
+                            <Card className="h-full hover:shadow-lg transition-shadow group flex flex-col">
+                              <CardContent className="p-6 flex flex-col flex-1">
+                                <div className="mb-4">
+                                  <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
+                                    {job.title}
+                                  </h3>
+                                  <div className="flex flex-wrap gap-2">
+                                    <Badge variant="outline" className="text-xs">
+                                      <MapPin className="h-3 w-3 mr-1" />
+                                      {job.location}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      {job.type}
+                                    </Badge>
                                   </div>
                                 </div>
-                                <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                                <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-1">
                                   {job.description.replace(/[#*]/g, '').substring(0, 150)}...
                                 </p>
-                                <Button asChild className="w-full group-hover:bg-primary/90">
+                                <Button asChild className="w-full group-hover:bg-primary/90 mt-auto">
                                   <Link href={`/karriere/${job.slug}`}>
                                     Mehr erfahren
                                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />

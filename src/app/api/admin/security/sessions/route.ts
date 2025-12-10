@@ -134,10 +134,23 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ error: 'Session nicht gefunden' }, { status: 404 })
       }
 
+      // Markiere ActiveSession als inaktiv
       result = await prisma.activeSession.update({
         where: { id: sessionId },
         data: { isActive: false }
       })
+
+      // Lösche auch die echte Next-Auth Session (falls vorhanden)
+      if (targetSession.sessionToken) {
+        await prisma.session.deleteMany({
+          where: { sessionToken: targetSession.sessionToken }
+        }).catch(() => {})
+      }
+
+      // Lösche alle Sessions des Users aus der Next-Auth sessions Tabelle
+      await prisma.session.deleteMany({
+        where: { userId: targetSession.userId }
+      }).catch(() => {})
 
       // Log erstellen
       await prisma.securityLog.create({
@@ -156,6 +169,11 @@ export async function DELETE(request: Request) {
         where: { userId, isActive: true },
         data: { isActive: false }
       })
+
+      // Lösche echte Next-Auth Sessions des Users
+      await prisma.session.deleteMany({
+        where: { userId }
+      }).catch(() => {})
 
       await prisma.securityLog.create({
         data: {
@@ -176,6 +194,13 @@ export async function DELETE(request: Request) {
         },
         data: { isActive: false }
       })
+
+      // Lösche alle echten Next-Auth Sessions (außer vom aktuellen Admin)
+      await prisma.session.deleteMany({
+        where: { 
+          userId: { not: session.user.id }
+        }
+      }).catch(() => {})
 
       await prisma.securityLog.create({
         data: {

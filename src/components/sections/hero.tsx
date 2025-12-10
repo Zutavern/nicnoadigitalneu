@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, Sparkles, CheckCircle2, ChevronDown, Mouse } from 'lucide-react'
 
 export function Hero() {
   return (
@@ -211,6 +211,98 @@ export function Hero() {
           </motion.div>
         </div>
       </div>
+
+      {/* Scroll Indicator */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.8, duration: 0.8 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
+      >
+        <motion.a
+          href="#testimonials"
+          className="flex flex-col items-center gap-3 group cursor-pointer"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {/* Maus-Icon mit animiertem Scroll-Rad */}
+          <div className="relative">
+            <div className="w-7 h-11 rounded-full border-2 border-slate-500/50 flex justify-center pt-2 group-hover:border-purple-400/70 transition-colors duration-300">
+              <motion.div
+                className="w-1.5 h-2.5 bg-gradient-to-b from-purple-400 to-pink-400 rounded-full"
+                animate={{
+                  y: [0, 8, 0],
+                  opacity: [1, 0.3, 1],
+                }}
+                transition={{
+                  duration: 1.8,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            </div>
+            
+            {/* Glühender Ring-Effekt */}
+            <motion.div
+              className="absolute -inset-1 rounded-full bg-purple-500/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              animate={{
+                scale: [1, 1.2, 1],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+          </div>
+
+          {/* Chevron-Pfeile */}
+          <div className="flex flex-col items-center -space-y-1">
+            <motion.div
+              animate={{
+                y: [0, 4, 0],
+                opacity: [0.4, 1, 0.4],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            >
+              <ChevronDown className="h-4 w-4 text-slate-400 group-hover:text-purple-400 transition-colors" />
+            </motion.div>
+            <motion.div
+              animate={{
+                y: [0, 4, 0],
+                opacity: [0.2, 0.6, 0.2],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 0.15,
+              }}
+            >
+              <ChevronDown className="h-4 w-4 text-slate-500 group-hover:text-purple-400/70 transition-colors" />
+            </motion.div>
+          </div>
+
+          {/* Text */}
+          <motion.span
+            className="text-xs text-slate-500 font-medium tracking-wider uppercase group-hover:text-purple-400/80 transition-colors"
+            animate={{
+              opacity: [0.5, 1, 0.5],
+            }}
+            transition={{
+              duration: 2.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            Scroll
+          </motion.span>
+        </motion.a>
+      </motion.div>
     </section>
   )
 }

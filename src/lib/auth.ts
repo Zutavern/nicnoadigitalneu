@@ -6,6 +6,7 @@ import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import type { UserRole } from "@prisma/client"
+import { handleLoginEvent, createActiveSession } from "./security-notifications"
 
 declare module "next-auth" {
   interface Session {
@@ -16,6 +17,7 @@ declare module "next-auth" {
       image?: string | null
       role: UserRole
       onboardingCompleted: boolean
+      sessionTerminated?: boolean
     }
   }
 
@@ -30,6 +32,8 @@ declare module "next-auth/jwt" {
     id: string
     role: UserRole
     onboardingCompleted: boolean
+    sessionCreatedAt?: number
+    sessionTerminated?: boolean
   }
 }
 
@@ -66,12 +70,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null
         }
 
+        const email = credentials.email as string
+
         try {
           const user = await prisma.user.findUnique({
-            where: { email: credentials.email as string },
+            where: { email },
           })
 
           if (!user || !user.password) {
+            // Log fehlgeschlagenen Login (User nicht gefunden)
+            await handleLoginEvent({
+              userId: '',
+              userEmail: email,
+            }, false).catch(console.error)
             return null
           }
 
@@ -81,8 +92,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           )
 
           if (!isPasswordValid) {
+            // Log fehlgeschlagenen Login (falsches Passwort)
+            await handleLoginEvent({
+              userId: user.id,
+              userEmail: email,
+              userName: user.name,
+            }, false).catch(console.error)
             return null
           }
+
+          // Log erfolgreichen Login
+          await handleLoginEvent({
+            userId: user.id,
+            userEmail: email,
+            userName: user.name,
+          }, true).catch(console.error)
 
           return {
             id: user.id,
@@ -105,6 +129,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id as string
         token.role = user.role
         token.onboardingCompleted = user.onboardingCompleted
+        token.sessionCreatedAt = Date.now() // Timestamp für Session-Invalidierung
       }
 
       // Update token when session is updated
@@ -113,15 +138,103 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.onboardingCompleted = session.user.onboardingCompleted
       }
 
+      // Prüfe ob User noch aktive Session hat (für Session-Invalidierung)
+      if (token.id) {
+        try {
+          const activeSession = await prisma.activeSession.findFirst({
+            where: {
+              userId: token.id as string,
+              isActive: true,
+              expiresAt: { gte: new Date() },
+            },
+          })
+          
+          // Wenn keine aktive Session mehr existiert, Token invalidieren
+          if (!activeSession) {
+            // Prüfe ob der User überhaupt Sessions hatte (neue User haben keine)
+            const anySession = await prisma.activeSession.findFirst({
+              where: { userId: token.id as string },
+            })
+            
+            // Nur invalidieren wenn Sessions existierten aber keine mehr aktiv ist
+            if (anySession) {
+              // Setze ein Flag dass die Session beendet wurde
+              token.sessionTerminated = true
+            }
+          }
+        } catch (error) {
+          // Bei DB-Fehlern Session nicht invalidieren
+          console.error('Session check error:', error)
+        }
+      }
+
       return token
     },
     async session({ session, token }) {
+      // Wenn Session terminiert wurde, leere Session zurückgeben
+      if (token.sessionTerminated) {
+        return { ...session, user: { ...session.user, sessionTerminated: true } }
+      }
+      
       if (token) {
         session.user.id = token.id
         session.user.role = token.role
         session.user.onboardingCompleted = token.onboardingCompleted
       }
       return session
+    },
+  },
+  events: {
+    async signIn({ user, account }) {
+      // Erstelle ActiveSession bei erfolgreichem Login
+      if (user?.id && account?.provider) {
+        try {
+          const sessionToken = `${user.id}-${Date.now()}-${Math.random().toString(36).substring(7)}`
+          await createActiveSession(user.id, sessionToken)
+          
+          // Log für OAuth-Logins (Credentials werden in authorize geloggt)
+          if (account.provider !== 'credentials') {
+            await handleLoginEvent({
+              userId: user.id,
+              userEmail: user.email || '',
+              userName: user.name,
+            }, true)
+          }
+        } catch (error) {
+          console.error('Error creating active session:', error)
+        }
+      }
+    },
+    async signOut({ token }) {
+      // Deaktiviere ActiveSession bei Logout
+      if (token?.id) {
+        try {
+          await prisma.activeSession.updateMany({
+            where: { userId: token.id as string, isActive: true },
+            data: { isActive: false },
+          })
+          
+          // Log Logout
+          const user = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { email: true },
+          })
+          
+          if (user) {
+            await prisma.securityLog.create({
+              data: {
+                userId: token.id as string,
+                userEmail: user.email,
+                event: 'LOGOUT',
+                status: 'SUCCESS',
+                message: 'Benutzer hat sich abgemeldet',
+              },
+            })
+          }
+        } catch (error) {
+          console.error('Error handling signOut:', error)
+        }
+      }
     },
   },
   debug: process.env.NODE_ENV === "development",

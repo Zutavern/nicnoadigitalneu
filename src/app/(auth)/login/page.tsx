@@ -22,6 +22,7 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
   const error = searchParams.get('error')
+  const reason = searchParams.get('reason')
 
   const [isLoading, setIsLoading] = useState(false)
   const [quickLoginLoading, setQuickLoginLoading] = useState<string | null>(null)
@@ -31,6 +32,11 @@ function LoginForm() {
     password: '',
   })
   const [formError, setFormError] = useState('')
+
+  // Session-Terminierung Nachricht
+  const sessionTerminatedMessage = reason === 'session_terminated' 
+    ? 'Ihre Sitzung wurde von einem Administrator beendet. Bitte melden Sie sich erneut an.'
+    : null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -156,6 +162,21 @@ function LoginForm() {
               </Link>
             </p>
           </div>
+
+          {/* Session wurde beendet Info */}
+          {sessionTerminatedMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-sm flex items-start gap-3"
+            >
+              <Shield className="h-5 w-5 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium">Sitzung beendet</p>
+                <p className="text-sm opacity-90 mt-1">{sessionTerminatedMessage}</p>
+              </div>
+            </motion.div>
+          )}
 
           {(error || formError) && (
             <motion.div

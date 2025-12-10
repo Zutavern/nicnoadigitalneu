@@ -32,6 +32,9 @@ import {
   FolderOpen,
   UserCircle,
   Tags,
+  Home,
+  Briefcase,
+  UserPlus,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -92,10 +95,13 @@ const menuItems = [
             label: 'Seiten',
             icon: Globe,
             children: [
+              { label: 'Homepage', href: '/admin/homepage', icon: Home },
               { label: 'FAQ', href: '/admin/faqs', icon: HelpCircle },
               { label: 'Testimonials', href: '/admin/testimonials', icon: Quote },
               { label: 'Partner & Vorteile', href: '/admin/partners', icon: HandshakeIcon },
               { label: 'Über uns', href: '/admin/about-us', icon: Users },
+              { label: 'Karriere', href: '/admin/career', icon: Briefcase },
+              { label: 'Presse', href: '/admin/press', icon: Newspaper },
             ],
           },
           {
@@ -110,6 +116,12 @@ const menuItems = [
           },
         ],
       },
+    ],
+  },
+  {
+    title: 'HR',
+    items: [
+      { label: 'Bewerber', href: '/admin/hr', icon: UserPlus },
     ],
   },
   {

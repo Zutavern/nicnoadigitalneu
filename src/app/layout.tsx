@@ -6,6 +6,7 @@ import { SessionProvider } from "@/components/providers/session-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ThemeColorProvider } from "@/components/providers/theme-color-provider";
 import { PasswordProtection } from "@/components/password-protection";
+import { SessionGuard } from "@/components/session-guard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,6 +42,7 @@ export default function RootLayout({
         >
           <ThemeColorProvider />
           <SessionProvider>
+            <SessionGuard />
             <PasswordProtection />
             {children}
             <CookieBanner />

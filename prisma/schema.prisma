@@ -40,6 +40,11 @@ model User {
   passwordResetExpires       DateTime? @map("password_reset_expires") @db.Timestamptz
   emailVerificationToken     String?   @map("email_verification_token")
   emailVerificationExpires   DateTime? @map("email_verification_expires") @db.Timestamptz
+  passwordChangedAt          DateTime? @map("password_changed_at") @db.Timestamptz
+  lastLoginAt                DateTime? @map("last_login_at") @db.Timestamptz
+  lastLoginIp                String?   @map("last_login_ip") @db.VarChar(50)
+  lastLoginDevice            String?   @map("last_login_device") @db.VarChar(255)
+  loginNotificationsEnabled  Boolean   @default(true) @map("login_notifications_enabled")
   
   // Stripe Fields
   stripeCustomerId         String?   @unique @map("stripe_customer_id")
@@ -962,6 +967,18 @@ model PlatformSettings {
   // Sicherheit
   passwordProtectionEnabled Boolean @default(true) @map("password_protection_enabled")
   
+  // Erweiterte Sicherheitseinstellungen
+  passwordPolicy            Json?   @map("password_policy") @db.JsonB
+  loginNotifications        Json?   @map("login_notifications") @db.JsonB
+  ipWhitelist               Json?   @map("ip_whitelist") @db.JsonB
+  sessionTimeout            Int?    @default(10080) @map("session_timeout") // 7 Tage in Minuten
+  maxActiveSessions         Int?    @default(5) @map("max_active_sessions")
+  requireTwoFactorForAdmin  Boolean @default(false) @map("require_two_factor_for_admin")
+  
+  // CMS Seiten-Konfigurationen
+  careerPageConfig          Json?   @map("career_page_config") @db.JsonB
+  partnerPageConfig         Json?   @map("partner_page_config") @db.JsonB
+  
   // Timestamps
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -1123,18 +1140,20 @@ model Testimonial {
 // ============================================
 
 model FAQ {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  question    String   @db.Text
-  answer      String   @db.Text
-  category    String?  @db.VarChar(100) // Optional: z.B. 'Buchungen', 'Finanzen', etc.
-  role        String   @db.VarChar(50) // 'STYLIST' oder 'SALON_OWNER'
-  isActive    Boolean  @default(true) @map("is_active")
-  sortOrder   Int      @default(0) @map("sort_order")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question       String   @db.Text
+  answer         String   @db.Text
+  category       String?  @db.VarChar(100) // Optional: z.B. 'Buchungen', 'Finanzen', etc.
+  role           String   @db.VarChar(50) // 'STYLIST' oder 'SALON_OWNER'
+  isActive       Boolean  @default(true) @map("is_active")
+  showOnHomepage Boolean  @default(false) @map("show_on_homepage") // Auf Homepage anzeigen
+  sortOrder      Int      @default(0) @map("sort_order")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@index([role, isActive, sortOrder])
   @@index([category, role, isActive])
+  @@index([showOnHomepage, role, isActive])
   @@map("faqs")
 }
 
@@ -1845,4 +1864,147 @@ model BlogPageConfig {
   updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
   
   @@map("blog_page_config")
+}
+
+// Homepage Konfiguration
+model HomePageConfig {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Hero Type & Layout
+  heroType              String   @default("animated") @map("hero_type") @db.VarChar(20) // "animated" | "image" | "video"
+  heroLayout            String   @default("split") @map("hero_layout") @db.VarChar(20) // "split" | "centered" | "fullscreen"
+  
+  // Hero Image (für heroType: "image")
+  heroImageUrl          String?  @map("hero_image_url") @db.Text // Vercel Blob URL
+  heroImageAlt          String?  @map("hero_image_alt") @db.VarChar(200)
+  heroImageOverlay      Int?     @default(40) @map("hero_image_overlay") // 0-100 für Overlay-Opacity
+  heroImagePosition     String?  @default("center") @map("hero_image_position") @db.VarChar(50) // "top" | "center" | "bottom"
+  
+  // Hero Video (für heroType: "video")
+  heroVideoUrl          String?  @map("hero_video_url") @db.Text
+  heroVideoPoster       String?  @map("hero_video_poster") @db.Text
+  
+  // Hero Content
+  heroBadgeText         String?  @map("hero_badge_text") @db.VarChar(100)
+  heroBadgeIcon         String?  @default("sparkles") @map("hero_badge_icon") @db.VarChar(50)
+  heroTitleLine1        String   @default("Revolutionieren") @map("hero_title_line_1") @db.VarChar(100)
+  heroTitleLine2        String   @default("Sie Ihren") @map("hero_title_line_2") @db.VarChar(100)
+  heroTitleHighlight    String   @default("Salon-Space") @map("hero_title_highlight") @db.VarChar(100)
+  heroDescription       String?  @map("hero_description") @db.Text
+  
+  // CTA Buttons
+  ctaPrimaryText        String   @default("Jetzt kostenlos starten") @map("cta_primary_text") @db.VarChar(100)
+  ctaPrimaryLink        String   @default("/registrieren") @map("cta_primary_link") @db.VarChar(200)
+  ctaPrimaryIcon        String?  @default("arrow-right") @map("cta_primary_icon") @db.VarChar(50)
+  ctaSecondaryText      String?  @default("Produkt entdecken") @map("cta_secondary_text") @db.VarChar(100)
+  ctaSecondaryLink      String?  @default("/produkt") @map("cta_secondary_link") @db.VarChar(200)
+  showSecondaryCta      Boolean  @default(true) @map("show_secondary_cta")
+  
+  // Trust Indicators
+  showTrustIndicators   Boolean  @default(true) @map("show_trust_indicators")
+  trustIndicator1       String?  @default("14 Tage kostenlos testen") @map("trust_indicator_1") @db.VarChar(100)
+  trustIndicator2       String?  @default("Keine Kreditkarte erforderlich") @map("trust_indicator_2") @db.VarChar(100)
+  trustIndicator3       String?  @default("DSGVO-konform") @map("trust_indicator_3") @db.VarChar(100)
+  
+  // Dashboard Preview (für animated hero)
+  showDashboardPreview  Boolean  @default(true) @map("show_dashboard_preview")
+  dashboardTitle        String?  @default("NICNOA Dashboard") @map("dashboard_title") @db.VarChar(100)
+  dashboardSubtitle     String?  @default("Salon Overview") @map("dashboard_subtitle") @db.VarChar(100)
+  
+  // Animation Settings
+  animationEnabled      Boolean  @default(true) @map("animation_enabled")
+  particlesEnabled      Boolean  @default(true) @map("particles_enabled")
+  gradientColors        String?  @default("purple,pink,blue") @map("gradient_colors") @db.VarChar(200)
+  
+  // Scroll Indicator
+  showScrollIndicator   Boolean  @default(true) @map("show_scroll_indicator")
+  scrollTargetId        String?  @default("testimonials") @map("scroll_target_id") @db.VarChar(50)
+  
+  // SEO
+  metaTitle             String?  @map("meta_title") @db.VarChar(70)
+  metaDescription       String?  @map("meta_description") @db.VarChar(160)
+  ogImageUrl            String?  @map("og_image_url") @db.Text
+  
+  // Sections Visibility
+  showTestimonials      Boolean  @default(true) @map("show_testimonials")
+  showPartners          Boolean  @default(true) @map("show_partners")
+  showPricing           Boolean  @default(true) @map("show_pricing")
+  showFaq               Boolean  @default(true) @map("show_faq")
+  showCta               Boolean  @default(true) @map("show_cta")
+  
+  // Timestamps
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  @@map("home_page_config")
+}
+
+// ============================================
+// Press / Media Section
+// ============================================
+
+model PressArticle {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title           String    @db.VarChar(300)
+  slug            String    @unique @db.VarChar(350)
+  excerpt         String?   @db.Text
+  source          String    @db.VarChar(200)  // z.B. "TechCrunch", "Gründerszene"
+  sourceUrl       String    @map("source_url") @db.Text
+  sourceLogo      String?   @map("source_logo") @db.Text  // Logo URL der Quelle
+  coverImage      String?   @map("cover_image") @db.Text  // Vercel Blob URL
+  publishedAt     DateTime  @map("published_at") @db.Timestamptz
+  category        String    @default("news") @db.VarChar(50)  // news, feature, interview, announcement
+  isFeatured      Boolean   @default(false) @map("is_featured")
+  isActive        Boolean   @default(true) @map("is_active")
+  sortOrder       Int       @default(0) @map("sort_order")
+  
+  // Timestamps
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  
+  @@index([category, isActive, publishedAt(sort: Desc)])
+  @@index([isFeatured, isActive])
+  @@map("press_articles")
+}
+
+model PressPageConfig {
+  id                  String   @id @default("default")
+  
+  // Hero Section
+  heroBadgeText       String?  @default("Presse & Medien") @map("hero_badge_text") @db.VarChar(100)
+  heroTitle           String   @default("NICNOA in den Medien") @map("hero_title") @db.Text
+  heroDescription     String?  @map("hero_description") @db.Text
+  
+  // Stats
+  showStats           Boolean  @default(true) @map("show_stats")
+  stat1Label          String?  @default("Presse-Artikel") @map("stat_1_label") @db.VarChar(50)
+  stat1Value          String?  @default("50+") @map("stat_1_value") @db.VarChar(20)
+  stat2Label          String?  @default("Medienreichweite") @map("stat_2_label") @db.VarChar(50)
+  stat2Value          String?  @default("10M+") @map("stat_2_value") @db.VarChar(20)
+  stat3Label          String?  @default("Auszeichnungen") @map("stat_3_label") @db.VarChar(50)
+  stat3Value          String?  @default("5") @map("stat_3_value") @db.VarChar(20)
+  
+  // Press Kit Section
+  showPressKit        Boolean  @default(true) @map("show_press_kit")
+  pressKitTitle       String?  @default("Presse-Kit") @map("press_kit_title") @db.VarChar(100)
+  pressKitDescription String?  @map("press_kit_description") @db.Text
+  pressKitDownloadUrl String?  @map("press_kit_download_url") @db.Text
+  
+  // Contact Section
+  contactTitle        String?  @default("Presse-Kontakt") @map("contact_title") @db.VarChar(100)
+  contactDescription  String?  @map("contact_description") @db.Text
+  contactEmail        String?  @default("presse@nicnoa.de") @map("contact_email") @db.VarChar(100)
+  contactPhone        String?  @map("contact_phone") @db.VarChar(50)
+  contactPerson       String?  @map("contact_person") @db.VarChar(100)
+  
+  // SEO
+  metaTitle           String?  @map("meta_title") @db.VarChar(70)
+  metaDescription     String?  @map("meta_description") @db.VarChar(160)
+  ogImage             String?  @map("og_image") @db.Text
+  
+  // Timestamps
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  @@map("press_page_config")
 }
