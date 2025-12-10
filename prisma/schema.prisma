@@ -2307,3 +2307,67 @@ model RoadmapItem {
   @@index([isActive, sortOrder])
   @@map("roadmap_items")
 }
+
+// ==========================================
+// LEGAL PAGES CMS (Impressum, Datenschutz, AGB)
+// ==========================================
+
+enum LegalPageType {
+  IMPRESSUM
+  DATENSCHUTZ
+  AGB
+}
+
+model LegalPageConfig {
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pageType          LegalPageType @unique @map("page_type")
+  
+  // Hero Section
+  heroBadgeText     String?       @map("hero_badge_text") @db.VarChar(100)
+  heroTitle         String        @map("hero_title") @db.VarChar(200)
+  heroDescription   String?       @map("hero_description") @db.Text
+  
+  // SEO
+  metaTitle         String?       @map("meta_title") @db.VarChar(70)
+  metaDescription   String?       @map("meta_description") @db.VarChar(160)
+  
+  // Contact Info (für Impressum/Datenschutz)
+  contactEmail      String?       @map("contact_email") @db.VarChar(100)
+  contactPhone      String?       @map("contact_phone") @db.VarChar(50)
+  
+  // Stand der Seite
+  lastUpdated       DateTime?     @map("last_updated") @db.Timestamptz
+  
+  // Timestamps
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Relations
+  sections          LegalSection[]
+  
+  @@map("legal_page_configs")
+}
+
+model LegalSection {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pageType      LegalPageType @map("page_type")
+  
+  // Content
+  title         String        @db.VarChar(200)
+  content       String        @db.Text
+  
+  // Display Options
+  sortOrder     Int           @default(0) @map("sort_order")
+  isActive      Boolean       @default(true) @map("is_active")
+  isCollapsible Boolean       @default(true) @map("is_collapsible")
+  
+  // Timestamps
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Relations
+  config        LegalPageConfig @relation(fields: [pageType], references: [pageType], onDelete: Cascade)
+  
+  @@index([pageType, isActive, sortOrder])
+  @@map("legal_sections")
+}

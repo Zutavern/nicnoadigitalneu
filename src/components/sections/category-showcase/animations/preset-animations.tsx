@@ -99,3 +99,5 @@ export const availablePresets: { value: PresetAnimationType; label: string; desc
     description: 'Automatisierungs-Flow mit animierten Schritten' 
   },
 ]
+
+

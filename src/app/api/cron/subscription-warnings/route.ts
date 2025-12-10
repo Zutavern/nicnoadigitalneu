@@ -105,3 +105,4 @@ export async function GET(request: Request) {
 
 
 
+http://localhost:3000/produkt

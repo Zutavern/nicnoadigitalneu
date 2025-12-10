@@ -242,3 +242,5 @@ export function CategoryHero({ data, isActive }: CategoryHeroProps) {
     </motion.div>
   )
 }
+
+

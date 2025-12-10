@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSession } from 'next-auth/react'
 import { Bell, Check, CheckCheck, ExternalLink, FileText, MessageSquare, UserPlus, AlertTriangle, CreditCard, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -45,45 +46,80 @@ interface NotificationBellProps {
   className?: string
 }
 
+// Maximale Anzahl an Fehlversuchen bevor Polling stoppt
+const MAX_ERROR_COUNT = 3
+
 export function NotificationBell({ className }: NotificationBellProps) {
+  const { status } = useSession()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [isOpen, setIsOpen] = useState(false)
+  const errorCountRef = useRef(0)
+
+  const isAuthenticated = status === 'authenticated'
 
   const fetchNotifications = useCallback(async () => {
+    // Keine Requests wenn nicht authentifiziert
+    if (!isAuthenticated) {
+      setIsLoading(false)
+      return
+    }
+
     try {
       const response = await fetch('/api/notifications?take=10')
       if (response.ok) {
         const data = await response.json()
         setNotifications(data.notifications)
         setUnreadCount(data.unreadCount)
+        errorCountRef.current = 0 // Reset bei Erfolg
+      } else if (response.status === 401) {
+        // Session abgelaufen - keine weiteren Requests
+        errorCountRef.current = MAX_ERROR_COUNT
       }
-    } catch (error) {
-      console.error('Error fetching notifications:', error)
+    } catch {
+      // Network-Fehler still ignorieren
+      errorCountRef.current++
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [isAuthenticated])
 
   const fetchUnreadCount = useCallback(async () => {
+    // Keine Requests wenn nicht authentifiziert oder zu viele Fehler
+    if (!isAuthenticated || errorCountRef.current >= MAX_ERROR_COUNT) {
+      return
+    }
+
     try {
       const response = await fetch('/api/notifications/unread-count')
       if (response.ok) {
         const data = await response.json()
         setUnreadCount(data.count)
+        errorCountRef.current = 0 // Reset bei Erfolg
+      } else if (response.status === 401) {
+        // Session abgelaufen - keine weiteren Requests
+        errorCountRef.current = MAX_ERROR_COUNT
       }
-    } catch (error) {
-      console.error('Error fetching unread count:', error)
+    } catch {
+      // Network-Fehler still ignorieren (z.B. Tab im Hintergrund)
+      errorCountRef.current++
     }
-  }, [])
+  }, [isAuthenticated])
 
   useEffect(() => {
-    fetchNotifications()
-    // Polling alle 30 Sekunden
-    const interval = setInterval(fetchUnreadCount, 30000)
-    return () => clearInterval(interval)
-  }, [fetchNotifications, fetchUnreadCount])
+    // Nur fetchen wenn authentifiziert
+    if (isAuthenticated) {
+      fetchNotifications()
+      // Polling alle 30 Sekunden
+      const interval = setInterval(fetchUnreadCount, 30000)
+      return () => clearInterval(interval)
+    } else {
+      setIsLoading(false)
+      setNotifications([])
+      setUnreadCount(0)
+    }
+  }, [isAuthenticated, fetchNotifications, fetchUnreadCount])
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
@@ -239,6 +275,8 @@ function NotificationContent({ notification }: { notification: Notification }) {
     </>
   )
 }
+
+
 
 
 
