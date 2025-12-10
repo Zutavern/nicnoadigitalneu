@@ -50,6 +50,7 @@ import {
 import { toast } from 'sonner'
 import Image from 'next/image'
 import Link from 'next/link'
+import { SortableList } from '@/components/ui/sortable-list'
 
 interface AboutUsPageConfig {
   id?: string
@@ -367,19 +368,12 @@ export default function AboutUsAdminPage() {
     }
   }
 
-  const handleMoveCard = async (id: string, direction: 'up' | 'down') => {
-    const cardIndex = approachCards.findIndex(c => c.id === id)
-    if (cardIndex === -1) return
+  // Reorder Cards via Drag & Drop
+  const handleReorderCards = async (reorderedCards: ApproachCard[]) => {
+    // Optimistisches Update
+    const updatedCards = reorderedCards.map((card, index) => ({ ...card, sortOrder: index }))
+    setApproachCards(updatedCards)
 
-    const newIndex = direction === 'up' ? cardIndex - 1 : cardIndex + 1
-    if (newIndex < 0 || newIndex >= approachCards.length) return
-
-    const updatedCards = [...approachCards]
-    const temp = updatedCards[cardIndex].sortOrder
-    updatedCards[cardIndex].sortOrder = updatedCards[newIndex].sortOrder
-    updatedCards[newIndex].sortOrder = temp
-
-    // Update in DB
     try {
       const res = await fetch('/api/admin/approach-cards', {
         method: 'PUT',
@@ -388,13 +382,15 @@ export default function AboutUsAdminPage() {
       })
 
       if (res.ok) {
-        await fetchApproachCards()
+        toast.success('Reihenfolge aktualisiert')
       } else {
-        toast.error('Fehler beim Verschieben')
+        toast.error('Fehler beim Speichern der Reihenfolge')
+        await fetchApproachCards()
       }
     } catch (error) {
-      console.error('Error moving card:', error)
-      toast.error('Fehler beim Verschieben der Kachel')
+      console.error('Error reordering cards:', error)
+      toast.error('Fehler beim Verschieben der Kacheln')
+      await fetchApproachCards()
     }
   }
 
@@ -918,32 +914,13 @@ export default function AboutUsAdminPage() {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {approachCards.map((card, index) => {
+                <SortableList
+                  items={approachCards}
+                  onReorder={handleReorderCards}
+                  renderItem={(card) => {
                     const Icon = getIconComponent(card.iconName)
                     return (
-                      <div
-                        key={card.id}
-                        className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleMoveCard(card.id, 'up')}
-                            disabled={index === 0}
-                          >
-                            <ChevronUp className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleMoveCard(card.id, 'down')}
-                            disabled={index === approachCards.length - 1}
-                          >
-                            <ChevronDown className="h-4 w-4" />
-                          </Button>
-                        </div>
+                      <div className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                         <div className="flex-1">
                           <div className="flex items-start gap-3">
                             <div className="rounded-lg bg-primary/10 p-2.5 flex-shrink-0">
@@ -958,7 +935,7 @@ export default function AboutUsAdminPage() {
                               </div>
                               <p className="text-sm text-muted-foreground">{card.description}</p>
                               <p className="text-xs text-muted-foreground mt-1">
-                                Icon: {card.iconName || 'Kein Icon'} | Position: {card.sortOrder}
+                                Icon: {card.iconName || 'Kein Icon'}
                               </p>
                             </div>
                           </div>
@@ -981,8 +958,8 @@ export default function AboutUsAdminPage() {
                         </div>
                       </div>
                     )
-                  })}
-                </div>
+                  }}
+                />
               )}
             </CardContent>
           </Card>

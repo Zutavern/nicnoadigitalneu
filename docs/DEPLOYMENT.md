@@ -2,8 +2,8 @@
 
 ## 🚀 Deployment-Dokumentation
 
-**Version:** 1.0  
-**Letzte Aktualisierung:** 6. Dezember 2025
+**Version:** 1.1  
+**Letzte Aktualisierung:** 10. Dezember 2025
 
 ---
 

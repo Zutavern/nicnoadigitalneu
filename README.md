@@ -66,6 +66,8 @@
 - 💳 Abo-Verwaltung
 - 📧 E-Mail-Template-Editor
 - 🔒 Security-Dashboard
+- 🎨 Design-System mit konfigurierbaren Presets
+- 📝 CMS für alle Marketing-Seiten
 
 ---
 
@@ -151,6 +153,7 @@ nicnoa/
 │   ├── API.md                 # API-Dokumentation
 │   ├── DATABASE.md            # Datenbank-Schema
 │   ├── DEVELOPMENT.md         # Entwickler-Guide
+│   ├── DEPLOYMENT.md          # Deployment-Anleitung
 │   └── PRD-*.md               # Product Requirements
 ├── prisma/
 │   ├── schema.prisma          # Datenbank-Schema
@@ -164,14 +167,14 @@ nicnoa/
 │   │   │   ├── admin/         # Admin-Dashboard
 │   │   │   ├── salon/         # Salon-Owner-Dashboard
 │   │   │   └── stylist/       # Stylist-Dashboard
-│   │   └── api/               # API Routes
+│   │   └── api/               # API Routes (100+ Endpunkte)
 │   ├── components/            # React-Komponenten
 │   │   ├── ui/                # Shadcn UI
 │   │   ├── admin/             # Admin-Komponenten
 │   │   └── dashboard/         # Dashboard-Komponenten
 │   ├── emails/                # E-Mail-Templates
 │   │   ├── components/        # Layout-Komponenten
-│   │   └── templates/         # 42 E-Mail-Templates
+│   │   └── templates/         # 45+ E-Mail-Templates
 │   └── lib/                   # Utilities & Configs
 │       ├── auth.ts            # NextAuth Config
 │       ├── prisma.ts          # Prisma Client
@@ -189,9 +192,9 @@ nicnoa/
 
 | Dokument | Beschreibung |
 |----------|--------------|
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System-Architektur & Datenfluss |
-| [API.md](docs/API.md) | REST API Dokumentation |
-| [DATABASE.md](docs/DATABASE.md) | Datenbank-Schema & Relationen |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System-Architektur, Design-System & CMS |
+| [API.md](docs/API.md) | REST API Dokumentation (100+ Endpunkte) |
+| [DATABASE.md](docs/DATABASE.md) | Datenbank-Schema & Relationen (50+ Tabellen) |
 | [DEVELOPMENT.md](docs/DEVELOPMENT.md) | Entwickler-Setup & Guidelines |
 | [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deployment-Anleitung |
 | [PRD-Email-Notification-System.md](docs/PRD-Email-Notification-System.md) | E-Mail System PRD |

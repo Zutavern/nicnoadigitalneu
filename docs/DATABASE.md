@@ -2,7 +2,7 @@
 
 ## 📊 Database Schema Reference
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Datenbank:** PostgreSQL 16  
 **ORM:** Prisma 7.1  
 **Hosting:** Neon (Serverless)
@@ -26,7 +26,8 @@
 13. [Subscription Plans](#13-subscription-plans)
 14. [Security & Logging](#14-security--logging)
 15. [System-Konfiguration](#15-system-konfiguration)
-16. [Enums](#16-enums)
+16. [Produkt-Seite CMS](#16-produkt-seite-cms)
+17. [Enums](#17-enums)
 
 ---
 
@@ -731,10 +732,87 @@ Globale Plattform-Einstellungen (Singleton).
 | `email_*` | String? | E-Mail-Branding |
 | `use_demo_mode` | Boolean | Demo-Modus aktiv |
 | `demo_mode_message` | String? | Demo-Nachricht |
+| `design_system_preset` | String? | Design-System Preset (nicnoa-classic, nicnoa-modern, etc.) |
+| `design_tokens` | Json? | Benutzerdefinierte Design-Tokens |
 
 ---
 
-## 16. Enums
+## 16. Produkt-Seite CMS
+
+### ProductFeature (product_features)
+
+Produkt-Features für die Produkt-Seite.
+
+| Spalte | Typ | Beschreibung |
+|--------|-----|--------------|
+| `id` | UUID | Primärschlüssel |
+| `title` | String | Feature-Titel |
+| `description` | Text | Feature-Beschreibung |
+| `icon_name` | String | Icon-Name (Lucide Icons) |
+| `category` | String | Kategorie (core, communication, analytics, security) |
+| `is_active` | Boolean | Aktiv |
+| `is_highlight` | Boolean | Hervorgehoben anzeigen |
+| `sort_order` | Int | Sortierung |
+
+**Indexes:** `(category, is_active, sort_order)`, `(is_active, sort_order)`
+
+### ProductPageConfig (product_page_config)
+
+Konfiguration der Produkt-Seite (Singleton mit ID "default").
+
+| Spalte | Typ | Beschreibung |
+|--------|-----|--------------|
+| `id` | String | "default" |
+| **Hero-Einstellungen** |
+| `hero_type` | String | "animated", "image", "video", "code" |
+| `hero_layout` | String | "split", "centered", "fullscreen" |
+| `hero_image_url` | Text? | Hero-Bild URL |
+| `hero_video_url` | Text? | Hero-Video URL |
+| `hero_badge_text` | String? | Badge-Text |
+| `hero_title` | Text | Haupttitel |
+| `hero_title_highlight` | String? | Hervorgehobener Text |
+| `hero_description` | Text? | Beschreibung |
+| **CTA-Buttons** |
+| `cta_primary_text` | String | Primärer Button-Text |
+| `cta_primary_link` | String | Primärer Button-Link |
+| `cta_secondary_text` | String? | Sekundärer Button-Text |
+| `cta_secondary_link` | String? | Sekundärer Button-Link |
+| `show_secondary_cta` | Boolean | Sekundären CTA anzeigen |
+| **Trust Indicators** |
+| `show_trust_indicators` | Boolean | Trust-Indikatoren anzeigen |
+| `trust_indicator_1` | String? | Trust-Indikator 1 |
+| `trust_indicator_2` | String? | Trust-Indikator 2 |
+| `trust_indicator_3` | String? | Trust-Indikator 3 |
+| **Animation** |
+| `animation_enabled` | Boolean | Animationen aktiviert |
+| `particles_enabled` | Boolean | Partikel aktiviert |
+| `use_design_system_colors` | Boolean | Design-System-Farben verwenden |
+| `gradient_colors` | String? | Gradient-Farben (kommasepariert) |
+| **Features-Section** |
+| `features_section_title` | String? | Features-Abschnittstitel |
+| `features_section_description` | Text? | Features-Beschreibung |
+| `show_feature_categories` | Boolean | Kategorien anzeigen |
+| **Stats** |
+| `show_stats` | Boolean | Stats anzeigen |
+| `stat_1_label` | String? | Stat 1 Label |
+| `stat_1_value` | String? | Stat 1 Wert |
+| `stat_2_label` | String? | Stat 2 Label |
+| `stat_2_value` | String? | Stat 2 Wert |
+| `stat_3_label` | String? | Stat 3 Label |
+| `stat_3_value` | String? | Stat 3 Wert |
+| **Bottom CTA** |
+| `bottom_cta_title` | String? | CTA-Titel |
+| `bottom_cta_description` | Text? | CTA-Beschreibung |
+| `bottom_cta_button_text` | String? | CTA-Button-Text |
+| `bottom_cta_button_link` | String? | CTA-Button-Link |
+| **SEO** |
+| `meta_title` | String? | Meta-Titel |
+| `meta_description` | String? | Meta-Beschreibung |
+| `og_image` | Text? | Open-Graph-Bild |
+
+---
+
+## 17. Enums
 
 ### UserRole
 ```prisma
@@ -830,7 +908,8 @@ enum ReferralStatus {
 
 ---
 
-**Letzte Aktualisierung:** 6. Dezember 2025
+**Letzte Aktualisierung:** 10. Dezember 2025
+
 
 
 

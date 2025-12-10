@@ -2,8 +2,8 @@
 
 ## 📐 System-Architektur Dokumentation
 
-**Version:** 1.0  
-**Datum:** 6. Dezember 2025  
+**Version:** 1.1  
+**Datum:** 10. Dezember 2025  
 **Status:** Produktiv
 
 ---
@@ -312,7 +312,15 @@ export default auth((req) => {
 ```
 src/app/api/
 ├── auth/
-│   └── register/route.ts        # Registrierung
+│   ├── register/route.ts        # Registrierung
+│   ├── 2fa/                     # Zwei-Faktor-Auth
+│   │   ├── setup/route.ts
+│   │   ├── verify/route.ts
+│   │   ├── status/route.ts
+│   │   └── disable/route.ts
+│   ├── forgot-password/route.ts
+│   ├── reset-password/route.ts
+│   └── verify-email/route.ts
 ├── admin/
 │   ├── users/route.ts           # Benutzerverwaltung
 │   ├── salons/route.ts          # Salonverwaltung
@@ -321,6 +329,10 @@ src/app/api/
 │   ├── revenue/route.ts         # Umsatzberichte
 │   ├── subscriptions/route.ts   # Abo-Verwaltung
 │   ├── settings/route.ts        # Plattform-Einstellungen
+│   ├── design-tokens/route.ts   # Design-System
+│   ├── product-config/          # Produkt-Seite CMS
+│   │   ├── route.ts
+│   │   └── upload/route.ts
 │   ├── security/                # Sicherheit
 │   │   ├── logs/route.ts
 │   │   ├── sessions/route.ts
@@ -333,6 +345,17 @@ src/app/api/
 │   ├── onboarding/              # Onboarding-Prüfung
 │   │   ├── route.ts
 │   │   └── [id]/route.ts
+│   ├── blog/                    # Blog CMS
+│   │   ├── posts/route.ts
+│   │   ├── authors/route.ts
+│   │   ├── categories/route.ts
+│   │   └── tags/route.ts
+│   ├── homepage-config/route.ts # Homepage CMS
+│   ├── partners/route.ts        # Partner CMS
+│   ├── press/route.ts           # Presse CMS
+│   ├── faqs/route.ts            # FAQ CMS
+│   ├── testimonials/route.ts    # Testimonials CMS
+│   ├── jobs/route.ts            # Karriere CMS
 │   └── referrals/route.ts       # Empfehlungen
 ├── salon/
 │   ├── stats/route.ts           # Salon-Statistiken
@@ -375,9 +398,28 @@ src/app/api/
 │   │   └── complete/route.ts
 │   └── documents/
 │       └── upload/route.ts
-└── referral/
-    ├── track/route.ts           # Link-Tracking
-    └── validate/route.ts        # Code validieren
+├── referral/
+│   ├── track/route.ts           # Link-Tracking
+│   └── validate/route.ts        # Code validieren
+├── platform/
+│   ├── design-tokens/route.ts   # Öffentliche Design-Tokens
+│   └── primary-color/route.ts   # Primärfarbe
+├── product-features/            # Produkt-Features
+│   ├── route.ts                 # GET öffentliche Features
+│   ├── admin/route.ts           # Admin CRUD
+│   └── [id]/route.ts            # Feature-Details
+├── product-page-config/route.ts # Produkt-Seiten-Config
+├── cron/                        # Automatisierte Jobs
+│   ├── booking-reminders/route.ts
+│   ├── daily-summary/route.ts
+│   ├── rent-reminders/route.ts
+│   ├── rental-ending/route.ts
+│   └── subscription-warnings/route.ts
+└── seed/                        # Seed-Endpunkte (Dev)
+    ├── error-messages/route.ts
+    ├── jobs/route.ts
+    ├── press/route.ts
+    └── referrals/route.ts
 ```
 
 ### 5.2 API-Response-Format
@@ -726,19 +768,139 @@ BLOB_READ_WRITE_TOKEN="..."
 
 ---
 
-## 12. Nächste Schritte
+## 12. Design-System
 
-### 12.1 Kurzfristig (Phase 4)
-- [ ] Cron-Jobs für E-Mail-Erinnerungen
+### 12.1 Übersicht
+
+NICNOA verfügt über ein konfigurierbares Design-System mit vordefinierten Presets und anpassbaren Design-Tokens.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           DESIGN SYSTEM ARCHITEKTUR                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                    ┌───────────────────────────────────────┐
+                    │         PlatformSettings              │
+                    │  - designSystemPreset                 │
+                    │  - designTokens (JSON)                │
+                    └───────────────────┬───────────────────┘
+                                        │
+                    ┌───────────────────┴───────────────────┐
+                    │                                       │
+                    ▼                                       ▼
+          ┌─────────────────┐                    ┌─────────────────┐
+          │  Design Presets │                    │  Custom Tokens  │
+          │                 │                    │                 │
+          │ - nicnoa-classic│                    │  - colors       │
+          │ - nicnoa-modern │                    │  - typography   │
+          │ - nicnoa-minimal│                    │  - spacing      │
+          │ - custom        │                    │  - shadows      │
+          └─────────────────┘                    └─────────────────┘
+```
+
+### 12.2 Design-Token-Struktur
+
+```typescript
+interface DesignTokens {
+  colors: {
+    primary: string
+    secondary: string
+    accent: string
+    background: string
+    foreground: string
+    muted: string
+    border: string
+  }
+  typography: {
+    fontFamily: string
+    fontSizeBase: string
+    lineHeight: string
+  }
+  spacing: {
+    unit: number
+    containerPadding: string
+  }
+  borderRadius: {
+    small: string
+    medium: string
+    large: string
+  }
+  shadows: {
+    small: string
+    medium: string
+    large: string
+  }
+}
+```
+
+### 12.3 Verfügbare Presets
+
+| Preset | Beschreibung | Primärfarbe |
+|--------|--------------|-------------|
+| `nicnoa-classic` | Klassisches NICNOA Design | Emerald (#10b981) |
+| `nicnoa-modern` | Modernes, lebendiges Design | Violet (#8b5cf6) |
+| `nicnoa-minimal` | Minimalistisches Design | Slate (#64748b) |
+| `custom` | Vollständig anpassbar | Benutzerdefiniert |
+
+---
+
+## 13. CMS-System
+
+### 13.1 Übersicht
+
+Die Plattform bietet ein umfassendes CMS für verschiedene Seiten:
+
+| Seite | Config-Modell | Features-Modell |
+|-------|---------------|-----------------|
+| Homepage | `HomePageConfig` | - |
+| Produkt | `ProductPageConfig` | `ProductFeature` |
+| Partner | `PartnerPageConfig` | `Partner` |
+| Presse | `PressPageConfig` | `PressArticle` |
+| FAQ | `FAQPageConfig` | `FAQ` |
+| Über uns | `AboutUsPageConfig` | `ApproachCard` |
+| Blog | `BlogPageConfig` | `BlogPost` |
+| Karriere | (in PlatformSettings) | `JobPosting` |
+
+### 13.2 Produkt-Features CMS
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         PRODUKT-FEATURES STRUKTUR                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    ProductPageConfig              ProductFeature
+          │                              │
+          │  Hero-Konfiguration          │  Feature-Karten
+          │  - Typ (animated/image)      │  - title
+          │  - Layout                    │  - description
+          │  - CTA-Buttons               │  - iconName
+          │  - Trust Indicators          │  - category
+          │                              │  - isHighlight
+          └──────────────────────────────┘
+
+Feature-Kategorien:
+- core: Kernfunktionen
+- communication: Kommunikation
+- analytics: Analytics & Berichte
+- security: Sicherheit
+```
+
+---
+
+## 14. Nächste Schritte
+
+### 14.1 Kurzfristig (Phase 4)
+- [x] Cron-Jobs für E-Mail-Erinnerungen
 - [ ] Stripe Produkte/Preise synchronisieren
-- [ ] Zusätzliche rollen-spezifische E-Mail-Templates
+- [x] Design-System mit konfigurierbaren Tokens
+- [x] Produkt-Seite CMS
 
-### 12.2 Mittelfristig (Phase 5)
+### 14.2 Mittelfristig (Phase 5)
 - [ ] Echtzeit-Benachrichtigungen (WebSocket)
 - [ ] Kalender-Integration (Google/Outlook)
 - [ ] Mobile App (React Native)
 
-### 12.3 Langfristig (Phase 6)
+### 14.3 Langfristig (Phase 6)
 - [ ] KI-gestützte Terminplanung
 - [ ] Multi-Sprachen-Support
 - [ ] White-Label für große Ketten
@@ -746,7 +908,8 @@ BLOB_READ_WRITE_TOKEN="..."
 ---
 
 **Dokumentation gepflegt von:** NICNOA Development Team  
-**Letzte Aktualisierung:** 6. Dezember 2025
+**Letzte Aktualisierung:** 10. Dezember 2025
+
 
 
 

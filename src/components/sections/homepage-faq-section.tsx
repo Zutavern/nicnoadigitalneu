@@ -1,11 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { HelpCircle, Scissors, Building2, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Accordion,
   AccordionContent,
@@ -37,6 +37,8 @@ interface HomepageFAQSectionProps {
 }
 
 export function HomepageFAQSection({ faqs, config }: HomepageFAQSectionProps) {
+  const [activeTab, setActiveTab] = useState<'SALON_OWNER' | 'STYLIST'>('SALON_OWNER')
+  
   const hasFAQs = faqs.STYLIST.length > 0 || faqs.SALON_OWNER.length > 0
 
   if (!hasFAQs) return null
@@ -69,12 +71,20 @@ export function HomepageFAQSection({ faqs, config }: HomepageFAQSectionProps) {
     },
   }
 
+  const currentFAQs = activeTab === 'SALON_OWNER' ? faqs.SALON_OWNER : faqs.STYLIST
+
   return (
-    <section className="py-20 bg-gradient-to-b from-background to-muted/30 relative overflow-hidden">
+    <section className="py-24 bg-gradient-to-b from-background to-muted/30 relative overflow-hidden">
       {/* Background Decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -right-20 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -left-20 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
+        <div 
+          className="absolute top-1/4 -right-20 w-96 h-96 rounded-full blur-3xl"
+          style={{ backgroundColor: 'hsl(var(--primary) / 0.08)' }}
+        />
+        <div 
+          className="absolute bottom-1/4 -left-20 w-96 h-96 rounded-full blur-3xl"
+          style={{ backgroundColor: 'hsl(var(--primary) / 0.08)' }}
+        />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
@@ -84,22 +94,22 @@ export function HomepageFAQSection({ faqs, config }: HomepageFAQSectionProps) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-12"
+          className="text-center mb-14"
         >
           <Badge
             variant="outline"
-            className="mb-4 px-4 py-2 bg-primary/5 border-primary/20"
+            className="mb-5 px-5 py-2.5 bg-primary/10 border-primary/20"
           >
             <HelpCircle className="w-4 h-4 mr-2 text-primary" />
             <span className="text-primary font-medium">FAQ</span>
           </Badge>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">{sectionTitle}</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-5">{sectionTitle}</h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             {sectionDescription}
           </p>
         </motion.div>
 
-        {/* FAQ Tabs */}
+        {/* Modern Tabs */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -107,90 +117,86 @@ export function HomepageFAQSection({ faqs, config }: HomepageFAQSectionProps) {
           viewport={{ once: true }}
           className="max-w-3xl mx-auto"
         >
-          <Tabs defaultValue="SALON_OWNER" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8 h-12">
-              <TabsTrigger
-                value="SALON_OWNER"
-                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          {/* Tab Buttons - Modern Design */}
+          <div className="flex justify-center mb-10">
+            <div className="inline-flex p-1.5 rounded-2xl bg-card/50 border border-border/50 backdrop-blur-sm shadow-lg">
+              <button
+                onClick={() => setActiveTab('SALON_OWNER')}
+                className={`flex items-center gap-3 px-6 py-3.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                  activeTab === 'SALON_OWNER'
+                    ? 'bg-primary text-primary-foreground shadow-lg'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
               >
-                <Building2 className="h-4 w-4" />
-                <span className="hidden sm:inline">{salonTabLabel}</span>
-                <span className="sm:hidden">Salonbesitzer</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="STYLIST"
-                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                <Building2 className="h-5 w-5" />
+                <span>{salonTabLabel}</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('STYLIST')}
+                className={`flex items-center gap-3 px-6 py-3.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                  activeTab === 'STYLIST'
+                    ? 'bg-primary text-primary-foreground shadow-lg'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
               >
-                <Scissors className="h-4 w-4" />
-                <span className="hidden sm:inline">{stylistTabLabel}</span>
-                <span className="sm:hidden">Stuhlmieter</span>
-              </TabsTrigger>
-            </TabsList>
+                <Scissors className="h-5 w-5" />
+                <span>{stylistTabLabel}</span>
+              </button>
+            </div>
+          </div>
 
-            <TabsContent value="SALON_OWNER">
-              {faqs.SALON_OWNER.length > 0 ? (
-                <motion.div variants={itemVariants}>
-                  <Accordion type="single" collapsible className="space-y-3">
-                    {faqs.SALON_OWNER.map((faq, index) => (
-                      <motion.div
-                        key={faq.id}
-                        variants={itemVariants}
-                        custom={index}
-                      >
-                        <AccordionItem
-                          value={faq.id}
-                          className="border rounded-xl px-6 bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-colors"
-                        >
-                          <AccordionTrigger className="text-left font-semibold hover:no-underline py-5">
-                            {faq.question}
-                          </AccordionTrigger>
-                          <AccordionContent className="text-muted-foreground pb-5">
-                            {faq.answer}
-                          </AccordionContent>
-                        </AccordionItem>
-                      </motion.div>
-                    ))}
-                  </Accordion>
-                </motion.div>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  Keine FAQs für Salonbesitzer verfügbar.
+          {/* FAQ Content */}
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {currentFAQs.length > 0 ? (
+              <Accordion type="single" collapsible className="space-y-4">
+                {currentFAQs.map((faq, index) => (
+                  <motion.div
+                    key={faq.id}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    custom={index}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <AccordionItem
+                      value={faq.id}
+                      className="border border-border/50 rounded-xl px-6 bg-card/30 backdrop-blur-sm hover:bg-card/50 hover:border-primary/20 transition-all duration-300 shadow-sm"
+                    >
+                      <AccordionTrigger className="text-left font-semibold hover:no-underline py-5 text-foreground hover:text-primary transition-colors">
+                        <span className="flex items-center gap-3">
+                          <span 
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0"
+                            style={{ 
+                              backgroundColor: 'hsl(var(--primary) / 0.15)',
+                              color: 'hsl(var(--primary))'
+                            }}
+                          >
+                            {index + 1}
+                          </span>
+                          {faq.question}
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground pb-5 pl-11 leading-relaxed">
+                        {faq.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  </motion.div>
+                ))}
+              </Accordion>
+            ) : (
+              <div className="text-center py-12 rounded-xl bg-card/30 border border-border/50">
+                <HelpCircle className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+                <p className="text-muted-foreground">
+                  Keine FAQs für {activeTab === 'SALON_OWNER' ? 'Salonbesitzer' : 'Stuhlmieter'} verfügbar.
                 </p>
-              )}
-            </TabsContent>
-
-            <TabsContent value="STYLIST">
-              {faqs.STYLIST.length > 0 ? (
-                <motion.div variants={itemVariants}>
-                  <Accordion type="single" collapsible className="space-y-3">
-                    {faqs.STYLIST.map((faq, index) => (
-                      <motion.div
-                        key={faq.id}
-                        variants={itemVariants}
-                        custom={index}
-                      >
-                        <AccordionItem
-                          value={faq.id}
-                          className="border rounded-xl px-6 bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-colors"
-                        >
-                          <AccordionTrigger className="text-left font-semibold hover:no-underline py-5">
-                            {faq.question}
-                          </AccordionTrigger>
-                          <AccordionContent className="text-muted-foreground pb-5">
-                            {faq.answer}
-                          </AccordionContent>
-                        </AccordionItem>
-                      </motion.div>
-                    ))}
-                  </Accordion>
-                </motion.div>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  Keine FAQs für Stuhlmieter verfügbar.
-                </p>
-              )}
-            </TabsContent>
-          </Tabs>
+              </div>
+            )}
+          </motion.div>
 
           {/* CTA Button */}
           <motion.div
@@ -198,9 +204,13 @@ export function HomepageFAQSection({ faqs, config }: HomepageFAQSectionProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="text-center mt-10"
+            className="text-center mt-12"
           >
-            <Button asChild size="lg" variant="outline" className="group">
+            <Button 
+              asChild 
+              size="lg" 
+              className="group bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg px-8"
+            >
               <Link href={buttonLink}>
                 {buttonText}
                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -212,4 +222,3 @@ export function HomepageFAQSection({ faqs, config }: HomepageFAQSectionProps) {
     </section>
   )
 }
-

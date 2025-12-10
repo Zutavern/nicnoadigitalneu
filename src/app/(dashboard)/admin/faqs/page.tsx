@@ -52,6 +52,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { toast } from 'sonner'
+import { SortableList } from '@/components/ui/sortable-list'
 
 interface FAQ {
   id: string
@@ -284,6 +285,39 @@ export default function FAQsPage() {
     }
   }
 
+  // Reorder FAQs via Drag & Drop
+  const handleReorderFAQs = async (reorderedItems: FAQ[]) => {
+    // Optimistisches Update nur für gefilterte Liste
+    const otherFAQs = faqs.filter(f => 
+      f.role !== roleTab || 
+      (!showInactive && !f.isActive) ||
+      (filterCategory !== 'all' && f.category !== filterCategory)
+    )
+    const updatedFAQs = [
+      ...otherFAQs,
+      ...reorderedItems.map((item, index) => ({ ...item, sortOrder: index }))
+    ]
+    setFaqs(updatedFAQs)
+    
+    try {
+      // Alle sortOrder-Änderungen parallel senden
+      await Promise.all(
+        reorderedItems.map((item, index) =>
+          fetch('/api/admin/faqs', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: item.id, sortOrder: index }),
+          })
+        )
+      )
+      toast.success('Reihenfolge aktualisiert')
+    } catch {
+      // Bei Fehler: Daten neu laden
+      fetchData()
+      toast.error('Fehler beim Speichern der Reihenfolge')
+    }
+  }
+
   // Filtered FAQs
   const filteredFAQs = faqs.filter((faq) => {
     if (faq.role !== roleTab) return false
@@ -437,21 +471,25 @@ export default function FAQsPage() {
               </Card>
 
               {/* FAQs List */}
-              <div className="space-y-3">
-                {filteredFAQs.map((faq, index) => (
-                  <motion.div
-                    key={faq.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.03 }}
-                  >
+              {filteredFAQs.length === 0 ? (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <HelpCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">Keine FAQs gefunden.</p>
+                    <Button variant="outline" className="mt-4" onClick={() => openEditDialog()}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Erstes FAQ erstellen
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <SortableList
+                  items={filteredFAQs}
+                  onReorder={handleReorderFAQs}
+                  renderItem={(faq) => (
                     <Card className={`${!faq.isActive ? 'opacity-60' : ''}`}>
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className="flex flex-col items-center gap-1 pt-1">
-                            <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
-                            <span className="text-xs text-muted-foreground font-mono">{faq.sortOrder}</span>
-                          </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <h3 className="font-semibold text-sm">{faq.question}</h3>
@@ -468,12 +506,6 @@ export default function FAQsPage() {
                             <p className="text-xs text-muted-foreground line-clamp-2">{faq.answer}</p>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateSortOrder(faq.id, faq.sortOrder - 1)} disabled={faq.sortOrder === 0}>
-                              <ChevronUp className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateSortOrder(faq.id, faq.sortOrder + 1)}>
-                              <ChevronDown className="h-4 w-4" />
-                            </Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(faq)}>
                               <Edit2 className="h-4 w-4" />
                             </Button>
@@ -484,22 +516,9 @@ export default function FAQsPage() {
                         </div>
                       </CardContent>
                     </Card>
-                  </motion.div>
-                ))}
-
-                {filteredFAQs.length === 0 && (
-                  <Card>
-                    <CardContent className="p-8 text-center">
-                      <HelpCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">Keine FAQs gefunden.</p>
-                      <Button variant="outline" className="mt-4" onClick={() => openEditDialog()}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Erstes FAQ erstellen
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+                  )}
+                />
+              )}
             </TabsContent>
 
             {/* Config Tab */}

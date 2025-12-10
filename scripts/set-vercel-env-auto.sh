@@ -83,3 +83,4 @@ echo "   Gehe zu: https://vercel.com/daniels-projects-c316ea43/nicnoa/settings/e
 echo "   → Für jede Variable: Edit → Build aktivieren → Save"
 
 
+

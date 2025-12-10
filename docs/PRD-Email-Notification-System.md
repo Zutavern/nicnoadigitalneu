@@ -2,8 +2,8 @@
 
 ## 📋 Product Requirements Document
 
-**Version:** 1.0  
-**Datum:** 6. Dezember 2025  
+**Version:** 1.1  
+**Datum:** 10. Dezember 2025  
 **Status:** Implementiert  
 **Autor:** NICNOA Development Team
 
@@ -510,6 +510,7 @@ RESEND_WEBHOOK_SECRET=whsec_xxxxx
 
 **Dokumentation gepflegt von:** NICNOA Development Team  
 **Letzte Aktualisierung:** 6. Dezember 2025
+
 
 
 

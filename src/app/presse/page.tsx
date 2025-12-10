@@ -8,7 +8,6 @@ import {
   Newspaper,
   ExternalLink,
   Calendar,
-  Building2,
   Star,
   ArrowRight,
   Download,
@@ -21,7 +20,6 @@ import {
   Sparkles,
   FileText,
   Quote,
-  Clock,
   Globe,
   ChevronRight,
   BookOpen,
@@ -72,10 +70,10 @@ interface PressPageConfig {
 }
 
 const categoryConfig: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  news: { label: 'Nachrichten', icon: Newspaper, color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
-  feature: { label: 'Feature', icon: BookOpen, color: 'bg-purple-500/10 text-purple-500 border-purple-500/20' },
-  interview: { label: 'Interview', icon: Mic, color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
-  announcement: { label: 'Ankündigung', icon: Megaphone, color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
+  news: { label: 'Nachrichten', icon: Newspaper, color: 'bg-primary/10 text-primary border-primary/20' },
+  feature: { label: 'Feature', icon: BookOpen, color: 'bg-primary/10 text-primary border-primary/20' },
+  interview: { label: 'Interview', icon: Mic, color: 'bg-primary/10 text-primary border-primary/20' },
+  announcement: { label: 'Ankündigung', icon: Megaphone, color: 'bg-primary/10 text-primary border-primary/20' },
 }
 
 const containerVariants = {
@@ -125,14 +123,6 @@ export default function PressePage() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('de-DE', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
-  }
-
   const formatShortDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('de-DE', {
       year: 'numeric',
@@ -147,7 +137,6 @@ export default function PressePage() {
       : articles.filter((a) => a.category === activeCategory)
 
   const featuredArticles = articles.filter((a) => a.isFeatured)
-  const regularArticles = filteredArticles.filter((a) => !a.isFeatured)
 
   // Statistiken
   const stats = [
@@ -171,51 +160,31 @@ export default function PressePage() {
     <div className="min-h-screen flex flex-col bg-background">
       <MainNav />
 
-      {/* Hero Section */}
+      {/* Hero Section - Dunkles Design */}
       <section className="relative pt-32 pb-24 overflow-hidden">
-        {/* Premium Background */}
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-purple-950/50 to-slate-950" />
-          
-          {/* Animated Grid */}
+        {/* Premium Dark Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-background">
+          {/* Grid Pattern */}
           <div
-            className="absolute inset-0 opacity-[0.15]"
+            className="absolute inset-0 opacity-20"
             style={{
               backgroundImage: `
-                linear-gradient(rgba(139, 92, 246, 0.3) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(139, 92, 246, 0.3) 1px, transparent 1px)
+                linear-gradient(hsl(var(--primary) / 0.15) 1px, transparent 1px),
+                linear-gradient(90deg, hsl(var(--primary) / 0.15) 1px, transparent 1px)
               `,
               backgroundSize: '60px 60px',
             }}
           />
           
           {/* Gradient Orbs */}
-          <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-purple-600/20 rounded-full blur-[150px] animate-pulse" />
-          <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-pink-600/15 rounded-full blur-[130px] animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px]" />
-          
-          {/* Floating Particles */}
-          <div className="absolute inset-0 overflow-hidden">
-            {[...Array(20)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-1 h-1 bg-purple-400/40 rounded-full"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                }}
-                animate={{
-                  y: [0, -30, 0],
-                  opacity: [0.2, 0.8, 0.2],
-                }}
-                transition={{
-                  duration: 3 + Math.random() * 2,
-                  repeat: Infinity,
-                  delay: Math.random() * 2,
-                }}
-              />
-            ))}
-          </div>
+          <div 
+            className="absolute top-0 left-1/4 w-[800px] h-[800px] rounded-full blur-[150px] animate-pulse"
+            style={{ backgroundColor: 'hsl(var(--primary) / 0.15)' }}
+          />
+          <div 
+            className="absolute bottom-0 right-1/4 w-[600px] h-[600px] rounded-full blur-[130px] animate-pulse"
+            style={{ backgroundColor: 'hsl(var(--primary) / 0.1)', animationDelay: '1s' }}
+          />
         </div>
 
         <div className="container relative z-10">
@@ -231,18 +200,21 @@ export default function PressePage() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-8"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full mb-8"
+                style={{
+                  backgroundColor: 'hsl(var(--primary) / 0.1)',
+                  borderWidth: '1px',
+                  borderColor: 'hsl(var(--primary) / 0.2)',
+                }}
               >
-                <Sparkles className="h-4 w-4 text-purple-400" />
-                <span className="text-sm font-medium text-purple-200">{config.heroBadgeText}</span>
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-primary">{config.heroBadgeText}</span>
               </motion.div>
             )}
 
             {/* Title */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight">
-              <span className="bg-gradient-to-b from-white via-white to-white/60 bg-clip-text text-transparent">
-                {config?.heroTitle || 'NICNOA in den Medien'}
-              </span>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight text-white">
+              {config?.heroTitle || 'NICNOA in den Medien'}
             </h1>
 
             {/* Description */}
@@ -251,7 +223,7 @@ export default function PressePage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
-                className="text-lg md:text-xl text-slate-300/90 mb-12 max-w-2xl mx-auto leading-relaxed"
+                className="text-lg md:text-xl text-slate-300 mb-12 max-w-2xl mx-auto leading-relaxed"
               >
                 {config.heroDescription}
               </motion.p>
@@ -273,10 +245,17 @@ export default function PressePage() {
                     transition={{ delay: 0.7 + i * 0.1 }}
                     className="text-center group"
                   >
-                    <div className="mb-3 mx-auto w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <stat.icon className="h-6 w-6 text-purple-300" />
+                    <div 
+                      className="mb-3 mx-auto w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                      style={{ 
+                        backgroundColor: 'hsl(var(--primary) / 0.2)',
+                        borderWidth: '1px',
+                        borderColor: 'hsl(var(--primary) / 0.3)'
+                      }}
+                    >
+                      <stat.icon className="h-6 w-6 text-primary" />
                     </div>
-                    <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
+                    <p className="text-3xl md:text-4xl font-bold text-white">
                       {stat.value}
                     </p>
                     <p className="text-sm text-slate-400 mt-1">{stat.label}</p>
@@ -293,7 +272,7 @@ export default function PressePage() {
 
       {/* Featured Articles */}
       {featuredArticles.length > 0 && (
-        <section className="py-20 relative">
+        <section className="py-20 relative bg-background">
           <div className="container">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -302,12 +281,19 @@ export default function PressePage() {
               className="mb-12"
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/20">
-                  <Star className="h-5 w-5 text-amber-400" />
+                <div 
+                  className="p-2 rounded-lg"
+                  style={{ 
+                    backgroundColor: 'hsl(var(--primary) / 0.15)',
+                    borderWidth: '1px',
+                    borderColor: 'hsl(var(--primary) / 0.2)'
+                  }}
+                >
+                  <Star className="h-5 w-5 text-primary" />
                 </div>
-                <span className="text-sm font-semibold text-amber-400 uppercase tracking-wider">Highlights</span>
+                <span className="text-sm font-semibold text-primary uppercase tracking-wider">Highlights</span>
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold">Ausgewählte Artikel</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground">Ausgewählte Artikel</h2>
             </motion.div>
 
             <motion.div
@@ -329,9 +315,9 @@ export default function PressePage() {
                       rel="noopener noreferrer"
                       className="group block h-full"
                     >
-                      <Card className="h-full overflow-hidden bg-gradient-to-b from-card to-card/50 border-border/50 hover:border-purple-500/30 hover:shadow-2xl hover:shadow-purple-500/5 transition-all duration-500">
+                      <Card className="h-full overflow-hidden bg-card/50 border-border/50 hover:border-primary/30 hover:shadow-2xl transition-all duration-500 backdrop-blur-sm">
                         {/* Cover Image */}
-                        <div className="relative h-56 overflow-hidden bg-gradient-to-br from-purple-900/50 to-slate-900">
+                        <div className="relative h-56 overflow-hidden bg-muted">
                           {article.coverImage ? (
                             <Image
                               src={article.coverImage}
@@ -341,14 +327,14 @@ export default function PressePage() {
                             />
                           ) : (
                             <div className="absolute inset-0 flex items-center justify-center">
-                              <Newspaper className="h-16 w-16 text-purple-500/30" />
+                              <Newspaper className="h-16 w-16 text-primary/30" />
                             </div>
                           )}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                           
                           {/* Featured Badge */}
                           <div className="absolute top-4 left-4">
-                            <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 shadow-lg">
+                            <Badge className="bg-primary text-primary-foreground border-0 shadow-lg">
                               <Star className="w-3 h-3 mr-1.5 fill-current" />
                               Featured
                             </Badge>
@@ -385,7 +371,7 @@ export default function PressePage() {
 
                         {/* Content */}
                         <CardContent className="p-6">
-                          <h3 className="text-lg font-semibold mb-3 line-clamp-2 group-hover:text-purple-400 transition-colors duration-300">
+                          <h3 className="text-lg font-semibold mb-3 line-clamp-2 group-hover:text-primary transition-colors duration-300 text-foreground">
                             {article.title}
                           </h3>
                           
@@ -400,7 +386,7 @@ export default function PressePage() {
                               <Calendar className="w-4 h-4" />
                               {formatShortDate(article.publishedAt)}
                             </span>
-                            <span className="flex items-center gap-1.5 text-sm font-medium text-purple-400 group-hover:text-purple-300 transition-colors">
+                            <span className="flex items-center gap-1.5 text-sm font-medium text-primary group-hover:text-primary/80 transition-colors">
                               Artikel lesen
                               <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                             </span>
@@ -428,35 +414,46 @@ export default function PressePage() {
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
               <div>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/20">
-                    <FileText className="h-5 w-5 text-purple-400" />
+                  <div 
+                    className="p-2 rounded-lg"
+                    style={{ 
+                      backgroundColor: 'hsl(var(--primary) / 0.15)',
+                      borderWidth: '1px',
+                      borderColor: 'hsl(var(--primary) / 0.2)'
+                    }}
+                  >
+                    <FileText className="h-5 w-5 text-primary" />
                   </div>
-                  <span className="text-sm font-semibold text-purple-400 uppercase tracking-wider">Archiv</span>
+                  <span className="text-sm font-semibold text-primary uppercase tracking-wider">Archiv</span>
                 </div>
-                <h2 className="text-3xl md:text-4xl font-bold">Alle Presse-Artikel</h2>
+                <h2 className="text-3xl md:text-4xl font-bold text-foreground">Alle Presse-Artikel</h2>
               </div>
 
-              {/* Category Filter */}
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant={activeCategory === 'all' ? 'default' : 'outline'}
-                  size="sm"
+              {/* Category Filter - Modernere Tabs */}
+              <div className="flex flex-wrap gap-2 p-1.5 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm">
+                <button
                   onClick={() => setActiveCategory('all')}
-                  className={activeCategory === 'all' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeCategory === 'all'
+                      ? 'bg-primary text-primary-foreground shadow-lg'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
                 >
                   Alle
-                </Button>
+                </button>
                 {Object.entries(categoryConfig).map(([key, { label, icon: Icon }]) => (
-                  <Button
+                  <button
                     key={key}
-                    variant={activeCategory === key ? 'default' : 'outline'}
-                    size="sm"
                     onClick={() => setActiveCategory(key)}
-                    className={activeCategory === key ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      activeCategory === key
+                        ? 'bg-primary text-primary-foreground shadow-lg'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    }`}
                   >
-                    <Icon className="w-4 h-4 mr-1.5" />
+                    <Icon className="w-4 h-4" />
                     {label}
-                  </Button>
+                  </button>
                 ))}
               </div>
             </div>
@@ -471,7 +468,7 @@ export default function PressePage() {
               <div className="w-20 h-20 rounded-full bg-muted mx-auto mb-6 flex items-center justify-center">
                 <Newspaper className="h-10 w-10 text-muted-foreground/50" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Keine Artikel gefunden</h3>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Keine Artikel gefunden</h3>
               <p className="text-muted-foreground">
                 In dieser Kategorie gibt es noch keine Artikel.
               </p>
@@ -496,11 +493,11 @@ export default function PressePage() {
                       rel="noopener noreferrer"
                       className="group block"
                     >
-                      <Card className="overflow-hidden hover:shadow-lg hover:border-purple-500/20 transition-all duration-300">
+                      <Card className="overflow-hidden bg-card/50 border-border/50 hover:border-primary/20 hover:shadow-lg transition-all duration-300 backdrop-blur-sm">
                         <CardContent className="p-0">
                           <div className="flex items-stretch">
                             {/* Thumbnail */}
-                            <div className="relative w-48 shrink-0 hidden md:block bg-gradient-to-br from-purple-900/30 to-slate-900/50">
+                            <div className="relative w-48 shrink-0 hidden md:block bg-muted">
                               {article.coverImage ? (
                                 <Image
                                   src={article.coverImage}
@@ -510,7 +507,7 @@ export default function PressePage() {
                                 />
                               ) : (
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                  <Newspaper className="h-8 w-8 text-purple-500/30" />
+                                  <Newspaper className="h-8 w-8 text-primary/30" />
                                 </div>
                               )}
                             </div>
@@ -526,7 +523,7 @@ export default function PressePage() {
                                       {catConfig.label}
                                     </Badge>
                                     {article.isFeatured && (
-                                      <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20">
+                                      <Badge className="bg-primary/10 text-primary border-primary/20">
                                         <Star className="w-3 h-3 mr-1 fill-current" />
                                         Featured
                                       </Badge>
@@ -534,7 +531,7 @@ export default function PressePage() {
                                   </div>
 
                                   {/* Title */}
-                                  <h3 className="text-lg font-semibold mb-2 group-hover:text-purple-500 transition-colors">
+                                  <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors text-foreground">
                                     {article.title}
                                   </h3>
 
@@ -570,7 +567,7 @@ export default function PressePage() {
 
                                 {/* CTA */}
                                 <div className="shrink-0 hidden lg:flex items-center">
-                                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-all duration-300">
+                                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                                     <span className="text-sm font-medium">Lesen</span>
                                     <ExternalLink className="w-4 h-4" />
                                   </div>
@@ -591,10 +588,7 @@ export default function PressePage() {
 
       {/* Press Kit & Contact Section */}
       {(config?.showPressKit || config?.contactEmail || config?.contactPhone || config?.contactPerson) && (
-        <section className="py-24 relative overflow-hidden">
-          {/* Background */}
-          <div className="absolute inset-0 bg-gradient-to-b from-background via-purple-950/5 to-background" />
-          
+        <section className="py-24 relative overflow-hidden bg-background">
           <div className="container relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -602,11 +596,11 @@ export default function PressePage() {
               viewport={{ once: true }}
               className="text-center mb-16"
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 mb-6">
-                <Mail className="h-4 w-4 text-purple-400" />
-                <span className="text-sm font-medium text-purple-300">Für Medienvertreter</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
+                <Mail className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-primary">Für Medienvertreter</span>
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Ressourcen & Kontakt</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">Ressourcen & Kontakt</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Alles was Sie für Ihre Berichterstattung über NICNOA benötigen
               </p>
@@ -621,14 +615,16 @@ export default function PressePage() {
                   viewport={{ once: true }}
                   transition={{ delay: 0.1 }}
                 >
-                  <Card className="h-full overflow-hidden bg-gradient-to-br from-purple-500/5 via-card to-card border-purple-500/10 hover:border-purple-500/30 transition-colors duration-500">
+                  <Card className="h-full overflow-hidden bg-card/50 border-primary/10 hover:border-primary/30 transition-colors duration-500 backdrop-blur-sm">
                     <CardContent className="p-8">
                       <div className="flex items-start gap-5">
-                        <div className="shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
-                          <Download className="h-7 w-7 text-white" />
+                        <div 
+                          className="shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg bg-primary"
+                        >
+                          <Download className="h-7 w-7 text-primary-foreground" />
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-xl font-semibold mb-2">
+                          <h3 className="text-xl font-semibold mb-2 text-foreground">
                             {config.pressKitTitle || 'Presse-Kit'}
                           </h3>
                           {config.pressKitDescription && (
@@ -649,8 +645,8 @@ export default function PressePage() {
                           'Gründer-Biografien & Fotos',
                         ].map((item, i) => (
                           <div key={i} className="flex items-center gap-3 text-sm">
-                            <div className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0">
-                              <ChevronRight className="w-3 h-3 text-purple-400" />
+                            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                              <ChevronRight className="w-3 h-3 text-primary" />
                             </div>
                             <span className="text-muted-foreground">{item}</span>
                           </div>
@@ -659,7 +655,7 @@ export default function PressePage() {
 
                       {config.pressKitDownloadUrl && (
                         <Button 
-                          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/20" 
+                          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
                           size="lg"
                           asChild
                         >
@@ -682,14 +678,14 @@ export default function PressePage() {
                   viewport={{ once: true }}
                   transition={{ delay: 0.2 }}
                 >
-                  <Card className="h-full overflow-hidden bg-gradient-to-br from-pink-500/5 via-card to-card border-pink-500/10 hover:border-pink-500/30 transition-colors duration-500">
+                  <Card className="h-full overflow-hidden bg-card/50 border-primary/10 hover:border-primary/30 transition-colors duration-500 backdrop-blur-sm">
                     <CardContent className="p-8">
                       <div className="flex items-start gap-5">
-                        <div className="shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/20">
-                          <Mail className="h-7 w-7 text-white" />
+                        <div className="shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg bg-primary">
+                          <Mail className="h-7 w-7 text-primary-foreground" />
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-xl font-semibold mb-2">
+                          <h3 className="text-xl font-semibold mb-2 text-foreground">
                             {config?.contactTitle || 'Presse-Kontakt'}
                           </h3>
                           {config?.contactDescription && (
@@ -706,12 +702,12 @@ export default function PressePage() {
                         {/* Contact Person */}
                         {config?.contactPerson && (
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center">
-                              <User className="h-5 w-5 text-pink-400" />
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-primary/20">
+                              <User className="h-5 w-5 text-primary" />
                             </div>
                             <div>
                               <p className="text-sm text-muted-foreground">Ansprechpartner</p>
-                              <p className="font-semibold">{config.contactPerson}</p>
+                              <p className="font-semibold text-foreground">{config.contactPerson}</p>
                             </div>
                           </div>
                         )}
@@ -722,12 +718,12 @@ export default function PressePage() {
                             href={`mailto:${config.contactEmail}`}
                             className="flex items-center gap-4 group"
                           >
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <Mail className="h-5 w-5 text-pink-400" />
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-primary/20 group-hover:scale-110 transition-transform">
+                              <Mail className="h-5 w-5 text-primary" />
                             </div>
                             <div>
                               <p className="text-sm text-muted-foreground">E-Mail</p>
-                              <p className="font-semibold text-pink-500 group-hover:text-pink-400 transition-colors">
+                              <p className="font-semibold text-primary group-hover:text-primary/80 transition-colors">
                                 {config.contactEmail}
                               </p>
                             </div>
@@ -740,12 +736,12 @@ export default function PressePage() {
                             href={`tel:${config.contactPhone.replace(/\s/g, '')}`}
                             className="flex items-center gap-4 group"
                           >
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <Phone className="h-5 w-5 text-pink-400" />
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-primary/20 group-hover:scale-110 transition-transform">
+                              <Phone className="h-5 w-5 text-primary" />
                             </div>
                             <div>
                               <p className="text-sm text-muted-foreground">Telefon</p>
-                              <p className="font-semibold text-pink-500 group-hover:text-pink-400 transition-colors">
+                              <p className="font-semibold text-primary group-hover:text-primary/80 transition-colors">
                                 {config.contactPhone}
                               </p>
                             </div>
@@ -763,11 +759,20 @@ export default function PressePage() {
 
       {/* CTA Section */}
       <section className="py-24 relative overflow-hidden">
-        {/* Premium Background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600">
-          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20" />
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/10 rounded-full blur-[100px]" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-pink-500/20 rounded-full blur-[80px]" />
+        {/* Premium Background with Primary Color */}
+        <div className="absolute inset-0 bg-primary">
+          <div 
+            className="absolute inset-0 opacity-20"
+            style={{
+              backgroundImage: `
+                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+              `,
+              backgroundSize: '40px 40px',
+            }}
+          />
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full blur-[100px] bg-white/10" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full blur-[80px] bg-white/10" />
         </div>
 
         <div className="container relative z-10">
@@ -775,7 +780,7 @@ export default function PressePage() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center text-white max-w-3xl mx-auto"
+            className="text-center text-primary-foreground max-w-3xl mx-auto"
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm mb-8">
               <Quote className="h-4 w-4" />
@@ -795,7 +800,7 @@ export default function PressePage() {
               {config?.contactEmail && (
                 <Button
                   size="lg"
-                  className="bg-white text-purple-600 hover:bg-white/90 shadow-xl shadow-black/10 text-base px-8"
+                  className="bg-white text-primary hover:bg-white/90 shadow-xl shadow-black/10 text-base px-8"
                   asChild
                 >
                   <a href={`mailto:${config.contactEmail}`}>

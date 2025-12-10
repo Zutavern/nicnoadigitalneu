@@ -49,13 +49,70 @@ export default {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
+  			},
+  			// Design System Brand Colors
+  			brand: {
+  				primary: {
+  					DEFAULT: 'hsl(var(--brand-primary))',
+  					foreground: 'hsl(var(--brand-primary-foreground))'
+  				},
+  				secondary: {
+  					DEFAULT: 'hsl(var(--brand-secondary))',
+  					foreground: 'hsl(var(--brand-secondary-foreground))'
+  				},
+  				accent: {
+  					DEFAULT: 'hsl(var(--brand-accent))',
+  					foreground: 'hsl(var(--brand-accent-foreground))'
+  				}
+  			},
+  			// Gradient Colors
+  			gradient: {
+  				from: 'hsl(var(--gradient-from))',
+  				via: 'hsl(var(--gradient-via))',
+  				to: 'hsl(var(--gradient-to))'
+  			},
+  			// Glow Colors (für Animationen)
+  			glow: {
+  				primary: 'hsl(var(--glow-primary))',
+  				secondary: 'hsl(var(--glow-secondary))'
+  			},
+  			// Surface Colors (für Marketing-Seiten)
+  			surface: {
+  				DEFAULT: 'hsl(var(--surface-background))',
+  				card: 'hsl(var(--surface-card))',
+  				muted: 'hsl(var(--surface-muted))',
+  				warm: 'hsl(var(--surface-warm))'
+  			},
+  			// Animation Colors
+  			'animation-color': {
+  				particle: 'hsl(var(--animation-particle))',
+  				orbit: 'hsl(var(--animation-orbit))',
+  				pulse: 'hsl(var(--animation-pulse))'
   			}
   		},
+  		fontFamily: {
+  			sans: ['var(--font-family)', 'Inter', 'system-ui', 'sans-serif'],
+  			heading: ['var(--font-family-heading)', 'Inter', 'system-ui', 'sans-serif'],
+  		},
+  		fontSize: {
+  			base: ['var(--font-size-base)', { lineHeight: 'var(--line-height)' }],
+  		},
+  		letterSpacing: {
+  			design: 'var(--letter-spacing)',
+  		},
   		borderRadius: {
-  			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
-  		}
+  			lg: 'var(--radius-lg)',
+  			md: 'var(--radius-md)',
+  			sm: 'var(--radius-sm)',
+  			xl: 'var(--radius-xl)',
+  			full: 'var(--radius-full)',
+  		},
+  		boxShadow: {
+  			'design-sm': 'var(--shadow-sm)',
+  			'design-md': 'var(--shadow-md)',
+  			'design-lg': 'var(--shadow-lg)',
+  			'design-glow': 'var(--shadow-glow)',
+  		},
   	}
   },
   plugins: [require("tailwindcss-animate")],

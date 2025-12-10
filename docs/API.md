@@ -2,7 +2,7 @@
 
 ## 📡 REST API Reference
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Base URL:** `https://nicnoa.vercel.app/api`  
 **Authentifizierung:** NextAuth.js Session Cookie
 
@@ -20,7 +20,9 @@
 8. [Stripe APIs](#8-stripe-apis)
 9. [Onboarding APIs](#9-onboarding-apis)
 10. [Referral APIs](#10-referral-apis)
-11. [Error Handling](#11-error-handling)
+11. [CMS APIs](#11-cms-apis)
+12. [Platform APIs](#12-platform-apis)
+13. [Error Handling](#13-error-handling)
 
 ---
 
@@ -479,7 +481,346 @@ Referral-Code validieren.
 
 ---
 
-## 11. Error Handling
+## 11. CMS APIs
+
+### Homepage
+
+#### GET /api/homepage-config
+Homepage-Konfiguration abrufen.
+
+#### GET /api/admin/homepage-config
+Homepage-Konfiguration für Admin abrufen.
+
+#### PUT /api/admin/homepage-config
+Homepage-Konfiguration aktualisieren.
+
+#### POST /api/admin/homepage-config/upload
+Hero-Bild hochladen.
+
+---
+
+### Produkt-Seite
+
+#### GET /api/product-page-config
+Produkt-Seiten-Konfiguration abrufen.
+
+#### GET /api/admin/product-config
+Produkt-Seiten-Konfiguration für Admin abrufen.
+
+#### PUT /api/admin/product-config
+Produkt-Seiten-Konfiguration aktualisieren.
+
+#### POST /api/admin/product-config/upload
+Hero-Medien für Produkt-Seite hochladen.
+
+---
+
+### Produkt-Features
+
+#### GET /api/product-features
+Öffentliche Produkt-Features auflisten.
+
+**Query Parameters:**
+| Parameter | Typ | Beschreibung |
+|-----------|-----|--------------|
+| `category` | string | Filter nach Kategorie (core, communication, analytics, security) |
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "title": "Terminkalender",
+      "description": "Digitaler Kalender mit...",
+      "iconName": "Calendar",
+      "category": "core",
+      "isHighlight": true
+    }
+  ]
+}
+```
+
+#### GET /api/product-features/admin
+Alle Produkt-Features für Admin (inkl. inaktive).
+
+#### POST /api/product-features/admin
+Neues Produkt-Feature erstellen.
+
+**Request Body:**
+```json
+{
+  "title": "Neues Feature",
+  "description": "Feature-Beschreibung",
+  "iconName": "Star",
+  "category": "core",
+  "isHighlight": false
+}
+```
+
+#### PUT /api/product-features/[id]
+Produkt-Feature aktualisieren.
+
+#### DELETE /api/product-features/[id]
+Produkt-Feature löschen.
+
+---
+
+### Partner
+
+#### GET /api/partners
+Öffentliche Partner auflisten.
+
+#### GET /api/partner-page-config
+Partner-Seiten-Konfiguration abrufen.
+
+#### GET /api/admin/partners
+Alle Partner für Admin.
+
+#### POST /api/admin/partners
+Neuen Partner erstellen.
+
+#### POST /api/admin/partners/upload-logo
+Partner-Logo hochladen.
+
+#### GET /api/admin/partner-page-config
+Partner-Seiten-Konfiguration für Admin.
+
+#### PUT /api/admin/partner-page-config
+Partner-Seiten-Konfiguration aktualisieren.
+
+---
+
+### Presse
+
+#### GET /api/press
+Öffentliche Presse-Artikel auflisten.
+
+#### GET /api/press-page-config
+Presse-Seiten-Konfiguration abrufen.
+
+#### GET /api/admin/press
+Alle Presse-Artikel für Admin.
+
+#### POST /api/admin/press
+Neuen Presse-Artikel erstellen.
+
+#### GET /api/admin/press-page-config
+Presse-Seiten-Konfiguration für Admin.
+
+#### PUT /api/admin/press-page-config
+Presse-Seiten-Konfiguration aktualisieren.
+
+---
+
+### FAQs
+
+#### GET /api/faqs
+Öffentliche FAQs auflisten.
+
+**Query Parameters:**
+| Parameter | Typ | Beschreibung |
+|-----------|-----|--------------|
+| `role` | string | Filter nach Rolle (STYLIST, SALON_OWNER) |
+
+#### GET /api/homepage-faqs
+FAQs für Homepage (showOnHomepage: true).
+
+#### GET /api/faq-page-config
+FAQ-Seiten-Konfiguration abrufen.
+
+#### GET /api/admin/faqs
+Alle FAQs für Admin.
+
+#### POST /api/admin/faqs
+Neues FAQ erstellen.
+
+#### GET /api/admin/faq-page-config
+FAQ-Seiten-Konfiguration für Admin.
+
+#### PUT /api/admin/faq-page-config
+FAQ-Seiten-Konfiguration aktualisieren.
+
+---
+
+### Testimonials
+
+#### GET /api/testimonials
+Öffentliche Testimonials auflisten.
+
+#### GET /api/admin/testimonials
+Alle Testimonials für Admin.
+
+#### POST /api/admin/testimonials
+Neues Testimonial erstellen.
+
+#### POST /api/admin/testimonials/upload-image
+Testimonial-Bild hochladen.
+
+---
+
+### Blog
+
+#### GET /api/blog/posts
+Veröffentlichte Blog-Posts auflisten.
+
+#### GET /api/blog/posts/[slug]
+Einzelnen Blog-Post abrufen.
+
+#### GET /api/admin/blog/posts
+Alle Blog-Posts für Admin.
+
+#### POST /api/admin/blog/posts
+Neuen Blog-Post erstellen.
+
+#### PUT /api/admin/blog/posts/[id]
+Blog-Post aktualisieren.
+
+#### POST /api/admin/blog/posts/upload-image
+Blog-Bild hochladen.
+
+#### GET /api/admin/blog/authors
+Blog-Autoren auflisten.
+
+#### GET /api/admin/blog/categories
+Blog-Kategorien auflisten.
+
+#### GET /api/admin/blog/tags
+Blog-Tags auflisten.
+
+---
+
+### Jobs (Karriere)
+
+#### GET /api/jobs
+Aktive Stellenanzeigen auflisten.
+
+#### GET /api/jobs/[slug]
+Einzelne Stellenanzeige abrufen.
+
+#### POST /api/jobs/apply
+Bewerbung einreichen.
+
+**Request:** `multipart/form-data`
+- `jobId`: Job-ID (optional für Initiativbewerbung)
+- `firstName`, `lastName`, `email`, `phone`
+- `coverLetter`: Anschreiben
+- `cv`: PDF-Datei
+
+#### GET /api/admin/jobs
+Alle Stellenanzeigen für Admin.
+
+#### POST /api/admin/jobs
+Neue Stellenanzeige erstellen.
+
+---
+
+### Über uns
+
+#### GET /api/about-us-page-config
+Über-uns-Seiten-Konfiguration abrufen.
+
+#### GET /api/approach-cards
+Approach-Karten für Über-uns-Seite.
+
+#### GET /api/admin/about-us-page-config
+Über-uns-Konfiguration für Admin.
+
+#### PUT /api/admin/about-us-page-config
+Über-uns-Konfiguration aktualisieren.
+
+#### POST /api/admin/about-us-page-config/upload-image
+Team-Bilder hochladen.
+
+#### GET /api/admin/approach-cards
+Alle Approach-Karten für Admin.
+
+#### POST /api/admin/approach-cards
+Neue Approach-Karte erstellen.
+
+---
+
+## 12. Platform APIs
+
+### Design-System
+
+#### GET /api/platform/design-tokens
+Öffentliche Design-Tokens abrufen.
+
+**Response:**
+```json
+{
+  "preset": "nicnoa-classic",
+  "tokens": {
+    "colors": {
+      "primary": "#10b981",
+      "secondary": "#3b82f6",
+      "accent": "#f59e0b"
+    },
+    "typography": {
+      "fontFamily": "Inter, sans-serif"
+    },
+    "borderRadius": {
+      "small": "0.25rem",
+      "medium": "0.5rem",
+      "large": "1rem"
+    }
+  }
+}
+```
+
+#### GET /api/admin/design-tokens
+Design-Tokens für Admin (inkl. alle Presets).
+
+#### PUT /api/admin/design-tokens
+Design-Tokens aktualisieren.
+
+**Request Body:**
+```json
+{
+  "preset": "nicnoa-modern",
+  "customTokens": {
+    "colors": {
+      "primary": "#8b5cf6"
+    }
+  }
+}
+```
+
+---
+
+### Platform-Einstellungen
+
+#### GET /api/platform/primary-color
+Primärfarbe der Plattform abrufen.
+
+#### GET /api/platform/password-protection-status
+Beta-Passwortschutz-Status.
+
+---
+
+### Error Messages
+
+#### GET /api/error-messages/[type]
+Fehlermeldungen nach Typ abrufen.
+
+**Path Parameters:**
+| Parameter | Typ | Beschreibung |
+|-----------|-----|--------------|
+| `type` | string | Error-Typ (404, 500, 403, etc.) |
+
+#### GET /api/admin/error-messages
+Alle Fehlermeldungen für Admin.
+
+#### POST /api/admin/error-messages
+Neue Fehlermeldung erstellen.
+
+#### PUT /api/admin/error-messages/[id]
+Fehlermeldung aktualisieren.
+
+---
+
+## 13. Error Handling
 
 ### Standard-Fehlerformat
 
@@ -553,7 +894,39 @@ Listenendpunkte unterstützen Paginierung:
 
 ---
 
-**Letzte Aktualisierung:** 6. Dezember 2025
+## Cron-Jobs
+
+Die Plattform nutzt Vercel Cron-Jobs für automatisierte Aufgaben:
+
+### GET /api/cron/booking-reminders
+Sendet Terminerinnerungen 24h vor Terminen.
+
+**Cron:** `0 8 * * *` (täglich 8:00 Uhr)
+
+### GET /api/cron/daily-summary
+Sendet tägliche Zusammenfassungen an Salons.
+
+**Cron:** `0 7 * * *` (täglich 7:00 Uhr)
+
+### GET /api/cron/rent-reminders
+Sendet Mietzahlungs-Erinnerungen.
+
+**Cron:** `0 9 1 * *` (monatlich am 1.)
+
+### GET /api/cron/rental-ending
+Benachrichtigt über auslaufende Mietverträge.
+
+**Cron:** `0 9 * * *` (täglich 9:00 Uhr)
+
+### GET /api/cron/subscription-warnings
+Warnt vor ablaufenden Abonnements.
+
+**Cron:** `0 10 * * *` (täglich 10:00 Uhr)
+
+---
+
+**Letzte Aktualisierung:** 10. Dezember 2025
+
 
 
 

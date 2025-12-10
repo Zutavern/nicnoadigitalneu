@@ -3,29 +3,47 @@
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowRight, Sparkles, CheckCircle2, ChevronDown, Mouse } from 'lucide-react'
+import { ArrowRight, Sparkles, CheckCircle2, ChevronDown } from 'lucide-react'
 
 export function Hero() {
   return (
     <section className="relative w-full min-h-[calc(100vh-80px)] flex items-center overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-purple-950">
+      {/* Animated Background - nutzt CSS Variablen */}
+      <div 
+        className="absolute inset-0"
+        style={{
+          background: `linear-gradient(to bottom right, 
+            hsl(224 71% 4%), 
+            hsl(224 50% 8%), 
+            hsl(var(--gradient-from) / 0.3)
+          )`
+        }}
+      >
         {/* Grid Pattern */}
         <div 
           className="absolute inset-0 opacity-20"
           style={{
             backgroundImage: `
-              linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px)
+              linear-gradient(hsl(var(--brand-primary) / 0.15) 1px, transparent 1px),
+              linear-gradient(90deg, hsl(var(--brand-primary) / 0.15) 1px, transparent 1px)
             `,
             backgroundSize: '50px 50px',
           }}
         />
         
-        {/* Gradient Orbs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 right-1/3 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        {/* Gradient Orbs - nutzen CSS Variablen */}
+        <div 
+          className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse"
+          style={{ backgroundColor: 'hsl(var(--glow-primary) / 0.3)' }}
+        />
+        <div 
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse"
+          style={{ backgroundColor: 'hsl(var(--glow-secondary) / 0.2)', animationDelay: '1s' }}
+        />
+        <div 
+          className="absolute top-1/2 right-1/3 w-64 h-64 rounded-full blur-3xl animate-pulse"
+          style={{ backgroundColor: 'hsl(var(--gradient-via) / 0.2)', animationDelay: '2s' }}
+        />
       </div>
 
       {/* Content */}
@@ -42,7 +60,13 @@ export function Hero() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm mb-6"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm mb-6"
+              style={{
+                backgroundColor: 'hsl(var(--brand-primary) / 0.1)',
+                borderWidth: '1px',
+                borderColor: 'hsl(var(--brand-primary) / 0.2)',
+                color: 'hsl(var(--brand-primary))',
+              }}
             >
               <Sparkles className="h-4 w-4" />
               <span>Jetzt im Beta-Programm verfügbar</span>
@@ -52,11 +76,26 @@ export function Hero() {
               Revolutionieren <br />
               Sie Ihren{' '}
               <span className="relative">
-                <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+                <span 
+                  className="bg-clip-text text-transparent"
+                  style={{
+                    backgroundImage: `linear-gradient(to right, 
+                      hsl(var(--gradient-from)), 
+                      hsl(var(--gradient-via)), 
+                      hsl(var(--gradient-to))
+                    )`
+                  }}
+                >
                   Salon-Space
                 </span>
                 <motion.span
-                  className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
+                  className="absolute -bottom-2 left-0 w-full h-1 rounded-full"
+                  style={{
+                    backgroundImage: `linear-gradient(to right, 
+                      hsl(var(--gradient-from)), 
+                      hsl(var(--gradient-to))
+                    )`
+                  }}
                   initial={{ scaleX: 0 }}
                   animate={{ scaleX: 1 }}
                   transition={{ delay: 0.8, duration: 0.6 }}
@@ -74,7 +113,10 @@ export function Hero() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mb-10">
               <Link href="/registrieren">
-                <Button size="lg" className="text-lg w-full sm:w-auto group bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 border-0">
+                <Button 
+                  size="lg" 
+                  className="text-lg w-full sm:w-auto group border-0 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+                >
                   Jetzt kostenlos starten
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
@@ -121,7 +163,15 @@ export function Hero() {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                    <div 
+                      className="h-10 w-10 rounded-xl flex items-center justify-center"
+                      style={{
+                        backgroundImage: `linear-gradient(to bottom right, 
+                          hsl(var(--gradient-from)), 
+                          hsl(var(--gradient-to))
+                        )`
+                      }}
+                    >
                       <Sparkles className="h-5 w-5 text-white" />
                     </div>
                     <div>
@@ -166,7 +216,13 @@ export function Hero() {
                         initial={{ height: 0 }}
                         animate={{ height: `${height}%` }}
                         transition={{ delay: 1 + i * 0.05, duration: 0.5 }}
-                        className="flex-1 bg-gradient-to-t from-purple-500 to-pink-500 rounded-t-sm"
+                        className="flex-1 rounded-t-sm"
+                        style={{
+                          backgroundImage: `linear-gradient(to top, 
+                            hsl(var(--gradient-from)), 
+                            hsl(var(--gradient-to))
+                          )`
+                        }}
                       />
                     ))}
                   </div>
@@ -198,8 +254,11 @@ export function Hero() {
                 className="absolute -right-4 bottom-1/4 bg-slate-800/90 backdrop-blur-xl rounded-xl p-4 border border-slate-700/50 shadow-xl"
               >
                 <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-purple-500/20 flex items-center justify-center">
-                    <Sparkles className="h-4 w-4 text-purple-400" />
+                  <div 
+                    className="h-8 w-8 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: 'hsl(var(--brand-primary) / 0.2)' }}
+                  >
+                    <Sparkles className="h-4 w-4" style={{ color: 'hsl(var(--brand-primary))' }} />
                   </div>
                   <div>
                     <p className="text-white text-sm font-medium">+3 Stylisten</p>
@@ -227,9 +286,15 @@ export function Hero() {
         >
           {/* Maus-Icon mit animiertem Scroll-Rad */}
           <div className="relative">
-            <div className="w-7 h-11 rounded-full border-2 border-slate-500/50 flex justify-center pt-2 group-hover:border-purple-400/70 transition-colors duration-300">
+            <div className="w-7 h-11 rounded-full border-2 border-slate-500/50 flex justify-center pt-2 group-hover:border-primary/70 transition-colors duration-300">
               <motion.div
-                className="w-1.5 h-2.5 bg-gradient-to-b from-purple-400 to-pink-400 rounded-full"
+                className="w-1.5 h-2.5 rounded-full"
+                style={{
+                  backgroundImage: `linear-gradient(to bottom, 
+                    hsl(var(--gradient-from)), 
+                    hsl(var(--gradient-to))
+                  )`
+                }}
                 animate={{
                   y: [0, 8, 0],
                   opacity: [1, 0.3, 1],
@@ -244,7 +309,8 @@ export function Hero() {
             
             {/* Glühender Ring-Effekt */}
             <motion.div
-              className="absolute -inset-1 rounded-full bg-purple-500/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              className="absolute -inset-1 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              style={{ backgroundColor: 'hsl(var(--glow-primary) / 0.3)' }}
               animate={{
                 scale: [1, 1.2, 1],
               }}
@@ -269,7 +335,7 @@ export function Hero() {
                 ease: "easeInOut",
               }}
             >
-              <ChevronDown className="h-4 w-4 text-slate-400 group-hover:text-purple-400 transition-colors" />
+              <ChevronDown className="h-4 w-4 text-slate-400 group-hover:text-primary transition-colors" />
             </motion.div>
             <motion.div
               animate={{
@@ -283,13 +349,13 @@ export function Hero() {
                 delay: 0.15,
               }}
             >
-              <ChevronDown className="h-4 w-4 text-slate-500 group-hover:text-purple-400/70 transition-colors" />
+              <ChevronDown className="h-4 w-4 text-slate-500 group-hover:text-primary/70 transition-colors" />
             </motion.div>
           </div>
 
           {/* Text */}
           <motion.span
-            className="text-xs text-slate-500 font-medium tracking-wider uppercase group-hover:text-purple-400/80 transition-colors"
+            className="text-xs text-slate-500 font-medium tracking-wider uppercase group-hover:text-primary/80 transition-colors"
             animate={{
               opacity: [0.5, 1, 0.5],
             }}

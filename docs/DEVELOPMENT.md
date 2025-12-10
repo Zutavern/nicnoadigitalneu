@@ -2,8 +2,8 @@
 
 ## 🛠 Development Guide
 
-**Version:** 1.0  
-**Letzte Aktualisierung:** 6. Dezember 2025
+**Version:** 1.1  
+**Letzte Aktualisierung:** 10. Dezember 2025
 
 ---
 
@@ -518,12 +518,52 @@ npx prisma generate         # Client generieren
 npx prisma migrate dev      # Migration erstellen
 npx prisma migrate reset    # DB zurücksetzen
 
+# Seed-Skripte (einzeln)
+npx ts-node scripts/seed-design-system.ts  # Design-System seeden
+npx ts-node prisma/seed-product-features.ts # Produkt-Features seeden
+
 # Code-Qualität
 pnpm lint                   # ESLint
 pnpm type-check             # TypeScript
 
 # E-Mails
 pnpm email:dev              # Preview Server
+```
+
+---
+
+## Design-System
+
+### Presets nutzen
+
+Das Design-System kann über die Admin-Oberfläche oder direkt in der Datenbank konfiguriert werden:
+
+```typescript
+// Verfügbare Presets
+const presets = [
+  'nicnoa-classic',  // Emerald-basiert (Standard)
+  'nicnoa-modern',   // Violet-basiert
+  'nicnoa-minimal',  // Slate-basiert
+  'custom'           // Vollständig anpassbar
+]
+```
+
+### Design-Tokens anpassen
+
+```typescript
+// Beispiel: Custom Tokens
+const customTokens = {
+  colors: {
+    primary: '#10b981',
+    secondary: '#3b82f6',
+    accent: '#f59e0b'
+  },
+  borderRadius: {
+    small: '0.25rem',
+    medium: '0.5rem',
+    large: '1rem'
+  }
+}
 ```
 
 ---

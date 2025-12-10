@@ -35,6 +35,8 @@ import {
   Home,
   Briefcase,
   UserPlus,
+  Package,
+  MapIcon,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -96,12 +98,14 @@ const menuItems = [
             icon: Globe,
             children: [
               { label: 'Homepage', href: '/admin/homepage', icon: Home },
+              { label: 'Produkt', href: '/admin/product', icon: Package },
               { label: 'FAQ', href: '/admin/faqs', icon: HelpCircle },
               { label: 'Testimonials', href: '/admin/testimonials', icon: Quote },
               { label: 'Partner & Vorteile', href: '/admin/partners', icon: HandshakeIcon },
               { label: 'Über uns', href: '/admin/about-us', icon: Users },
               { label: 'Karriere', href: '/admin/career', icon: Briefcase },
               { label: 'Presse', href: '/admin/press', icon: Newspaper },
+              { label: 'Roadmap', href: '/admin/roadmap', icon: MapIcon },
             ],
           },
           {

@@ -50,6 +50,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { SortableList } from '@/components/ui/sortable-list'
 
 interface Testimonial {
   id: string
@@ -222,6 +223,35 @@ export default function TestimonialsPage() {
     }
   }
 
+  // Reorder Testimonials via Drag & Drop
+  const handleReorderTestimonials = async (reorderedItems: Testimonial[]) => {
+    // Optimistisches Update nur für gefilterte Liste
+    const otherTestimonials = testimonials.filter(t => t.role !== roleTab || (!showInactive && !t.isActive))
+    const updatedTestimonials = [
+      ...otherTestimonials,
+      ...reorderedItems.map((item, index) => ({ ...item, sortOrder: index }))
+    ]
+    setTestimonials(updatedTestimonials)
+    
+    try {
+      // Alle sortOrder-Änderungen parallel senden
+      await Promise.all(
+        reorderedItems.map((item, index) =>
+          fetch('/api/admin/testimonials', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: item.id, sortOrder: index }),
+          })
+        )
+      )
+      toast.success('Reihenfolge aktualisiert')
+    } catch {
+      // Bei Fehler: Daten neu laden
+      fetchData()
+      toast.error('Fehler beim Speichern der Reihenfolge')
+    }
+  }
+
   // Filtered Testimonials
   const filteredTestimonials = testimonials.filter((t) => {
     if (t.role !== roleTab) return false
@@ -321,23 +351,25 @@ export default function TestimonialsPage() {
           </Card>
 
           {/* Testimonials List */}
-          <div className="space-y-3">
-            {filteredTestimonials.map((testimonial, index) => (
-              <motion.div
-                key={testimonial.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.03 }}
-              >
+          {filteredTestimonials.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Quote className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">Keine Testimonials gefunden.</p>
+                <Button variant="outline" className="mt-4" onClick={() => openEditDialog()}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Erstes Testimonial erstellen
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <SortableList
+              items={filteredTestimonials}
+              onReorder={handleReorderTestimonials}
+              renderItem={(testimonial) => (
                 <Card className={`${!testimonial.isActive ? 'opacity-60' : ''}`}>
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
-                      {/* Sort Handle */}
-                      <div className="flex flex-col items-center gap-1 pt-1">
-                        <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
-                        <span className="text-xs text-muted-foreground font-mono">{testimonial.sortOrder}</span>
-                      </div>
-
                       {/* Avatar */}
                       {testimonial.imageUrl ? (
                         <Avatar className="h-12 w-12 border-2 border-primary/20 shrink-0">
@@ -370,12 +402,6 @@ export default function TestimonialsPage() {
 
                       {/* Actions */}
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateSortOrder(testimonial.id, testimonial.sortOrder - 1)} disabled={testimonial.sortOrder === 0}>
-                          <ChevronUp className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateSortOrder(testimonial.id, testimonial.sortOrder + 1)}>
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(testimonial)}>
                           <Edit2 className="h-4 w-4" />
                         </Button>
@@ -386,22 +412,9 @@ export default function TestimonialsPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </motion.div>
-            ))}
-
-            {filteredTestimonials.length === 0 && (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <Quote className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Keine Testimonials gefunden.</p>
-                  <Button variant="outline" className="mt-4" onClick={() => openEditDialog()}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Erstes Testimonial erstellen
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+              )}
+            />
+          )}
         </div>
 
         {/* Preview */}

@@ -979,6 +979,10 @@ model PlatformSettings {
   careerPageConfig          Json?   @map("career_page_config") @db.JsonB
   partnerPageConfig         Json?   @map("partner_page_config") @db.JsonB
   
+  // Design-System
+  designSystemPreset        String? @default("nicnoa-classic") @map("design_system_preset") @db.VarChar(50)
+  designTokens              Json?   @map("design_tokens") @db.JsonB
+  
   // Timestamps
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -2007,4 +2011,240 @@ model PressPageConfig {
   updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
   
   @@map("press_page_config")
+}
+
+// ============================================
+// Product Features (Produkt-Seite CMS)
+// ============================================
+
+model ProductFeature {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title           String   @db.VarChar(200)
+  description     String   @db.Text
+  iconName        String   @map("icon_name") @db.VarChar(50)  // z.B. "Calendar", "Users", "BarChart3"
+  category        String   @default("core") @db.VarChar(50)   // core, communication, analytics, security
+  isActive        Boolean  @default(true) @map("is_active")
+  isHighlight     Boolean  @default(false) @map("is_highlight")  // Hervorgehoben anzeigen
+  sortOrder       Int      @default(0) @map("sort_order")
+  
+  // Timestamps
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  @@index([category, isActive, sortOrder])
+  @@index([isActive, sortOrder])
+  @@map("product_features")
+}
+
+model ProductPageConfig {
+  id                    String   @id @default("default")
+  
+  // Hero Type & Layout
+  heroType              String   @default("animated") @map("hero_type") @db.VarChar(20)  // "animated" | "image" | "video" | "code"
+  heroLayout            String   @default("split") @map("hero_layout") @db.VarChar(20)  // "split" | "centered" | "fullscreen"
+  
+  // Hero Image (für heroType: "image")
+  heroImageUrl          String?  @map("hero_image_url") @db.Text
+  heroImageAlt          String?  @map("hero_image_alt") @db.VarChar(200)
+  heroImageOverlay      Int?     @default(40) @map("hero_image_overlay")
+  heroImagePosition     String?  @default("center") @map("hero_image_position") @db.VarChar(50)
+  
+  // Hero Video (für heroType: "video")
+  heroVideoUrl          String?  @map("hero_video_url") @db.Text
+  heroVideoPoster       String?  @map("hero_video_poster") @db.Text
+  
+  // Hero Code Animation (für heroType: "code")
+  heroAnimationCode     String?  @map("hero_animation_code") @db.Text  // Custom CSS/JS Animation
+  
+  // Hero Content
+  heroBadgeText         String?  @default("Die All-in-One Plattform") @map("hero_badge_text") @db.VarChar(100)
+  heroBadgeIcon         String?  @default("sparkles") @map("hero_badge_icon") @db.VarChar(50)
+  heroTitle             String   @default("Alles was Ihr Salon-Space braucht") @map("hero_title") @db.Text
+  heroTitleHighlight    String?  @default("Salon-Space") @map("hero_title_highlight") @db.VarChar(100)
+  heroDescription       String?  @map("hero_description") @db.Text
+  
+  // CTA Buttons
+  ctaPrimaryText        String   @default("Kostenlos starten") @map("cta_primary_text") @db.VarChar(100)
+  ctaPrimaryLink        String   @default("/registrieren") @map("cta_primary_link") @db.VarChar(200)
+  ctaPrimaryIcon        String?  @default("arrow-right") @map("cta_primary_icon") @db.VarChar(50)
+  ctaSecondaryText      String?  @default("Preise ansehen") @map("cta_secondary_text") @db.VarChar(100)
+  ctaSecondaryLink      String?  @default("/preise") @map("cta_secondary_link") @db.VarChar(200)
+  showSecondaryCta      Boolean  @default(true) @map("show_secondary_cta")
+  
+  // Trust Indicators
+  showTrustIndicators   Boolean  @default(true) @map("show_trust_indicators")
+  trustIndicator1       String?  @default("14 Tage kostenlos testen") @map("trust_indicator_1") @db.VarChar(100)
+  trustIndicator2       String?  @default("Keine Kreditkarte erforderlich") @map("trust_indicator_2") @db.VarChar(100)
+  trustIndicator3       String?  @default("DSGVO-konform") @map("trust_indicator_3") @db.VarChar(100)
+  
+  // Animation Settings (für heroType: "animated")
+  animationEnabled      Boolean  @default(true) @map("animation_enabled")
+  particlesEnabled      Boolean  @default(true) @map("particles_enabled")
+  showDashboardPreview  Boolean  @default(true) @map("show_dashboard_preview")
+  
+  // Animation Colors (Design System Integration)
+  useDesignSystemColors Boolean  @default(true) @map("use_design_system_colors")
+  animationPrimaryColor String?  @map("animation_primary_color") @db.VarChar(50)   // Falls nicht Design System
+  animationSecondaryColor String? @map("animation_secondary_color") @db.VarChar(50)
+  animationAccentColor  String?  @map("animation_accent_color") @db.VarChar(50)
+  gradientColors        String?  @default("primary,secondary,accent") @map("gradient_colors") @db.VarChar(200)
+  
+  // Dashboard Preview
+  dashboardTitle        String?  @default("NICNOA Dashboard") @map("dashboard_title") @db.VarChar(100)
+  dashboardSubtitle     String?  @default("Produkt Overview") @map("dashboard_subtitle") @db.VarChar(100)
+  
+  // Scroll Indicator
+  showScrollIndicator   Boolean  @default(true) @map("show_scroll_indicator")
+  scrollTargetId        String?  @default("features") @map("scroll_target_id") @db.VarChar(50)
+  
+  // Features Section
+  featuresSectionTitle  String?  @default("Unsere Features") @map("features_section_title") @db.VarChar(200)
+  featuresSectionDescription String? @map("features_section_description") @db.Text
+  showFeatureCategories Boolean  @default(true) @map("show_feature_categories")
+  
+  // Stats Section (optional)
+  showStats             Boolean  @default(false) @map("show_stats")
+  stat1Label            String?  @map("stat_1_label") @db.VarChar(50)
+  stat1Value            String?  @map("stat_1_value") @db.VarChar(20)
+  stat2Label            String?  @map("stat_2_label") @db.VarChar(50)
+  stat2Value            String?  @map("stat_2_value") @db.VarChar(20)
+  stat3Label            String?  @map("stat_3_label") @db.VarChar(50)
+  stat3Value            String?  @map("stat_3_value") @db.VarChar(20)
+  
+  // Bottom CTA Section
+  bottomCtaTitle        String?  @default("Bereit für die Zukunft Ihres Salons?") @map("bottom_cta_title") @db.VarChar(200)
+  bottomCtaDescription  String?  @map("bottom_cta_description") @db.Text
+  bottomCtaButtonText   String?  @default("Jetzt kostenlos testen") @map("bottom_cta_button_text") @db.VarChar(100)
+  bottomCtaButtonLink   String?  @default("/registrieren") @map("bottom_cta_button_link") @db.VarChar(200)
+  
+  // Category Showcase Section
+  showCategoryShowcase     Boolean  @default(true) @map("show_category_showcase")
+  categoryShowcaseTitle    String?  @default("Entdecken Sie unsere Funktionen") @map("category_showcase_title") @db.VarChar(200)
+  categoryShowcaseSubtitle String?  @map("category_showcase_subtitle") @db.Text
+  autoPlayEnabled          Boolean  @default(true) @map("auto_play_enabled")
+  autoPlayInterval         Int      @default(5000) @map("auto_play_interval")
+  showDots                 Boolean  @default(true) @map("show_dots")
+  showArrows               Boolean  @default(true) @map("show_arrows")
+  
+  // SEO
+  metaTitle             String?  @map("meta_title") @db.VarChar(70)
+  metaDescription       String?  @map("meta_description") @db.VarChar(160)
+  ogImage               String?  @map("og_image") @db.Text
+  
+  // Timestamps
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  @@map("product_page_config")
+}
+
+// ==========================================
+// CATEGORY ANIMATIONS - Animierte Kategorie-Hero-Flächen
+// ==========================================
+
+model CategoryAnimation {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryKey           String   @unique @map("category_key") @db.VarChar(50)  // core, communication, analytics, security, automation
+  
+  // Hero-Texte (alle konfigurierbar)
+  title                 String   @db.VarChar(200)
+  subtitle              String?  @db.VarChar(200)
+  description           String   @db.Text
+  badgeText             String?  @map("badge_text") @db.VarChar(100)
+  
+  // Features/Merkmale (Array von Strings)
+  features              String[] @default([])
+  
+  // Animation Settings
+  animationType         String   @default("preset") @map("animation_type") @db.VarChar(20)  // "preset" | "custom" | "lottie"
+  presetAnimation       String?  @map("preset_animation") @db.VarChar(50)  // "calendar" | "chat" | "chart" | "shield" | "workflow"
+  customAnimationCode   String?  @map("custom_animation_code") @db.Text    // Für eigene Framer Motion Code
+  lottieUrl             String?  @map("lottie_url") @db.Text               // Für Lottie JSON-Animationen
+  
+  // Position & Styling
+  animationPosition     String   @default("right") @map("animation_position") @db.VarChar(20)  // "left" | "right" | "center" | "background"
+  animationSize         String   @default("medium") @map("animation_size") @db.VarChar(20)    // "small" | "medium" | "large" | "full"
+  animationSpeed        Float    @default(1.0) @map("animation_speed")                         // Multiplikator für Geschwindigkeit
+  
+  // Design System Colors
+  useDesignSystemColors Boolean  @default(true) @map("use_design_system_colors")
+  customPrimaryColor    String?  @map("custom_primary_color") @db.VarChar(50)
+  customSecondaryColor  String?  @map("custom_secondary_color") @db.VarChar(50)
+  customAccentColor     String?  @map("custom_accent_color") @db.VarChar(50)
+  
+  // Status
+  isActive              Boolean  @default(true) @map("is_active")
+  sortOrder             Int      @default(0) @map("sort_order")
+  
+  // Timestamps
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  @@index([isActive, sortOrder])
+  @@map("category_animations")
+}
+
+// ==========================================
+// ROADMAP PAGE CMS
+// ==========================================
+
+model RoadmapPageConfig {
+  id                    String   @id @default("default")
+  
+  // Hero Section
+  heroBadgeText         String?  @default("Roadmap") @map("hero_badge_text") @db.VarChar(100)
+  heroTitle             String   @default("Unsere Vision für die Zukunft des Salon-Managements") @map("hero_title") @db.Text
+  heroTitleHighlight    String?  @default("Zukunft des Salon-Managements") @map("hero_title_highlight") @db.VarChar(200)
+  heroDescription       String?  @map("hero_description") @db.Text
+  
+  // Timeline Section
+  timelineSectionTitle  String?  @default("Geplante Features") @map("timeline_section_title") @db.VarChar(200)
+  timelineSectionDescription String? @map("timeline_section_description") @db.Text
+  
+  // CTA Section
+  showCta               Boolean  @default(true) @map("show_cta")
+  ctaTitle              String?  @default("Gestalten Sie die Zukunft mit") @map("cta_title") @db.VarChar(200)
+  ctaDescription        String?  @map("cta_description") @db.Text
+  ctaButtonText         String?  @default("Beta-Programm anfragen") @map("cta_button_text") @db.VarChar(100)
+  ctaButtonLink         String?  @default("/beta-programm") @map("cta_button_link") @db.VarChar(200)
+  
+  // Status Filter
+  showStatusFilter      Boolean  @default(true) @map("show_status_filter")
+  
+  // SEO
+  metaTitle             String?  @map("meta_title") @db.VarChar(70)
+  metaDescription       String?  @map("meta_description") @db.VarChar(160)
+  
+  // Timestamps
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  @@map("roadmap_page_config")
+}
+
+model RoadmapItem {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Basic Info
+  quarter     String   @db.VarChar(20)     // "Q2 2025"
+  title       String   @db.VarChar(200)
+  description String   @db.Text
+  
+  // Visual
+  icon        String   @default("sparkles") @db.VarChar(50)  // Lucide icon name
+  status      String   @default("Planung") @db.VarChar(50)   // "Planung", "In Entwicklung", "Konzeption", "Abgeschlossen"
+  
+  // Status Color (optional custom color)
+  statusColor String?  @map("status_color") @db.VarChar(20)  // "blue", "green", "yellow", "purple"
+  
+  // Control
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  @@index([isActive, sortOrder])
+  @@map("roadmap_items")
 }

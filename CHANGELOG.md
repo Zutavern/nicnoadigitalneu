@@ -10,10 +10,50 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 ## [Unreleased]
 
 ### Geplant
-- Cron-Jobs für E-Mail-Erinnerungen
 - Echtzeit-Benachrichtigungen (WebSocket)
 - Kalender-Integration (Google/Outlook)
 - Mobile App (React Native)
+
+---
+
+## [1.1.0] - 2025-12-10
+
+### Hinzugefügt
+
+#### Design-System
+- Konfigurierbares Design-System mit vordefinierten Presets
+- Design-Tokens für Farben, Typografie, Abstände und Schatten
+- 3 Standard-Presets: nicnoa-classic, nicnoa-modern, nicnoa-minimal
+- Vollständig anpassbare Custom-Tokens
+- Admin-Oberfläche für Design-System-Verwaltung
+- API-Endpunkte: `/api/platform/design-tokens`, `/api/admin/design-tokens`
+
+#### Produkt-Seite CMS
+- Vollständiges CMS für die Produkt-Seite
+- `ProductPageConfig` für Hero-Bereich, CTAs, Stats und SEO
+- `ProductFeature` Modell für Feature-Karten
+- Kategorisierte Features (core, communication, analytics, security)
+- Highlight-Features mit besonderer Hervorhebung
+- Admin-Dashboard für Produkt-Features unter `/admin/product`
+- API-Endpunkte: `/api/product-page-config`, `/api/product-features`
+
+#### Cron-Jobs für E-Mail-Erinnerungen
+- `/api/cron/booking-reminders` - Terminerinnerungen (täglich 8:00)
+- `/api/cron/daily-summary` - Tägliche Zusammenfassungen (täglich 7:00)
+- `/api/cron/rent-reminders` - Mietzahlungs-Erinnerungen (monatlich)
+- `/api/cron/rental-ending` - Auslaufende Mietverträge (täglich 9:00)
+- `/api/cron/subscription-warnings` - Abo-Warnungen (täglich 10:00)
+
+### Geändert
+- Dokumentation vollständig aktualisiert
+- API-Dokumentation um 50+ neue Endpunkte erweitert
+- Architektur-Dokumentation um Design-System und CMS erweitert
+- Datenbank-Dokumentation um ProductFeature und ProductPageConfig erweitert
+
+### Verbessert
+- Homepage Hero unterstützt jetzt Design-System-Farben
+- Produkt-Seite Hero mit konfigurierbaren Animationsfarben
+- E-Mail-Templates nutzen Design-System-Tokens
 
 ---
 
@@ -141,6 +181,7 @@ Die erste vollständige Version der NICNOA-Plattform.
 
 | Version | Datum | Beschreibung |
 |---------|-------|--------------|
+| 1.1.0 | 2025-12-10 | Design-System, Produkt-Seite CMS, Cron-Jobs |
 | 1.0.0 | 2025-12-06 | Initial Release |
 
 ---
@@ -151,8 +192,10 @@ Die erste vollständige Version der NICNOA-Plattform.
 
 ---
 
-[Unreleased]: https://github.com/your-org/nicnoa/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/your-org/nicnoa/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/your-org/nicnoa/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/your-org/nicnoa/releases/tag/v1.0.0
+
 
 
 

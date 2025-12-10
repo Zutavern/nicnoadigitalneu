@@ -36,6 +36,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
+import { DesignSystemSection } from '@/components/admin/design-system-section'
 
 interface PlatformSettings {
   id: string
@@ -409,77 +410,7 @@ export default function SettingsPage() {
 
         {/* Branding Settings */}
         <TabsContent value="branding" className="space-y-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle>Branding</CardTitle>
-                <CardDescription>Logo, Farben und visuelles Erscheinungsbild</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-4">
-                    <Label>Logo</Label>
-                    <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                      <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        PNG, SVG oder JPG (max. 2MB)
-                      </p>
-                      <Button variant="outline" size="sm" className="mt-2">
-                        Logo hochladen
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <Label>Favicon</Label>
-                    <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                      <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        ICO oder PNG (32x32)
-                      </p>
-                      <Button variant="outline" size="sm" className="mt-2">
-                        Favicon hochladen
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <Label>Primärfarbe</Label>
-                  <div className="flex items-center gap-4">
-                    {['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#22c55e'].map((color) => (
-                      <button
-                        key={color}
-                        className={`h-10 w-10 rounded-full border-2 transition-colors ${
-                          primaryColor === color ? 'border-foreground' : 'border-transparent hover:border-foreground/50'
-                        }`}
-                        style={{ backgroundColor: color }}
-                        onClick={() => setPrimaryColor(color)}
-                      />
-                    ))}
-                    <Input 
-                      type="color" 
-                      className="h-10 w-20" 
-                      value={primaryColor} 
-                      onChange={(e) => setPrimaryColor(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="googleAnalyticsId">Google Analytics ID</Label>
-                  <Input
-                    id="googleAnalyticsId"
-                    value={googleAnalyticsId}
-                    onChange={(e) => setGoogleAnalyticsId(e.target.value)}
-                    placeholder="G-XXXXXXXXXX"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <DesignSystemSection />
         </TabsContent>
 
         {/* Billing Settings */}

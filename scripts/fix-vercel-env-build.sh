@@ -45,3 +45,4 @@ echo "⚠️  Hinweis: Die Vercel CLI unterstützt 'Build' nicht direkt als Opti
 echo "   Du musst das Dashboard verwenden oder die Vercel API."
 
 
+
