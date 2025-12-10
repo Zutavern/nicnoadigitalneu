@@ -374,12 +374,12 @@ export default function ProduktPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className={`group relative rounded-2xl border bg-card/50 backdrop-blur-sm transition-all hover:shadow-lg ${
-                  feature.isHighlight ? 'border-primary/20 ring-1 ring-primary/10' : 'border-border/50'
-                }`}
+                className="h-full"
               >
-                {/* Outer container for glow effect with padding */}
-                <div className="relative h-full rounded-[1.25rem] p-0.5 md:p-1">
+                {/* Outer container for glow effect */}
+                <div className={`group relative h-full rounded-2xl transition-all hover:shadow-lg ${
+                  feature.isHighlight ? 'ring-1 ring-primary/10' : ''
+                }`}>
                   {/* Glowing Effect - Follows mouse cursor, uses design system colors */}
                   <GlowingEffect
                     spread={config.glowEffectSpread ?? 40}
@@ -393,7 +393,9 @@ export default function ProduktPage() {
                   />
                   
                   {/* Inner content container */}
-                  <div className="relative h-full rounded-xl bg-background/80 backdrop-blur-sm p-6">
+                  <div className={`relative h-full rounded-2xl border bg-card/80 backdrop-blur-sm p-6 ${
+                    feature.isHighlight ? 'border-primary/20' : 'border-border/50'
+                  }`}>
                     {feature.isHighlight && (
                       <div className="absolute -top-3 right-4">
                         <Badge className="bg-primary text-primary-foreground">
