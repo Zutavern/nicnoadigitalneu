@@ -111,7 +111,6 @@ const menuItems = [
               { label: 'Roadmap', href: '/admin/roadmap', icon: MapIcon },
               { label: 'Beta-Programm', href: '/admin/beta', icon: Rocket },
               { label: 'Updates', href: '/admin/updates', icon: RefreshCw },
-              { label: 'Rechtliches', href: '/admin/legal', icon: Scale },
             ],
           },
           {
@@ -122,6 +121,16 @@ const menuItems = [
               { label: 'Kategorien', href: '/admin/blog/categories', icon: FolderOpen },
               { label: 'Autoren', href: '/admin/blog/authors', icon: UserCircle },
               { label: 'Tags', href: '/admin/blog/tags', icon: Tags },
+            ],
+          },
+          {
+            label: 'Rechtliches',
+            icon: Scale,
+            children: [
+              { label: 'Übersicht', href: '/admin/legal', icon: Scale },
+              { label: 'Impressum', href: '/admin/legal/impressum', icon: FileText },
+              { label: 'Datenschutz', href: '/admin/legal/datenschutz', icon: Shield },
+              { label: 'AGB', href: '/admin/legal/agb', icon: Scale },
             ],
           },
         ],
@@ -152,6 +161,7 @@ export function AdminSidebar() {
     'cms': false,
     'seiten': false,
     'blog': false,
+    'rechtliches': false,
   })
 
   // Prevent hydration mismatch by waiting for mount

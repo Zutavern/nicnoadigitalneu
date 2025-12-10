@@ -207,3 +207,94 @@
 .animate-gradient {
   animation: gradient 3s ease infinite;
 }
+
+/* ================================================
+   Legal Content Styles - Saubere Typografie für 
+   rechtliche Dokumente (Impressum, Datenschutz, AGB)
+   ================================================ */
+
+.legal-content {
+  @apply text-base leading-relaxed;
+}
+
+.legal-content h1 {
+  @apply text-2xl font-bold mt-8 mb-4 text-foreground border-b border-border pb-2;
+}
+
+.legal-content h2 {
+  @apply text-xl font-semibold mt-6 mb-3 text-foreground;
+}
+
+.legal-content h3 {
+  @apply text-lg font-medium mt-5 mb-2 text-foreground/90;
+}
+
+.legal-content p {
+  @apply mb-3 text-muted-foreground leading-relaxed;
+}
+
+.legal-content ul,
+.legal-content ol {
+  @apply ml-6 mb-4 space-y-1.5;
+}
+
+.legal-content ul {
+  @apply list-disc;
+}
+
+.legal-content ol {
+  @apply list-decimal;
+}
+
+.legal-content li {
+  @apply text-muted-foreground leading-relaxed;
+}
+
+.legal-content a {
+  @apply text-primary underline underline-offset-2 hover:text-primary/80 transition-colors;
+}
+
+.legal-content strong,
+.legal-content b {
+  @apply font-semibold text-foreground;
+}
+
+.legal-content em,
+.legal-content i {
+  @apply italic;
+}
+
+.legal-content blockquote {
+  @apply border-l-4 border-primary/50 pl-4 py-1 my-4 italic text-muted-foreground bg-muted/30 rounded-r-lg pr-3;
+}
+
+.legal-content code {
+  @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+.legal-content pre {
+  @apply bg-muted rounded-lg p-4 my-4 overflow-x-auto text-sm;
+}
+
+.legal-content hr {
+  @apply my-6 border-border;
+}
+
+/* Spacing zwischen Sections */
+.legal-content > *:first-child {
+  @apply mt-0;
+}
+
+.legal-content section {
+  @apply mb-6;
+}
+
+/* TipTap Editor Styles für Legal Content */
+.legal-tiptap-editor .ProseMirror {
+  @apply min-h-[200px] focus:outline-none;
+}
+
+.legal-tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+  @apply text-muted-foreground/50 float-left h-0 pointer-events-none;
+  content: attr(data-placeholder);
+}
