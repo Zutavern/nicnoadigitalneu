@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { unstable_cache } from 'next/cache'
 
 // Default Homepage Config
 const defaultConfig = {
@@ -46,25 +45,17 @@ const defaultConfig = {
   showCta: true,
 }
 
-// Cached function to get homepage config
-const getHomepageConfig = unstable_cache(
-  async () => {
-    try {
-      const config = await prisma.homePageConfig.findFirst()
-      return config || defaultConfig
-    } catch {
-      return defaultConfig
-    }
-  },
-  ['homepage-config'],
-  { revalidate: 60 } // Cache for 60 seconds
-)
+// Kein Cache! CMS-Inhalte werden immer frisch aus der DB geladen
+// Demo-Modus gilt NICHT für CMS-Inhalte (Homepage, FAQs, Blog, etc.)
+export const dynamic = 'force-dynamic'
 
-// GET - Hole Homepage-Konfiguration (öffentlich, gecached)
+// GET - Hole Homepage-Konfiguration (öffentlich, kein Cache)
 export async function GET() {
   try {
-    const config = await getHomepageConfig()
-    return NextResponse.json(config)
+    // CMS-Inhalte werden IMMER aus der echten Datenbank geladen
+    // Der Demo-Modus beeinflusst nur operative Daten (User, Buchungen, etc.)
+    const config = await prisma.homePageConfig.findFirst()
+    return NextResponse.json(config || defaultConfig)
   } catch (error) {
     console.error('Error fetching homepage config:', error)
     return NextResponse.json(defaultConfig)

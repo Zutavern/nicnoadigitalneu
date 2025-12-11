@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
   Package,
@@ -76,6 +76,7 @@ import {
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Image from 'next/image'
+import { ImageUploader } from '@/components/ui/image-uploader'
 
 // Icon Mapping - alle verfügbaren Icons
 const iconMap: Record<string, React.ElementType> = {
@@ -334,7 +335,6 @@ export default function ProductCMSPage() {
   const [config, setConfig] = useState<ProductPageConfig>(defaultConfig)
   const [isLoadingConfig, setIsLoadingConfig] = useState(true)
   const [isSavingConfig, setIsSavingConfig] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
   
   // Category Animations State
@@ -350,8 +350,6 @@ export default function ProductCMSPage() {
   const [mainTab, setMainTab] = useState<'page' | 'features' | 'animations'>('page')
   const [configTab, setConfigTab] = useState('hero')
   const [showPreview, setShowPreview] = useState(true)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const ogInputRef = useRef<HTMLInputElement>(null)
 
   // Fetch Functions
   const fetchFeatures = useCallback(async () => {
@@ -434,42 +432,6 @@ export default function ProductCMSPage() {
       toast.error(error instanceof Error ? error.message : 'Fehler beim Speichern')
     } finally {
       setIsSavingConfig(false)
-    }
-  }
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'hero' | 'og') => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setIsUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('type', type)
-
-      const res = await fetch('/api/admin/product-config/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || 'Upload fehlgeschlagen')
-      }
-
-      const data = await res.json()
-      
-      if (type === 'hero') {
-        updateConfig('heroImageUrl', data.url)
-      } else {
-        updateConfig('ogImage', data.url)
-      }
-      
-      toast.success('Bild hochgeladen!')
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Upload fehlgeschlagen')
-    } finally {
-      setIsUploading(false)
     }
   }
 
@@ -818,45 +780,18 @@ export default function ProductCMSPage() {
                       {config.heroType === 'image' && (
                         <div className="space-y-4 border-t pt-6">
                           <Label>Hero-Bild</Label>
-                          {config.heroImageUrl ? (
-                            <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-                              <Image
-                                src={config.heroImageUrl}
-                                alt={config.heroImageAlt || 'Hero'}
-                                fill
-                                className="object-cover"
-                              />
-                              <Button
-                                variant="destructive"
-                                size="icon"
-                                className="absolute top-2 right-2"
-                                onClick={() => removeImage('hero')}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <div
-                              onClick={() => fileInputRef.current?.click()}
-                              className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
-                            >
-                              {isUploading ? (
-                                <Loader2 className="h-8 w-8 mx-auto animate-spin text-primary" />
-                              ) : (
-                                <>
-                                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                                  <p className="text-sm text-muted-foreground">Klicken zum Hochladen</p>
-                                  <p className="text-xs text-muted-foreground mt-1">JPEG, PNG, WebP • Max. 10MB</p>
-                                </>
-                              )}
-                            </div>
-                          )}
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            className="hidden"
-                            onChange={(e) => handleImageUpload(e, 'hero')}
+                          <ImageUploader
+                            value={config.heroImageUrl}
+                            onUpload={(url) => {
+                              updateConfig('heroImageUrl', url)
+                              toast.success('Hero-Bild hochgeladen!')
+                            }}
+                            onRemove={() => removeImage('hero')}
+                            uploadEndpoint="/api/admin/product-config/upload"
+                            uploadData={{ type: 'hero' }}
+                            aspectRatio={16/9}
+                            placeholder="Hero-Bild hochladen"
+                            description="JPEG, PNG, WebP • Max. 10MB • Empfohlen: 1920x1080px"
                           />
 
                           {config.heroImageUrl && (
@@ -1421,38 +1356,20 @@ export default function ProductCMSPage() {
                       <div className="space-y-2">
                         <Label>Open Graph Bild (für Social Media)</Label>
                         <p className="text-xs text-muted-foreground mb-2">Empfohlen: 1200x630px</p>
-                        {config.ogImage ? (
-                          <div className="relative aspect-[1200/630] max-w-md rounded-lg overflow-hidden bg-muted">
-                            <Image
-                              src={config.ogImage}
-                              alt="OG Image"
-                              fill
-                              className="object-cover"
-                            />
-                            <Button
-                              variant="destructive"
-                              size="icon"
-                              className="absolute top-2 right-2"
-                              onClick={() => removeImage('og')}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                            <label className="cursor-pointer">
-                              <Upload className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
-                              <p className="text-sm text-muted-foreground">Bild hochladen</p>
-                              <input
-                                ref={ogInputRef}
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => handleImageUpload(e, 'og')}
-                              />
-                            </label>
-                          </div>
-                        )}
+                        <ImageUploader
+                          value={config.ogImage}
+                          onUpload={(url) => {
+                            updateConfig('ogImage', url)
+                            toast.success('OG-Bild hochgeladen!')
+                          }}
+                          onRemove={() => removeImage('og')}
+                          uploadEndpoint="/api/admin/product-config/upload"
+                          uploadData={{ type: 'og' }}
+                          aspectRatio={1200/630}
+                          placeholder="OG-Bild hochladen"
+                          description="JPEG, PNG, WebP • Empfohlen: 1200x630px"
+                          previewHeight="aspect-[1200/630] max-w-md"
+                        />
                       </div>
                     </CardContent>
                   </Card>

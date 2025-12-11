@@ -1190,6 +1190,16 @@ let cachedDemoMode: boolean | null = null
 let cacheExpiry: number = 0
 const CACHE_DURATION = 60 * 1000 // 1 minute cache
 
+/**
+ * Prüft ob der Demo-Modus aktiv ist.
+ * 
+ * WICHTIG: Demo-Modus gilt NUR für operative Daten:
+ * - Benutzer, Salons, Buchungen, Subscriptions, etc.
+ * 
+ * CMS-Inhalte (Homepage-Config, FAQs, Testimonials, Blog, etc.)
+ * werden IMMER aus der echten Datenbank geladen - auch im Demo-Modus!
+ * Diese APIs sollten isDemoModeActive() NICHT verwenden.
+ */
 export async function isDemoModeActive(): Promise<boolean> {
   // Return cached value if still valid
   if (cachedDemoMode !== null && Date.now() < cacheExpiry) {

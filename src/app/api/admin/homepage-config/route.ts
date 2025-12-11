@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { isDemoModeActive } from '@/lib/mock-data'
 
-// Default Homepage Config für Demo-Modus und Initialisierung
+// Default Homepage Config für Initialisierung (wenn noch keine Config existiert)
 const defaultConfig = {
-  id: 'default',
   heroType: 'animated',
   heroLayout: 'split',
   heroImageUrl: null,
@@ -49,14 +47,11 @@ const defaultConfig = {
 }
 
 // GET - Hole Homepage-Konfiguration
+// WICHTIG: CMS-Daten werden IMMER aus der echten DB geladen (auch im Demo-Modus)
+// Demo-Modus gilt nur für operative Daten (Buchungen, User, Salons), NICHT für CMS-Inhalte
 export async function GET() {
   try {
-    // Demo-Modus prüfen
-    if (await isDemoModeActive()) {
-      return NextResponse.json(defaultConfig)
-    }
-
-    // Versuche bestehende Config zu laden
+    // CMS-Inhalte kommen IMMER aus der echten Datenbank
     let config = await prisma.homePageConfig.findFirst()
     
     // Wenn keine Config existiert, erstelle Default
@@ -176,7 +171,48 @@ export async function PUT(request: Request) {
           }
         })
       : await prisma.homePageConfig.create({
-          data: body
+          data: {
+            heroType: body.heroType,
+            heroLayout: body.heroLayout,
+            heroImageUrl: body.heroImageUrl,
+            heroImageAlt: body.heroImageAlt,
+            heroImageOverlay: body.heroImageOverlay,
+            heroImagePosition: body.heroImagePosition,
+            heroVideoUrl: body.heroVideoUrl,
+            heroVideoPoster: body.heroVideoPoster,
+            heroBadgeText: body.heroBadgeText,
+            heroBadgeIcon: body.heroBadgeIcon,
+            heroTitleLine1: body.heroTitleLine1,
+            heroTitleLine2: body.heroTitleLine2,
+            heroTitleHighlight: body.heroTitleHighlight,
+            heroDescription: body.heroDescription,
+            ctaPrimaryText: body.ctaPrimaryText,
+            ctaPrimaryLink: body.ctaPrimaryLink,
+            ctaPrimaryIcon: body.ctaPrimaryIcon,
+            ctaSecondaryText: body.ctaSecondaryText,
+            ctaSecondaryLink: body.ctaSecondaryLink,
+            showSecondaryCta: body.showSecondaryCta,
+            showTrustIndicators: body.showTrustIndicators,
+            trustIndicator1: body.trustIndicator1,
+            trustIndicator2: body.trustIndicator2,
+            trustIndicator3: body.trustIndicator3,
+            showDashboardPreview: body.showDashboardPreview,
+            dashboardTitle: body.dashboardTitle,
+            dashboardSubtitle: body.dashboardSubtitle,
+            animationEnabled: body.animationEnabled,
+            particlesEnabled: body.particlesEnabled,
+            gradientColors: body.gradientColors,
+            showScrollIndicator: body.showScrollIndicator,
+            scrollTargetId: body.scrollTargetId,
+            metaTitle: body.metaTitle,
+            metaDescription: body.metaDescription,
+            ogImageUrl: body.ogImageUrl,
+            showTestimonials: body.showTestimonials,
+            showPartners: body.showPartners,
+            showPricing: body.showPricing,
+            showFaq: body.showFaq,
+            showCta: body.showCta,
+          }
         })
 
     return NextResponse.json(config)

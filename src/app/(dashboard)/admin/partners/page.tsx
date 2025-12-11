@@ -50,6 +50,7 @@ import {
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ImageUploader } from '@/components/ui/image-uploader'
 
 interface Partner {
   id: string
@@ -116,7 +117,6 @@ export default function PartnersPage() {
   const [currentPartner, setCurrentPartner] = useState<Partial<Partner>>(emptyPartner)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false)
   const [instructionInput, setInstructionInput] = useState('')
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [showInactive, setShowInactive] = useState(false)
@@ -253,36 +253,6 @@ export default function PartnersPage() {
       setIsEditing(false)
     }
     setEditDialogOpen(true)
-  }
-
-  const handleLogoUpload = async (file: File) => {
-    setIsUploadingLogo(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      if (currentPartner.id) {
-        formData.append('partnerId', currentPartner.id)
-      }
-
-      const res = await fetch('/api/admin/partners/upload-logo', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || 'Fehler beim Upload')
-      }
-
-      const data = await res.json()
-      setCurrentPartner({ ...currentPartner, logoUrl: data.url })
-      toast.success('Logo erfolgreich hochgeladen!')
-    } catch (error: unknown) {
-      const err = error as Error
-      toast.error(err.message || 'Fehler beim Upload')
-    } finally {
-      setIsUploadingLogo(false)
-    }
   }
 
   const addInstruction = () => {
@@ -524,51 +494,27 @@ export default function PartnersPage() {
                             {/* Logo Upload */}
                             <div className="space-y-2">
                               <Label>Logo</Label>
-                              <div className="flex items-center gap-4">
-                                {currentPartner.logoUrl ? (
-                                  <div className="relative">
-                                    <img 
-                                      src={currentPartner.logoUrl} 
-                                      alt="Logo" 
-                                      className="h-20 w-20 object-contain border rounded-lg p-2"
-                                    />
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
-                                      onClick={() => setCurrentPartner({ ...currentPartner, logoUrl: null })}
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <div className="h-20 w-20 border-2 border-dashed rounded-lg flex items-center justify-center">
-                                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                                  </div>
-                                )}
-                                <div className="flex-1">
-                                  <Input
-                                    type="file"
-                                    accept="image/svg+xml,image/png,image/jpeg,image/jpg,image/webp"
-                                    onChange={(e) => {
-                                      const file = e.target.files?.[0]
-                                      if (file) handleLogoUpload(file)
-                                    }}
-                                    disabled={isUploadingLogo}
-                                    className="cursor-pointer"
-                                  />
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    SVG, PNG, JPG oder WebP (max. 5MB)
-                                  </p>
-                                </div>
-                              </div>
-                              {isUploadingLogo && (
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  Logo wird hochgeladen...
-                                </div>
-                              )}
+                              <ImageUploader
+                                value={currentPartner.logoUrl}
+                                onUpload={(url) => {
+                                  setCurrentPartner({ ...currentPartner, logoUrl: url })
+                                  toast.success('Logo erfolgreich hochgeladen!')
+                                }}
+                                onRemove={() => setCurrentPartner({ ...currentPartner, logoUrl: null })}
+                                uploadEndpoint="/api/admin/partners/upload-logo"
+                                uploadData={currentPartner.id ? { partnerId: currentPartner.id } : undefined}
+                                accept={{
+                                  'image/svg+xml': ['.svg'],
+                                  'image/png': ['.png'],
+                                  'image/jpeg': ['.jpg', '.jpeg'],
+                                  'image/webp': ['.webp'],
+                                }}
+                                maxSize={5 * 1024 * 1024}
+                                aspectRatio={1}
+                                placeholder="Logo hochladen"
+                                description="SVG, PNG, JPG oder WebP (max. 5MB)"
+                                previewHeight="h-24"
+                              />
                             </div>
 
                             {/* Name & Slug */}

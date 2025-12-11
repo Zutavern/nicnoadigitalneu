@@ -51,6 +51,7 @@ import { toast } from 'sonner'
 import Image from 'next/image'
 import Link from 'next/link'
 import { SortableList } from '@/components/ui/sortable-list'
+import { ImageUploader } from '@/components/ui/image-uploader'
 
 interface AboutUsPageConfig {
   id?: string
@@ -121,8 +122,6 @@ export default function AboutUsAdminPage() {
   const [isLoadingConfig, setIsLoadingConfig] = useState(true)
   const [isSavingConfig, setIsSavingConfig] = useState(false)
   const [showPreview, setShowPreview] = useState(true)
-  const [uploadingImage1, setUploadingImage1] = useState(false)
-  const [uploadingImage2, setUploadingImage2] = useState(false)
   const [approachCards, setApproachCards] = useState<ApproachCard[]>([])
   const [isLoadingCards, setIsLoadingCards] = useState(false)
   const [editCardDialogOpen, setEditCardDialogOpen] = useState(false)
@@ -214,38 +213,6 @@ export default function AboutUsAdminPage() {
       toast.error('Fehler beim Speichern der Konfiguration')
     } finally {
       setIsSavingConfig(false)
-    }
-  }
-
-  const handleImageUpload = async (file: File, teamNumber: 1 | 2) => {
-    const setUploading = teamNumber === 1 ? setUploadingImage1 : setUploadingImage2
-    try {
-      setUploading(true)
-      const formData = new FormData()
-      formData.append('file', file)
-
-      const res = await fetch('/api/admin/about-us-page-config/upload-image', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (res.ok) {
-        const { url } = await res.json()
-        if (teamNumber === 1) {
-          setPageConfig((prev) => ({ ...prev, team1ImageUrl: url }))
-        } else {
-          setPageConfig((prev) => ({ ...prev, team2ImageUrl: url }))
-        }
-        toast.success('Bild erfolgreich hochgeladen')
-      } else {
-        const error = await res.json()
-        toast.error(error.error || 'Fehler beim Hochladen')
-      }
-    } catch (error) {
-      console.error('Error uploading image:', error)
-      toast.error('Fehler beim Hochladen des Bildes')
-    } finally {
-      setUploading(false)
     }
   }
 
@@ -519,54 +486,19 @@ export default function AboutUsAdminPage() {
               </div>
               <div className="space-y-2">
                 <Label>Bild</Label>
-                {pageConfig.team1ImageUrl ? (
-                  <div className="relative">
-                    <div className="relative w-full h-48 rounded-lg overflow-hidden border">
-                      <Image
-                        src={pageConfig.team1ImageUrl}
-                        alt={pageConfig.team1Name || 'Team Member 1'}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="mt-2"
-                      onClick={() => handleRemoveImage(1)}
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Bild entfernen
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed rounded-lg p-6">
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/jpg,image/png,image/webp"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) handleImageUpload(file, 1)
-                      }}
-                      className="hidden"
-                      id="team1ImageUpload"
-                      disabled={uploadingImage1}
-                    />
-                    <label
-                      htmlFor="team1ImageUpload"
-                      className="flex flex-col items-center justify-center cursor-pointer"
-                    >
-                      {uploadingImage1 ? (
-                        <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-                      ) : (
-                        <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                      )}
-                      <span className="text-sm text-muted-foreground">
-                        {uploadingImage1 ? 'Wird hochgeladen...' : 'Bild hochladen (JPG, PNG, WebP)'}
-                      </span>
-                    </label>
-                  </div>
-                )}
+                <ImageUploader
+                  value={pageConfig.team1ImageUrl}
+                  onUpload={(url) => {
+                    setPageConfig((prev) => ({ ...prev, team1ImageUrl: url }))
+                    toast.success('Bild erfolgreich hochgeladen')
+                  }}
+                  onRemove={() => handleRemoveImage(1)}
+                  uploadEndpoint="/api/admin/about-us-page-config/upload-image"
+                  aspectRatio={1}
+                  placeholder="Team-Bild hochladen"
+                  description="JPG, PNG, WebP • Quadratisches Format empfohlen"
+                  previewHeight="h-48"
+                />
               </div>
             </CardContent>
           </Card>
@@ -625,54 +557,19 @@ export default function AboutUsAdminPage() {
               </div>
               <div className="space-y-2">
                 <Label>Bild</Label>
-                {pageConfig.team2ImageUrl ? (
-                  <div className="relative">
-                    <div className="relative w-full h-48 rounded-lg overflow-hidden border">
-                      <Image
-                        src={pageConfig.team2ImageUrl}
-                        alt={pageConfig.team2Name || 'Team Member 2'}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="mt-2"
-                      onClick={() => handleRemoveImage(2)}
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Bild entfernen
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed rounded-lg p-6">
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/jpg,image/png,image/webp"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) handleImageUpload(file, 2)
-                      }}
-                      className="hidden"
-                      id="team2ImageUpload"
-                      disabled={uploadingImage2}
-                    />
-                    <label
-                      htmlFor="team2ImageUpload"
-                      className="flex flex-col items-center justify-center cursor-pointer"
-                    >
-                      {uploadingImage2 ? (
-                        <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-                      ) : (
-                        <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                      )}
-                      <span className="text-sm text-muted-foreground">
-                        {uploadingImage2 ? 'Wird hochgeladen...' : 'Bild hochladen (JPG, PNG, WebP)'}
-                      </span>
-                    </label>
-                  </div>
-                )}
+                <ImageUploader
+                  value={pageConfig.team2ImageUrl}
+                  onUpload={(url) => {
+                    setPageConfig((prev) => ({ ...prev, team2ImageUrl: url }))
+                    toast.success('Bild erfolgreich hochgeladen')
+                  }}
+                  onRemove={() => handleRemoveImage(2)}
+                  uploadEndpoint="/api/admin/about-us-page-config/upload-image"
+                  aspectRatio={1}
+                  placeholder="Team-Bild hochladen"
+                  description="JPG, PNG, WebP • Quadratisches Format empfohlen"
+                  previewHeight="h-48"
+                />
               </div>
             </CardContent>
           </Card>

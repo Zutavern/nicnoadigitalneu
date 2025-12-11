@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,10 +14,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
+import { FileUploader } from '@/components/ui/file-uploader'
 import {
   X,
-  Upload,
-  FileText,
   CheckCircle2,
   Loader2,
   Sparkles,
@@ -46,24 +45,6 @@ export function JobApplicationForm({
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      // Prüfe Dateityp
-      if (!file.type.includes('pdf') && !file.type.includes('doc') && !file.type.includes('docx')) {
-        toast.error('Bitte lade eine PDF oder Word-Datei hoch')
-        return
-      }
-      // Prüfe Dateigröße (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error('Datei ist zu groß. Maximal 10MB erlaubt.')
-        return
-      }
-      setCvFile(file)
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -242,49 +223,14 @@ export function JobApplicationForm({
                 <Label>
                   Lebenslauf (CV) <span className="text-destructive">*</span>
                 </Label>
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors bg-muted/30"
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  {cvFile ? (
-                    <div className="space-y-2">
-                      <FileText className="h-8 w-8 mx-auto text-primary" />
-                      <p className="font-medium">{cvFile.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {(cvFile.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setCvFile(null)
-                          if (fileInputRef.current) {
-                            fileInputRef.current.value = ''
-                          }
-                        }}
-                      >
-                        Datei ändern
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                      <p className="font-medium">CV hochladen</p>
-                      <p className="text-sm text-muted-foreground">
-                        PDF oder Word-Datei (max. 10MB)
-                      </p>
-                    </div>
-                  )}
-                </div>
+                <FileUploader
+                  value={cvFile}
+                  onFileSelect={(file) => setCvFile(file)}
+                  onRemove={() => setCvFile(null)}
+                  placeholder="CV hochladen"
+                  description="PDF oder Word-Datei (max. 10MB)"
+                  disabled={isSubmitting}
+                />
 
                 {/* Upload Progress */}
                 {isSubmitting && uploadProgress > 0 && (

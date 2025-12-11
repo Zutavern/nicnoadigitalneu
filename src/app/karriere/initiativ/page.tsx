@@ -10,10 +10,9 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
 import { Card, CardContent } from '@/components/ui/card'
+import { FileUploader } from '@/components/ui/file-uploader'
 import {
   ArrowLeft,
-  Upload,
-  FileText,
   CheckCircle2,
   Loader2,
   Sparkles,
@@ -21,7 +20,6 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { useRef } from 'react'
 
 export default function InitiativbewerbungPage() {
   const [formData, setFormData] = useState({
@@ -36,22 +34,6 @@ export default function InitiativbewerbungPage() {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      if (!file.type.includes('pdf') && !file.type.includes('doc') && !file.type.includes('docx')) {
-        toast.error('Bitte lade eine PDF oder Word-Datei hoch')
-        return
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error('Datei ist zu groß. Maximal 10MB erlaubt.')
-        return
-      }
-      setCvFile(file)
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -246,49 +228,14 @@ export default function InitiativbewerbungPage() {
                     <Label>
                       Lebenslauf (CV) <span className="text-destructive">*</span>
                     </Label>
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors bg-muted/30"
-                    >
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        onChange={handleFileChange}
-                        className="hidden"
-                      />
-                      {cvFile ? (
-                        <div className="space-y-2">
-                          <FileText className="h-8 w-8 mx-auto text-primary" />
-                          <p className="font-medium">{cvFile.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {(cvFile.size / 1024 / 1024).toFixed(2)} MB
-                          </p>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setCvFile(null)
-                              if (fileInputRef.current) {
-                                fileInputRef.current.value = ''
-                              }
-                            }}
-                          >
-                            Datei ändern
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                          <p className="font-medium">CV hochladen</p>
-                          <p className="text-sm text-muted-foreground">
-                            PDF oder Word-Datei (max. 10MB)
-                          </p>
-                        </div>
-                      )}
-                    </div>
+                    <FileUploader
+                      value={cvFile}
+                      onFileSelect={(file) => setCvFile(file)}
+                      onRemove={() => setCvFile(null)}
+                      placeholder="CV hochladen"
+                      description="PDF oder Word-Datei (max. 10MB)"
+                      disabled={isSubmitting}
+                    />
 
                     {isSubmitting && uploadProgress > 0 && (
                       <div className="space-y-2 mt-4">

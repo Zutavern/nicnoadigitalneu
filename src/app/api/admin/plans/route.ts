@@ -9,7 +9,7 @@ import { isDemoModeActive, getMockAdminPlans } from '@/lib/mock-data'
 export async function GET(request: Request) {
   try {
     // Demo-Modus prüfen
-    if (await isDemoModeActive()) {
+    if (await isDemoModeActive({ ignoreForAdmin: true })) {
       return NextResponse.json(getMockAdminPlans())
     }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
   Home,
@@ -14,11 +14,7 @@ import {
   Sparkles,
   Type,
   MousePointer,
-  Settings,
   Layout,
-  Upload,
-  X,
-  Check,
   AlertCircle,
   ChevronDown,
   ArrowRight,
@@ -48,6 +44,100 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import Image from 'next/image'
+import { ImageUploader } from '@/components/ui/image-uploader'
+import { MultiImageUploader } from '@/components/ui/multi-image-uploader'
+import { VideoUploader, type VideoSettings } from '@/components/ui/video-uploader'
+
+// Helper: Parse heroImageUrl (kann einzelne URL oder JSON-Array sein)
+function parseHeroImages(value: string | null): string[] {
+  if (!value) return []
+  try {
+    const parsed = JSON.parse(value)
+    if (Array.isArray(parsed)) return parsed
+    return [value]
+  } catch {
+    return value ? [value] : []
+  }
+}
+
+// Helper: Serialize heroImages zu JSON-String
+function serializeHeroImages(urls: string[]): string | null {
+  if (urls.length === 0) return null
+  if (urls.length === 1) return urls[0]
+  return JSON.stringify(urls)
+}
+
+// Carousel Preview für CMS
+function ImageCarouselPreview({ 
+  images, 
+  imageAlt, 
+  imagePosition, 
+  overlay 
+}: { 
+  images: string[]
+  imageAlt: string | null
+  imagePosition: string
+  overlay: number
+}) {
+  const [activeIndex, setActiveIndex] = useState(0)
+
+  useEffect(() => {
+    if (images.length <= 1) return
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % images.length)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [images.length])
+
+  if (images.length === 0) return null
+
+  return (
+    <>
+      {images.map((url, index) => (
+        <motion.div
+          key={url}
+          initial={{ opacity: 0 }}
+          animate={{ 
+            opacity: index === activeIndex ? 1 : 0,
+            scale: index === activeIndex ? 1 : 1.05,
+          }}
+          transition={{ duration: 0.8 }}
+          className="absolute inset-0"
+        >
+          <Image
+            src={url}
+            alt={imageAlt || `Bild ${index + 1}`}
+            fill
+            className="object-cover"
+            style={{ objectPosition: imagePosition }}
+            priority={index === 0}
+          />
+        </motion.div>
+      ))}
+      {/* Overlay */}
+      <div
+        className="absolute inset-0 bg-black transition-opacity duration-300"
+        style={{ opacity: overlay / 100 }}
+      />
+      {/* Gradient */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent" />
+      {/* Dot Navigation */}
+      {images.length > 1 && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
+          {images.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setActiveIndex(index)}
+              className={`h-1.5 rounded-full transition-all ${
+                index === activeIndex ? 'w-4 bg-primary' : 'w-1.5 bg-white/40'
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </>
+  )
+}
 
 interface HomePageConfig {
   id?: string
@@ -80,7 +170,6 @@ interface HomePageConfig {
   dashboardSubtitle: string | null
   animationEnabled: boolean
   particlesEnabled: boolean
-  gradientColors: string
   showScrollIndicator: boolean
   scrollTargetId: string | null
   metaTitle: string | null
@@ -123,7 +212,6 @@ const defaultConfig: HomePageConfig = {
   dashboardSubtitle: 'Salon Overview',
   animationEnabled: true,
   particlesEnabled: true,
-  gradientColors: 'purple,pink,blue',
   showScrollIndicator: true,
   scrollTargetId: 'testimonials',
   metaTitle: null,
@@ -140,12 +228,10 @@ export default function HomePageCMS() {
   const [config, setConfig] = useState<HomePageConfig>(defaultConfig)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
   const [activeTab, setActiveTab] = useState('hero')
   const [showPreview, setShowPreview] = useState(true)
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop')
   const [hasChanges, setHasChanges] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchConfig = useCallback(async () => {
     setIsLoading(true)
@@ -193,42 +279,6 @@ export default function HomePageCMS() {
   const updateConfig = <K extends keyof HomePageConfig>(key: K, value: HomePageConfig[K]) => {
     setConfig(prev => ({ ...prev, [key]: value }))
     setHasChanges(true)
-  }
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'hero' | 'og') => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setIsUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('type', type)
-
-      const res = await fetch('/api/admin/homepage-config/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || 'Upload fehlgeschlagen')
-      }
-
-      const data = await res.json()
-      
-      if (type === 'hero') {
-        updateConfig('heroImageUrl', data.url)
-      } else {
-        updateConfig('ogImageUrl', data.url)
-      }
-      
-      toast.success('Bild hochgeladen!')
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Upload fehlgeschlagen')
-    } finally {
-      setIsUploading(false)
-    }
   }
 
   const removeImage = async (type: 'hero' | 'og') => {
@@ -340,7 +390,7 @@ export default function HomePageCMS() {
                   <div className="grid grid-cols-3 gap-4">
                     {[
                       { value: 'animated', label: 'Animiert', icon: Sparkles, desc: 'Mit Dashboard-Vorschau' },
-                      { value: 'image', label: 'Bild', icon: ImageIcon, desc: 'Vollflächiges Bild' },
+                      { value: 'image', label: 'Bild(er)', icon: ImageIcon, desc: 'Carousel möglich' },
                       { value: 'video', label: 'Video', icon: Video, desc: 'Hintergrund-Video' },
                     ].map((type) => (
                       <button
@@ -359,71 +409,87 @@ export default function HomePageCMS() {
                     ))}
                   </div>
 
+                  {/* Zurücksetzen Button wenn nicht animiert */}
+                  {config.heroType !== 'animated' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        updateConfig('heroType', 'animated')
+                        updateConfig('heroImageUrl', null)
+                        updateConfig('heroVideoUrl', null)
+                        toast.success('Hero auf animiert zurückgesetzt')
+                      }}
+                      className="w-full"
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Zum animierten Hero zurücksetzen
+                    </Button>
+                  )}
+
                   {/* Image Upload (wenn heroType === 'image') */}
                   {config.heroType === 'image' && (
                     <div className="space-y-4 border-t pt-6">
-                      <Label>Hero-Bild</Label>
-                      {config.heroImageUrl ? (
-                        <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-                          <Image
-                            src={config.heroImageUrl}
-                            alt={config.heroImageAlt || 'Hero'}
-                            fill
-                            className="object-cover"
-                          />
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="text-base">Hero-Bilder</Label>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Mehrere Bilder werden als animiertes Carousel angezeigt
+                          </p>
+                        </div>
+                        {parseHeroImages(config.heroImageUrl).length > 0 && (
                           <Button
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-2 right-2"
-                            onClick={() => removeImage('hero')}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              updateConfig('heroImageUrl', null)
+                              toast.success('Alle Bilder entfernt')
+                            }}
                           >
-                            <X className="h-4 w-4" />
+                            Alle entfernen
                           </Button>
-                        </div>
-                      ) : (
-                        <div
-                          onClick={() => fileInputRef.current?.click()}
-                          className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
-                        >
-                          {isUploading ? (
-                            <Loader2 className="h-8 w-8 mx-auto animate-spin text-primary" />
-                          ) : (
-                            <>
-                              <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                              <p className="text-sm text-muted-foreground">Klicken zum Hochladen</p>
-                              <p className="text-xs text-muted-foreground mt-1">JPEG, PNG, WebP • Max. 10MB</p>
-                            </>
-                          )}
-                        </div>
-                      )}
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        className="hidden"
-                        onChange={(e) => handleImageUpload(e, 'hero')}
+                        )}
+                      </div>
+                      
+                      <MultiImageUploader
+                        value={parseHeroImages(config.heroImageUrl)}
+                        onChange={(urls) => {
+                          updateConfig('heroImageUrl', serializeHeroImages(urls))
+                          if (urls.length > 0) {
+                            toast.success(urls.length === 1 ? 'Bild gespeichert!' : `${urls.length} Bilder gespeichert!`)
+                          }
+                        }}
+                        uploadEndpoint="/api/admin/homepage-config/upload"
+                        uploadData={{ type: 'hero' }}
+                        aspectRatio={16/9}
+                        maxImages={10}
+                        placeholder="Hero-Bilder hochladen"
+                        description="JPEG, PNG, WebP • Max. 10MB • Empfohlen: 1920x1080px"
                       />
 
-                      {config.heroImageUrl && (
+                      {parseHeroImages(config.heroImageUrl).length > 0 && (
                         <>
                           <div className="space-y-2">
-                            <Label>Alt-Text</Label>
+                            <Label>Alt-Text (für alle Bilder)</Label>
                             <Input
                               value={config.heroImageAlt || ''}
                               onChange={(e) => updateConfig('heroImageAlt', e.target.value)}
-                              placeholder="Beschreibung des Bildes"
+                              placeholder="Beschreibung der Bilder"
                             />
                           </div>
 
                           <div className="space-y-2">
-                            <Label>Overlay-Stärke: {config.heroImageOverlay}%</Label>
+                            <Label>Abdunklung: {config.heroImageOverlay}%</Label>
                             <Slider
                               value={[config.heroImageOverlay]}
                               onValueChange={([v]) => updateConfig('heroImageOverlay', v)}
                               min={0}
-                              max={80}
+                              max={95}
                               step={5}
                             />
+                            <p className="text-xs text-muted-foreground">
+                              Je höher der Wert, desto dunkler werden die Bilder (für bessere Lesbarkeit)
+                            </p>
                           </div>
 
                           <div className="space-y-2">
@@ -442,22 +508,97 @@ export default function HomePageCMS() {
                               </SelectContent>
                             </Select>
                           </div>
+
+                          {parseHeroImages(config.heroImageUrl).length > 1 && (
+                            <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                              <p className="text-sm text-primary font-medium flex items-center gap-2">
+                                <Sparkles className="h-4 w-4" />
+                                Carousel aktiviert
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {parseHeroImages(config.heroImageUrl).length} Bilder werden automatisch durchgewechselt
+                              </p>
+                            </div>
+                          )}
                         </>
                       )}
                     </div>
                   )}
 
-                  {/* Video Settings */}
+                  {/* Video Upload & Settings */}
                   {config.heroType === 'video' && (
                     <div className="space-y-4 border-t pt-6">
-                      <div className="space-y-2">
-                        <Label>Video-URL</Label>
-                        <Input
-                          value={config.heroVideoUrl || ''}
-                          onChange={(e) => updateConfig('heroVideoUrl', e.target.value)}
-                          placeholder="https://..."
-                        />
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="text-base">Hero-Video</Label>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Videos starten automatisch und laufen im Loop
+                          </p>
+                        </div>
+                        {config.heroVideoUrl && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              updateConfig('heroVideoUrl', null)
+                              updateConfig('heroVideoPoster', null)
+                              toast.success('Video entfernt')
+                            }}
+                          >
+                            Video entfernen
+                          </Button>
+                        )}
                       </div>
+
+                      <VideoUploader
+                        value={config.heroVideoUrl}
+                        posterUrl={config.heroVideoPoster}
+                        settings={{
+                          autoplay: true,
+                          loop: true,
+                          muted: true,
+                          playbackSpeed: 1,
+                          overlay: config.heroImageOverlay,
+                        }}
+                        onUpload={(url) => {
+                          updateConfig('heroVideoUrl', url)
+                          toast.success('Video hochgeladen!')
+                        }}
+                        onRemove={() => {
+                          updateConfig('heroVideoUrl', null)
+                          updateConfig('heroVideoPoster', null)
+                        }}
+                        onSettingsChange={(settings) => {
+                          updateConfig('heroImageOverlay', settings.overlay)
+                        }}
+                        uploadEndpoint="/api/admin/homepage-config/upload"
+                        uploadData={{ type: 'video' }}
+                        placeholder="Hero-Video hochladen"
+                        description="MP4, WebM, MOV • Max. 100MB • Empfohlen: 1920x1080px"
+                      />
+
+                      {/* Poster-Bild Upload */}
+                      {config.heroVideoUrl && (
+                        <div className="space-y-2">
+                          <Label>Poster-Bild (Ladevorschau)</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Wird angezeigt, bevor das Video geladen ist
+                          </p>
+                          <ImageUploader
+                            value={config.heroVideoPoster}
+                            onUpload={(url) => {
+                              updateConfig('heroVideoPoster', url)
+                              toast.success('Poster-Bild gespeichert!')
+                            }}
+                            onRemove={() => updateConfig('heroVideoPoster', null)}
+                            uploadEndpoint="/api/admin/homepage-config/upload"
+                            uploadData={{ type: 'video-poster' }}
+                            aspectRatio={16/9}
+                            placeholder="Poster-Bild hochladen"
+                            description="Wird während des Ladens angezeigt"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -743,23 +884,13 @@ export default function HomePageCMS() {
 
                   <Separator />
 
-                  <div className="space-y-2">
-                    <Label>Gradient-Farben</Label>
-                    <Select
-                      value={config.gradientColors}
-                      onValueChange={(v) => updateConfig('gradientColors', v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="purple,pink,blue">Purple → Pink → Blue</SelectItem>
-                        <SelectItem value="blue,cyan,teal">Blue → Cyan → Teal</SelectItem>
-                        <SelectItem value="orange,red,pink">Orange → Red → Pink</SelectItem>
-                        <SelectItem value="green,teal,blue">Green → Teal → Blue</SelectItem>
-                        <SelectItem value="slate,gray,zinc">Slate → Gray (Neutral)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="p-4 rounded-lg bg-muted/50 border">
+                    <p className="text-sm text-muted-foreground">
+                      <strong>Farben</strong> werden automatisch aus den{' '}
+                      <span className="text-primary font-medium">Design-System Einstellungen</span>{' '}
+                      übernommen. Ändern Sie die Brand-Farben unter{' '}
+                      <span className="font-medium">Einstellungen → Design</span>.
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -808,37 +939,20 @@ export default function HomePageCMS() {
                   <div className="space-y-2">
                     <Label>Open Graph Bild (für Social Media)</Label>
                     <p className="text-xs text-muted-foreground mb-2">Empfohlen: 1200x630px</p>
-                    {config.ogImageUrl ? (
-                      <div className="relative aspect-[1200/630] max-w-md rounded-lg overflow-hidden bg-muted">
-                        <Image
-                          src={config.ogImageUrl}
-                          alt="OG Image"
-                          fill
-                          className="object-cover"
-                        />
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-2 right-2"
-                          onClick={() => removeImage('og')}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                        <label className="cursor-pointer">
-                          <Upload className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
-                          <p className="text-sm text-muted-foreground">Bild hochladen</p>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => handleImageUpload(e, 'og')}
-                          />
-                        </label>
-                      </div>
-                    )}
+                    <ImageUploader
+                      value={config.ogImageUrl}
+                      onUpload={(url) => {
+                        updateConfig('ogImageUrl', url)
+                        toast.success('OG-Bild hochgeladen!')
+                      }}
+                      onRemove={() => removeImage('og')}
+                      uploadEndpoint="/api/admin/homepage-config/upload"
+                      uploadData={{ type: 'og' }}
+                      aspectRatio={1200/630}
+                      placeholder="OG-Bild hochladen"
+                      description="JPEG, PNG, WebP • Empfohlen: 1200x630px"
+                      previewHeight="aspect-[1200/630] max-w-md"
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -887,29 +1001,18 @@ export default function HomePageCMS() {
                   <div className={`border rounded-xl overflow-hidden bg-slate-950 relative ${
                     previewDevice === 'mobile' ? 'aspect-[9/16]' : 'aspect-[16/9]'
                   }`}>
-                    {/* Background Layer */}
+                    {/* Background Layer - Identisch mit Live-Seite */}
                     <div className="absolute inset-0 overflow-hidden">
                       {config.heroType === 'image' && config.heroImageUrl ? (
-                        /* Image Hero Background */
-                        <>
-                          <Image
-                            src={config.heroImageUrl}
-                            alt={config.heroImageAlt || 'Hero'}
-                            fill
-                            className="object-cover transition-all duration-500"
-                            style={{ objectPosition: config.heroImagePosition }}
-                            priority
-                          />
-                          {/* Overlay */}
-                          <div
-                            className="absolute inset-0 bg-slate-950/50 backdrop-blur-[1px] transition-opacity duration-300"
-                            style={{ opacity: config.heroImageOverlay / 100 }}
-                          />
-                          {/* Gradient Overlay für Lesbarkeit */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent opacity-70" />
-                        </>
+                        /* Image Hero Background - mit Carousel-Unterstützung */
+                        <ImageCarouselPreview
+                          images={parseHeroImages(config.heroImageUrl)}
+                          imageAlt={config.heroImageAlt}
+                          imagePosition={config.heroImagePosition}
+                          overlay={config.heroImageOverlay}
+                        />
                       ) : config.heroType === 'video' && config.heroVideoUrl ? (
-                        /* Video Hero Background */
+                        /* Video Hero Background - wie auf Live-Seite */
                         <>
                           <video
                             src={config.heroVideoUrl}
@@ -920,18 +1023,33 @@ export default function HomePageCMS() {
                             playsInline
                             className="absolute inset-0 w-full h-full object-cover"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-slate-950/30" />
+                          {/* Abdunklungs-Overlay */}
+                          <div
+                            className="absolute inset-0 bg-black transition-opacity duration-300"
+                            style={{ opacity: config.heroImageOverlay / 100 }}
+                          />
+                          {/* Gradient Overlay (wie Live-Seite) */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
                         </>
                       ) : (
-                        /* Animated Hero Background */
-                        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-purple-950/50">
+                        /* Animated Hero Background - Design-System Farben */
+                        <div 
+                          className="absolute inset-0"
+                          style={{
+                            background: `linear-gradient(to bottom right, 
+                              hsl(224 71% 4%), 
+                              hsl(224 50% 8%), 
+                              hsl(var(--gradient-from) / 0.3)
+                            )`
+                          }}
+                        >
                           {/* Animated Grid Pattern */}
                           <div
                             className="absolute inset-0 opacity-30"
                             style={{
                               backgroundImage: `
-                                linear-gradient(rgba(139, 92, 246, 0.15) 1px, transparent 1px),
-                                linear-gradient(90deg, rgba(139, 92, 246, 0.15) 1px, transparent 1px)
+                                linear-gradient(hsl(var(--brand-primary) / 0.15) 1px, transparent 1px),
+                                linear-gradient(90deg, hsl(var(--brand-primary) / 0.15) 1px, transparent 1px)
                               `,
                               backgroundSize: '40px 40px',
                             }}
@@ -943,10 +1061,11 @@ export default function HomePageCMS() {
                               {Array.from({ length: 20 }).map((_, i) => (
                                 <motion.div
                                   key={i}
-                                  className="absolute w-1 h-1 bg-purple-400/40 rounded-full"
+                                  className="absolute w-1 h-1 rounded-full"
                                   style={{
                                     left: `${(i * 5) % 100}%`,
                                     top: `${(i * 7) % 100}%`,
+                                    backgroundColor: 'hsl(var(--brand-primary) / 0.4)',
                                   }}
                                   animate={{
                                     opacity: [0.2, 0.8, 0.2],
@@ -963,9 +1082,10 @@ export default function HomePageCMS() {
                             </>
                           )}
                           
-                          {/* Gradient Orbs */}
+                          {/* Gradient Orbs - Design-System Farben */}
                           <motion.div
-                            className="absolute top-1/4 left-1/4 w-40 h-40 bg-purple-500/30 rounded-full blur-3xl"
+                            className="absolute top-1/4 left-1/4 w-40 h-40 rounded-full blur-3xl"
+                            style={{ backgroundColor: 'hsl(var(--glow-primary) / 0.3)' }}
                             animate={config.animationEnabled ? {
                               scale: [1, 1.2, 1],
                               opacity: [0.3, 0.5, 0.3],
@@ -973,7 +1093,8 @@ export default function HomePageCMS() {
                             transition={{ duration: 4, repeat: Infinity }}
                           />
                           <motion.div
-                            className="absolute bottom-1/3 right-1/4 w-32 h-32 bg-pink-500/25 rounded-full blur-3xl"
+                            className="absolute bottom-1/3 right-1/4 w-32 h-32 rounded-full blur-3xl"
+                            style={{ backgroundColor: 'hsl(var(--glow-secondary) / 0.25)' }}
                             animate={config.animationEnabled ? {
                               scale: [1, 1.3, 1],
                               opacity: [0.25, 0.4, 0.25],
@@ -981,7 +1102,8 @@ export default function HomePageCMS() {
                             transition={{ duration: 5, repeat: Infinity, delay: 1 }}
                           />
                           <motion.div
-                            className="absolute top-1/2 right-1/3 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl"
+                            className="absolute top-1/2 right-1/3 w-24 h-24 rounded-full blur-2xl"
+                            style={{ backgroundColor: 'hsl(var(--gradient-via) / 0.2)' }}
                             animate={config.animationEnabled ? {
                               scale: [1, 1.4, 1],
                               opacity: [0.2, 0.35, 0.2],
@@ -1001,22 +1123,28 @@ export default function HomePageCMS() {
                         config.heroLayout === 'split' && config.heroType === 'animated' ? 'w-3/5' : 'w-full text-center'
                       } ${previewDevice === 'mobile' ? 'text-center w-full' : ''}`}>
                         
-                        {/* Badge */}
+                        {/* Badge - Design-System Farben */}
                         {config.heroBadgeText && (
                           <motion.div
                             initial={config.animationEnabled ? { opacity: 0, y: 10 } : {}}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5 }}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs mb-4 ${
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs mb-4 ${
                               previewDevice === 'mobile' || config.heroLayout !== 'split' ? 'mx-auto' : ''
                             }`}
+                            style={{
+                              backgroundColor: 'hsl(var(--brand-primary) / 0.2)',
+                              borderWidth: '1px',
+                              borderColor: 'hsl(var(--brand-primary) / 0.3)',
+                              color: 'hsl(var(--brand-primary))',
+                            }}
                           >
                             <Sparkles className="h-3 w-3" />
                             <span>{config.heroBadgeText}</span>
                           </motion.div>
                         )}
                         
-                        {/* Title */}
+                        {/* Title - Design-System Gradient */}
                         <motion.h1
                           initial={config.animationEnabled ? { opacity: 0, y: 20 } : {}}
                           animate={{ opacity: 1, y: 0 }}
@@ -1027,7 +1155,16 @@ export default function HomePageCMS() {
                         >
                           {config.heroTitleLine1}{' '}
                           {config.heroTitleLine2}{' '}
-                          <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+                          <span 
+                            className="bg-clip-text text-transparent"
+                            style={{
+                              backgroundImage: `linear-gradient(to right, 
+                                hsl(var(--gradient-from)), 
+                                hsl(var(--gradient-via)), 
+                                hsl(var(--gradient-to))
+                              )`
+                            }}
+                          >
                             {config.heroTitleHighlight}
                           </span>
                         </motion.h1>
@@ -1046,7 +1183,7 @@ export default function HomePageCMS() {
                           </motion.p>
                         )}
                         
-                        {/* CTA Buttons */}
+                        {/* CTA Buttons - Design-System Farben */}
                         <motion.div
                           initial={config.animationEnabled ? { opacity: 0, y: 20 } : {}}
                           animate={{ opacity: 1, y: 0 }}
@@ -1055,9 +1192,18 @@ export default function HomePageCMS() {
                             previewDevice === 'mobile' || config.heroLayout !== 'split' ? 'justify-center' : ''
                           } ${previewDevice === 'mobile' ? 'flex-col' : ''}`}
                         >
-                          <button className={`px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-medium transition-all shadow-lg shadow-purple-500/25 flex items-center gap-2 ${
-                            previewDevice === 'mobile' ? 'text-sm justify-center' : 'text-xs'
-                          }`}>
+                          <button 
+                            className={`px-4 py-2 rounded-lg text-white font-medium transition-all shadow-lg flex items-center gap-2 ${
+                              previewDevice === 'mobile' ? 'text-sm justify-center' : 'text-xs'
+                            }`}
+                            style={{
+                              backgroundImage: `linear-gradient(to right, 
+                                hsl(var(--gradient-from)), 
+                                hsl(var(--gradient-to))
+                              )`,
+                              boxShadow: '0 10px 15px -3px hsl(var(--glow-primary) / 0.25)',
+                            }}
+                          >
                             {config.ctaPrimaryText}
                             <ArrowRight className="h-3 w-3" />
                           </button>
@@ -1104,8 +1250,17 @@ export default function HomePageCMS() {
                           className="w-2/5 pr-4"
                         >
                           <div className="relative">
-                            {/* Glow Effect */}
-                            <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20 rounded-2xl blur-xl opacity-60" />
+                            {/* Glow Effect - Design-System Farben */}
+                            <div 
+                              className="absolute -inset-2 rounded-2xl blur-xl opacity-60"
+                              style={{
+                                backgroundImage: `linear-gradient(to right, 
+                                  hsl(var(--glow-primary) / 0.2), 
+                                  hsl(var(--glow-secondary) / 0.2), 
+                                  hsl(var(--glow-primary) / 0.2)
+                                )`
+                              }}
+                            />
                             
                             {/* Mock Dashboard */}
                             <div className="relative bg-slate-900/90 backdrop-blur-xl rounded-xl border border-slate-700/50 overflow-hidden shadow-2xl">
@@ -1155,7 +1310,13 @@ export default function HomePageCMS() {
                                     {[40, 65, 45, 80, 55, 90, 70].map((height, i) => (
                                       <motion.div
                                         key={i}
-                                        className="flex-1 bg-gradient-to-t from-purple-500 to-pink-500 rounded-t"
+                                        className="flex-1 rounded-t"
+                                        style={{
+                                          backgroundImage: `linear-gradient(to top, 
+                                            hsl(var(--gradient-from)), 
+                                            hsl(var(--gradient-to))
+                                          )`
+                                        }}
                                         initial={{ height: 0 }}
                                         animate={{ height: `${height}%` }}
                                         transition={{ delay: 1 + i * 0.05, duration: 0.5 }}

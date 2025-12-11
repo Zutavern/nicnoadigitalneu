@@ -18,12 +18,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { TiptapEditor } from '@/components/editor/tiptap-editor'
+import { ImageUploader } from '@/components/ui/image-uploader'
 import {
   ArrowLeft,
   Save,
   Eye,
   Loader2,
-  Image as ImageIcon,
   Globe,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -456,7 +456,18 @@ export default function NewBlogPostPage() {
                   />
                 </TabsContent>
                 <TabsContent value="upload" className="space-y-2">
-                  <ImageUploadButton onUpload={setFeaturedImage} />
+                  <ImageUploader
+                    value={featuredImage || undefined}
+                    onUpload={(url) => {
+                      setFeaturedImage(url)
+                      toast.success('Bild hochgeladen!')
+                    }}
+                    onRemove={() => setFeaturedImage('')}
+                    uploadEndpoint="/api/admin/blog/posts/upload-image"
+                    aspectRatio={16/9}
+                    placeholder="Featured Image hochladen"
+                    description="JPEG, PNG, WebP • Empfohlen: 1200x630px"
+                  />
                 </TabsContent>
               </Tabs>
               
@@ -479,69 +490,6 @@ export default function NewBlogPostPage() {
         </div>
       </div>
     </div>
-  )
-}
-
-// Image Upload Button Component
-function ImageUploadButton({ onUpload }: { onUpload: (url: string) => void }) {
-  const [isUploading, setIsUploading] = useState(false)
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setIsUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-
-      const res = await fetch('/api/admin/blog/posts/upload-image', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!res.ok) throw new Error('Upload fehlgeschlagen')
-
-      const { url } = await res.json()
-      onUpload(url)
-      toast.success('Bild hochgeladen!')
-    } catch (error) {
-      console.error('Upload error:', error)
-      toast.error('Fehler beim Upload')
-    } finally {
-      setIsUploading(false)
-      e.target.value = ''
-    }
-  }
-
-  return (
-    <label className="block">
-      <input
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleUpload}
-        disabled={isUploading}
-      />
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full h-24 border-dashed"
-        disabled={isUploading}
-        asChild
-      >
-        <span>
-          {isUploading ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <>
-              <ImageIcon className="h-5 w-5 mr-2" />
-              Bild auswählen
-            </>
-          )}
-        </span>
-      </Button>
-    </label>
   )
 }
 

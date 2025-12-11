@@ -18,7 +18,6 @@ import {
   ChevronLeft,
   CheckCircle2,
   AlertTriangle,
-  Upload,
   ExternalLink,
   Phone,
   BookOpen,
@@ -31,6 +30,7 @@ import {
   Check,
   Info
 } from 'lucide-react'
+import { FileUploader } from '@/components/ui/file-uploader'
 
 type DocumentKey = 
   | 'masterCertificate'
@@ -712,38 +712,19 @@ export default function StylistOnboardingPage() {
                                 </a>
                               )}
 
-                              {hasFile ? (
-                                <div className="flex items-center gap-3">
-                                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 text-emerald-400">
-                                    <CheckCircle2 className="h-4 w-4" />
-                                    <span className="text-sm font-medium truncate max-w-[200px]">
-                                      {doc.file?.name || 'Hochgeladen'}
-                                    </span>
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleRemoveFile(slot.key)}
-                                    className="text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 cursor-pointer transition-all duration-200">
-                                  <Upload className="h-4 w-4 text-muted-foreground" />
-                                  <span className="text-sm text-white">Datei auswählen</span>
-                                  <input
-                                    type="file"
-                                    className="hidden"
-                                    accept=".pdf,.jpg,.jpeg,.png"
-                                    onChange={(e) => {
-                                      const file = e.target.files?.[0]
-                                      if (file) handleFileUpload(slot.key, file)
-                                    }}
-                                  />
-                                </label>
-                              )}
+                              <FileUploader
+                                value={doc.file || null}
+                                onFileSelect={(file) => handleFileUpload(slot.key, file)}
+                                onRemove={() => handleRemoveFile(slot.key)}
+                                accept={{
+                                  'application/pdf': ['.pdf'],
+                                  'image/jpeg': ['.jpg', '.jpeg'],
+                                  'image/png': ['.png'],
+                                }}
+                                placeholder="Dokument hochladen"
+                                description="PDF, JPG, PNG (max. 10MB)"
+                                className="bg-white/5 border-white/10"
+                              />
                             </div>
                           </div>
                         </motion.div>

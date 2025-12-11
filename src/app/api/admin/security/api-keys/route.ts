@@ -16,7 +16,7 @@ function generateApiKey(): { key: string; hash: string; prefix: string } {
 export async function GET(request: Request) {
   try {
     // Demo-Modus prüfen
-    if (await isDemoModeActive()) {
+    if (await isDemoModeActive({ ignoreForAdmin: true })) {
       const mockData = getMockAdminSecurity()
       return NextResponse.json({
         apiKeys: mockData.apiKeys,

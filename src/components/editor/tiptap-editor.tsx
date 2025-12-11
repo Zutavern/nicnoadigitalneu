@@ -54,6 +54,7 @@ import {
   Eye,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ImageUploader } from '@/components/ui/image-uploader'
 
 const lowlight = createLowlight(common)
 
@@ -78,11 +79,9 @@ export function TiptapEditor({
   const [imageDialogOpen, setImageDialogOpen] = useState(false)
   const [youtubeUrl, setYoutubeUrl] = useState('')
   const [youtubeDialogOpen, setYoutubeDialogOpen] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
   const [htmlContent, setHtmlContent] = useState('')
   const [htmlDialogOpen, setHtmlDialogOpen] = useState(false)
   const [showHtmlPreview, setShowHtmlPreview] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   
   // Unterstützte Tags Liste
   const supportedTags = ['h1', 'h2', 'h3', 'p', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del', 
@@ -190,40 +189,6 @@ export function TiptapEditor({
       editor.commands.setContent(content)
     }
   }, [content, editor])
-
-  const handleImageUpload = useCallback(async (file: File) => {
-    if (!editor) return
-
-    setIsUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-
-      const response = await fetch('/api/admin/blog/posts/upload-image', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!response.ok) {
-        throw new Error('Upload fehlgeschlagen')
-      }
-
-      const { url } = await response.json()
-      editor.chain().focus().setImage({ src: url }).run()
-    } catch (error) {
-      console.error('Bild-Upload fehlgeschlagen:', error)
-    } finally {
-      setIsUploading(false)
-    }
-  }, [editor])
-
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      handleImageUpload(file)
-    }
-    e.target.value = '' // Reset input
-  }, [handleImageUpload])
 
   const addLink = useCallback(() => {
     if (!editor) return
@@ -490,15 +455,11 @@ export function TiptapEditor({
           {/* Image Dialog */}
           <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
             <DialogTrigger asChild>
-              <ToolbarButton title="Bild einfügen" disabled={isUploading}>
-                {isUploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ImageIcon className="h-4 w-4" />
-                )}
+              <ToolbarButton title="Bild einfügen">
+                <ImageIcon className="h-4 w-4" />
               </ToolbarButton>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-lg">
               <DialogHeader>
                 <DialogTitle>Bild einfügen</DialogTitle>
               </DialogHeader>
@@ -508,31 +469,18 @@ export function TiptapEditor({
                   <TabsTrigger value="url" className="flex-1">URL eingeben</TabsTrigger>
                 </TabsList>
                 <TabsContent value="upload" className="space-y-4">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileSelect}
+                  <ImageUploader
+                    onUpload={(url) => {
+                      if (editor) {
+                        editor.chain().focus().setImage({ src: url }).run()
+                        setImageDialogOpen(false)
+                      }
+                    }}
+                    uploadEndpoint="/api/admin/blog/posts/upload-image"
+                    placeholder="Bild hochladen"
+                    description="JPEG, PNG, WebP • Max. 10MB"
+                    autoOpenEditor={false}
                   />
-                  <Button
-                    variant="outline"
-                    className="w-full h-32 border-dashed"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                  >
-                    {isUploading ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        <span>Wird hochgeladen...</span>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                        <ImageIcon className="h-8 w-8" />
-                        <span>Klicken zum Auswählen oder Bild hierher ziehen</span>
-                      </div>
-                    )}
-                  </Button>
                 </TabsContent>
                 <TabsContent value="url" className="space-y-4">
                   <div className="space-y-2">

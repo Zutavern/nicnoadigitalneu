@@ -51,6 +51,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { SortableList } from '@/components/ui/sortable-list'
+import { ImageUploader } from '@/components/ui/image-uploader'
 
 interface Testimonial {
   id: string
@@ -93,7 +94,6 @@ export default function TestimonialsPage() {
   const [currentTestimonial, setCurrentTestimonial] = useState<Partial<Testimonial>>(emptyTestimonial)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [isUploadingImage, setIsUploadingImage] = useState(false)
 
   // Fetch Data
   const fetchData = useCallback(async () => {
@@ -178,35 +178,6 @@ export default function TestimonialsPage() {
       setIsEditing(false)
     }
     setEditDialogOpen(true)
-  }
-
-  const handleImageUpload = async (file: File) => {
-    setIsUploadingImage(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      if (currentTestimonial.id) {
-        formData.append('testimonialId', currentTestimonial.id)
-      }
-
-      const res = await fetch('/api/admin/testimonials/upload-image', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || 'Fehler beim Upload')
-      }
-
-      const data = await res.json()
-      setCurrentTestimonial({ ...currentTestimonial, imageUrl: data.url })
-      toast.success('Bild hochgeladen!')
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Fehler beim Upload')
-    } finally {
-      setIsUploadingImage(false)
-    }
   }
 
   const updateSortOrder = async (id: string, newSortOrder: number) => {
@@ -545,49 +516,21 @@ export default function TestimonialsPage() {
             {/* Image Upload */}
             <div className="space-y-2">
               <Label>Bild (optional)</Label>
-              <div className="flex items-center gap-4">
-                {currentTestimonial.imageUrl ? (
-                  <div className="relative">
-                    <Avatar className="h-20 w-20 border-2 border-primary/20">
-                      <AvatarImage src={currentTestimonial.imageUrl} alt="Preview" />
-                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
-                        {currentTestimonial.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
-                      onClick={() => setCurrentTestimonial({ ...currentTestimonial, imageUrl: null })}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="h-20 w-20 border-2 border-dashed rounded-full flex items-center justify-center">
-                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                )}
-                <div className="flex-1">
-                  <Input
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg,image/webp"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleImageUpload(file)
-                    }}
-                    disabled={isUploadingImage}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WebP (max. 5MB)</p>
-                </div>
-              </div>
-              {isUploadingImage && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Bild wird hochgeladen...
-                </div>
-              )}
+              <ImageUploader
+                value={currentTestimonial.imageUrl}
+                onUpload={(url) => {
+                  setCurrentTestimonial({ ...currentTestimonial, imageUrl: url })
+                  toast.success('Bild hochgeladen!')
+                }}
+                onRemove={() => setCurrentTestimonial({ ...currentTestimonial, imageUrl: null })}
+                uploadEndpoint="/api/admin/testimonials/upload-image"
+                uploadData={currentTestimonial.id ? { testimonialId: currentTestimonial.id } : undefined}
+                aspectRatio={1}
+                maxSize={5 * 1024 * 1024}
+                placeholder="Avatar hochladen"
+                description="PNG, JPG, WebP (max. 5MB) • Quadratisches Format empfohlen"
+                previewHeight="h-32 w-32"
+              />
             </div>
 
             {/* Name */}
