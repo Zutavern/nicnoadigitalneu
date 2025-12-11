@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { CookieBanner } from "@/components/cookie-banner";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ThemeColorProvider } from "@/components/providers/theme-color-provider";
+import { CookieConsentProvider } from "@/components/providers/cookie-consent-provider";
+import { CookieConsentBanner, CookieSettingsButton } from "@/components/cookie-consent-banner";
 import { PasswordProtection } from "@/components/password-protection";
 import { SessionGuard } from "@/components/session-guard";
+import cookiesData from "@/data/cookies.json";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,10 +44,13 @@ export default function RootLayout({
         >
           <ThemeColorProvider />
           <SessionProvider>
-            <SessionGuard />
-            <PasswordProtection />
-            {children}
-            <CookieBanner />
+            <CookieConsentProvider categories={cookiesData.categories}>
+              <SessionGuard />
+              <PasswordProtection />
+              {children}
+              <CookieConsentBanner />
+              <CookieSettingsButton />
+            </CookieConsentProvider>
           </SessionProvider>
         </ThemeProvider>
       </body>

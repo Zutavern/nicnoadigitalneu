@@ -23,6 +23,9 @@ importers:
       '@hookform/resolvers':
         specifier: ^4.1.1
         version: 4.1.1(react-hook-form@7.54.2(react@19.0.0))
+      '@kriegcc/react-cookie-consent':
+        specifier: 0.1.1-test
+        version: 0.1.1-test(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@prisma/adapter-pg':
         specifier: ^7.1.0
         version: 7.1.0
@@ -1051,6 +1054,12 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@kriegcc/react-cookie-consent@0.1.1-test':
+    resolution: {integrity: sha512-+KNLk2d7GFafwI3Vt/4J5jCKTtngzzBOCha4LS/VQYmzeTgYED69HQ/oJC9safsTJsqgxOSCOmzmvC/xVyEIag==}
+    peerDependencies:
+      react: '>=17.0.0'
+      react-dom: '>=17.0.0'
 
   '@mrleebo/prisma-ast@0.12.1':
     resolution: {integrity: sha512-JwqeCQ1U3fvccttHZq7Tk0m/TMC6WcFAQZdukypW3AzlJYKYTGNVd1ANU2GuhKnv4UQuOFj3oAl0LLG/gxFN1w==}
@@ -3843,6 +3852,10 @@ packages:
   jose@6.1.3:
     resolution: {integrity: sha512-0TpaTfihd4QMNwrz/ob2Bp7X04yuxJkjRGi4aKmOqwhov54i6u79oCv7T+C7lo70MKH6BesI3vscD1yb/yzKXQ==}
 
+  js-cookie@3.0.5:
+    resolution: {integrity: sha512-cEiJEAEoIbWfCZYKWhVwFuvPX1gETRYPw6LlaTKoxD3s2AkXzkCjnp6h0V77ozyqj0jakteJ4YqDJT830+lVGw==}
+    engines: {node: '>=14'}
+
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
@@ -5944,6 +5957,12 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@kriegcc/react-cookie-consent@0.1.1-test(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
+    dependencies:
+      js-cookie: 3.0.5
+      react: 19.0.0
+      react-dom: 19.0.0(react@19.0.0)
 
   '@mrleebo/prisma-ast@0.12.1':
     dependencies:
@@ -8917,6 +8936,8 @@ snapshots:
   jiti@2.6.1: {}
 
   jose@6.1.3: {}
+
+  js-cookie@3.0.5: {}
 
   js-tokens@4.0.0: {}
 

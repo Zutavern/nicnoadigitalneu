@@ -1,0 +1,84 @@
+{
+  "categories": [
+    {
+      "id": "essential",
+      "name": "Notwendig",
+      "description": "Diese Cookies sind für die Grundfunktionen der Website erforderlich und können nicht deaktiviert werden.",
+      "isRequired": true,
+      "cookies": [
+        {
+          "name": "session_token",
+          "description": "Authentifizierungs-Token für Ihre Sitzung",
+          "duration": "Session",
+          "provider": "NICNOA"
+        },
+        {
+          "name": "password_entered",
+          "description": "Speichert den Zustand der Passwort-Authentifizierung",
+          "duration": "Session",
+          "provider": "NICNOA"
+        },
+        {
+          "name": "cookie_consent",
+          "description": "Speichert Ihre Cookie-Präferenzen",
+          "duration": "1 Jahr",
+          "provider": "NICNOA"
+        }
+      ]
+    },
+    {
+      "id": "functional",
+      "name": "Funktional",
+      "description": "Diese Cookies ermöglichen erweiterte Funktionalitäten und Personalisierung.",
+      "isRequired": false,
+      "cookies": [
+        {
+          "name": "theme",
+          "description": "Speichert Ihre bevorzugte Farbschema-Einstellung (Hell/Dunkel)",
+          "duration": "1 Jahr",
+          "provider": "NICNOA"
+        },
+        {
+          "name": "language",
+          "description": "Speichert Ihre Sprachpräferenz",
+          "duration": "1 Jahr",
+          "provider": "NICNOA"
+        }
+      ]
+    },
+    {
+      "id": "analytics",
+      "name": "Analyse",
+      "description": "Diese Cookies helfen uns zu verstehen, wie Besucher mit der Website interagieren.",
+      "isRequired": false,
+      "cookies": [
+        {
+          "name": "_ga",
+          "description": "Google Analytics Cookie zur Unterscheidung von Nutzern",
+          "duration": "2 Jahre",
+          "provider": "Google"
+        },
+        {
+          "name": "_gid",
+          "description": "Google Analytics Cookie zur Unterscheidung von Nutzern",
+          "duration": "24 Stunden",
+          "provider": "Google"
+        }
+      ]
+    },
+    {
+      "id": "marketing",
+      "name": "Marketing",
+      "description": "Diese Cookies werden verwendet, um Werbung relevanter für Sie zu gestalten.",
+      "isRequired": false,
+      "cookies": [
+        {
+          "name": "_fbp",
+          "description": "Facebook Pixel für Remarketing",
+          "duration": "3 Monate",
+          "provider": "Meta"
+        }
+      ]
+    }
+  ]
+}
