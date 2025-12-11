@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma'
 import { UsageLogEntry } from './types'
-import { Decimal } from '@prisma/client/runtime/library'
 
 /**
  * Loggt einen AI-Request in die Datenbank
@@ -18,7 +17,7 @@ export async function logAIUsage(entry: UsageLogEntry): Promise<void> {
         inputTokens: entry.inputTokens,
         outputTokens: entry.outputTokens,
         totalTokens: entry.totalTokens,
-        costUsd: new Decimal(entry.costUsd),
+        costUsd: entry.costUsd, // Prisma handles Decimal conversion automatically
         responseTimeMs: entry.responseTimeMs,
         success: entry.success,
         errorMessage: entry.errorMessage,
