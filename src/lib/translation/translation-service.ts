@@ -1,11 +1,9 @@
-import OpenAI from 'openai'
 import { prisma } from '@/lib/prisma'
 import { isOpenRouterEnabled, translateViaOpenRouter } from '@/lib/openrouter/client'
 
 // Cache für API-Keys (um nicht bei jeder Übersetzung die DB abzufragen)
 interface ApiKeysCache {
   deeplApiKey: string | null
-  openaiApiKey: string | null
   translationProvider: string | null
   openRouterEnabled: boolean
 }
@@ -24,7 +22,6 @@ async function getApiKeys(): Promise<ApiKeysCache> {
       where: { id: 'default' },
       select: {
         deeplApiKey: true,
-        openaiApiKey: true,
         translationProvider: true,
       }
     }),
@@ -33,7 +30,6 @@ async function getApiKeys(): Promise<ApiKeysCache> {
 
   cachedApiKeys = {
     deeplApiKey: settings?.deeplApiKey || process.env.DEEPL_API_KEY || null,
-    openaiApiKey: settings?.openaiApiKey || process.env.OPENAI_API_KEY || null,
     translationProvider: settings?.translationProvider || 'auto',
     openRouterEnabled: openRouterActive,
   }
@@ -212,74 +208,24 @@ async function translateWithDeepL(
   }
 }
 
-// OpenAI GPT für Übersetzung (direkt oder via OpenRouter)
-async function translateWithOpenAI(
+// KI-basierte Übersetzung via OpenRouter
+async function translateWithAI(
   text: string,
-  targetLang: string,
-  apiKey: string,
-  useOpenRouter: boolean = false
+  targetLang: string
 ): Promise<TranslationResult> {
   const languageName = LANGUAGE_NAMES[targetLang] || targetLang
 
-  // Wenn OpenRouter aktiviert ist, nutze OpenRouter
-  if (useOpenRouter) {
-    try {
-      const translatedText = await translateViaOpenRouter(
-        text,
-        languageName,
-        'German',
-        { requestType: 'translation' }
-      )
-      
-      return {
-        translatedText,
-        provider: 'openrouter',
-        charactersUsed: text.length,
-      }
-    } catch (error) {
-      console.warn('[Translation] OpenRouter failed, falling back to direct OpenAI:', error)
-      // Fallback zu direkter OpenAI API wenn OpenRouter fehlschlägt
-      if (!apiKey) {
-        throw error // Wenn kein direkter API-Key, Fehler werfen
-      }
-    }
-  }
-
-  // Direkte OpenAI API
-  if (!apiKey) {
-    throw new Error('OPENAI_API_KEY not configured')
-  }
-
-  const openai = new OpenAI({ apiKey })
-
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      {
-        role: 'system',
-        content: `You are a professional translator. Translate the following German text to ${languageName}.
-Maintain the original tone, style, and formatting.
-If there are technical terms, brand names, or proper nouns, keep them as is.
-Only output the translated text, nothing else.`,
-      },
-      {
-        role: 'user',
-        content: text,
-      },
-    ],
-    temperature: 0.3, // Niedrige Temperatur für konsistentere Übersetzungen
-    max_tokens: Math.max(text.length * 2, 500), // Genug Platz für längere Zielsprachen
-  })
-
-  const translatedText = response.choices[0]?.message?.content?.trim()
-
-  if (!translatedText) {
-    throw new Error('No translation returned from OpenAI')
-  }
-
+  // Nutze OpenRouter für alle KI-Übersetzungen
+  const translatedText = await translateViaOpenRouter(
+    text,
+    languageName,
+    'German',
+    { requestType: 'translation' }
+  )
+  
   return {
     translatedText,
-    provider: 'openai',
+    provider: 'openai', // Wird als 'openai' markiert für Kompatibilität
     charactersUsed: text.length,
   }
 }
@@ -299,20 +245,20 @@ export async function translateText(
   }
 
   // API-Keys aus DB oder Umgebung laden
-  const { deeplApiKey, openaiApiKey, translationProvider, openRouterEnabled } = await getApiKeys()
+  const { deeplApiKey, translationProvider, openRouterEnabled } = await getApiKeys()
 
   // Prüfen ob überhaupt ein Key konfiguriert ist
-  if (!deeplApiKey && !openaiApiKey && !openRouterEnabled) {
-    throw new Error('Keine Übersetzungs-API konfiguriert. Bitte unter Einstellungen > Übersetzungen oder OpenRouter konfigurieren.')
+  if (!deeplApiKey && !openRouterEnabled) {
+    throw new Error('Keine Übersetzungs-API konfiguriert. Bitte DeepL unter Einstellungen > Übersetzungen oder OpenRouter aktivieren.')
   }
 
-  // Wenn DeepL die Sprache nicht unterstützt, direkt zu OpenAI/OpenRouter
+  // Wenn DeepL die Sprache nicht unterstützt, direkt zu OpenRouter
   if (DEEPL_LANGUAGE_MAP[targetLang] === null) {
-    if (!openaiApiKey && !openRouterEnabled) {
-      throw new Error(`Sprache ${targetLang} wird nur von OpenAI/OpenRouter unterstützt, aber keines konfiguriert.`)
+    if (!openRouterEnabled) {
+      throw new Error(`Sprache ${targetLang} wird nur via OpenRouter unterstützt. Bitte OpenRouter unter Einstellungen aktivieren.`)
     }
-    console.log(`[Translation] Using ${openRouterEnabled ? 'OpenRouter' : 'OpenAI'} for ${targetLang} (not supported by DeepL)`)
-    return translateWithOpenAI(text, targetLang, openaiApiKey || '', openRouterEnabled)
+    console.log(`[Translation] Using OpenRouter for ${targetLang} (not supported by DeepL)`)
+    return translateWithAI(text, targetLang)
   }
 
   // Provider-Auswahl basierend auf Einstellung
@@ -329,14 +275,14 @@ export async function translateText(
     }
   }
 
-  // Fallback zu OpenAI/OpenRouter
-  if (openaiApiKey || openRouterEnabled) {
+  // Fallback zu OpenRouter
+  if (openRouterEnabled) {
     try {
-      const result = await translateWithOpenAI(text, targetLang, openaiApiKey || '', openRouterEnabled)
-      console.log(`[Translation] ${openRouterEnabled ? 'OpenRouter' : 'OpenAI'}: ${text.substring(0, 50)}... → ${targetLang}`)
+      const result = await translateWithAI(text, targetLang)
+      console.log(`[Translation] OpenRouter: ${text.substring(0, 50)}... → ${targetLang}`)
       return result
     } catch (error) {
-      console.error(`[Translation] ${openRouterEnabled ? 'OpenRouter' : 'OpenAI'} also failed:`, error)
+      console.error(`[Translation] OpenRouter also failed:`, error)
       throw error
     }
   }
@@ -387,29 +333,29 @@ export function isLanguageSupported(langCode: string): boolean {
 }
 
 // Hilfsfunktion: Provider für Sprache ermitteln
-export async function getPreferredProvider(langCode: string): Promise<'deepl' | 'openai'> {
+export async function getPreferredProvider(langCode: string): Promise<'deepl' | 'openrouter'> {
   if (DEEPL_LANGUAGE_MAP[langCode] === null) {
-    return 'openai'
+    return 'openrouter'
   }
-  const { deeplApiKey, translationProvider } = await getApiKeys()
+  const { deeplApiKey, translationProvider, openRouterEnabled } = await getApiKeys()
   
-  if (translationProvider === 'openai') return 'openai'
+  if (translationProvider === 'openai' || translationProvider === 'openrouter') return 'openrouter'
   if (translationProvider === 'deepl') return 'deepl'
   
   // Auto: DeepL bevorzugt wenn Key vorhanden
-  return deeplApiKey ? 'deepl' : 'openai'
+  return deeplApiKey ? 'deepl' : 'openrouter'
 }
 
 // Hilfsfunktion: API-Status prüfen
 export async function getTranslationApiStatus(): Promise<{
   deeplConfigured: boolean
-  openaiConfigured: boolean
+  openRouterEnabled: boolean
   provider: string
 }> {
-  const { deeplApiKey, openaiApiKey, translationProvider } = await getApiKeys()
+  const { deeplApiKey, translationProvider, openRouterEnabled } = await getApiKeys()
   return {
     deeplConfigured: !!deeplApiKey,
-    openaiConfigured: !!openaiApiKey,
+    openRouterEnabled,
     provider: translationProvider || 'auto',
   }
 }
