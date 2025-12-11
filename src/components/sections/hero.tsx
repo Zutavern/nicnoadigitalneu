@@ -373,9 +373,9 @@ function ImageHero({ config }: { config: HeroConfig }) {
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent" />
       </div>
 
-      {/* Dot Navigation für Carousel */}
+      {/* Dot Navigation für Carousel - über dem Scroll Indicator */}
       {images.length > 1 && (
-        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+        <div className="absolute bottom-36 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
           {images.map((_, index) => (
             <button
               key={index}
