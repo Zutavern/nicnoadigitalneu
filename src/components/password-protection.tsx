@@ -14,7 +14,7 @@ export function PasswordProtection() {
   const [error, setError] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
   const [capsLockOn, setCapsLockOn] = useState(false)
-  const [isEnabled, setIsEnabled] = useState(true)
+  const [isEnabled, setIsEnabled] = useState<boolean | null>(null) // null = noch nicht geladen
   const [isChecking, setIsChecking] = useState(true)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -24,14 +24,21 @@ export function PasswordProtection() {
         const res = await fetch('/api/platform/password-protection-status')
         if (res.ok) {
           const data = await res.json()
-          setIsEnabled(data.enabled ?? true)
-          if (!data.enabled) {
+          const enabled = data.enabled ?? true
+          setIsEnabled(enabled)
+          if (!enabled) {
             setIsUnlocked(true)
           }
+        } else {
+          // Bei Fehler: Schutz nicht anzeigen
+          setIsEnabled(false)
+          setIsUnlocked(true)
         }
       } catch (error) {
         console.error('Error checking password protection status:', error)
-        setIsEnabled(true)
+        // Bei Fehler: Schutz nicht anzeigen (bessere UX)
+        setIsEnabled(false)
+        setIsUnlocked(true)
       } finally {
         setIsChecking(false)
       }
@@ -90,184 +97,342 @@ export function PasswordProtection() {
     }
   }
 
-  if (isUnlocked) return null
+  // Nicht rendern während noch gecheckt wird oder wenn deaktiviert/entsperrt
+  if (isChecking || isEnabled === null || isUnlocked) return null
 
   return (
     <AnimatePresence mode="wait">
       {!isAnimatingOut ? (
         <motion.div
           key="password-overlay"
-          initial={{ opacity: 1 }}
+          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
           className="fixed inset-0 z-[9999] overflow-hidden"
         >
-          {/* Dunkler NICNOA Hintergrund */}
+          {/* ===== ATEMBERAUBENDER NICNOA HINTERGRUND ===== */}
           <motion.div 
             className="absolute inset-0"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 1.1 }}
             transition={{ duration: 1, ease: "easeInOut" }}
-            style={{
-              background: 'linear-gradient(135deg, #030304 0%, #050506 25%, #080809 50%, #050506 75%, #030304 100%)',
-            }}
           >
-            {/* Subtiles Grid-Muster */}
+            {/* Basis: Tiefer dunkler Gradient */}
             <div 
-              className="absolute inset-0 opacity-[0.03]"
+              className="absolute inset-0"
               style={{
-                backgroundImage: `
-                  linear-gradient(hsl(151, 30%, 50%) 1px, transparent 1px),
-                  linear-gradient(90deg, hsl(151, 30%, 50%) 1px, transparent 1px)
+                background: `
+                  radial-gradient(ellipse 80% 50% at 50% 0%, hsl(151, 40%, 8%) 0%, transparent 50%),
+                  radial-gradient(ellipse 60% 40% at 100% 100%, hsl(151, 35%, 6%) 0%, transparent 50%),
+                  radial-gradient(ellipse 70% 50% at 0% 50%, hsl(151, 30%, 5%) 0%, transparent 50%),
+                  linear-gradient(180deg, #020203 0%, #030304 25%, #040405 50%, #030304 75%, #020203 100%)
                 `,
-                backgroundSize: '60px 60px',
-                maskImage: 'radial-gradient(ellipse at center, black 20%, transparent 70%)',
               }}
             />
 
-            {/* Animierte Partikel - kleine */}
+            {/* Mesh-Gradient Overlay - Der WOW-Effekt */}
+            <div className="absolute inset-0">
+              {/* Großer zentraler Glow */}
+              <motion.div 
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120vmax] h-[120vmax]"
+                animate={{ 
+                  rotate: [0, 360],
+                  scale: [1, 1.05, 1],
+                }}
+                transition={{ 
+                  rotate: { duration: 120, repeat: Infinity, ease: "linear" },
+                  scale: { duration: 8, repeat: Infinity, ease: "easeInOut" }
+                }}
+                style={{
+                  background: `
+                    conic-gradient(
+                      from 0deg at 50% 50%,
+                      hsl(151, 50%, 15%) 0deg,
+                      hsl(151, 40%, 8%) 60deg,
+                      hsl(151, 60%, 12%) 120deg,
+                      hsl(151, 35%, 6%) 180deg,
+                      hsl(151, 55%, 14%) 240deg,
+                      hsl(151, 45%, 10%) 300deg,
+                      hsl(151, 50%, 15%) 360deg
+                    )
+                  `,
+                  filter: 'blur(80px)',
+                  opacity: 0.4,
+                }}
+              />
+            </div>
+            
+            {/* Animierte Lichtstreifen */}
             <div className="absolute inset-0 overflow-hidden">
-              <motion.div className="absolute w-1 h-1 bg-[hsl(151,40%,50%)]/40 rounded-full" style={{ left: '5%', top: '10%' }} animate={{ opacity: [0.2, 0.9, 0.2], scale: [1, 1.8, 1] }} transition={{ duration: 3, repeat: Infinity, delay: 0 }} />
-              <motion.div className="absolute w-1 h-1 bg-[hsl(151,40%,50%)]/40 rounded-full" style={{ left: '12%', top: '75%' }} animate={{ opacity: [0.2, 0.9, 0.2], scale: [1, 1.8, 1] }} transition={{ duration: 4, repeat: Infinity, delay: 0.5 }} />
-              <motion.div className="absolute w-1 h-1 bg-[hsl(151,40%,50%)]/40 rounded-full" style={{ left: '22%', top: '30%' }} animate={{ opacity: [0.2, 0.9, 0.2], scale: [1, 1.8, 1] }} transition={{ duration: 2.5, repeat: Infinity, delay: 1 }} />
-              <motion.div className="absolute w-1 h-1 bg-[hsl(151,40%,50%)]/40 rounded-full" style={{ left: '33%', top: '88%' }} animate={{ opacity: [0.2, 0.9, 0.2], scale: [1, 1.8, 1] }} transition={{ duration: 3.5, repeat: Infinity, delay: 0.3 }} />
-              <motion.div className="absolute w-1 h-1 bg-[hsl(151,40%,50%)]/40 rounded-full" style={{ left: '42%', top: '15%' }} animate={{ opacity: [0.2, 0.9, 0.2], scale: [1, 1.8, 1] }} transition={{ duration: 4.5, repeat: Infinity, delay: 1.5 }} />
-              <motion.div className="absolute w-1 h-1 bg-[hsl(151,40%,50%)]/40 rounded-full" style={{ left: '55%', top: '65%' }} animate={{ opacity: [0.2, 0.9, 0.2], scale: [1, 1.8, 1] }} transition={{ duration: 3, repeat: Infinity, delay: 0.8 }} />
-              <motion.div className="absolute w-1 h-1 bg-[hsl(151,40%,50%)]/40 rounded-full" style={{ left: '68%', top: '92%' }} animate={{ opacity: [0.2, 0.9, 0.2], scale: [1, 1.8, 1] }} transition={{ duration: 2, repeat: Infinity, delay: 1.2 }} />
-              <motion.div className="absolute w-1 h-1 bg-[hsl(151,40%,50%)]/40 rounded-full" style={{ left: '78%', top: '25%' }} animate={{ opacity: [0.2, 0.9, 0.2], scale: [1, 1.8, 1] }} transition={{ duration: 3.8, repeat: Infinity, delay: 0.2 }} />
-              <motion.div className="absolute w-1 h-1 bg-[hsl(151,40%,50%)]/40 rounded-full" style={{ left: '88%', top: '55%' }} animate={{ opacity: [0.2, 0.9, 0.2], scale: [1, 1.8, 1] }} transition={{ duration: 4.2, repeat: Infinity, delay: 1.8 }} />
-              <motion.div className="absolute w-1 h-1 bg-[hsl(151,40%,50%)]/40 rounded-full" style={{ left: '95%', top: '82%' }} animate={{ opacity: [0.2, 0.9, 0.2], scale: [1, 1.8, 1] }} transition={{ duration: 2.8, repeat: Infinity, delay: 0.6 }} />
-              
-              {/* Mittlere Partikel */}
-              <motion.div className="absolute w-1.5 h-1.5 bg-[hsl(151,35%,45%)]/30 rounded-full" style={{ left: '8%', top: '45%' }} animate={{ opacity: [0.1, 0.7, 0.1], scale: [1, 1.5, 1] }} transition={{ duration: 5, repeat: Infinity, delay: 0.7 }} />
-              <motion.div className="absolute w-1.5 h-1.5 bg-[hsl(151,35%,45%)]/30 rounded-full" style={{ left: '18%', top: '58%' }} animate={{ opacity: [0.1, 0.7, 0.1], scale: [1, 1.5, 1] }} transition={{ duration: 4.5, repeat: Infinity, delay: 1.4 }} />
-              <motion.div className="absolute w-1.5 h-1.5 bg-[hsl(151,35%,45%)]/30 rounded-full" style={{ left: '28%', top: '12%' }} animate={{ opacity: [0.1, 0.7, 0.1], scale: [1, 1.5, 1] }} transition={{ duration: 5.2, repeat: Infinity, delay: 0.9 }} />
-              <motion.div className="absolute w-1.5 h-1.5 bg-[hsl(151,35%,45%)]/30 rounded-full" style={{ left: '48%', top: '78%' }} animate={{ opacity: [0.1, 0.7, 0.1], scale: [1, 1.5, 1] }} transition={{ duration: 4.8, repeat: Infinity, delay: 2.1 }} />
-              <motion.div className="absolute w-1.5 h-1.5 bg-[hsl(151,35%,45%)]/30 rounded-full" style={{ left: '62%', top: '35%' }} animate={{ opacity: [0.1, 0.7, 0.1], scale: [1, 1.5, 1] }} transition={{ duration: 5.5, repeat: Infinity, delay: 1.1 }} />
-              <motion.div className="absolute w-1.5 h-1.5 bg-[hsl(151,35%,45%)]/30 rounded-full" style={{ left: '82%', top: '68%' }} animate={{ opacity: [0.1, 0.7, 0.1], scale: [1, 1.5, 1] }} transition={{ duration: 4.3, repeat: Infinity, delay: 0.4 }} />
-              <motion.div className="absolute w-1.5 h-1.5 bg-[hsl(151,35%,45%)]/30 rounded-full" style={{ left: '92%', top: '18%' }} animate={{ opacity: [0.1, 0.7, 0.1], scale: [1, 1.5, 1] }} transition={{ duration: 5.8, repeat: Infinity, delay: 1.7 }} />
-              
-              {/* Große, langsam pulsierende Partikel */}
-              <motion.div className="absolute w-2 h-2 bg-[hsl(151,30%,40%)]/20 rounded-full" style={{ left: '15%', top: '22%' }} animate={{ opacity: [0.05, 0.4, 0.05], scale: [1, 1.3, 1] }} transition={{ duration: 6, repeat: Infinity, delay: 0 }} />
-              <motion.div className="absolute w-2 h-2 bg-[hsl(151,30%,40%)]/20 rounded-full" style={{ left: '38%', top: '42%' }} animate={{ opacity: [0.05, 0.4, 0.05], scale: [1, 1.3, 1] }} transition={{ duration: 7, repeat: Infinity, delay: 1.5 }} />
-              <motion.div className="absolute w-2 h-2 bg-[hsl(151,30%,40%)]/20 rounded-full" style={{ left: '72%', top: '48%' }} animate={{ opacity: [0.05, 0.4, 0.05], scale: [1, 1.3, 1] }} transition={{ duration: 6.5, repeat: Infinity, delay: 3 }} />
-              <motion.div className="absolute w-2 h-2 bg-[hsl(151,30%,40%)]/20 rounded-full" style={{ left: '85%', top: '85%' }} animate={{ opacity: [0.05, 0.4, 0.05], scale: [1, 1.3, 1] }} transition={{ duration: 5.5, repeat: Infinity, delay: 2 }} />
-              
-              {/* Winzige, schnell blinkende Sterne */}
-              <motion.div className="absolute w-0.5 h-0.5 bg-white/50 rounded-full" style={{ left: '3%', top: '5%' }} animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.5, repeat: Infinity, delay: 0 }} />
-              <motion.div className="absolute w-0.5 h-0.5 bg-white/50 rounded-full" style={{ left: '97%', top: '8%' }} animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.8, repeat: Infinity, delay: 0.3 }} />
-              <motion.div className="absolute w-0.5 h-0.5 bg-white/50 rounded-full" style={{ left: '25%', top: '95%' }} animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0.7 }} />
-              <motion.div className="absolute w-0.5 h-0.5 bg-white/50 rounded-full" style={{ left: '75%', top: '3%' }} animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 2, repeat: Infinity, delay: 1.1 }} />
-              <motion.div className="absolute w-0.5 h-0.5 bg-white/50 rounded-full" style={{ left: '50%', top: '50%' }} animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.6, repeat: Infinity, delay: 0.5 }} />
-              <motion.div className="absolute w-0.5 h-0.5 bg-white/50 rounded-full" style={{ left: '35%', top: '70%' }} animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.4, repeat: Infinity, delay: 0.9 }} />
-              <motion.div className="absolute w-0.5 h-0.5 bg-white/50 rounded-full" style={{ left: '65%', top: '15%' }} animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.7, repeat: Infinity, delay: 1.3 }} />
-              <motion.div className="absolute w-0.5 h-0.5 bg-white/50 rounded-full" style={{ left: '8%', top: '88%' }} animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.3, repeat: Infinity, delay: 0.2 }} />
-              
-              {/* Aufsteigende Partikel */}
               <motion.div 
-                className="absolute w-1 h-1 bg-[hsl(151,40%,55%)]/50 rounded-full" 
-                style={{ left: '20%', bottom: '0%' }} 
-                animate={{ y: [0, -800], opacity: [0, 0.8, 0] }} 
-                transition={{ duration: 8, repeat: Infinity, delay: 0, ease: "linear" }} 
+                className="absolute h-[200vh] w-[1px] bg-gradient-to-b from-transparent via-[hsl(151,60%,50%)]/30 to-transparent"
+                style={{ left: '20%', top: '-50%' }}
+                animate={{ 
+                  y: ['-100%', '100%'],
+                  opacity: [0, 1, 0],
+                }}
+                transition={{ duration: 4, repeat: Infinity, delay: 0, ease: "easeInOut" }}
               />
               <motion.div 
-                className="absolute w-1 h-1 bg-[hsl(151,40%,55%)]/50 rounded-full" 
-                style={{ left: '40%', bottom: '0%' }} 
-                animate={{ y: [0, -900], opacity: [0, 0.8, 0] }} 
-                transition={{ duration: 10, repeat: Infinity, delay: 2, ease: "linear" }} 
+                className="absolute h-[200vh] w-[1px] bg-gradient-to-b from-transparent via-[hsl(151,50%,45%)]/25 to-transparent"
+                style={{ left: '40%', top: '-50%' }}
+                animate={{ 
+                  y: ['-100%', '100%'],
+                  opacity: [0, 1, 0],
+                }}
+                transition={{ duration: 5, repeat: Infinity, delay: 1.5, ease: "easeInOut" }}
               />
               <motion.div 
-                className="absolute w-1 h-1 bg-[hsl(151,40%,55%)]/50 rounded-full" 
-                style={{ left: '60%', bottom: '0%' }} 
-                animate={{ y: [0, -700], opacity: [0, 0.8, 0] }} 
-                transition={{ duration: 7, repeat: Infinity, delay: 4, ease: "linear" }} 
+                className="absolute h-[200vh] w-[1px] bg-gradient-to-b from-transparent via-[hsl(151,55%,50%)]/20 to-transparent"
+                style={{ left: '65%', top: '-50%' }}
+                animate={{ 
+                  y: ['-100%', '100%'],
+                  opacity: [0, 1, 0],
+                }}
+                transition={{ duration: 6, repeat: Infinity, delay: 3, ease: "easeInOut" }}
               />
               <motion.div 
-                className="absolute w-1 h-1 bg-[hsl(151,40%,55%)]/50 rounded-full" 
-                style={{ left: '80%', bottom: '0%' }} 
-                animate={{ y: [0, -850], opacity: [0, 0.8, 0] }} 
-                transition={{ duration: 9, repeat: Infinity, delay: 1, ease: "linear" }} 
-              />
-              <motion.div 
-                className="absolute w-0.5 h-0.5 bg-white/40 rounded-full" 
-                style={{ left: '30%', bottom: '0%' }} 
-                animate={{ y: [0, -600], opacity: [0, 0.6, 0] }} 
-                transition={{ duration: 6, repeat: Infinity, delay: 3, ease: "linear" }} 
-              />
-              <motion.div 
-                className="absolute w-0.5 h-0.5 bg-white/40 rounded-full" 
-                style={{ left: '70%', bottom: '0%' }} 
-                animate={{ y: [0, -750], opacity: [0, 0.6, 0] }} 
-                transition={{ duration: 8, repeat: Infinity, delay: 5, ease: "linear" }} 
+                className="absolute h-[200vh] w-[1px] bg-gradient-to-b from-transparent via-[hsl(151,45%,40%)]/15 to-transparent"
+                style={{ left: '85%', top: '-50%' }}
+                animate={{ 
+                  y: ['-100%', '100%'],
+                  opacity: [0, 1, 0],
+                }}
+                transition={{ duration: 4.5, repeat: Infinity, delay: 2, ease: "easeInOut" }}
               />
             </div>
 
-            {/* NICNOA Teal Glow-Effekte - intensiver */}
-            <motion.div 
-              className="absolute top-0 left-0 w-[900px] h-[900px] bg-[hsl(151,35%,25%)]/15 rounded-full blur-[180px]"
-              animate={{ scale: [1, 1.1, 1], opacity: [0.15, 0.2, 0.15] }}
-              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <motion.div 
-              className="absolute bottom-0 right-0 w-[700px] h-[700px] bg-[hsl(151,40%,22%)]/12 rounded-full blur-[150px]"
-              animate={{ scale: [1, 1.15, 1], opacity: [0.12, 0.18, 0.12] }}
-              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-            />
-            <motion.div 
-              className="absolute top-1/3 right-1/4 w-[400px] h-[400px] bg-[hsl(151,30%,30%)]/10 rounded-full blur-[100px]"
-              animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.15, 0.1] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 4 }}
-            />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[hsl(151,25%,20%)]/8 rounded-full blur-[120px]" />
-            
-            {/* Subtiler Aurora-Effekt */}
-            <div className="absolute inset-0 overflow-hidden opacity-30">
+            {/* Floating Orbs - Premium Effekt */}
+            <div className="absolute inset-0 overflow-hidden">
               <motion.div 
-                className="absolute -top-1/2 left-0 right-0 h-full bg-gradient-to-b from-[hsl(151,40%,30%)]/20 via-transparent to-transparent"
-                style={{ transform: 'skewY(-12deg)' }}
-                animate={{ x: ['-50%', '50%', '-50%'] }}
+                className="absolute w-[500px] h-[500px] rounded-full"
+                style={{
+                  background: 'radial-gradient(circle, hsl(151, 50%, 25%) 0%, transparent 70%)',
+                  filter: 'blur(60px)',
+                  left: '-10%',
+                  top: '-10%',
+                }}
+                animate={{ 
+                  x: [0, 100, 0],
+                  y: [0, 50, 0],
+                  scale: [1, 1.2, 1],
+                }}
                 transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
               />
               <motion.div 
-                className="absolute -top-1/2 left-0 right-0 h-full bg-gradient-to-b from-[hsl(151,35%,25%)]/15 via-transparent to-transparent"
-                style={{ transform: 'skewY(12deg)' }}
-                animate={{ x: ['50%', '-50%', '50%'] }}
-                transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute w-[400px] h-[400px] rounded-full"
+                style={{
+                  background: 'radial-gradient(circle, hsl(151, 45%, 20%) 0%, transparent 70%)',
+                  filter: 'blur(50px)',
+                  right: '-5%',
+                  bottom: '10%',
+                }}
+                animate={{ 
+                  x: [0, -80, 0],
+                  y: [0, -60, 0],
+                  scale: [1, 1.15, 1],
+                }}
+                transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+              />
+              <motion.div 
+                className="absolute w-[350px] h-[350px] rounded-full"
+                style={{
+                  background: 'radial-gradient(circle, hsl(151, 55%, 22%) 0%, transparent 70%)',
+                  filter: 'blur(45px)',
+                  left: '30%',
+                  bottom: '-5%',
+                }}
+                animate={{ 
+                  x: [0, 60, 0],
+                  y: [0, -40, 0],
+                  scale: [1, 1.1, 1],
+                }}
+                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 4 }}
+              />
+              <motion.div 
+                className="absolute w-[300px] h-[300px] rounded-full"
+                style={{
+                  background: 'radial-gradient(circle, hsl(151, 60%, 28%) 0%, transparent 70%)',
+                  filter: 'blur(40px)',
+                  right: '25%',
+                  top: '15%',
+                }}
+                animate={{ 
+                  x: [0, -40, 0],
+                  y: [0, 30, 0],
+                  scale: [1, 1.08, 1],
+                }}
+                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
               />
             </div>
+
+            {/* Subtiles Netz-Muster */}
+            <div 
+              className="absolute inset-0 opacity-[0.02]"
+              style={{
+                backgroundImage: `
+                  linear-gradient(hsl(151, 50%, 50%) 1px, transparent 1px),
+                  linear-gradient(90deg, hsl(151, 50%, 50%) 1px, transparent 1px)
+                `,
+                backgroundSize: '80px 80px',
+                maskImage: 'radial-gradient(ellipse 80% 60% at 50% 50%, black 0%, transparent 70%)',
+              }}
+            />
+
+            {/* Partikel-System */}
+            <div className="absolute inset-0 overflow-hidden">
+              {/* Funkelnde Sterne */}
+              {[...Array(20)].map((_, i) => (
+                <motion.div 
+                  key={`star-${i}`}
+                  className="absolute w-[2px] h-[2px] bg-white rounded-full"
+                  style={{ 
+                    left: `${5 + (i * 4.5)}%`, 
+                    top: `${10 + ((i * 17) % 80)}%`,
+                  }}
+                  animate={{ 
+                    opacity: [0.1, 0.8, 0.1],
+                    scale: [0.8, 1.5, 0.8],
+                  }}
+                  transition={{ 
+                    duration: 2 + (i % 3),
+                    repeat: Infinity,
+                    delay: i * 0.2,
+                    ease: "easeInOut"
+                  }}
+                />
+              ))}
+              
+              {/* Aufsteigende Partikel mit Glow */}
+              {[...Array(8)].map((_, i) => (
+                <motion.div 
+                  key={`rise-${i}`}
+                  className="absolute w-[3px] h-[3px] rounded-full"
+                  style={{ 
+                    left: `${10 + (i * 12)}%`, 
+                    bottom: '-2%',
+                    background: 'hsl(151, 60%, 50%)',
+                    boxShadow: '0 0 10px hsl(151, 60%, 50%), 0 0 20px hsl(151, 50%, 40%)',
+                  }}
+                  animate={{ 
+                    y: [0, -window.innerHeight * 1.2],
+                    opacity: [0, 1, 1, 0],
+                    scale: [0.5, 1, 1, 0.3],
+                  }}
+                  transition={{ 
+                    duration: 8 + (i % 4),
+                    repeat: Infinity,
+                    delay: i * 1.2,
+                    ease: "linear"
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Aurora Borealis Effekt */}
+            <div className="absolute inset-0 overflow-hidden opacity-40">
+              <motion.div 
+                className="absolute w-[200%] h-[60%] -top-[20%] -left-[50%]"
+                style={{
+                  background: `
+                    linear-gradient(180deg, 
+                      transparent 0%,
+                      hsl(151, 50%, 20%) 20%,
+                      hsl(151, 40%, 15%) 40%,
+                      hsl(151, 60%, 25%) 60%,
+                      transparent 100%
+                    )
+                  `,
+                  filter: 'blur(40px)',
+                  transform: 'skewY(-5deg)',
+                }}
+                animate={{ 
+                  x: ['-20%', '20%', '-20%'],
+                  opacity: [0.3, 0.5, 0.3],
+                }}
+                transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <motion.div 
+                className="absolute w-[200%] h-[50%] -top-[10%] -left-[50%]"
+                style={{
+                  background: `
+                    linear-gradient(180deg, 
+                      transparent 0%,
+                      hsl(151, 45%, 18%) 30%,
+                      hsl(151, 55%, 22%) 50%,
+                      transparent 100%
+                    )
+                  `,
+                  filter: 'blur(50px)',
+                  transform: 'skewY(8deg)',
+                }}
+                animate={{ 
+                  x: ['20%', '-20%', '20%'],
+                  opacity: [0.2, 0.4, 0.2],
+                }}
+                transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+              />
+            </div>
+
+            {/* Zentrale Highlight-Pulse */}
+            <motion.div 
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px]"
+              style={{
+                background: 'radial-gradient(circle, hsl(151, 50%, 30%) 0%, transparent 60%)',
+                filter: 'blur(80px)',
+              }}
+              animate={{ 
+                scale: [0.8, 1.1, 0.8],
+                opacity: [0.15, 0.25, 0.15],
+              }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            />
             
-            {/* Vignette */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.6)_100%)]" />
+            {/* Vignette für Tiefe */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.7)_100%)]" />
           </motion.div>
 
           {/* Login Box */}
           <div className="fixed inset-0 flex items-center justify-center p-4">
             <motion.div
-              initial={{ scale: 0.8, y: 60, opacity: 0 }}
+              initial={{ scale: 0.9, y: 40, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.9, y: -100, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 25, duration: 0.8 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.2 }}
               className="relative w-full max-w-md"
             >
-              {/* Animierter Glow hinter der Box */}
+              {/* Mehrschichtiger Glow-Effekt */}
               <motion.div 
-                className="absolute -inset-2 bg-gradient-to-r from-[hsl(151,40%,40%)] via-[hsl(151,35%,35%)] to-[hsl(151,40%,40%)] rounded-3xl blur-2xl"
+                className="absolute -inset-4 rounded-3xl opacity-50"
+                style={{
+                  background: 'conic-gradient(from 180deg, hsl(151, 60%, 35%), hsl(151, 40%, 25%), hsl(151, 50%, 30%), hsl(151, 45%, 28%), hsl(151, 60%, 35%))',
+                  filter: 'blur(30px)',
+                }}
                 animate={{ 
-                  opacity: [0.25, 0.4, 0.25],
-                  scale: [1, 1.02, 1],
+                  rotate: [0, 360],
                 }}
                 transition={{ 
-                  duration: 3, 
+                  duration: 20, 
+                  repeat: Infinity, 
+                  ease: "linear" 
+                }}
+              />
+              <motion.div 
+                className="absolute -inset-2 bg-gradient-to-r from-[hsl(151,50%,40%)] via-[hsl(151,40%,30%)] to-[hsl(151,50%,40%)] rounded-3xl blur-2xl"
+                animate={{ 
+                  opacity: [0.3, 0.5, 0.3],
+                  scale: [1, 1.03, 1],
+                }}
+                transition={{ 
+                  duration: 4, 
                   repeat: Infinity, 
                   ease: "easeInOut" 
                 }}
               />
-              {/* Zweiter Glow-Layer für mehr Tiefe */}
-              <div className="absolute -inset-1 bg-gradient-to-b from-[hsl(151,35%,45%)]/30 to-transparent rounded-3xl blur-xl" />
               
-              {/* Die Box selbst - mit subtiler Border-Glow */}
-              <div className="relative rounded-2xl border border-[hsl(151,30%,40%)]/30 bg-[#1a1a1c]/95 backdrop-blur-2xl p-8 shadow-2xl shadow-[hsl(151,30%,30%)]/20">
+              {/* Die Box selbst - mit Glassmorphism */}
+              <div className="relative rounded-2xl border border-[hsl(151,40%,50%)]/20 bg-[#0a0a0b]/90 backdrop-blur-xl p-8 shadow-2xl shadow-[hsl(151,40%,20%)]/30">
                 
                 {/* Header mit Logo */}
                 <motion.div 
@@ -457,47 +622,73 @@ export function PasswordProtection() {
           </div>
         </motion.div>
       ) : (
-        /* Unlock Animation */
+        /* Unlock Animation - Explodierender Effekt */
         <motion.div
           key="unlock-animation"
           className="fixed inset-0 z-[9999] overflow-hidden pointer-events-none"
         >
+          {/* Hintergrund fadeout mit Burst */}
           <motion.div 
             className="absolute inset-0"
             initial={{ opacity: 1 }}
             animate={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            style={{
-              background: 'linear-gradient(135deg, #050505 0%, #0a0a0b 25%, #0d0d0e 50%, #0a0a0b 75%, #050505 100%)',
-            }}
+            transition={{ duration: 1, ease: "easeOut" }}
           >
-            <div className="absolute top-0 left-0 w-[800px] h-[800px] bg-[hsl(151,30%,25%)]/10 rounded-full blur-[150px]" />
-            <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-[hsl(151,35%,20%)]/10 rounded-full blur-[120px]" />
+            {/* Radiale Expansion */}
+            <motion.div 
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+              initial={{ width: 0, height: 0, opacity: 1 }}
+              animate={{ width: '300vmax', height: '300vmax', opacity: 0 }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              style={{
+                background: 'radial-gradient(circle, hsl(151, 60%, 40%) 0%, hsl(151, 50%, 20%) 30%, transparent 70%)',
+              }}
+            />
+            
+            <div 
+              className="absolute inset-0"
+              style={{
+                background: 'radial-gradient(ellipse at center, hsl(151, 40%, 10%) 0%, #020203 70%)',
+              }}
+            />
           </motion.div>
 
           <div className="fixed inset-0 flex items-center justify-center p-4">
             <motion.div
               initial={{ scale: 1, y: 0, opacity: 1 }}
-              animate={{ scale: 0.8, y: -200, opacity: 0 }}
-              transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+              animate={{ scale: 1.5, y: 0, opacity: 0 }}
+              transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
               className="relative w-full max-w-md"
             >
-              <div className="absolute -inset-1 bg-primary/20 rounded-3xl blur-xl opacity-75" />
-              <div className="relative rounded-2xl border border-primary/30 bg-[#1a1a1c]/95 backdrop-blur-2xl p-8 shadow-2xl">
+              {/* Burst-Glow */}
+              <motion.div 
+                className="absolute inset-0 rounded-3xl"
+                initial={{ opacity: 0.5 }}
+                animate={{ 
+                  opacity: 0,
+                  scale: 3,
+                }}
+                transition={{ duration: 0.8 }}
+                style={{
+                  background: 'radial-gradient(circle, hsl(151, 60%, 50%) 0%, transparent 60%)',
+                  filter: 'blur(40px)',
+                }}
+              />
+              <div className="relative rounded-2xl border border-primary/30 bg-[#0a0a0b]/90 backdrop-blur-xl p-8 shadow-2xl">
                 <div className="text-center">
                   <motion.div 
                     className="flex justify-center mb-4"
-                    animate={{ scale: [1, 1.2, 1] }}
+                    animate={{ scale: [1, 1.3, 1.1], rotate: [0, 10, 0] }}
                     transition={{ duration: 0.5 }}
                   >
-                    <div className="bg-primary p-4 rounded-2xl">
+                    <div className="bg-gradient-to-br from-primary to-primary/80 p-4 rounded-2xl shadow-lg shadow-primary/30">
                       <CheckCircle2 className="w-10 h-10 text-primary-foreground" />
                     </div>
                   </motion.div>
                   <h2 className="text-2xl font-bold text-foreground mb-2">
                     Willkommen!
                   </h2>
-                  <p className="text-primary">
+                  <p className="text-primary font-medium">
                     Zugang gewährt
                   </p>
                 </div>

@@ -40,6 +40,8 @@ import {
   Rocket,
   RefreshCw,
   Scale,
+  Languages,
+  Search,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -144,10 +146,18 @@ const menuItems = [
     ],
   },
   {
+    title: 'Internationalisierung',
+    items: [
+      { label: 'Sprachen', href: '/admin/languages', icon: Languages },
+      { label: 'Übersetzungen', href: '/admin/translations', icon: Globe },
+    ],
+  },
+  {
     title: 'System',
     items: [
       { label: 'Einstellungen', href: '/admin/settings', icon: Settings },
       { label: 'Sicherheit', href: '/admin/security', icon: Shield },
+      { label: 'SEO', href: '/admin/seo', icon: Search },
       { label: 'Fehlermeldungen', href: '/admin/error-messages', icon: AlertTriangle },
     ],
   },

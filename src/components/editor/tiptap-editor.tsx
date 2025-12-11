@@ -52,9 +52,11 @@ import {
   FileCode2,
   AlertTriangle,
   Eye,
+  Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ImageUploader } from '@/components/ui/image-uploader'
+import { AITextImprover } from '@/components/editor/ai-text-improver'
 
 const lowlight = createLowlight(common)
 
@@ -64,6 +66,10 @@ interface TiptapEditorProps {
   placeholder?: string
   className?: string
   editorClassName?: string
+  /** Callback für AI-Artikel-Generator Button (nur für Blog-Editor) */
+  onAIClick?: () => void
+  /** Zeigt den AI-Button in der Toolbar */
+  showAIButton?: boolean
 }
 
 export function TiptapEditor({
@@ -72,6 +78,8 @@ export function TiptapEditor({
   placeholder = 'Schreibe deinen Artikel...',
   className,
   editorClassName,
+  onAIClick,
+  showAIButton = false,
 }: TiptapEditorProps) {
   const [linkUrl, setLinkUrl] = useState('')
   const [linkDialogOpen, setLinkDialogOpen] = useState(false)
@@ -639,11 +647,28 @@ export function TiptapEditor({
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* AI Article Generator Button */}
+          {showAIButton && onAIClick && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onAIClick}
+              className="gap-1.5 bg-gradient-to-r from-violet-500/10 to-purple-500/10 hover:from-violet-500/20 hover:to-purple-500/20 border-violet-500/30"
+              title="KI-Artikel generieren"
+            >
+              <Sparkles className="h-4 w-4 text-violet-500" />
+              <span className="hidden sm:inline text-violet-600 dark:text-violet-400 font-medium">KI-Artikel</span>
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Editor Content */}
       <EditorContent editor={editor} />
+      
+      {/* AI Text Improver (Floating Button bei Selektion) */}
+      <AITextImprover editor={editor} />
     </div>
   )
 }

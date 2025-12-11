@@ -135,7 +135,7 @@ function AnimatedHero({ config }: { config: HeroConfig }) {
   ].filter(Boolean)
 
   return (
-    <section className="relative w-full min-h-[calc(100vh-80px)] flex items-center overflow-hidden">
+    <section className="relative w-full min-h-[calc(100vh-80px)] overflow-hidden">
       {/* Animated Background */}
       <div 
         className="absolute inset-0"
@@ -178,121 +178,123 @@ function AnimatedHero({ config }: { config: HeroConfig }) {
         )}
       </div>
 
-      {/* Content */}
-      <div className="container relative z-10 py-20">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Text Content */}
-          <motion.div
-            initial={config.animationEnabled ? { opacity: 0, y: 30 } : false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            {/* Badge */}
+      {/* Content Container - mit flex items-center für vertikale Zentrierung */}
+      <div className="relative z-10 min-h-[calc(100vh-80px-120px)] flex items-center">
+        <div className="container py-20">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Text Content */}
             <motion.div
-              initial={config.animationEnabled ? { opacity: 0, scale: 0.9 } : false}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm mb-6"
-              style={{
-                backgroundColor: 'hsl(var(--brand-primary) / 0.1)',
-                borderWidth: '1px',
-                borderColor: 'hsl(var(--brand-primary) / 0.2)',
-                color: 'hsl(var(--brand-primary))',
-              }}
+              initial={config.animationEnabled ? { opacity: 0, y: 30 } : false}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
             >
-              <Sparkles className="h-4 w-4" />
-              <span>{config.heroBadgeText}</span>
-            </motion.div>
+              {/* Badge */}
+              <motion.div
+                initial={config.animationEnabled ? { opacity: 0, scale: 0.9 } : false}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm mb-6"
+                style={{
+                  backgroundColor: 'hsl(var(--brand-primary) / 0.1)',
+                  borderWidth: '1px',
+                  borderColor: 'hsl(var(--brand-primary) / 0.2)',
+                  color: 'hsl(var(--brand-primary))',
+                }}
+              >
+                <Sparkles className="h-4 w-4" />
+                <span>{config.heroBadgeText}</span>
+              </motion.div>
 
-            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl mb-6">
-              {config.heroTitleLine1} <br />
-              {config.heroTitleLine2}{' '}
-              <span className="relative">
-                <span 
-                  className="bg-clip-text text-transparent"
-                  style={{
-                    backgroundImage: `linear-gradient(to right, 
-                      hsl(var(--gradient-from)), 
-                      hsl(var(--gradient-via)), 
-                      hsl(var(--gradient-to))
-                    )`
-                  }}
-                >
-                  {config.heroTitleHighlight}
+              <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl mb-6">
+                {config.heroTitleLine1} <br />
+                {config.heroTitleLine2}{' '}
+                <span className="relative">
+                  <span 
+                    className="bg-clip-text text-transparent"
+                    style={{
+                      backgroundImage: `linear-gradient(to right, 
+                        hsl(var(--gradient-from)), 
+                        hsl(var(--gradient-via)), 
+                        hsl(var(--gradient-to))
+                      )`
+                    }}
+                  >
+                    {config.heroTitleHighlight}
+                  </span>
+                  <motion.span
+                    className="absolute -bottom-2 left-0 w-full h-1 rounded-full"
+                    style={{
+                      backgroundImage: `linear-gradient(to right, 
+                        hsl(var(--gradient-from)), 
+                        hsl(var(--gradient-to))
+                      )`
+                    }}
+                    initial={config.animationEnabled ? { scaleX: 0 } : false}
+                    animate={{ scaleX: 1 }}
+                    transition={{ delay: 0.8, duration: 0.6 }}
+                  />
                 </span>
-                <motion.span
-                  className="absolute -bottom-2 left-0 w-full h-1 rounded-full"
-                  style={{
-                    backgroundImage: `linear-gradient(to right, 
-                      hsl(var(--gradient-from)), 
-                      hsl(var(--gradient-to))
-                    )`
-                  }}
-                  initial={config.animationEnabled ? { scaleX: 0 } : false}
-                  animate={{ scaleX: 1 }}
-                  transition={{ delay: 0.8, duration: 0.6 }}
-                />
-              </span>
-            </h1>
-            
-            <p className="text-lg text-slate-300 sm:text-xl mb-8 max-w-xl">
-              {config.heroDescription}
-            </p>
+              </h1>
+              
+              <p className="text-lg text-slate-300 sm:text-xl mb-8 max-w-xl">
+                {config.heroDescription}
+              </p>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-10">
-              <Link href={config.ctaPrimaryLink}>
-                <Button 
-                  size="lg" 
-                  className="text-lg w-full sm:w-auto group border-0 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-                >
-                  {config.ctaPrimaryText}
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              {config.showSecondaryCta && (
-                <Link href={config.ctaSecondaryLink}>
-                  <Button size="lg" variant="outline" className="text-lg w-full sm:w-auto border-slate-700 text-white hover:bg-slate-800">
-                    {config.ctaSecondaryText}
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-10">
+                <Link href={config.ctaPrimaryLink}>
+                  <Button 
+                    size="lg" 
+                    className="text-lg w-full sm:w-auto group border-0 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+                  >
+                    {config.ctaPrimaryText}
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
-              )}
-            </div>
-
-            {/* Trust Indicators */}
-            {config.showTrustIndicators && trustIndicators.length > 0 && (
-              <div className="flex flex-wrap gap-6 text-sm text-slate-400">
-                {trustIndicators.map((item, index) => (
-                  <motion.div
-                    key={item}
-                    initial={config.animationEnabled ? { opacity: 0, y: 10 } : false}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 + index * 0.1 }}
-                    className="flex items-center gap-2"
-                  >
-                    <CheckCircle2 className="h-4 w-4 text-green-400" />
-                    <span>{item}</span>
-                  </motion.div>
-                ))}
+                {config.showSecondaryCta && (
+                  <Link href={config.ctaSecondaryLink}>
+                    <Button size="lg" variant="outline" className="text-lg w-full sm:w-auto border-slate-700 text-white hover:bg-slate-800">
+                      {config.ctaSecondaryText}
+                    </Button>
+                  </Link>
+                )}
               </div>
-            )}
-          </motion.div>
 
-          {/* Dashboard Preview */}
-          {config.showDashboardPreview && (
-            <motion.div
-              initial={config.animationEnabled ? { opacity: 0, scale: 0.9 } : false}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4, duration: 0.8 }}
-              className="relative hidden lg:block"
-            >
-              <DashboardPreview config={config} />
+              {/* Trust Indicators */}
+              {config.showTrustIndicators && trustIndicators.length > 0 && (
+                <div className="flex flex-wrap gap-6 text-sm text-slate-400">
+                  {trustIndicators.map((item, index) => (
+                    <motion.div
+                      key={item}
+                      initial={config.animationEnabled ? { opacity: 0, y: 10 } : false}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 + index * 0.1 }}
+                      className="flex items-center gap-2"
+                    >
+                      <CheckCircle2 className="h-4 w-4 text-green-400" />
+                      <span>{item}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </motion.div>
-          )}
+
+            {/* Dashboard Preview */}
+            {config.showDashboardPreview && (
+              <motion.div
+                initial={config.animationEnabled ? { opacity: 0, scale: 0.9 } : false}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.4, duration: 0.8 }}
+                className="relative hidden lg:block"
+              >
+                <DashboardPreview config={config} />
+              </motion.div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Scroll Indicator */}
+      {/* Scroll Indicator - außerhalb des Content-Containers, im normalen Flow */}
       {config.showScrollIndicator && (
         <ScrollIndicator targetId={config.scrollTargetId} animationEnabled={config.animationEnabled} />
       )}
@@ -338,7 +340,7 @@ function ImageHero({ config }: { config: HeroConfig }) {
   if (images.length === 0) return null
 
   return (
-    <section className="relative w-full min-h-screen flex items-center overflow-hidden">
+    <section className="relative w-full min-h-screen overflow-hidden">
       {/* Background Images Carousel */}
       <div className="absolute inset-0">
         {images.map((imageUrl, index) => (
@@ -373,123 +375,127 @@ function ImageHero({ config }: { config: HeroConfig }) {
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent" />
       </div>
 
-      {/* Dot Navigation für Carousel - knapp über dem Scroll Indicator */}
-      {images.length > 1 && (
-        <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
-          {images.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setActiveIndex(index)}
-              className={`transition-all duration-300 rounded-full ${
-                index === activeIndex
-                  ? 'w-8 h-2'
-                  : 'w-2 h-2 hover:opacity-100'
-              }`}
+      {/* Content Container */}
+      <div className="relative z-10 min-h-[calc(100vh-120px)] flex items-center">
+        <div className="container py-20">
+          <div className="max-w-2xl">
+            {/* Badge */}
+            <motion.div
+              initial={config.animationEnabled ? { opacity: 0, scale: 0.9 } : false}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm mb-6 backdrop-blur-sm"
               style={{
-                backgroundColor: index === activeIndex 
-                  ? 'hsl(var(--brand-primary))' 
-                  : 'rgba(255,255,255,0.4)',
-                opacity: index === activeIndex ? 1 : 0.6,
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="container relative z-10 py-20">
-        <div className="max-w-2xl">
-          {/* Badge */}
-          <motion.div
-            initial={config.animationEnabled ? { opacity: 0, scale: 0.9 } : false}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm mb-6 backdrop-blur-sm"
-            style={{
-              backgroundColor: 'hsl(var(--brand-primary) / 0.15)',
-              borderWidth: '1px',
-              borderColor: 'hsl(var(--brand-primary) / 0.3)',
-            }}
-          >
-            <Sparkles className="h-4 w-4" style={{ color: 'hsl(var(--brand-primary))' }} />
-            <span className="text-white">{config.heroBadgeText}</span>
-          </motion.div>
-
-          <motion.h1 
-            initial={config.animationEnabled ? { opacity: 0, y: 30 } : false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl mb-6"
-          >
-            {config.heroTitleLine1} <br />
-            {config.heroTitleLine2}{' '}
-            <span 
-              className="bg-clip-text text-transparent"
-              style={{
-                backgroundImage: `linear-gradient(to right, 
-                  hsl(var(--gradient-from)), 
-                  hsl(var(--gradient-via)), 
-                  hsl(var(--gradient-to))
-                )`
+                backgroundColor: 'hsl(var(--brand-primary) / 0.15)',
+                borderWidth: '1px',
+                borderColor: 'hsl(var(--brand-primary) / 0.3)',
               }}
             >
-              {config.heroTitleHighlight}
-            </span>
-          </motion.h1>
-          
-          <motion.p 
-            initial={config.animationEnabled ? { opacity: 0, y: 20 } : false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="text-lg text-slate-200 sm:text-xl mb-8"
-          >
-            {config.heroDescription}
-          </motion.p>
+              <Sparkles className="h-4 w-4" style={{ color: 'hsl(var(--brand-primary))' }} />
+              <span className="text-white">{config.heroBadgeText}</span>
+            </motion.div>
 
-          {/* CTA Buttons */}
-          <motion.div 
-            initial={config.animationEnabled ? { opacity: 0, y: 20 } : false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="flex flex-col sm:flex-row gap-4 mb-10"
-          >
-            <Link href={config.ctaPrimaryLink}>
-              <Button 
-                size="lg" 
-                className="text-lg w-full sm:w-auto group"
+            <motion.h1 
+              initial={config.animationEnabled ? { opacity: 0, y: 30 } : false}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl mb-6"
+            >
+              {config.heroTitleLine1} <br />
+              {config.heroTitleLine2}{' '}
+              <span 
+                className="bg-clip-text text-transparent"
+                style={{
+                  backgroundImage: `linear-gradient(to right, 
+                    hsl(var(--gradient-from)), 
+                    hsl(var(--gradient-via)), 
+                    hsl(var(--gradient-to))
+                  )`
+                }}
               >
-                {config.ctaPrimaryText}
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-            {config.showSecondaryCta && (
-              <Link href={config.ctaSecondaryLink}>
-                <Button size="lg" variant="outline" className="text-lg w-full sm:w-auto border-white/30 text-white hover:bg-white/10">
-                  {config.ctaSecondaryText}
+                {config.heroTitleHighlight}
+              </span>
+            </motion.h1>
+            
+            <motion.p 
+              initial={config.animationEnabled ? { opacity: 0, y: 20 } : false}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.8 }}
+              className="text-lg text-slate-200 sm:text-xl mb-8"
+            >
+              {config.heroDescription}
+            </motion.p>
+
+            {/* CTA Buttons */}
+            <motion.div 
+              initial={config.animationEnabled ? { opacity: 0, y: 20 } : false}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="flex flex-col sm:flex-row gap-4 mb-10"
+            >
+              <Link href={config.ctaPrimaryLink}>
+                <Button 
+                  size="lg" 
+                  className="text-lg w-full sm:w-auto group"
+                >
+                  {config.ctaPrimaryText}
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-            )}
-          </motion.div>
+              {config.showSecondaryCta && (
+                <Link href={config.ctaSecondaryLink}>
+                  <Button size="lg" variant="outline" className="text-lg w-full sm:w-auto border-white/30 text-white hover:bg-white/10">
+                    {config.ctaSecondaryText}
+                  </Button>
+                </Link>
+              )}
+            </motion.div>
 
-          {/* Trust Indicators */}
-          {config.showTrustIndicators && trustIndicators.length > 0 && (
-            <div className="flex flex-wrap gap-6 text-sm text-slate-300">
-              {trustIndicators.map((item, index) => (
-                <motion.div
-                  key={item}
-                  initial={config.animationEnabled ? { opacity: 0, y: 10 } : false}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 + index * 0.1 }}
-                  className="flex items-center gap-2"
-                >
-                  <CheckCircle2 className="h-4 w-4 text-green-400" />
-                  <span>{item}</span>
-                </motion.div>
-              ))}
-            </div>
-          )}
+            {/* Trust Indicators */}
+            {config.showTrustIndicators && trustIndicators.length > 0 && (
+              <div className="flex flex-wrap gap-6 text-sm text-slate-300">
+                {trustIndicators.map((item, index) => (
+                  <motion.div
+                    key={item}
+                    initial={config.animationEnabled ? { opacity: 0, y: 10 } : false}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 + index * 0.1 }}
+                    className="flex items-center gap-2"
+                  >
+                    <CheckCircle2 className="h-4 w-4 text-green-400" />
+                    <span>{item}</span>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Dot Navigation für Carousel */}
+      {images.length > 1 && (
+        <div className="relative z-20 flex justify-center mb-2">
+          <div className="flex items-center gap-2">
+            {images.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setActiveIndex(index)}
+                className={`transition-all duration-300 rounded-full ${
+                  index === activeIndex
+                    ? 'w-8 h-2'
+                    : 'w-2 h-2 hover:opacity-100'
+                }`}
+                style={{
+                  backgroundColor: index === activeIndex 
+                    ? 'hsl(var(--brand-primary))' 
+                    : 'rgba(255,255,255,0.4)',
+                  opacity: index === activeIndex ? 1 : 0.6,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Scroll Indicator */}
       {config.showScrollIndicator && (
@@ -544,7 +550,7 @@ function VideoHero({ config }: { config: HeroConfig }) {
   }, [config.heroVideoUrl])
 
   return (
-    <section className="relative w-full min-h-screen flex items-center overflow-hidden">
+    <section className="relative w-full min-h-screen overflow-hidden">
       {/* Background Video */}
       <div className="absolute inset-0">
         <video
@@ -583,98 +589,100 @@ function VideoHero({ config }: { config: HeroConfig }) {
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
       </div>
 
-      {/* Content */}
-      <div className="container relative z-10 py-20">
-        <div className="max-w-2xl">
-          {/* Badge */}
-          <motion.div
-            initial={config.animationEnabled ? { opacity: 0, scale: 0.9 } : false}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm mb-6 backdrop-blur-sm"
-            style={{
-              backgroundColor: 'hsl(var(--brand-primary) / 0.15)',
-              borderWidth: '1px',
-              borderColor: 'hsl(var(--brand-primary) / 0.3)',
-            }}
-          >
-            <Play className="h-4 w-4" style={{ color: 'hsl(var(--brand-primary))' }} />
-            <span className="text-white">{config.heroBadgeText}</span>
-          </motion.div>
-
-          <motion.h1 
-            initial={config.animationEnabled ? { opacity: 0, y: 30 } : false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl mb-6"
-          >
-            {config.heroTitleLine1} <br />
-            {config.heroTitleLine2}{' '}
-            <span 
-              className="bg-clip-text text-transparent"
+      {/* Content Container */}
+      <div className="relative z-10 min-h-[calc(100vh-120px)] flex items-center">
+        <div className="container py-20">
+          <div className="max-w-2xl">
+            {/* Badge */}
+            <motion.div
+              initial={config.animationEnabled ? { opacity: 0, scale: 0.9 } : false}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm mb-6 backdrop-blur-sm"
               style={{
-                backgroundImage: `linear-gradient(to right, 
-                  hsl(var(--gradient-from)), 
-                  hsl(var(--gradient-via)), 
-                  hsl(var(--gradient-to))
-                )`
+                backgroundColor: 'hsl(var(--brand-primary) / 0.15)',
+                borderWidth: '1px',
+                borderColor: 'hsl(var(--brand-primary) / 0.3)',
               }}
             >
-              {config.heroTitleHighlight}
-            </span>
-          </motion.h1>
-          
-          <motion.p 
-            initial={config.animationEnabled ? { opacity: 0, y: 20 } : false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="text-lg text-slate-200 sm:text-xl mb-8"
-          >
-            {config.heroDescription}
-          </motion.p>
+              <Play className="h-4 w-4" style={{ color: 'hsl(var(--brand-primary))' }} />
+              <span className="text-white">{config.heroBadgeText}</span>
+            </motion.div>
 
-          {/* CTA Buttons */}
-          <motion.div 
-            initial={config.animationEnabled ? { opacity: 0, y: 20 } : false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="flex flex-col sm:flex-row gap-4 mb-10"
-          >
-            <Link href={config.ctaPrimaryLink}>
-              <Button 
-                size="lg" 
-                className="text-lg w-full sm:w-auto group"
+            <motion.h1 
+              initial={config.animationEnabled ? { opacity: 0, y: 30 } : false}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl mb-6"
+            >
+              {config.heroTitleLine1} <br />
+              {config.heroTitleLine2}{' '}
+              <span 
+                className="bg-clip-text text-transparent"
+                style={{
+                  backgroundImage: `linear-gradient(to right, 
+                    hsl(var(--gradient-from)), 
+                    hsl(var(--gradient-via)), 
+                    hsl(var(--gradient-to))
+                  )`
+                }}
               >
-                {config.ctaPrimaryText}
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-            {config.showSecondaryCta && (
-              <Link href={config.ctaSecondaryLink}>
-                <Button size="lg" variant="outline" className="text-lg w-full sm:w-auto border-white/30 text-white hover:bg-white/10">
-                  {config.ctaSecondaryText}
+                {config.heroTitleHighlight}
+              </span>
+            </motion.h1>
+            
+            <motion.p 
+              initial={config.animationEnabled ? { opacity: 0, y: 20 } : false}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.8 }}
+              className="text-lg text-slate-200 sm:text-xl mb-8"
+            >
+              {config.heroDescription}
+            </motion.p>
+
+            {/* CTA Buttons */}
+            <motion.div 
+              initial={config.animationEnabled ? { opacity: 0, y: 20 } : false}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="flex flex-col sm:flex-row gap-4 mb-10"
+            >
+              <Link href={config.ctaPrimaryLink}>
+                <Button 
+                  size="lg" 
+                  className="text-lg w-full sm:w-auto group"
+                >
+                  {config.ctaPrimaryText}
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-            )}
-          </motion.div>
+              {config.showSecondaryCta && (
+                <Link href={config.ctaSecondaryLink}>
+                  <Button size="lg" variant="outline" className="text-lg w-full sm:w-auto border-white/30 text-white hover:bg-white/10">
+                    {config.ctaSecondaryText}
+                  </Button>
+                </Link>
+              )}
+            </motion.div>
 
-          {/* Trust Indicators */}
-          {config.showTrustIndicators && trustIndicators.length > 0 && (
-            <div className="flex flex-wrap gap-6 text-sm text-slate-300">
-              {trustIndicators.map((item, index) => (
-                <motion.div
-                  key={item}
-                  initial={config.animationEnabled ? { opacity: 0, y: 10 } : false}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 + index * 0.1 }}
-                  className="flex items-center gap-2"
-                >
-                  <CheckCircle2 className="h-4 w-4 text-green-400" />
-                  <span>{item}</span>
-                </motion.div>
-              ))}
-            </div>
-          )}
+            {/* Trust Indicators */}
+            {config.showTrustIndicators && trustIndicators.length > 0 && (
+              <div className="flex flex-wrap gap-6 text-sm text-slate-300">
+                {trustIndicators.map((item, index) => (
+                  <motion.div
+                    key={item}
+                    initial={config.animationEnabled ? { opacity: 0, y: 10 } : false}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 + index * 0.1 }}
+                    className="flex items-center gap-2"
+                  >
+                    <CheckCircle2 className="h-4 w-4 text-green-400" />
+                    <span>{item}</span>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -808,99 +816,42 @@ function DashboardPreview({ config }: { config: HeroConfig }) {
 function ScrollIndicator({ targetId, animationEnabled }: { targetId: string; animationEnabled: boolean }) {
   return (
     <motion.div
-      initial={animationEnabled ? { opacity: 0, y: 20 } : false}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 1.8, duration: 0.8 }}
-      className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
+      initial={animationEnabled ? { opacity: 0 } : false}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 1 }}
+      className="flex justify-center mt-8 pb-4"
     >
-      <motion.a
+      <a
         href={`#${targetId}`}
-        className="flex flex-col items-center gap-3 group cursor-pointer"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        className="flex flex-col items-center gap-1.5 group cursor-pointer"
       >
         {/* Mouse Icon */}
         <div className="relative">
-          <div className="w-7 h-11 rounded-full border-2 border-slate-500/50 flex justify-center pt-2 group-hover:border-primary/70 transition-colors duration-300">
+          <div className="w-5 h-8 rounded-full border-2 border-slate-500/50 flex justify-center pt-1.5 group-hover:border-primary/60 transition-colors">
             <motion.div
-              className="w-1.5 h-2.5 rounded-full"
-              style={{
-                backgroundImage: `linear-gradient(to bottom, 
-                  hsl(var(--gradient-from)), 
-                  hsl(var(--gradient-to))
-                )`
-              }}
-              animate={{
-                y: [0, 8, 0],
-                opacity: [1, 0.3, 1],
-              }}
-              transition={{
-                duration: 1.8,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
+              className="w-1 h-1.5 rounded-full bg-primary"
+              animate={{ y: [0, 4, 0], opacity: [1, 0.3, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
             />
           </div>
-          
-          <motion.div
-            className="absolute -inset-1 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{ backgroundColor: 'hsl(var(--glow-primary) / 0.3)' }}
-            animate={{
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
         </div>
 
         {/* Chevrons */}
         <div className="flex flex-col items-center -space-y-1">
           <motion.div
-            animate={{
-              y: [0, 4, 0],
-              opacity: [0.4, 1, 0.4],
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
+            animate={{ y: [0, 3, 0], opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
           >
-            <ChevronDown className="h-4 w-4 text-slate-400 group-hover:text-primary transition-colors" />
+            <ChevronDown className="h-3 w-3 text-slate-400 group-hover:text-primary transition-colors" />
           </motion.div>
           <motion.div
-            animate={{
-              y: [0, 4, 0],
-              opacity: [0.2, 0.6, 0.2],
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 0.15,
-            }}
+            animate={{ y: [0, 3, 0], opacity: [0.2, 0.6, 0.2] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.1 }}
           >
-            <ChevronDown className="h-4 w-4 text-slate-500 group-hover:text-primary/70 transition-colors" />
+            <ChevronDown className="h-3 w-3 text-slate-500 group-hover:text-primary/60 transition-colors" />
           </motion.div>
         </div>
-
-        <motion.span
-          className="text-xs text-slate-500 font-medium tracking-wider uppercase group-hover:text-primary/80 transition-colors"
-          animate={{
-            opacity: [0.5, 1, 0.5],
-          }}
-          transition={{
-            duration: 2.5,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        >
-          Scroll
-        </motion.span>
-      </motion.a>
+      </a>
     </motion.div>
   )
 }

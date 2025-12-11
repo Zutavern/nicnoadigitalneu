@@ -20,9 +20,26 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Statische Metadata (dynamische SEO wird über individuelle Seiten gesteuert)
 export const metadata: Metadata = {
-  title: "NICNOA&CO.online",
+  title: {
+    default: "NICNOA&CO.online",
+    template: "%s | NICNOA&CO.online",
+  },
   description: "Die All-in-One SaaS-Lösung für moderne Salon-Coworking-Spaces.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://nicnoa.de"),
+  openGraph: {
+    type: "website",
+    siteName: "NICNOA&CO.online",
+    locale: "de_DE",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

@@ -33,6 +33,7 @@ import { toast } from 'sonner'
 import { SortableList } from '@/components/ui/sortable-list'
 import { LegalAdminPreview } from '@/components/legal/legal-admin-preview'
 import { LegalTiptapEditor } from '@/components/editor/legal-tiptap-editor'
+import { SEOAudit } from '@/components/admin/seo-audit'
 
 const PAGE_TYPE = 'AGB'
 
@@ -430,10 +431,10 @@ export default function AGBAdminPage() {
                 </p>
               </div>
               {/* Google Preview */}
-              <div className="p-3 bg-muted/30 rounded-lg border">
+              <div className="p-3 bg-white rounded-lg border shadow-sm">
                 <div className="flex items-center gap-2 mb-2">
-                  <Search className="h-3 w-3 text-muted-foreground" />
-                  <p className="text-xs font-medium">Google-Vorschau</p>
+                  <Search className="h-3 w-3 text-gray-500" />
+                  <p className="text-xs font-medium text-gray-700">Google-Vorschau</p>
                 </div>
                 <div className="space-y-0.5">
                   <p className="text-[#1a0dab] text-sm hover:underline cursor-pointer truncate">
@@ -444,6 +445,15 @@ export default function AGBAdminPage() {
                     {pageConfig.metaDescription || pageConfig.heroDescription || 'Allgemeine Geschäftsbedingungen der NICNOA GmbH'}
                   </p>
                 </div>
+              </div>
+
+              {/* SEO Audit */}
+              <div className="pt-4 border-t">
+                <SEOAudit
+                  metaTitle={pageConfig.metaTitle}
+                  metaDescription={pageConfig.metaDescription}
+                  content={sections.map(s => s.content).join(' ')}
+                />
               </div>
             </CardContent>
           </Card>

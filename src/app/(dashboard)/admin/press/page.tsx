@@ -59,6 +59,7 @@ import {
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
+import { SEOSection } from '@/components/admin/seo-preview'
 
 interface PressArticle {
   id: string
@@ -715,30 +716,16 @@ export default function PressAdminPage() {
                       <CardTitle>SEO-Einstellungen</CardTitle>
                       <CardDescription>Optimierung für Suchmaschinen</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Meta-Titel (max. 70 Zeichen)</Label>
-                        <Input
-                          value={pageConfig.metaTitle || ''}
-                          onChange={(e) => updateConfig('metaTitle', e.target.value)}
-                          maxLength={70}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          {(pageConfig.metaTitle || '').length}/70 Zeichen
-                        </p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Meta-Beschreibung (max. 160 Zeichen)</Label>
-                        <Textarea
-                          value={pageConfig.metaDescription || ''}
-                          onChange={(e) => updateConfig('metaDescription', e.target.value)}
-                          maxLength={160}
-                          rows={2}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          {(pageConfig.metaDescription || '').length}/160 Zeichen
-                        </p>
-                      </div>
+                    <CardContent>
+                      <SEOSection
+                        metaTitle={pageConfig.metaTitle}
+                        metaDescription={pageConfig.metaDescription}
+                        fallbackTitle="Presse | NICNOA"
+                        fallbackDescription="Pressemitteilungen und Neuigkeiten von NICNOA"
+                        url="nicnoa.de › presse"
+                        onTitleChange={(value) => updateConfig('metaTitle', value)}
+                        onDescriptionChange={(value) => updateConfig('metaDescription', value)}
+                      />
                     </CardContent>
                   </Card>
                 </>

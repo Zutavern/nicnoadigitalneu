@@ -51,6 +51,9 @@ export async function GET() {
         glowUseGradient: true,
         glowCustomPrimary: null,
         glowCustomSecondary: null,
+        // SEO
+        metaTitle: null,
+        metaDescription: null,
       })
     }
 
@@ -91,6 +94,9 @@ export async function GET() {
       glowUseGradient: c.glow_use_gradient ?? true,
       glowCustomPrimary: c.glow_custom_primary,
       glowCustomSecondary: c.glow_custom_secondary,
+      // SEO
+      metaTitle: c.meta_title,
+      metaDescription: c.meta_description,
     })
   } catch (error) {
     console.error('Error fetching About Us page config:', error)
@@ -146,6 +152,9 @@ export async function PUT(request: Request) {
       glowUseGradient,
       glowCustomPrimary,
       glowCustomSecondary,
+      // SEO
+      metaTitle,
+      metaDescription,
     } = body
 
     if (!heroTitle) {
@@ -197,6 +206,8 @@ export async function PUT(request: Request) {
           glow_use_gradient = ${glowUseGradient ?? true},
           glow_custom_primary = ${glowCustomPrimary || null},
           glow_custom_secondary = ${glowCustomSecondary || null},
+          meta_title = ${metaTitle || null},
+          meta_description = ${metaDescription || null},
           updated_at = NOW()
         WHERE id = ${existing[0].id}
       `
@@ -213,6 +224,7 @@ export async function PUT(request: Request) {
           why_title, why_description, why_button_text, why_button_link,
           glow_effect_enabled, glow_effect_spread, glow_effect_proximity, glow_effect_border_width,
           glow_use_design_system, glow_use_gradient, glow_custom_primary, glow_custom_secondary,
+          meta_title, meta_description,
           created_at, updated_at
         ) VALUES (
           ${heroBadgeText || null}, ${heroTitle}, ${heroDescription || null},
@@ -224,6 +236,7 @@ export async function PUT(request: Request) {
           ${whyTitle || null}, ${whyDescription || null}, ${whyButtonText || 'Jetzt durchstarten'}, ${whyButtonLink || '/registrieren'},
           ${glowEffectEnabled ?? true}, ${glowEffectSpread ?? 40}, ${glowEffectProximity ?? 64}, ${glowEffectBorderWidth ?? 3},
           ${glowUseDesignSystem ?? true}, ${glowUseGradient ?? true}, ${glowCustomPrimary || null}, ${glowCustomSecondary || null},
+          ${metaTitle || null}, ${metaDescription || null},
           NOW(), NOW()
         )
       `

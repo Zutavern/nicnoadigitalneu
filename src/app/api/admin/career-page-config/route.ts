@@ -67,6 +67,9 @@ export async function PUT(request: Request) {
         glowUseGradient: data.glowUseGradient,
         glowCustomPrimary: data.glowCustomPrimary,
         glowCustomSecondary: data.glowCustomSecondary,
+        // SEO
+        metaTitle: data.metaTitle,
+        metaDescription: data.metaDescription,
       },
       create: {
         id: 'default',

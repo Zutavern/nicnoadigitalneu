@@ -38,6 +38,9 @@ export async function GET() {
       glowUseGradient: true,
       glowCustomPrimary: null,
       glowCustomSecondary: null,
+      // SEO
+      metaTitle: null,
+      metaDescription: null,
     }
 
     if (config) {
@@ -67,6 +70,9 @@ export async function GET() {
         glowUseGradient: config.glowUseGradient ?? defaultConfig.glowUseGradient,
         glowCustomPrimary: config.glowCustomPrimary,
         glowCustomSecondary: config.glowCustomSecondary,
+        // SEO
+        metaTitle: config.metaTitle,
+        metaDescription: config.metaDescription,
       })
     }
 
@@ -122,6 +128,9 @@ export async function PUT(request: Request) {
           glowUseGradient: body.glowUseGradient,
           glowCustomPrimary: body.glowCustomPrimary,
           glowCustomSecondary: body.glowCustomSecondary,
+          // SEO
+          metaTitle: body.metaTitle,
+          metaDescription: body.metaDescription,
         },
       })
       return NextResponse.json(config)
@@ -153,6 +162,9 @@ export async function PUT(request: Request) {
           glowUseGradient: body.glowUseGradient ?? true,
           glowCustomPrimary: body.glowCustomPrimary,
           glowCustomSecondary: body.glowCustomSecondary,
+          // SEO
+          metaTitle: body.metaTitle,
+          metaDescription: body.metaDescription,
         },
       })
       return NextResponse.json(config)

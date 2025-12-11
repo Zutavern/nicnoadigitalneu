@@ -982,12 +982,72 @@ model PlatformSettings {
   // Design-System
   designSystemPreset        String? @default("nicnoa-classic") @map("design_system_preset") @db.VarChar(50)
   designTokens              Json?   @map("design_tokens") @db.JsonB
-  
+
+  // Übersetzungs-API-Keys
+  deeplApiKey               String?  @map("deepl_api_key") @db.VarChar(500)
+  openaiApiKey              String?  @map("openai_api_key") @db.VarChar(500)
+  translationProvider       String?  @default("deepl") @map("translation_provider") @db.VarChar(20) // 'deepl', 'openai', 'auto'
+
+  // OpenRouter Konfiguration
+  openRouterApiKey          String?  @map("openrouter_api_key") @db.VarChar(500)
+  openRouterEnabled         Boolean  @default(false) @map("openrouter_enabled")
+  openRouterDefaultModel    String?  @default("openai/gpt-4o-mini") @map("openrouter_default_model") @db.VarChar(100)
+  openRouterSiteUrl         String?  @map("openrouter_site_url") @db.VarChar(255)
+  openRouterSiteName        String?  @map("openrouter_site_name") @db.VarChar(100)
+
+  // Tone of Voice für Blog-Artikel
+  blogToneOfVoice           String?  @map("blog_tone_of_voice") @db.Text
+  blogToneOfVoicePrompt     String?  @map("blog_tone_of_voice_prompt") @db.Text
+  blogArticleSystemPrompt   String?  @map("blog_article_system_prompt") @db.Text
+
   // Timestamps
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("platform_settings")
+}
+
+// ============================================
+// AI Usage Tracking (OpenRouter)
+// ============================================
+
+model AIUsageLog {
+  id              String   @id @default(cuid())
+  
+  // Nutzer-Zuordnung
+  userId          String?  @map("user_id")         // Salon-User oder Admin
+  salonId         String?  @map("salon_id")        // Zuordnung zum Salon
+  userType        String   @default("admin") @map("user_type") @db.VarChar(20) // 'admin', 'salon_owner', 'chair_renter'
+  
+  // Request Details
+  requestType     String   @map("request_type") @db.VarChar(50)  // 'translation', 'chat', 'completion', 'embedding'
+  model           String   @db.VarChar(100)                      // z.B. 'openai/gpt-4o-mini'
+  provider        String   @default("openrouter") @db.VarChar(30) // 'openrouter', 'openai', 'deepl'
+  
+  // Token & Kosten
+  inputTokens     Int      @default(0) @map("input_tokens")
+  outputTokens    Int      @default(0) @map("output_tokens")
+  totalTokens     Int      @default(0) @map("total_tokens")
+  costUsd         Decimal  @default(0) @map("cost_usd") @db.Decimal(10, 6)
+  
+  // Performance
+  responseTimeMs  Int?     @map("response_time_ms")
+  
+  // Status
+  success         Boolean  @default(true)
+  errorMessage    String?  @map("error_message") @db.Text
+  
+  // Zusätzliche Infos
+  metadata        Json?    @db.JsonB
+  
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([userId])
+  @@index([salonId])
+  @@index([requestType])
+  @@index([createdAt])
+  @@index([userType, createdAt])
+  @@map("ai_usage_logs")
 }
 
 // ============================================
@@ -1111,6 +1171,10 @@ model CareerPageConfig {
   glowCustomPrimary     String?  @map("glow_custom_primary") @db.VarChar(50)
   glowCustomSecondary   String?  @map("glow_custom_secondary") @db.VarChar(50)
 
+  // SEO
+  metaTitle         String?  @map("meta_title") @db.VarChar(70)
+  metaDescription   String?  @map("meta_description") @db.VarChar(160)
+
   // Meta
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -1150,6 +1214,10 @@ model PartnerPageConfig {
   glowUseGradient       Boolean  @default(true) @map("glow_use_gradient")
   glowCustomPrimary     String?  @map("glow_custom_primary") @db.VarChar(50)
   glowCustomSecondary   String?  @map("glow_custom_secondary") @db.VarChar(50)
+
+  // SEO
+  metaTitle         String?  @map("meta_title") @db.VarChar(70)
+  metaDescription   String?  @map("meta_description") @db.VarChar(160)
 
   // Meta
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -1220,6 +1288,10 @@ model FAQPageConfig {
   contactLinkText   String?  @default("Support-Team") @map("contact_link_text") @db.VarChar(100)
   contactLinkUrl    String?  @default("/support") @map("contact_link_url") @db.VarChar(200)
   
+  // SEO
+  metaTitle         String?  @map("meta_title") @db.VarChar(70)
+  metaDescription   String?  @map("meta_description") @db.VarChar(160)
+
   // Meta
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -1277,6 +1349,10 @@ model AboutUsPageConfig {
   glowUseGradient       Boolean  @default(true) @map("glow_use_gradient")
   glowCustomPrimary     String?  @map("glow_custom_primary") @db.VarChar(50)
   glowCustomSecondary   String?  @map("glow_custom_secondary") @db.VarChar(50)
+
+  // SEO
+  metaTitle         String?  @map("meta_title") @db.VarChar(70)
+  metaDescription   String?  @map("meta_description") @db.VarChar(160)
 
   // Meta
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -2523,4 +2599,166 @@ model ChangelogEntry {
   @@index([isActive, sortOrder])
   @@index([date])
   @@map("changelog_entries")
+}
+
+// ============================================
+// Global SEO Configuration
+// ============================================
+
+model GlobalSeoConfig {
+  id                      String   @id @default("default")
+  
+  // Site-weite Defaults
+  siteName                String   @default("NICNOA&CO.online") @map("site_name") @db.VarChar(100)
+  titleSuffix             String?  @default(" | NICNOA&CO.online") @map("title_suffix") @db.VarChar(100)
+  defaultMetaDescription  String?  @map("default_meta_description") @db.VarChar(160)
+  
+  // Open Graph / Social
+  defaultOgImage          String?  @map("default_og_image") @db.VarChar(500)
+  twitterHandle           String?  @map("twitter_handle") @db.VarChar(50)
+  facebookAppId           String?  @map("facebook_app_id") @db.VarChar(50)
+  
+  // Verification
+  googleSiteVerification  String?  @map("google_site_verification") @db.VarChar(100)
+  bingSiteVerification    String?  @map("bing_site_verification") @db.VarChar(100)
+  
+  // Robots
+  robotsIndex             Boolean  @default(true) @map("robots_index")
+  robotsFollow            Boolean  @default(true) @map("robots_follow")
+  
+  // Schema.org / Structured Data
+  organizationName        String?  @map("organization_name") @db.VarChar(200)
+  organizationLogo        String?  @map("organization_logo") @db.VarChar(500)
+  organizationAddress     String?  @map("organization_address") @db.Text
+  organizationPhone       String?  @map("organization_phone") @db.VarChar(50)
+  organizationEmail       String?  @map("organization_email") @db.VarChar(100)
+  
+  // Timestamps
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  @@map("global_seo_config")
+}
+
+// ============================================
+// AI Translation System
+// ============================================
+
+model Language {
+  id            String    @id @db.VarChar(10) // z.B. "de", "en", "fr"
+  name          String    @db.VarChar(100) // "German", "English"
+  nativeName    String    @map("native_name") @db.VarChar(100) // "Deutsch", "English"
+  flag          String?   @db.VarChar(10) // Emoji flag: "🇩🇪", "🇬🇧"
+  isDefault     Boolean   @default(false) @map("is_default")
+  isActive      Boolean   @default(false) @map("is_active")
+  sortOrder     Int       @default(0) @map("sort_order")
+  
+  // SEO-sichere Deaktivierung
+  deactivatedAt DateTime? @map("deactivated_at") @db.Timestamptz
+  redirectTo    String?   @map("redirect_to") @db.VarChar(10) // Redirect zu welcher Sprache
+  
+  // Timestamps
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Relations
+  translations     Translation[]
+  translationJobs  TranslationJob[]
+  
+  @@index([isActive, sortOrder])
+  @@map("languages")
+}
+
+model Translation {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Language Reference
+  languageId    String            @map("language_id") @db.VarChar(10)
+  language      Language          @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  
+  // Content Reference
+  contentType   String            @map("content_type") @db.VarChar(100) // "blog_post", "faq", "homepage_config"
+  contentId     String            @map("content_id") @db.VarChar(100) // ID des Original-Inhalts
+  field         String            @db.VarChar(100) // "title", "description", "content"
+  
+  // Translation Value
+  value         String            @db.Text
+  
+  // Change Detection
+  sourceHash    String            @map("source_hash") @db.VarChar(64) // SHA256 des Original-Texts
+  isOutdated    Boolean           @default(false) @map("is_outdated")
+  
+  // Status
+  status        TranslationStatus @default(PENDING)
+  translatedAt  DateTime?         @map("translated_at") @db.Timestamptz
+  reviewedAt    DateTime?         @map("reviewed_at") @db.Timestamptz
+  reviewedBy    String?           @map("reviewed_by") @db.Uuid
+  
+  // AI Provider Info
+  provider      String?           @db.VarChar(50) // "deepl", "openai"
+  
+  // Timestamps
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+  
+  @@unique([languageId, contentType, contentId, field])
+  @@index([contentType, contentId])
+  @@index([languageId, status])
+  @@index([isOutdated])
+  @@map("translations")
+}
+
+model TranslationJob {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Language Reference
+  languageId    String    @map("language_id") @db.VarChar(10)
+  language      Language  @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  
+  // Content Reference
+  contentType   String    @map("content_type") @db.VarChar(100)
+  contentId     String    @map("content_id") @db.VarChar(100)
+  field         String    @db.VarChar(100)
+  
+  // Original Text to Translate
+  originalText  String    @map("original_text") @db.Text
+  sourceHash    String    @map("source_hash") @db.VarChar(64)
+  
+  // Job Status
+  status        JobStatus @default(PENDING)
+  priority      Int       @default(0) // Höhere Zahl = höhere Priorität
+  attempts      Int       @default(0)
+  maxAttempts   Int       @default(3) @map("max_attempts")
+  
+  // Error Handling
+  lastError     String?   @map("last_error") @db.Text
+  
+  // Processing Info
+  startedAt     DateTime? @map("started_at") @db.Timestamptz
+  completedAt   DateTime? @map("completed_at") @db.Timestamptz
+  
+  // Timestamps
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  
+  @@index([status, priority, createdAt])
+  @@index([languageId, status])
+  @@index([contentType, contentId])
+  @@map("translation_jobs")
+}
+
+// Enums for Translation System
+enum TranslationStatus {
+  PENDING
+  TRANSLATED
+  REVIEWED
+  FAILED
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
 }

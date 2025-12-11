@@ -47,6 +47,7 @@ import Image from 'next/image'
 import { ImageUploader } from '@/components/ui/image-uploader'
 import { MultiImageUploader } from '@/components/ui/multi-image-uploader'
 import { VideoUploader, type VideoSettings } from '@/components/ui/video-uploader'
+import { SEOSection } from '@/components/admin/seo-preview'
 
 // Helper: Parse heroImageUrl (kann einzelne URL oder JSON-Array sein)
 function parseHeroImages(value: string | null): string[] {
@@ -905,55 +906,24 @@ export default function HomePageCMS() {
                     SEO & Meta-Tags
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>Meta-Titel</Label>
-                      <span className="text-xs text-muted-foreground">{(config.metaTitle || '').length}/70</span>
-                    </div>
-                    <Input
-                      value={config.metaTitle || ''}
-                      onChange={(e) => updateConfig('metaTitle', e.target.value)}
-                      placeholder="NICNOA&CO.online - Die All-in-One Salon-Lösung"
-                      maxLength={70}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>Meta-Beschreibung</Label>
-                      <span className="text-xs text-muted-foreground">{(config.metaDescription || '').length}/160</span>
-                    </div>
-                    <Textarea
-                      value={config.metaDescription || ''}
-                      onChange={(e) => updateConfig('metaDescription', e.target.value)}
-                      placeholder="Die All-in-One SaaS-Lösung für moderne Salon-Coworking-Spaces..."
-                      maxLength={160}
-                      rows={3}
-                    />
-                  </div>
-
-                  <Separator />
-
-                  {/* OG Image */}
-                  <div className="space-y-2">
-                    <Label>Open Graph Bild (für Social Media)</Label>
-                    <p className="text-xs text-muted-foreground mb-2">Empfohlen: 1200x630px</p>
-                    <ImageUploader
-                      value={config.ogImageUrl}
-                      onUpload={(url) => {
-                        updateConfig('ogImageUrl', url)
-                        toast.success('OG-Bild hochgeladen!')
-                      }}
-                      onRemove={() => removeImage('og')}
-                      uploadEndpoint="/api/admin/homepage-config/upload"
-                      uploadData={{ type: 'og' }}
-                      aspectRatio={1200/630}
-                      placeholder="OG-Bild hochladen"
-                      description="JPEG, PNG, WebP • Empfohlen: 1200x630px"
-                      previewHeight="aspect-[1200/630] max-w-md"
-                    />
-                  </div>
+                <CardContent>
+                  <SEOSection
+                    metaTitle={config.metaTitle}
+                    metaDescription={config.metaDescription}
+                    fallbackTitle="NICNOA&CO.online - Die All-in-One Salon-Lösung"
+                    fallbackDescription="Die All-in-One SaaS-Lösung für moderne Salon-Coworking-Spaces..."
+                    url="nicnoa.de"
+                    onTitleChange={(value) => updateConfig('metaTitle', value)}
+                    onDescriptionChange={(value) => updateConfig('metaDescription', value)}
+                    ogImageUrl={config.ogImageUrl}
+                    onOgImageUpload={(url) => {
+                      updateConfig('ogImageUrl', url)
+                      toast.success('OG-Bild hochgeladen!')
+                    }}
+                    onOgImageRemove={() => removeImage('og')}
+                    ogImageUploadEndpoint="/api/admin/homepage-config/upload"
+                    ogImageUploadData={{ type: 'og' }}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>

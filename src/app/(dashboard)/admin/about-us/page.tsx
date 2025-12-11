@@ -1,27 +1,29 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
   Loader2,
   Save,
+  RefreshCw,
   Eye,
-  Upload,
-  X,
+  EyeOff,
   Users,
   Lightbulb,
   Target,
   ArrowRight,
   Linkedin,
-  ShieldCheck,
-  Scaling,
-  Sparkles,
   Plus,
   Edit2,
   Trash2,
-  GripVertical,
-  ChevronUp,
-  ChevronDown,
+  Search,
+  Globe,
+  Monitor,
+  Smartphone,
+  Type,
+  Image as ImageIcon,
+  Layout,
+  MousePointer,
 } from 'lucide-react'
 import { getIconComponent, iconNames } from '@/lib/icon-mapping'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -52,6 +54,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { SortableList } from '@/components/ui/sortable-list'
 import { ImageUploader } from '@/components/ui/image-uploader'
+import { SEOSection } from '@/components/admin/seo-preview'
 
 interface AboutUsPageConfig {
   id?: string
@@ -80,6 +83,8 @@ interface AboutUsPageConfig {
   whyDescription: string
   whyButtonText: string
   whyButtonLink: string
+  metaTitle: string | null
+  metaDescription: string | null
 }
 
 interface ApproachCard {
@@ -91,37 +96,45 @@ interface ApproachCard {
   isActive: boolean
 }
 
+const defaultConfig: AboutUsPageConfig = {
+  heroBadgeText: 'Das Team hinter NICNOA&CO.online',
+  heroTitle: 'Experten für moderne Salon-Spaces',
+  heroDescription: 'Wir revolutionieren die Salon-Branche mit innovativer Technologie.',
+  team1Name: '',
+  team1Role: '',
+  team1Description: '',
+  team1ImageUrl: null,
+  team1LinkedInUrl: '',
+  team2Name: '',
+  team2Role: '',
+  team2Description: '',
+  team2ImageUrl: null,
+  team2LinkedInUrl: '',
+  visionBadgeText: 'Unsere Vision',
+  visionTitle: 'Die Zukunft der Salon-Branche gestalten',
+  visionDescription: '',
+  missionBadgeText: 'Unsere Mission',
+  missionTitle: 'Innovativ & Effizient',
+  missionDescription: '',
+  approachTitle: 'Unser Ansatz',
+  approachDescription: 'Wie wir arbeiten und was uns auszeichnet',
+  whyTitle: 'Warum wir tun, was wir tun',
+  whyDescription: '',
+  whyButtonText: 'Jetzt durchstarten',
+  whyButtonLink: '/registrieren',
+  metaTitle: null,
+  metaDescription: null,
+}
+
 export default function AboutUsAdminPage() {
-  const [pageConfig, setPageConfig] = useState<AboutUsPageConfig>({
-    heroBadgeText: '',
-    heroTitle: '',
-    heroDescription: '',
-    team1Name: '',
-    team1Role: '',
-    team1Description: '',
-    team1ImageUrl: null,
-    team1LinkedInUrl: '',
-    team2Name: '',
-    team2Role: '',
-    team2Description: '',
-    team2ImageUrl: null,
-    team2LinkedInUrl: '',
-    visionBadgeText: '',
-    visionTitle: '',
-    visionDescription: '',
-    missionBadgeText: '',
-    missionTitle: '',
-    missionDescription: '',
-    approachTitle: '',
-    approachDescription: '',
-    whyTitle: '',
-    whyDescription: '',
-    whyButtonText: 'Jetzt durchstarten',
-    whyButtonLink: '/registrieren',
-  })
-  const [isLoadingConfig, setIsLoadingConfig] = useState(true)
-  const [isSavingConfig, setIsSavingConfig] = useState(false)
+  const [config, setConfig] = useState<AboutUsPageConfig>(defaultConfig)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [activeTab, setActiveTab] = useState('hero')
   const [showPreview, setShowPreview] = useState(true)
+  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop')
+  const [hasChanges, setHasChanges] = useState(false)
+  
   const [approachCards, setApproachCards] = useState<ApproachCard[]>([])
   const [isLoadingCards, setIsLoadingCards] = useState(false)
   const [editCardDialogOpen, setEditCardDialogOpen] = useState(false)
@@ -134,121 +147,64 @@ export default function AboutUsAdminPage() {
   })
   const [isEditingCard, setIsEditingCard] = useState(false)
 
-  useEffect(() => {
-    fetchPageConfig()
-    fetchApproachCards()
-  }, [])
-
-  const fetchPageConfig = async () => {
+  const fetchData = useCallback(async () => {
+    setIsLoading(true)
     try {
-      setIsLoadingConfig(true)
-      const res = await fetch('/api/admin/about-us-page-config')
-      if (res.ok) {
-        const data = await res.json()
-        console.log('✅ Page Config geladen:', data)
-        // Merge mit Default-Werten, um sicherzustellen, dass alle Felder vorhanden sind
-        setPageConfig({
-          heroBadgeText: data.heroBadgeText || '',
-          heroTitle: data.heroTitle || '',
-          heroDescription: data.heroDescription || '',
-          team1Name: data.team1Name || '',
-          team1Role: data.team1Role || '',
-          team1Description: data.team1Description || '',
-          team1ImageUrl: data.team1ImageUrl || null,
-          team1LinkedInUrl: data.team1LinkedInUrl || '',
-          team2Name: data.team2Name || '',
-          team2Role: data.team2Role || '',
-          team2Description: data.team2Description || '',
-          team2ImageUrl: data.team2ImageUrl || null,
-          team2LinkedInUrl: data.team2LinkedInUrl || '',
-          visionBadgeText: data.visionBadgeText || '',
-          visionTitle: data.visionTitle || '',
-          visionDescription: data.visionDescription || '',
-          missionBadgeText: data.missionBadgeText || '',
-          missionTitle: data.missionTitle || '',
-          missionDescription: data.missionDescription || '',
-          approachTitle: data.approachTitle || '',
-          approachDescription: data.approachDescription || '',
-          whyTitle: data.whyTitle || '',
-          whyDescription: data.whyDescription || '',
-          whyButtonText: data.whyButtonText || 'Jetzt durchstarten',
-          whyButtonLink: data.whyButtonLink || '/registrieren',
+      const [configRes, cardsRes] = await Promise.all([
+        fetch('/api/admin/about-us-page-config'),
+        fetch('/api/admin/approach-cards'),
+      ])
+      
+      if (configRes.ok) {
+        const data = await configRes.json()
+        setConfig({
+          ...defaultConfig,
+          ...data,
         })
-      } else {
-        const error = await res.json().catch(() => ({ error: 'Unbekannter Fehler' }))
-        console.error('❌ Error fetching config:', res.status, error)
-        // Verwende Default-Werte wenn API fehlschlägt
-        if (res.status === 403) {
-          toast.error('Nicht berechtigt - bitte einloggen')
-        } else {
-          toast.error('Fehler beim Laden der Konfiguration')
-        }
+      }
+      
+      if (cardsRes.ok) {
+        const cardsData = await cardsRes.json()
+        setApproachCards(Array.isArray(cardsData) ? cardsData : [])
       }
     } catch (error) {
-      console.error('❌ Error fetching config:', error)
+      console.error('Error fetching data:', error)
       toast.error('Fehler beim Laden der Konfiguration')
     } finally {
-      setIsLoadingConfig(false)
+      setIsLoading(false)
     }
-  }
+  }, [])
 
-  const handleSavePageConfig = async () => {
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
+
+  const handleSave = async () => {
+    setIsSaving(true)
     try {
-      setIsSavingConfig(true)
       const res = await fetch('/api/admin/about-us-page-config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(pageConfig),
+        body: JSON.stringify(config),
       })
 
-      if (res.ok) {
-        toast.success('Konfiguration erfolgreich gespeichert')
-        await fetchPageConfig()
-      } else {
+      if (!res.ok) {
         const error = await res.json()
-        toast.error(error.error || 'Fehler beim Speichern')
+        throw new Error(error.error || 'Fehler beim Speichern')
       }
+
+      toast.success('Konfiguration erfolgreich gespeichert!')
+      setHasChanges(false)
     } catch (error) {
-      console.error('Error saving config:', error)
-      toast.error('Fehler beim Speichern der Konfiguration')
+      toast.error(error instanceof Error ? error.message : 'Fehler beim Speichern')
     } finally {
-      setIsSavingConfig(false)
+      setIsSaving(false)
     }
   }
 
-  const handleRemoveImage = (teamNumber: 1 | 2) => {
-    if (teamNumber === 1) {
-      setPageConfig((prev) => ({ ...prev, team1ImageUrl: null }))
-    } else {
-      setPageConfig((prev) => ({ ...prev, team2ImageUrl: null }))
-    }
-  }
-
-  const fetchApproachCards = async () => {
-    try {
-      setIsLoadingCards(true)
-      const res = await fetch('/api/admin/approach-cards')
-      if (res.ok) {
-        const data = await res.json()
-        console.log('✅ Approach Cards geladen:', data)
-        setApproachCards(Array.isArray(data) ? data : [])
-      } else {
-        const error = await res.json().catch(() => ({ error: 'Unbekannter Fehler' }))
-        console.error('❌ Error fetching cards:', res.status, error)
-        if (res.status === 403) {
-          toast.error('Nicht berechtigt - bitte einloggen')
-        } else {
-          toast.error('Fehler beim Laden der Kacheln')
-        }
-        setApproachCards([])
-      }
-    } catch (error) {
-      console.error('❌ Error fetching cards:', error)
-      toast.error('Fehler beim Laden der Kacheln')
-      setApproachCards([])
-    } finally {
-      setIsLoadingCards(false)
-    }
+  const updateConfig = <K extends keyof AboutUsPageConfig>(key: K, value: AboutUsPageConfig[K]) => {
+    setConfig(prev => ({ ...prev, [key]: value }))
+    setHasChanges(true)
   }
 
   const handleSaveCard = async () => {
@@ -259,7 +215,6 @@ export default function AboutUsAdminPage() {
       }
 
       if (isEditingCard && currentCard.id) {
-        // Update
         const res = await fetch(`/api/admin/approach-cards/${currentCard.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -271,13 +226,16 @@ export default function AboutUsAdminPage() {
           setEditCardDialogOpen(false)
           setCurrentCard({ title: '', description: '', iconName: 'Target', sortOrder: 0, isActive: true })
           setIsEditingCard(false)
-          await fetchApproachCards()
+          const cardsRes = await fetch('/api/admin/approach-cards')
+          if (cardsRes.ok) {
+            const cardsData = await cardsRes.json()
+            setApproachCards(Array.isArray(cardsData) ? cardsData : [])
+          }
         } else {
           const error = await res.json()
           toast.error(error.error || 'Fehler beim Aktualisieren')
         }
       } else {
-        // Create
         const maxSortOrder = approachCards.length > 0 
           ? Math.max(...approachCards.map(c => c.sortOrder)) + 1 
           : 0
@@ -295,8 +253,11 @@ export default function AboutUsAdminPage() {
           toast.success('Kachel erfolgreich erstellt')
           setEditCardDialogOpen(false)
           setCurrentCard({ title: '', description: '', iconName: 'Target', sortOrder: 0, isActive: true })
-          setIsEditingCard(false)
-          await fetchApproachCards()
+          const cardsRes = await fetch('/api/admin/approach-cards')
+          if (cardsRes.ok) {
+            const cardsData = await cardsRes.json()
+            setApproachCards(Array.isArray(cardsData) ? cardsData : [])
+          }
         } else {
           const error = await res.json()
           toast.error(error.error || 'Fehler beim Erstellen')
@@ -306,12 +267,6 @@ export default function AboutUsAdminPage() {
       console.error('Error saving card:', error)
       toast.error('Fehler beim Speichern der Kachel')
     }
-  }
-
-  const handleEditCard = (card: ApproachCard) => {
-    setCurrentCard(card)
-    setIsEditingCard(true)
-    setEditCardDialogOpen(true)
   }
 
   const handleDeleteCard = async (id: string) => {
@@ -324,7 +279,7 @@ export default function AboutUsAdminPage() {
 
       if (res.ok) {
         toast.success('Kachel erfolgreich gelöscht')
-        await fetchApproachCards()
+        setApproachCards(prev => prev.filter(c => c.id !== id))
       } else {
         const error = await res.json()
         toast.error(error.error || 'Fehler beim Löschen')
@@ -335,9 +290,7 @@ export default function AboutUsAdminPage() {
     }
   }
 
-  // Reorder Cards via Drag & Drop
   const handleReorderCards = async (reorderedCards: ApproachCard[]) => {
-    // Optimistisches Update
     const updatedCards = reorderedCards.map((card, index) => ({ ...card, sortOrder: index }))
     setApproachCards(updatedCards)
 
@@ -348,20 +301,19 @@ export default function AboutUsAdminPage() {
         body: JSON.stringify({ cards: updatedCards }),
       })
 
-      if (res.ok) {
-        toast.success('Reihenfolge aktualisiert')
-      } else {
+      if (!res.ok) {
         toast.error('Fehler beim Speichern der Reihenfolge')
-        await fetchApproachCards()
+        const cardsRes = await fetch('/api/admin/approach-cards')
+        if (cardsRes.ok) {
+          const cardsData = await cardsRes.json()
+          setApproachCards(Array.isArray(cardsData) ? cardsData : [])
+        }
       }
     } catch (error) {
       console.error('Error reordering cards:', error)
-      toast.error('Fehler beim Verschieben der Kacheln')
-      await fetchApproachCards()
     }
   }
 
-  // Kacheln aus der API für Preview
   const approaches = approachCards
     .filter((card) => card.isActive)
     .map((card) => ({
@@ -370,846 +322,734 @@ export default function AboutUsAdminPage() {
       description: card.description,
     }))
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Über uns - Seiten-Konfiguration</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <Users className="h-8 w-8 text-primary" />
+            Über uns
+          </h1>
+          <p className="text-muted-foreground">
             Verwalten Sie alle Inhalte der Über-uns-Seite
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          {hasChanges && (
+            <Badge variant="outline" className="text-amber-500 border-amber-500/30">
+              Ungespeicherte Änderungen
+            </Badge>
+          )}
+          <Button variant="outline" onClick={fetchData}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Zurücksetzen
+          </Button>
+          <Button variant="outline" onClick={() => setShowPreview(!showPreview)}>
+            {showPreview ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+            {showPreview ? 'Vorschau ausblenden' : 'Vorschau anzeigen'}
+          </Button>
+          <Button onClick={handleSave} disabled={isSaving || !hasChanges}>
+            {isSaving ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Speichern...</>
+            ) : (
+              <><Save className="mr-2 h-4 w-4" /> Speichern</>
+            )}
+          </Button>
+        </div>
       </div>
 
-      <Tabs defaultValue="config" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="config">Konfiguration</TabsTrigger>
-          <TabsTrigger value="cards">Kacheln</TabsTrigger>
-          <TabsTrigger value="preview">Vorschau</TabsTrigger>
-        </TabsList>
+      <div className={`grid gap-6 ${showPreview ? 'lg:grid-cols-2' : 'grid-cols-1'}`}>
+        {/* Editor */}
+        <div className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="hero" className="text-xs sm:text-sm">
+                <Layout className="mr-1 h-4 w-4 hidden sm:inline" />
+                Hero
+              </TabsTrigger>
+              <TabsTrigger value="team" className="text-xs sm:text-sm">
+                <Users className="mr-1 h-4 w-4 hidden sm:inline" />
+                Team
+              </TabsTrigger>
+              <TabsTrigger value="content" className="text-xs sm:text-sm">
+                <Type className="mr-1 h-4 w-4 hidden sm:inline" />
+                Inhalte
+              </TabsTrigger>
+              <TabsTrigger value="cards" className="text-xs sm:text-sm">
+                <MousePointer className="mr-1 h-4 w-4 hidden sm:inline" />
+                Kacheln
+              </TabsTrigger>
+              <TabsTrigger value="seo" className="text-xs sm:text-sm">
+                <Search className="mr-1 h-4 w-4 hidden sm:inline" />
+                SEO
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="config" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Hero-Bereich</CardTitle>
-              <CardDescription>Hauptbereich am Anfang der Seite</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="heroBadgeText">Badge-Text</Label>
-                <Input
-                  id="heroBadgeText"
-                  value={pageConfig.heroBadgeText}
-                  onChange={(e) =>
-                    setPageConfig((prev) => ({ ...prev, heroBadgeText: e.target.value }))
-                  }
-                  placeholder="z.B. Das Team hinter NICNOA&CO.online"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="heroTitle">Titel</Label>
-                <Input
-                  id="heroTitle"
-                  value={pageConfig.heroTitle}
-                  onChange={(e) =>
-                    setPageConfig((prev) => ({ ...prev, heroTitle: e.target.value }))
-                  }
-                  placeholder="z.B. Experten für moderne Salon-Spaces"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="heroDescription">Beschreibung</Label>
-                <Textarea
-                  id="heroDescription"
-                  value={pageConfig.heroDescription}
-                  onChange={(e) =>
-                    setPageConfig((prev) => ({ ...prev, heroDescription: e.target.value }))
-                  }
-                  placeholder="Beschreibung des Teams..."
-                  rows={4}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Team Member 1 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Team-Mitglied 1</CardTitle>
-              <CardDescription>Erstes Team-Mitglied (z.B. Daniel)</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="team1Name">Name</Label>
-                <Input
-                  id="team1Name"
-                  value={pageConfig.team1Name}
-                  onChange={(e) =>
-                    setPageConfig((prev) => ({ ...prev, team1Name: e.target.value }))
-                  }
-                  placeholder="z.B. Daniel"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="team1Role">Rolle</Label>
-                <Input
-                  id="team1Role"
-                  value={pageConfig.team1Role}
-                  onChange={(e) =>
-                    setPageConfig((prev) => ({ ...prev, team1Role: e.target.value }))
-                  }
-                  placeholder="z.B. Co-Founder"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="team1Description">Beschreibung</Label>
-                <Textarea
-                  id="team1Description"
-                  value={pageConfig.team1Description}
-                  onChange={(e) =>
-                    setPageConfig((prev) => ({ ...prev, team1Description: e.target.value }))
-                  }
-                  placeholder="Beschreibung des Team-Mitglieds..."
-                  rows={4}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="team1LinkedInUrl">LinkedIn URL</Label>
-                <Input
-                  id="team1LinkedInUrl"
-                  value={pageConfig.team1LinkedInUrl}
-                  onChange={(e) =>
-                    setPageConfig((prev) => ({ ...prev, team1LinkedInUrl: e.target.value }))
-                  }
-                  placeholder="https://linkedin.com/in/..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Bild</Label>
-                <ImageUploader
-                  value={pageConfig.team1ImageUrl}
-                  onUpload={(url) => {
-                    setPageConfig((prev) => ({ ...prev, team1ImageUrl: url }))
-                    toast.success('Bild erfolgreich hochgeladen')
-                  }}
-                  onRemove={() => handleRemoveImage(1)}
-                  uploadEndpoint="/api/admin/about-us-page-config/upload-image"
-                  aspectRatio={1}
-                  placeholder="Team-Bild hochladen"
-                  description="JPG, PNG, WebP • Quadratisches Format empfohlen"
-                  previewHeight="h-48"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Team Member 2 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Team-Mitglied 2</CardTitle>
-              <CardDescription>Zweites Team-Mitglied (z.B. Nico)</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="team2Name">Name</Label>
-                <Input
-                  id="team2Name"
-                  value={pageConfig.team2Name}
-                  onChange={(e) =>
-                    setPageConfig((prev) => ({ ...prev, team2Name: e.target.value }))
-                  }
-                  placeholder="z.B. Nico"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="team2Role">Rolle</Label>
-                <Input
-                  id="team2Role"
-                  value={pageConfig.team2Role}
-                  onChange={(e) =>
-                    setPageConfig((prev) => ({ ...prev, team2Role: e.target.value }))
-                  }
-                  placeholder="z.B. Co-Founder"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="team2Description">Beschreibung</Label>
-                <Textarea
-                  id="team2Description"
-                  value={pageConfig.team2Description}
-                  onChange={(e) =>
-                    setPageConfig((prev) => ({ ...prev, team2Description: e.target.value }))
-                  }
-                  placeholder="Beschreibung des Team-Mitglieds..."
-                  rows={4}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="team2LinkedInUrl">LinkedIn URL</Label>
-                <Input
-                  id="team2LinkedInUrl"
-                  value={pageConfig.team2LinkedInUrl}
-                  onChange={(e) =>
-                    setPageConfig((prev) => ({ ...prev, team2LinkedInUrl: e.target.value }))
-                  }
-                  placeholder="https://linkedin.com/in/..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Bild</Label>
-                <ImageUploader
-                  value={pageConfig.team2ImageUrl}
-                  onUpload={(url) => {
-                    setPageConfig((prev) => ({ ...prev, team2ImageUrl: url }))
-                    toast.success('Bild erfolgreich hochgeladen')
-                  }}
-                  onRemove={() => handleRemoveImage(2)}
-                  uploadEndpoint="/api/admin/about-us-page-config/upload-image"
-                  aspectRatio={1}
-                  placeholder="Team-Bild hochladen"
-                  description="JPG, PNG, WebP • Quadratisches Format empfohlen"
-                  previewHeight="h-48"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Vision & Mission */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Vision</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="visionBadgeText">Badge-Text</Label>
-                  <Input
-                    id="visionBadgeText"
-                    value={pageConfig.visionBadgeText}
-                    onChange={(e) =>
-                      setPageConfig((prev) => ({ ...prev, visionBadgeText: e.target.value }))
-                    }
-                    placeholder="z.B. Unsere Vision"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="visionTitle">Titel</Label>
-                  <Input
-                    id="visionTitle"
-                    value={pageConfig.visionTitle}
-                    onChange={(e) =>
-                      setPageConfig((prev) => ({ ...prev, visionTitle: e.target.value }))
-                    }
-                    placeholder="z.B. Die Zukunft der Salon-Branche gestalten"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="visionDescription">Beschreibung</Label>
-                  <Textarea
-                    id="visionDescription"
-                    value={pageConfig.visionDescription}
-                    onChange={(e) =>
-                      setPageConfig((prev) => ({ ...prev, visionDescription: e.target.value }))
-                    }
-                    placeholder="Beschreibung der Vision..."
-                    rows={4}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Mission</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="missionBadgeText">Badge-Text</Label>
-                  <Input
-                    id="missionBadgeText"
-                    value={pageConfig.missionBadgeText}
-                    onChange={(e) =>
-                      setPageConfig((prev) => ({ ...prev, missionBadgeText: e.target.value }))
-                    }
-                    placeholder="z.B. Unsere Mission"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="missionTitle">Titel</Label>
-                  <Input
-                    id="missionTitle"
-                    value={pageConfig.missionTitle}
-                    onChange={(e) =>
-                      setPageConfig((prev) => ({ ...prev, missionTitle: e.target.value }))
-                    }
-                    placeholder="z.B. Innovativ & Effizient"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="missionDescription">Beschreibung</Label>
-                  <Textarea
-                    id="missionDescription"
-                    value={pageConfig.missionDescription}
-                    onChange={(e) =>
-                      setPageConfig((prev) => ({ ...prev, missionDescription: e.target.value }))
-                    }
-                    placeholder="Beschreibung der Mission..."
-                    rows={4}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Approach Section Header */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Ansatz-Bereich Header</CardTitle>
-              <CardDescription>Überschrift für den Kachel-Bereich (Kacheln werden separat verwaltet)</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="approachTitle">Titel</Label>
-                <Input
-                  id="approachTitle"
-                  value={pageConfig.approachTitle}
-                  onChange={(e) =>
-                    setPageConfig((prev) => ({ ...prev, approachTitle: e.target.value }))
-                  }
-                  placeholder="z.B. Unser Ansatz"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="approachDescription">Beschreibung</Label>
-                <Textarea
-                  id="approachDescription"
-                  value={pageConfig.approachDescription}
-                  onChange={(e) =>
-                    setPageConfig((prev) => ({ ...prev, approachDescription: e.target.value }))
-                  }
-                  placeholder="z.B. Wie wir arbeiten und was uns auszeichnet"
-                  rows={2}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Why Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Warum-Bereich</CardTitle>
-              <CardDescription>Abschlussbereich mit CTA</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="whyTitle">Titel</Label>
-                <Input
-                  id="whyTitle"
-                  value={pageConfig.whyTitle}
-                  onChange={(e) =>
-                    setPageConfig((prev) => ({ ...prev, whyTitle: e.target.value }))
-                  }
-                  placeholder="z.B. Warum wir tun, was wir tun"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="whyDescription">Beschreibung</Label>
-                <Textarea
-                  id="whyDescription"
-                  value={pageConfig.whyDescription}
-                  onChange={(e) =>
-                    setPageConfig((prev) => ({ ...prev, whyDescription: e.target.value }))
-                  }
-                  placeholder="Beschreibung..."
-                  rows={4}
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="whyButtonText">Button-Text</Label>
-                  <Input
-                    id="whyButtonText"
-                    value={pageConfig.whyButtonText}
-                    onChange={(e) =>
-                      setPageConfig((prev) => ({ ...prev, whyButtonText: e.target.value }))
-                    }
-                    placeholder="z.B. Jetzt durchstarten"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="whyButtonLink">Button-Link</Label>
-                  <Input
-                    id="whyButtonLink"
-                    value={pageConfig.whyButtonLink}
-                    onChange={(e) =>
-                      setPageConfig((prev) => ({ ...prev, whyButtonLink: e.target.value }))
-                    }
-                    placeholder="z.B. /registrieren"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-end">
-            <Button onClick={handleSavePageConfig} disabled={isSavingConfig}>
-              {isSavingConfig ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Wird gespeichert...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Konfiguration speichern
-                </>
-              )}
-            </Button>
-          </div>
-        </TabsContent>
-
-        {/* Kacheln Tab */}
-        <TabsContent value="cards" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Ansatz-Kacheln</CardTitle>
-                  <CardDescription>
-                    Verwalten Sie die Kacheln im Ansatz-Bereich. Sie können die Reihenfolge ändern, bearbeiten und neue hinzufügen.
-                  </CardDescription>
-                </div>
-                <Button
-                  onClick={() => {
-                    setCurrentCard({ title: '', description: '', iconName: 'Target', sortOrder: 0, isActive: true })
-                    setIsEditingCard(false)
-                    setEditCardDialogOpen(true)
-                  }}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Neue Kachel
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {isLoadingCards ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : approachCards.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground mb-4">Noch keine Kacheln vorhanden</p>
-                  <Button
-                    onClick={() => {
-                      setCurrentCard({ title: '', description: '', iconName: 'Target', sortOrder: 0, isActive: true })
-                      setIsEditingCard(false)
-                      setEditCardDialogOpen(true)
-                    }}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Erste Kachel erstellen
-                  </Button>
-                </div>
-              ) : (
-                <SortableList
-                  items={approachCards}
-                  onReorder={handleReorderCards}
-                  renderItem={(card) => {
-                    const Icon = getIconComponent(card.iconName)
-                    return (
-                      <div className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                        <div className="flex-1">
-                          <div className="flex items-start gap-3">
-                            <div className="rounded-lg bg-primary/10 p-2.5 flex-shrink-0">
-                              <Icon className="h-5 w-5 text-primary" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-semibold">{card.title}</h3>
-                                <Badge variant={card.isActive ? 'default' : 'secondary'}>
-                                  {card.isActive ? 'Aktiv' : 'Inaktiv'}
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-muted-foreground">{card.description}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Icon: {card.iconName || 'Kein Icon'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditCard(card)}
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteCard(card.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </div>
-                    )
-                  }}
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Edit Card Dialog */}
-          <Dialog open={editCardDialogOpen} onOpenChange={setEditCardDialogOpen}>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>
-                  {isEditingCard ? 'Kachel bearbeiten' : 'Neue Kachel erstellen'}
-                </DialogTitle>
-                <DialogDescription>
-                  Erstellen oder bearbeiten Sie eine Ansatz-Kachel
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cardTitle">Titel</Label>
-                  <Input
-                    id="cardTitle"
-                    value={currentCard.title}
-                    onChange={(e) =>
-                      setCurrentCard((prev) => ({ ...prev, title: e.target.value }))
-                    }
-                    placeholder="z.B. Praxisnah validiert"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cardDescription">Beschreibung</Label>
-                  <Textarea
-                    id="cardDescription"
-                    value={currentCard.description}
-                    onChange={(e) =>
-                      setCurrentCard((prev) => ({ ...prev, description: e.target.value }))
-                    }
-                    placeholder="Beschreibung der Kachel..."
-                    rows={4}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cardIcon">Icon</Label>
-                  <Select
-                    value={currentCard.iconName || 'Target'}
-                    onValueChange={(value) =>
-                      setCurrentCard((prev) => ({ ...prev, iconName: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {iconNames.map((iconName) => {
-                        const Icon = getIconComponent(iconName)
-                        return (
-                          <SelectItem key={iconName} value={iconName}>
-                            <div className="flex items-center gap-2">
-                              <Icon className="h-4 w-4" />
-                              <span>{iconName}</span>
-                            </div>
-                          </SelectItem>
-                        )
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="cardActive"
-                    checked={currentCard.isActive !== false}
-                    onCheckedChange={(checked) =>
-                      setCurrentCard((prev) => ({ ...prev, isActive: checked }))
-                    }
-                  />
-                  <Label htmlFor="cardActive">Aktiv</Label>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setEditCardDialogOpen(false)}>
-                  Abbrechen
-                </Button>
-                <Button onClick={handleSaveCard}>
-                  <Save className="mr-2 h-4 w-4" />
-                  {isEditingCard ? 'Aktualisieren' : 'Erstellen'}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </TabsContent>
-
-        <TabsContent value="preview" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Live-Vorschau</CardTitle>
-              <CardDescription>
-                So wird die Über-uns-Seite für Besucher angezeigt
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="border rounded-lg p-6 bg-background max-h-[800px] overflow-y-auto">
-                {/* Hero Section */}
-                <section className="relative pt-20">
-                  <div className="container py-16">
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5 }}
-                      className="text-center"
-                    >
-                      {pageConfig.heroBadgeText && (
-                        <span className="inline-flex items-center rounded-full border bg-background px-3 py-1 text-sm">
-                          <Users className="mr-1 h-3.5 w-3.5 text-primary" />
-                          <span className="text-muted-foreground">{pageConfig.heroBadgeText}</span>
-                        </span>
-                      )}
-                      <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl">
-                        {pageConfig.heroTitle}
-                      </h1>
-                      {pageConfig.heroDescription && (
-                        <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-                          {pageConfig.heroDescription}
-                        </p>
-                      )}
-                    </motion.div>
+            {/* Hero Tab */}
+            <TabsContent value="hero" className="space-y-6 mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Layout className="h-5 w-5 text-primary" />
+                    Hero-Bereich
+                  </CardTitle>
+                  <CardDescription>Hauptbereich am Anfang der Seite</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Badge-Text</Label>
+                    <Input
+                      value={config.heroBadgeText}
+                      onChange={(e) => updateConfig('heroBadgeText', e.target.value)}
+                      placeholder="z.B. Das Team hinter NICNOA&CO.online"
+                    />
                   </div>
-                </section>
-
-                {/* Team Section */}
-                <section className="container py-16">
-                  <div className="grid gap-16 md:grid-cols-2">
-                    {/* Team Member 1 */}
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.5 }}
-                      className="flex flex-col"
-                    >
-                      <div className="relative aspect-[4/3] overflow-hidden rounded-xl">
-                        {pageConfig.team1ImageUrl ? (
-                          <Image
-                            src={pageConfig.team1ImageUrl}
-                            alt={pageConfig.team1Name || 'Team Member 1'}
-                            width={400}
-                            height={300}
-                            className="object-cover w-full h-full"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                            <Users className="h-16 w-16 text-primary/40" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-                      </div>
-                      <div className="flex flex-col flex-1 mt-6">
-                        {pageConfig.team1Name && (
-                          <h2 className="text-2xl font-bold">{pageConfig.team1Name}</h2>
-                        )}
-                        {pageConfig.team1Role && (
-                          <span className="text-primary font-medium">{pageConfig.team1Role}</span>
-                        )}
-                        {pageConfig.team1Description && (
-                          <p className="mt-2 text-muted-foreground min-h-[100px]">
-                            {pageConfig.team1Description}
-                          </p>
-                        )}
-                        {pageConfig.team1LinkedInUrl && (
-                          <Button variant="ghost" size="sm" className="self-start mt-auto" asChild>
-                            <a href={pageConfig.team1LinkedInUrl} target="_blank" rel="noopener noreferrer">
-                              <Linkedin className="mr-2 h-4 w-4" />
-                              {pageConfig.team1Name} auf LinkedIn
-                            </a>
-                          </Button>
-                        )}
-                      </div>
-                    </motion.div>
-
-                    {/* Team Member 2 */}
-                    <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.5 }}
-                      className="flex flex-col"
-                    >
-                      <div className="relative aspect-[4/3] overflow-hidden rounded-xl">
-                        {pageConfig.team2ImageUrl ? (
-                          <Image
-                            src={pageConfig.team2ImageUrl}
-                            alt={pageConfig.team2Name || 'Team Member 2'}
-                            width={400}
-                            height={300}
-                            className="object-cover w-full h-full"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                            <Users className="h-16 w-16 text-primary/40" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-                      </div>
-                      <div className="flex flex-col flex-1 mt-6">
-                        {pageConfig.team2Name && (
-                          <h2 className="text-2xl font-bold">{pageConfig.team2Name}</h2>
-                        )}
-                        {pageConfig.team2Role && (
-                          <span className="text-primary font-medium">{pageConfig.team2Role}</span>
-                        )}
-                        {pageConfig.team2Description && (
-                          <p className="mt-2 text-muted-foreground min-h-[100px]">
-                            {pageConfig.team2Description}
-                          </p>
-                        )}
-                        {pageConfig.team2LinkedInUrl && (
-                          <Button variant="ghost" size="sm" className="self-start mt-auto" asChild>
-                            <a href={pageConfig.team2LinkedInUrl} target="_blank" rel="noopener noreferrer">
-                              <Linkedin className="mr-2 h-4 w-4" />
-                              {pageConfig.team2Name} auf LinkedIn
-                            </a>
-                          </Button>
-                        )}
-                      </div>
-                    </motion.div>
+                  <div className="space-y-2">
+                    <Label>Titel</Label>
+                    <Input
+                      value={config.heroTitle}
+                      onChange={(e) => updateConfig('heroTitle', e.target.value)}
+                      placeholder="z.B. Experten für moderne Salon-Spaces"
+                    />
                   </div>
-                </section>
+                  <div className="space-y-2">
+                    <Label>Beschreibung</Label>
+                    <Textarea
+                      value={config.heroDescription}
+                      onChange={(e) => updateConfig('heroDescription', e.target.value)}
+                      placeholder="Beschreibung des Teams..."
+                      rows={4}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                {/* Vision & Mission */}
-                <section className="border-t bg-muted/50">
-                  <div className="container py-16">
-                    <div className="grid gap-16 md:grid-cols-2">
-                      {/* Vision */}
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="space-y-4"
-                      >
-                        {pageConfig.visionBadgeText && (
-                          <div className="inline-flex items-center rounded-lg bg-primary/10 px-3 py-1">
-                            <Lightbulb className="mr-2 h-4 w-4 text-primary" />
-                            <span className="text-sm font-medium">{pageConfig.visionBadgeText}</span>
-                          </div>
-                        )}
-                        {pageConfig.visionTitle && (
-                          <h2 className="text-3xl font-bold">{pageConfig.visionTitle}</h2>
-                        )}
-                        {pageConfig.visionDescription && (
-                          <p className="text-muted-foreground">{pageConfig.visionDescription}</p>
-                        )}
-                      </motion.div>
-
-                      {/* Mission */}
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.2 }}
-                        className="space-y-4"
-                      >
-                        {pageConfig.missionBadgeText && (
-                          <div className="inline-flex items-center rounded-lg bg-primary/10 px-3 py-1">
-                            <Target className="mr-2 h-4 w-4 text-primary" />
-                            <span className="text-sm font-medium">{pageConfig.missionBadgeText}</span>
-                          </div>
-                        )}
-                        {pageConfig.missionTitle && (
-                          <h2 className="text-3xl font-bold">{pageConfig.missionTitle}</h2>
-                        )}
-                        {pageConfig.missionDescription && (
-                          <p className="text-muted-foreground">{pageConfig.missionDescription}</p>
-                        )}
-                      </motion.div>
+            {/* Team Tab */}
+            <TabsContent value="team" className="space-y-6 mt-6">
+              {/* Team Member 1 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    Team-Mitglied 1
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Name</Label>
+                      <Input
+                        value={config.team1Name}
+                        onChange={(e) => updateConfig('team1Name', e.target.value)}
+                        placeholder="z.B. Daniel"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Rolle</Label>
+                      <Input
+                        value={config.team1Role}
+                        onChange={(e) => updateConfig('team1Role', e.target.value)}
+                        placeholder="z.B. Co-Founder"
+                      />
                     </div>
                   </div>
-                </section>
+                  <div className="space-y-2">
+                    <Label>Beschreibung</Label>
+                    <Textarea
+                      value={config.team1Description}
+                      onChange={(e) => updateConfig('team1Description', e.target.value)}
+                      placeholder="Beschreibung des Team-Mitglieds..."
+                      rows={3}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>LinkedIn URL</Label>
+                    <Input
+                      value={config.team1LinkedInUrl}
+                      onChange={(e) => updateConfig('team1LinkedInUrl', e.target.value)}
+                      placeholder="https://linkedin.com/in/..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Bild</Label>
+                    <ImageUploader
+                      value={config.team1ImageUrl}
+                      onUpload={(url) => {
+                        updateConfig('team1ImageUrl', url)
+                        toast.success('Bild erfolgreich hochgeladen')
+                      }}
+                      onRemove={() => updateConfig('team1ImageUrl', null)}
+                      uploadEndpoint="/api/admin/about-us-page-config/upload-image"
+                      aspectRatio={1}
+                      placeholder="Team-Bild hochladen"
+                      description="JPG, PNG, WebP • Quadratisches Format"
+                      previewHeight="h-32"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
-                {/* Approach Section */}
-                {pageConfig.approachTitle && (
-                  <section className="container py-16">
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5 }}
-                      className="text-center mb-12"
+              {/* Team Member 2 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    Team-Mitglied 2
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Name</Label>
+                      <Input
+                        value={config.team2Name}
+                        onChange={(e) => updateConfig('team2Name', e.target.value)}
+                        placeholder="z.B. Nico"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Rolle</Label>
+                      <Input
+                        value={config.team2Role}
+                        onChange={(e) => updateConfig('team2Role', e.target.value)}
+                        placeholder="z.B. Co-Founder"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Beschreibung</Label>
+                    <Textarea
+                      value={config.team2Description}
+                      onChange={(e) => updateConfig('team2Description', e.target.value)}
+                      placeholder="Beschreibung des Team-Mitglieds..."
+                      rows={3}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>LinkedIn URL</Label>
+                    <Input
+                      value={config.team2LinkedInUrl}
+                      onChange={(e) => updateConfig('team2LinkedInUrl', e.target.value)}
+                      placeholder="https://linkedin.com/in/..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Bild</Label>
+                    <ImageUploader
+                      value={config.team2ImageUrl}
+                      onUpload={(url) => {
+                        updateConfig('team2ImageUrl', url)
+                        toast.success('Bild erfolgreich hochgeladen')
+                      }}
+                      onRemove={() => updateConfig('team2ImageUrl', null)}
+                      uploadEndpoint="/api/admin/about-us-page-config/upload-image"
+                      aspectRatio={1}
+                      placeholder="Team-Bild hochladen"
+                      description="JPG, PNG, WebP • Quadratisches Format"
+                      previewHeight="h-32"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Content Tab */}
+            <TabsContent value="content" className="space-y-6 mt-6">
+              {/* Vision */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lightbulb className="h-5 w-5 text-primary" />
+                    Vision
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Badge-Text</Label>
+                    <Input
+                      value={config.visionBadgeText}
+                      onChange={(e) => updateConfig('visionBadgeText', e.target.value)}
+                      placeholder="z.B. Unsere Vision"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Titel</Label>
+                    <Input
+                      value={config.visionTitle}
+                      onChange={(e) => updateConfig('visionTitle', e.target.value)}
+                      placeholder="z.B. Die Zukunft der Salon-Branche gestalten"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Beschreibung</Label>
+                    <Textarea
+                      value={config.visionDescription}
+                      onChange={(e) => updateConfig('visionDescription', e.target.value)}
+                      placeholder="Beschreibung der Vision..."
+                      rows={4}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Mission */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-primary" />
+                    Mission
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Badge-Text</Label>
+                    <Input
+                      value={config.missionBadgeText}
+                      onChange={(e) => updateConfig('missionBadgeText', e.target.value)}
+                      placeholder="z.B. Unsere Mission"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Titel</Label>
+                    <Input
+                      value={config.missionTitle}
+                      onChange={(e) => updateConfig('missionTitle', e.target.value)}
+                      placeholder="z.B. Innovativ & Effizient"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Beschreibung</Label>
+                    <Textarea
+                      value={config.missionDescription}
+                      onChange={(e) => updateConfig('missionDescription', e.target.value)}
+                      placeholder="Beschreibung der Mission..."
+                      rows={4}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Why & CTA */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ArrowRight className="h-5 w-5 text-primary" />
+                    Warum-Bereich (CTA)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Titel</Label>
+                    <Input
+                      value={config.whyTitle}
+                      onChange={(e) => updateConfig('whyTitle', e.target.value)}
+                      placeholder="z.B. Warum wir tun, was wir tun"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Beschreibung</Label>
+                    <Textarea
+                      value={config.whyDescription}
+                      onChange={(e) => updateConfig('whyDescription', e.target.value)}
+                      placeholder="Beschreibung..."
+                      rows={4}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Button-Text</Label>
+                      <Input
+                        value={config.whyButtonText}
+                        onChange={(e) => updateConfig('whyButtonText', e.target.value)}
+                        placeholder="z.B. Jetzt durchstarten"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Button-Link</Label>
+                      <Input
+                        value={config.whyButtonLink}
+                        onChange={(e) => updateConfig('whyButtonLink', e.target.value)}
+                        placeholder="z.B. /registrieren"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Cards Tab */}
+            <TabsContent value="cards" className="space-y-6 mt-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <MousePointer className="h-5 w-5 text-primary" />
+                        Ansatz-Kacheln
+                      </CardTitle>
+                      <CardDescription>
+                        Kacheln können per Drag & Drop sortiert werden
+                      </CardDescription>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        setCurrentCard({ title: '', description: '', iconName: 'Target', sortOrder: 0, isActive: true })
+                        setIsEditingCard(false)
+                        setEditCardDialogOpen(true)
+                      }}
                     >
-                      <h2 className="text-3xl font-bold">{pageConfig.approachTitle}</h2>
-                      {pageConfig.approachDescription && (
-                        <p className="mt-4 text-muted-foreground">{pageConfig.approachDescription}</p>
-                      )}
-                    </motion.div>
-                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-                      {approaches.length > 0 ? (
-                        approaches.map((approach, index) => {
-                          const Icon = approach.icon
-                          return (
-                            <motion.div
-                              key={index}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.5, delay: index * 0.1 }}
-                              className="group relative rounded-xl border bg-card p-6 hover:shadow-lg transition-shadow"
-                            >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Neue Kachel
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {/* Section Header */}
+                  <div className="space-y-4 mb-6 pb-6 border-b">
+                    <div className="space-y-2">
+                      <Label>Bereichs-Titel</Label>
+                      <Input
+                        value={config.approachTitle}
+                        onChange={(e) => updateConfig('approachTitle', e.target.value)}
+                        placeholder="z.B. Unser Ansatz"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Bereichs-Beschreibung</Label>
+                      <Textarea
+                        value={config.approachDescription}
+                        onChange={(e) => updateConfig('approachDescription', e.target.value)}
+                        placeholder="z.B. Wie wir arbeiten..."
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Cards List */}
+                  {isLoadingCards ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  ) : approachCards.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <p className="mb-4">Noch keine Kacheln vorhanden</p>
+                      <Button
+                        onClick={() => {
+                          setCurrentCard({ title: '', description: '', iconName: 'Target', sortOrder: 0, isActive: true })
+                          setIsEditingCard(false)
+                          setEditCardDialogOpen(true)
+                        }}
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Erste Kachel erstellen
+                      </Button>
+                    </div>
+                  ) : (
+                    <SortableList
+                      items={approachCards}
+                      onReorder={handleReorderCards}
+                      renderItem={(card) => {
+                        const Icon = getIconComponent(card.iconName)
+                        return (
+                          <div className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                            <div className="flex-1">
                               <div className="flex items-start gap-3">
                                 <div className="rounded-lg bg-primary/10 p-2.5 flex-shrink-0">
                                   <Icon className="h-5 w-5 text-primary" />
                                 </div>
-                                <div className="space-y-2">
-                                  <h3 className="text-lg font-semibold leading-tight">{approach.title}</h3>
-                                  <p className="text-sm text-muted-foreground">{approach.description}</p>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h3 className="font-semibold">{card.title}</h3>
+                                    <Badge variant={card.isActive ? 'default' : 'secondary'}>
+                                      {card.isActive ? 'Aktiv' : 'Inaktiv'}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground line-clamp-2">{card.description}</p>
                                 </div>
                               </div>
-                              <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-primary/10 group-hover:ring-primary/20 transition-all" />
-                            </motion.div>
-                          )
-                        })
-                      ) : (
-                        <div className="col-span-full text-center py-8 text-muted-foreground">
-                          Keine aktiven Kacheln vorhanden. Bitte erstellen Sie Kacheln im Tab "Kacheln".
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setCurrentCard(card)
+                                  setIsEditingCard(true)
+                                  setEditCardDialogOpen(true)
+                                }}
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteCard(card.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+                        )
+                      }}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* SEO Tab */}
+            <TabsContent value="seo" className="space-y-6 mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5 text-primary" />
+                    SEO & Meta-Tags
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <SEOSection
+                    metaTitle={config.metaTitle}
+                    metaDescription={config.metaDescription}
+                    fallbackTitle="Über uns | NICNOA"
+                    fallbackDescription="Lernen Sie das Team hinter NICNOA kennen. Unsere Vision, Mission und warum wir die beste Lösung für Salon-Spaces entwickeln."
+                    url="nicnoa.de › uber-uns"
+                    onTitleChange={(value) => updateConfig('metaTitle', value || null)}
+                    onDescriptionChange={(value) => updateConfig('metaDescription', value || null)}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Preview */}
+        {showPreview && (
+          <div className="lg:sticky lg:top-6 h-fit space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Eye className="h-4 w-4" />
+                    Live-Vorschau
+                  </CardTitle>
+                  <div className="flex gap-1">
+                    <Button
+                      variant={previewDevice === 'desktop' ? 'secondary' : 'ghost'}
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setPreviewDevice('desktop')}
+                    >
+                      <Monitor className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={previewDevice === 'mobile' ? 'secondary' : 'ghost'}
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setPreviewDevice('mobile')}
+                    >
+                      <Smartphone className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div
+                  className={`mx-auto transition-all duration-300 ${
+                    previewDevice === 'mobile' ? 'max-w-[375px] px-4 pb-4' : 'w-full'
+                  }`}
+                >
+                  <div className={`border rounded-xl overflow-hidden bg-slate-950 ${
+                    previewDevice === 'mobile' ? 'aspect-[9/16]' : 'aspect-[16/10]'
+                  } overflow-y-auto max-h-[600px]`}>
+                    {/* Preview Content */}
+                    <div className="p-4 space-y-6 text-white">
+                      {/* Hero */}
+                      <div className="text-center space-y-3">
+                        {config.heroBadgeText && (
+                          <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs">
+                            <Users className="mr-1 h-3 w-3 text-primary" />
+                            {config.heroBadgeText}
+                          </span>
+                        )}
+                        <h1 className={`font-bold ${previewDevice === 'mobile' ? 'text-xl' : 'text-2xl'}`}>
+                          {config.heroTitle || 'Titel'}
+                        </h1>
+                        {config.heroDescription && (
+                          <p className="text-slate-400 text-sm">{config.heroDescription}</p>
+                        )}
+                      </div>
+
+                      {/* Team */}
+                      <div className={`grid gap-4 ${previewDevice === 'mobile' ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                        {[
+                          { name: config.team1Name, role: config.team1Role, img: config.team1ImageUrl },
+                          { name: config.team2Name, role: config.team2Role, img: config.team2ImageUrl },
+                        ].map((member, i) => (
+                          <div key={i} className="bg-slate-900 rounded-lg p-3">
+                            <div className="aspect-square rounded-lg bg-slate-800 mb-2 flex items-center justify-center overflow-hidden">
+                              {member.img ? (
+                                <Image
+                                  src={member.img}
+                                  alt={member.name || 'Team'}
+                                  width={150}
+                                  height={150}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <Users className="h-8 w-8 text-slate-600" />
+                              )}
+                            </div>
+                            <p className="font-semibold text-sm">{member.name || `Team ${i + 1}`}</p>
+                            <p className="text-primary text-xs">{member.role || 'Rolle'}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Vision & Mission */}
+                      <div className="grid gap-4 grid-cols-2">
+                        <div className="bg-slate-900/50 rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Lightbulb className="h-4 w-4 text-primary" />
+                            <span className="text-xs text-primary">{config.visionBadgeText || 'Vision'}</span>
+                          </div>
+                          <p className="text-xs font-medium">{config.visionTitle || 'Titel'}</p>
+                        </div>
+                        <div className="bg-slate-900/50 rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Target className="h-4 w-4 text-primary" />
+                            <span className="text-xs text-primary">{config.missionBadgeText || 'Mission'}</span>
+                          </div>
+                          <p className="text-xs font-medium">{config.missionTitle || 'Titel'}</p>
+                        </div>
+                      </div>
+
+                      {/* Approach Cards */}
+                      {approaches.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-slate-400">{config.approachTitle}</p>
+                          <div className={`grid gap-2 ${previewDevice === 'mobile' ? 'grid-cols-2' : 'grid-cols-2'}`}>
+                            {approaches.slice(0, 4).map((approach, i) => {
+                              const Icon = approach.icon
+                              return (
+                                <div key={i} className="bg-slate-900/50 rounded-lg p-2">
+                                  <Icon className="h-3 w-3 text-primary mb-1" />
+                                  <p className="text-[10px] font-medium truncate">{approach.title}</p>
+                                </div>
+                              )
+                            })}
+                          </div>
                         </div>
                       )}
-                    </div>
-                  </section>
-                )}
 
-                {/* Why Section */}
-                <section className="border-t bg-muted/50">
-                  <div className="container py-16">
-                    <div className="mx-auto max-w-3xl text-center">
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                      >
-                        {pageConfig.whyTitle && (
-                          <h2 className="text-3xl font-bold mb-4">{pageConfig.whyTitle}</h2>
-                        )}
-                        {pageConfig.whyDescription && (
-                          <p className="text-muted-foreground mb-8">{pageConfig.whyDescription}</p>
-                        )}
-                        {pageConfig.whyButtonText && (
-                          <Button size="lg" className="group" asChild>
-                            <Link href={pageConfig.whyButtonLink || '/registrieren'}>
-                              {pageConfig.whyButtonText}
-                              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                            </Link>
-                          </Button>
-                        )}
-                      </motion.div>
+                      {/* CTA */}
+                      <div className="text-center bg-slate-900/50 rounded-lg p-4">
+                        <p className="text-sm font-medium mb-2">{config.whyTitle || 'CTA Titel'}</p>
+                        <button className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-medium">
+                          {config.whyButtonText || 'Button'}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </section>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                </div>
+                <p className="text-xs text-center text-muted-foreground py-3">
+                  Echtzeit-Vorschau
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+
+      {/* Edit Card Dialog */}
+      <Dialog open={editCardDialogOpen} onOpenChange={setEditCardDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {isEditingCard ? 'Kachel bearbeiten' : 'Neue Kachel erstellen'}
+            </DialogTitle>
+            <DialogDescription>
+              Erstellen oder bearbeiten Sie eine Ansatz-Kachel
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Titel</Label>
+              <Input
+                value={currentCard.title}
+                onChange={(e) =>
+                  setCurrentCard((prev) => ({ ...prev, title: e.target.value }))
+                }
+                placeholder="z.B. Praxisnah validiert"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Beschreibung</Label>
+              <Textarea
+                value={currentCard.description}
+                onChange={(e) =>
+                  setCurrentCard((prev) => ({ ...prev, description: e.target.value }))
+                }
+                placeholder="Beschreibung der Kachel..."
+                rows={4}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Icon</Label>
+              <Select
+                value={currentCard.iconName || 'Target'}
+                onValueChange={(value) =>
+                  setCurrentCard((prev) => ({ ...prev, iconName: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {iconNames.map((iconName) => {
+                    const Icon = getIconComponent(iconName)
+                    return (
+                      <SelectItem key={iconName} value={iconName}>
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4" />
+                          <span>{iconName}</span>
+                        </div>
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={currentCard.isActive !== false}
+                onCheckedChange={(checked) =>
+                  setCurrentCard((prev) => ({ ...prev, isActive: checked }))
+                }
+              />
+              <Label>Aktiv</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditCardDialogOpen(false)}>
+              Abbrechen
+            </Button>
+            <Button onClick={handleSaveCard}>
+              <Save className="mr-2 h-4 w-4" />
+              {isEditingCard ? 'Aktualisieren' : 'Erstellen'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
-

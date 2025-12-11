@@ -20,10 +20,26 @@ import {
   AlertTriangle,
   Lock,
   Shield,
+  Languages,
+  Eye,
+  EyeOff,
+  Bot,
+  TrendingUp,
+  Activity,
+  DollarSign,
+  CheckCircle,
+  XCircle,
+  MessageSquareQuote,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  Code2,
 } from 'lucide-react'
+import { POPULAR_MODELS } from '@/lib/openrouter'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -34,6 +50,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
 import { DesignSystemSection } from '@/components/admin/design-system-section'
@@ -60,6 +81,10 @@ interface PlatformSettings {
   useDemoMode: boolean
   demoModeMessage: string | null
   passwordProtectionEnabled: boolean
+  // Übersetzungs-API
+  deeplApiKey: string | null
+  openaiApiKey: string | null
+  translationProvider: string | null
 }
 
 export default function SettingsPage() {
@@ -86,9 +111,38 @@ export default function SettingsPage() {
   const [useDemoMode, setUseDemoMode] = useState(true)
   const [demoModeMessage, setDemoModeMessage] = useState('Demo-Modus aktiv - Es werden Beispieldaten angezeigt')
   const [passwordProtectionEnabled, setPasswordProtectionEnabled] = useState(true)
+  // Übersetzungs-API
+  const [deeplApiKey, setDeeplApiKey] = useState('')
+  const [openaiApiKey, setOpenaiApiKey] = useState('')
+  const [translationProvider, setTranslationProvider] = useState('auto')
+  const [showDeeplKey, setShowDeeplKey] = useState(false)
+  const [showOpenaiKey, setShowOpenaiKey] = useState(false)
+  
+  // OpenRouter
+  const [openRouterApiKey, setOpenRouterApiKey] = useState('')
+  const [openRouterEnabled, setOpenRouterEnabled] = useState(false)
+  const [openRouterDefaultModel, setOpenRouterDefaultModel] = useState('openai/gpt-4o-mini')
+  const [openRouterSiteUrl, setOpenRouterSiteUrl] = useState('https://nicnoa.de')
+  const [openRouterSiteName, setOpenRouterSiteName] = useState('NICNOA Platform')
+  const [showOpenRouterKey, setShowOpenRouterKey] = useState(false)
+  const [isTestingOpenRouter, setIsTestingOpenRouter] = useState(false)
+  const [openRouterUsage, setOpenRouterUsage] = useState<{
+    today: { totalCostUsd: number; totalRequests: number }
+    thisMonth: { totalCostUsd: number; totalRequests: number }
+  } | null>(null)
+  
+  // Tone of Voice
+  const [blogToneOfVoice, setBlogToneOfVoice] = useState('')
+  const [blogToneOfVoicePrompt, setBlogToneOfVoicePrompt] = useState('')
+  const [blogArticleSystemPrompt, setBlogArticleSystemPrompt] = useState('')
+  const [defaultArticlePrompt, setDefaultArticlePrompt] = useState('')
+  const [showArticlePrompt, setShowArticlePrompt] = useState(false)
+  const [isSavingTone, setIsSavingTone] = useState(false)
 
   useEffect(() => {
     fetchSettings()
+    fetchOpenRouterConfig()
+    fetchToneOfVoice()
   }, [])
 
   const fetchSettings = async () => {
@@ -116,11 +170,138 @@ export default function SettingsPage() {
       setUseDemoMode(data.useDemoMode ?? true)
       setDemoModeMessage(data.demoModeMessage || 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt')
       setPasswordProtectionEnabled(data.passwordProtectionEnabled ?? true)
+      // Übersetzungs-API - nur Masken anzeigen wenn vorhanden
+      setDeeplApiKey(data.deeplApiKey ? '••••••••••••••••' : '')
+      setOpenaiApiKey(data.openaiApiKey ? '••••••••••••••••' : '')
+      setTranslationProvider(data.translationProvider || 'auto')
     } catch (error) {
       console.error('Error fetching settings:', error)
       toast.error('Fehler beim Laden der Einstellungen')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchOpenRouterConfig = async () => {
+    try {
+      const [configRes, usageRes] = await Promise.all([
+        fetch('/api/admin/openrouter'),
+        fetch('/api/admin/openrouter/usage?period=month'),
+      ])
+      
+      if (configRes.ok) {
+        const config = await configRes.json()
+        setOpenRouterApiKey(config.hasApiKey ? '••••••••••••••••' : '')
+        setOpenRouterEnabled(config.openRouterEnabled)
+        setOpenRouterDefaultModel(config.openRouterDefaultModel || 'openai/gpt-4o-mini')
+        setOpenRouterSiteUrl(config.openRouterSiteUrl || 'https://nicnoa.de')
+        setOpenRouterSiteName(config.openRouterSiteName || 'NICNOA Platform')
+      }
+      
+      if (usageRes.ok) {
+        const usage = await usageRes.json()
+        setOpenRouterUsage({
+          today: usage.today,
+          thisMonth: usage.thisMonth,
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching OpenRouter config:', error)
+    }
+  }
+
+  const saveOpenRouterConfig = async () => {
+    setIsSaving(true)
+    try {
+      const res = await fetch('/api/admin/openrouter', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          openRouterApiKey: openRouterApiKey !== '••••••••••••••••' ? openRouterApiKey : undefined,
+          openRouterEnabled,
+          openRouterDefaultModel,
+          openRouterSiteUrl,
+          openRouterSiteName,
+        }),
+      })
+      
+      if (!res.ok) throw new Error('Failed to save')
+      
+      const data = await res.json()
+      setOpenRouterApiKey(data.hasApiKey ? '••••••••••••••••' : '')
+      toast.success('OpenRouter-Einstellungen gespeichert!')
+    } catch (error) {
+      console.error('Error saving OpenRouter config:', error)
+      toast.error('Fehler beim Speichern')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const testOpenRouterKey = async () => {
+    if (!openRouterApiKey || openRouterApiKey === '••••••••••••••••') {
+      toast.error('Bitte gib einen API Key ein')
+      return
+    }
+
+    setIsTestingOpenRouter(true)
+    try {
+      const res = await fetch('/api/admin/openrouter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: openRouterApiKey }),
+      })
+
+      const data = await res.json()
+
+      if (data.valid) {
+        toast.success(data.message)
+      } else {
+        toast.error(data.error || 'Ungültiger API Key')
+      }
+    } catch (error) {
+      toast.error('Verbindungsfehler')
+    } finally {
+      setIsTestingOpenRouter(false)
+    }
+  }
+
+  const fetchToneOfVoice = async () => {
+    try {
+      const res = await fetch('/api/admin/tone-of-voice')
+      if (res.ok) {
+        const data = await res.json()
+        setBlogToneOfVoice(data.blogToneOfVoice || '')
+        setBlogToneOfVoicePrompt(data.blogToneOfVoicePrompt || '')
+        setBlogArticleSystemPrompt(data.blogArticleSystemPrompt || '')
+        setDefaultArticlePrompt(data.defaultArticlePrompt || '')
+      }
+    } catch (error) {
+      console.error('Error fetching tone of voice:', error)
+    }
+  }
+
+  const saveToneOfVoice = async () => {
+    setIsSavingTone(true)
+    try {
+      const res = await fetch('/api/admin/tone-of-voice', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blogToneOfVoice,
+          blogToneOfVoicePrompt,
+          blogArticleSystemPrompt,
+        }),
+      })
+
+      if (!res.ok) throw new Error('Failed to save')
+
+      toast.success('Tone of Voice gespeichert!')
+    } catch (error) {
+      console.error('Error saving tone of voice:', error)
+      toast.error('Fehler beim Speichern')
+    } finally {
+      setIsSavingTone(false)
     }
   }
 
@@ -148,6 +329,10 @@ export default function SettingsPage() {
           useDemoMode,
           demoModeMessage: demoModeMessage || null,
           passwordProtectionEnabled,
+          // Nur senden wenn geändert (nicht die Maske)
+          deeplApiKey: deeplApiKey !== '••••••••••••••••' ? deeplApiKey : undefined,
+          openaiApiKey: openaiApiKey !== '••••••••••••••••' ? openaiApiKey : undefined,
+          translationProvider,
         }),
       })
       
@@ -272,11 +457,20 @@ export default function SettingsPage() {
       </motion.div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="general">Allgemein</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="billing">Abrechnung</TabsTrigger>
           <TabsTrigger value="email">E-Mail</TabsTrigger>
+          <TabsTrigger value="translations">Übersetzungen</TabsTrigger>
+          <TabsTrigger value="openrouter" className="gap-1">
+            <Bot className="h-3.5 w-3.5" />
+            OpenRouter
+          </TabsTrigger>
+          <TabsTrigger value="tone" className="gap-1">
+            <MessageSquareQuote className="h-3.5 w-3.5" />
+            Tone
+          </TabsTrigger>
           <TabsTrigger value="security">Sicherheit</TabsTrigger>
           <TabsTrigger value="integrations">Integrationen</TabsTrigger>
         </TabsList>
@@ -564,6 +758,596 @@ export default function SettingsPage() {
                 </Button>
               </CardContent>
             </Card>
+          </motion.div>
+        </TabsContent>
+
+        {/* Translation Settings */}
+        <TabsContent value="translations" className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Languages className="h-5 w-5 text-primary" />
+                  Übersetzungs-API
+                </CardTitle>
+                <CardDescription>
+                  Konfigurieren Sie die API-Schlüssel für automatische Übersetzungen. 
+                  DeepL wird bevorzugt, OpenAI dient als Fallback.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Status-Übersicht */}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className={`p-4 rounded-lg border ${deeplApiKey ? 'bg-green-500/5 border-green-500/20' : 'bg-amber-500/5 border-amber-500/20'}`}>
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="font-medium">DeepL</span>
+                      <Badge className={deeplApiKey ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}>
+                        {deeplApiKey ? 'Konfiguriert' : 'Nicht konfiguriert'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Hochwertige Übersetzungen für die meisten europäischen Sprachen
+                    </p>
+                  </div>
+                  <div className={`p-4 rounded-lg border ${openaiApiKey ? 'bg-green-500/5 border-green-500/20' : 'bg-amber-500/5 border-amber-500/20'}`}>
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="font-medium">OpenAI</span>
+                      <Badge className={openaiApiKey ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}>
+                        {openaiApiKey ? 'Konfiguriert' : 'Nicht konfiguriert'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Fallback für Sprachen, die DeepL nicht unterstützt (z.B. Kroatisch)
+                    </p>
+                  </div>
+                </div>
+
+                {/* Provider-Auswahl */}
+                <div className="space-y-2">
+                  <Label>Bevorzugter Übersetzungsdienst</Label>
+                  <Select value={translationProvider} onValueChange={setTranslationProvider}>
+                    <SelectTrigger className="w-full md:w-[300px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">Automatisch (DeepL bevorzugt)</SelectItem>
+                      <SelectItem value="deepl">Nur DeepL</SelectItem>
+                      <SelectItem value="openai">Nur OpenAI</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    &quot;Automatisch&quot; nutzt DeepL wenn verfügbar, sonst OpenAI
+                  </p>
+                </div>
+
+                {/* DeepL API Key */}
+                <div className="space-y-2">
+                  <Label htmlFor="deeplApiKey">DeepL API-Schlüssel</Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        id="deeplApiKey"
+                        type={showDeeplKey ? 'text' : 'password'}
+                        value={deeplApiKey}
+                        onChange={(e) => setDeeplApiKey(e.target.value)}
+                        placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx"
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                        onClick={() => setShowDeeplKey(!showDeeplKey)}
+                      >
+                        {showDeeplKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => window.open('https://www.deepl.com/pro-api', '_blank')}
+                    >
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      API Key holen
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Free-Keys enden mit &quot;:fx&quot;, Pro-Keys ohne Suffix
+                  </p>
+                </div>
+
+                {/* OpenAI API Key */}
+                <div className="space-y-2">
+                  <Label htmlFor="openaiApiKey">OpenAI API-Schlüssel</Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        id="openaiApiKey"
+                        type={showOpenaiKey ? 'text' : 'password'}
+                        value={openaiApiKey}
+                        onChange={(e) => setOpenaiApiKey(e.target.value)}
+                        placeholder="sk-..."
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                        onClick={() => setShowOpenaiKey(!showOpenaiKey)}
+                      >
+                        {showOpenaiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => window.open('https://platform.openai.com/api-keys', '_blank')}
+                    >
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      API Key holen
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Verwendet GPT-4o-mini für kostengünstige Übersetzungen
+                  </p>
+                </div>
+
+                {/* Hinweis wenn keine Keys */}
+                {!deeplApiKey && !openaiApiKey && (
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-amber-500">Keine API-Schlüssel konfiguriert</h4>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Für automatische Übersetzungen benötigen Sie mindestens einen API-Schlüssel 
+                          (DeepL oder OpenAI). Ohne konfigurierte Keys können keine Übersetzungen 
+                          durchgeführt werden.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+
+        {/* OpenRouter Settings */}
+        <TabsContent value="openrouter" className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            {/* Status-Karten */}
+            <div className="grid gap-4 md:grid-cols-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    {openRouterEnabled && openRouterApiKey ? (
+                      <CheckCircle className="h-8 w-8 text-green-500" />
+                    ) : (
+                      <XCircle className="h-8 w-8 text-amber-500" />
+                    )}
+                    <div>
+                      <p className="text-sm text-muted-foreground">Status</p>
+                      <p className="font-semibold">
+                        {openRouterEnabled && openRouterApiKey ? 'Aktiv' : 'Inaktiv'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <DollarSign className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Heute</p>
+                      <p className="font-semibold">
+                        ${openRouterUsage?.today.totalCostUsd.toFixed(4) || '0.00'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <TrendingUp className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Dieser Monat</p>
+                      <p className="font-semibold">
+                        ${openRouterUsage?.thisMonth.totalCostUsd.toFixed(4) || '0.00'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <Activity className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Anfragen (Monat)</p>
+                      <p className="font-semibold">
+                        {openRouterUsage?.thisMonth.totalRequests || 0}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Konfiguration */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="h-5 w-5 text-primary" />
+                  OpenRouter Konfiguration
+                </CardTitle>
+                <CardDescription>
+                  OpenRouter ist ein KI-Gateway, das Zugriff auf verschiedene LLM-Modelle bietet.
+                  Nutzer können so auf einem gemeinsamen Gateway KI-Funktionen nutzen.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Enable/Disable */}
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div>
+                    <Label className="text-base">OpenRouter aktivieren</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Aktiviert den OpenRouter-Gateway für AI-Funktionen
+                    </p>
+                  </div>
+                  <Switch
+                    checked={openRouterEnabled}
+                    onCheckedChange={setOpenRouterEnabled}
+                  />
+                </div>
+
+                {/* API Key */}
+                <div className="space-y-2">
+                  <Label htmlFor="openRouterApiKey">API-Schlüssel</Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        id="openRouterApiKey"
+                        type={showOpenRouterKey ? 'text' : 'password'}
+                        value={openRouterApiKey}
+                        onChange={(e) => setOpenRouterApiKey(e.target.value)}
+                        placeholder="sk-or-v1-..."
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                        onClick={() => setShowOpenRouterKey(!showOpenRouterKey)}
+                      >
+                        {showOpenRouterKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={testOpenRouterKey}
+                      disabled={isTestingOpenRouter}
+                    >
+                      {isTestingOpenRouter ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Zap className="mr-2 h-4 w-4" />
+                      )}
+                      Testen
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => window.open('https://openrouter.ai/keys', '_blank')}
+                    >
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      API Key holen
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Default Model */}
+                <div className="space-y-2">
+                  <Label>Standard-Modell</Label>
+                  <Select value={openRouterDefaultModel} onValueChange={setOpenRouterDefaultModel}>
+                    <SelectTrigger className="w-full md:w-[400px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {POPULAR_MODELS.map((model) => (
+                        <SelectItem key={model.id} value={model.id}>
+                          <div className="flex items-center gap-2">
+                            <span>{model.name}</span>
+                            <span className="text-xs text-muted-foreground">({model.provider})</span>
+                            {model.recommended && (
+                              <Badge variant="secondary" className="text-xs">Empfohlen</Badge>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Wird für Übersetzungen und AI-Funktionen verwendet
+                  </p>
+                </div>
+
+                {/* Site Attribution */}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="openRouterSiteUrl">Site URL</Label>
+                    <Input
+                      id="openRouterSiteUrl"
+                      value={openRouterSiteUrl}
+                      onChange={(e) => setOpenRouterSiteUrl(e.target.value)}
+                      placeholder="https://nicnoa.de"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Wird als HTTP-Referer an OpenRouter gesendet
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="openRouterSiteName">Site Name</Label>
+                    <Input
+                      id="openRouterSiteName"
+                      value={openRouterSiteName}
+                      onChange={(e) => setOpenRouterSiteName(e.target.value)}
+                      placeholder="NICNOA Platform"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Wird als X-Title Header an OpenRouter gesendet
+                    </p>
+                  </div>
+                </div>
+
+                {/* Info Box */}
+                <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <Bot className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-blue-500">Über OpenRouter</h4>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        OpenRouter bietet Zugang zu verschiedenen KI-Modellen über eine einheitliche API.
+                        Die Kosten werden pro Anfrage berechnet und hier nachverfolgt.
+                        Stuhlmieter und Salonbesitzer können über diesen Gateway AI-Funktionen nutzen.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Save Button */}
+            <Button onClick={saveOpenRouterConfig} disabled={isSaving} className="w-full">
+              {isSaving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              OpenRouter-Einstellungen speichern
+            </Button>
+          </motion.div>
+        </TabsContent>
+
+        {/* Tone of Voice Settings */}
+        <TabsContent value="tone" className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquareQuote className="h-5 w-5 text-primary" />
+                  Tone of Voice für Blog-Artikel
+                </CardTitle>
+                <CardDescription>
+                  Definiere den Schreibstil und die Tonalität für KI-generierte Blog-Artikel.
+                  Diese Einstellungen werden beim Generieren von Artikeln verwendet.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Tone Templates */}
+                <div className="space-y-3">
+                  <Label>Schnellauswahl (Template)</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {[
+                      { id: 'professional', label: 'Professionell', desc: 'Sachlich, kompetent, vertrauenswürdig' },
+                      { id: 'friendly', label: 'Freundlich', desc: 'Warm, einladend, zugänglich' },
+                      { id: 'expert', label: 'Experte', desc: 'Fachkundig, detailliert, tiefgehend' },
+                      { id: 'casual', label: 'Locker', desc: 'Entspannt, modern, nahbar' },
+                    ].map((template) => (
+                      <button
+                        key={template.id}
+                        onClick={() => {
+                          const templates: Record<string, { voice: string; prompt: string }> = {
+                            professional: {
+                              voice: 'Professionell und sachlich',
+                              prompt: 'Schreibe in einem professionellen, sachlichen Ton. Verwende klare, präzise Sprache. Vermeide übertriebene Adjektive. Fokussiere auf Fakten und Mehrwert für den Leser. Nutze eine formelle, aber zugängliche Ansprache.',
+                            },
+                            friendly: {
+                              voice: 'Freundlich und einladend',
+                              prompt: 'Schreibe in einem warmen, freundlichen Ton. Sprich den Leser direkt an (Du-Form). Verwende eine einladende Sprache und schaffe eine persönliche Verbindung. Erkläre komplexe Themen einfach und verständlich.',
+                            },
+                            expert: {
+                              voice: 'Fachkundig und detailliert',
+                              prompt: 'Schreibe als Branchenexperte mit tiefem Fachwissen. Verwende Fachbegriffe (aber erkläre sie). Gehe ins Detail und liefere fundierte Einblicke. Unterstütze Aussagen mit Beispielen und Best Practices.',
+                            },
+                            casual: {
+                              voice: 'Locker und modern',
+                              prompt: 'Schreibe in einem lockeren, modernen Stil. Verwende eine ungezwungene Sprache und aktuelle Ausdrücke. Bring gerne etwas Humor ein. Halte Sätze kurz und knackig. Sprich den Leser direkt an.',
+                            },
+                          }
+                          const selected = templates[template.id]
+                          setBlogToneOfVoice(selected.voice)
+                          setBlogToneOfVoicePrompt(selected.prompt)
+                        }}
+                        className="p-3 text-left border rounded-lg hover:border-primary hover:bg-primary/5 transition-colors"
+                      >
+                        <p className="font-medium text-sm">{template.label}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{template.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tone Description */}
+                <div className="space-y-2">
+                  <Label htmlFor="blogToneOfVoice">Tone of Voice Beschreibung</Label>
+                  <Input
+                    id="blogToneOfVoice"
+                    value={blogToneOfVoice}
+                    onChange={(e) => setBlogToneOfVoice(e.target.value)}
+                    placeholder="z.B. Professionell, aber zugänglich"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Eine kurze Beschreibung des gewünschten Schreibstils
+                  </p>
+                </div>
+
+                {/* System Prompt Extension */}
+                <div className="space-y-2">
+                  <Label htmlFor="blogToneOfVoicePrompt">
+                    System-Prompt für KI
+                    <span className="text-muted-foreground font-normal ml-2">(Detaillierte Anweisungen)</span>
+                  </Label>
+                  <Textarea
+                    id="blogToneOfVoicePrompt"
+                    value={blogToneOfVoicePrompt}
+                    onChange={(e) => setBlogToneOfVoicePrompt(e.target.value)}
+                    placeholder="Schreibe in einem professionellen, aber zugänglichen Ton. Verwende klare, präzise Sprache..."
+                    rows={6}
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Diese Anweisungen werden dem KI-System mitgegeben, um den Schreibstil zu definieren
+                  </p>
+                </div>
+
+                {/* Preview */}
+                {blogToneOfVoicePrompt && (
+                  <div className="p-4 bg-muted/50 rounded-lg border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">Vorschau: So wird die KI instruiert</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground italic">
+                      &quot;{blogToneOfVoicePrompt}&quot;
+                    </p>
+                  </div>
+                )}
+
+                {/* Info */}
+                <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <MessageSquareQuote className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-blue-500">Tipps für gute Ergebnisse</h4>
+                      <ul className="text-sm text-muted-foreground mt-2 space-y-1 list-disc list-inside">
+                        <li>Beschreibe den gewünschten Stil konkret und mit Beispielen</li>
+                        <li>Definiere die Zielgruppe (z.B. &quot;für Salon-Besitzer&quot;)</li>
+                        <li>Gib an, welche Sprache verwendet werden soll (Du/Sie)</li>
+                        <li>Erwähne, ob Fachbegriffe erklärt werden sollen</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Vollständiger Artikel-Prompt */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Code2 className="h-5 w-5 text-primary" />
+                  Vollständiger System-Prompt
+                </CardTitle>
+                <CardDescription>
+                  Dieser Prompt wird für die KI-Artikelgenerierung verwendet. 
+                  Wenn du ihn hier speicherst, wird er immer angewendet.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Collapsible open={showArticlePrompt} onOpenChange={setShowArticlePrompt}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                      <span>System-Prompt {blogArticleSystemPrompt ? '(angepasst)' : '(Standard)'}</span>
+                      {showArticlePrompt ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-4 space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>System-Prompt für Artikelgenerierung</Label>
+                        {blogArticleSystemPrompt && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setBlogArticleSystemPrompt('')}
+                          >
+                            <RefreshCw className="mr-1 h-3 w-3" />
+                            Auf Standard zurücksetzen
+                          </Button>
+                        )}
+                      </div>
+                      <Textarea
+                        value={blogArticleSystemPrompt || defaultArticlePrompt}
+                        onChange={(e) => setBlogArticleSystemPrompt(e.target.value)}
+                        rows={16}
+                        className="font-mono text-xs"
+                        placeholder={defaultArticlePrompt}
+                      />
+                    </div>
+                    
+                    {/* Platzhalter-Erklärung */}
+                    <div className="p-3 bg-muted/50 rounded-lg">
+                      <p className="text-sm font-medium mb-2">Verfügbare Platzhalter:</p>
+                      <ul className="text-xs text-muted-foreground space-y-1 font-mono">
+                        <li><code className="bg-muted px-1 rounded">{'{{TONE_OF_VOICE}}'}</code> - Dein Tone of Voice Prompt</li>
+                        <li><code className="bg-muted px-1 rounded">{'{{ARTICLE_TYPE}}'}</code> - Gewählter Artikeltyp</li>
+                        <li><code className="bg-muted px-1 rounded">{'{{LENGTH_WORDS}}'}</code> - Wortanzahl</li>
+                        <li><code className="bg-muted px-1 rounded">{'{{LENGTH_PARAGRAPHS}}'}</code> - Absatzanzahl</li>
+                        <li><code className="bg-muted px-1 rounded">{'{{QUOTES}}'}</code> - Zitat-Anweisung</li>
+                        <li><code className="bg-muted px-1 rounded">{'{{STATISTICS}}'}</code> - Statistik-Anweisung</li>
+                        <li><code className="bg-muted px-1 rounded">{'{{CATEGORY}}'}</code> - Kategoriename</li>
+                      </ul>
+                    </div>
+
+                    {blogArticleSystemPrompt && blogArticleSystemPrompt !== defaultArticlePrompt && (
+                      <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                        <p className="text-sm text-green-600 dark:text-green-400">
+                          ✓ Ein angepasster Prompt ist aktiv und wird bei jeder Generierung verwendet.
+                        </p>
+                      </div>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
+              </CardContent>
+            </Card>
+
+            {/* Save Button */}
+            <Button onClick={saveToneOfVoice} disabled={isSavingTone} className="w-full">
+              {isSavingTone ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              Tone of Voice speichern
+            </Button>
           </motion.div>
         </TabsContent>
 

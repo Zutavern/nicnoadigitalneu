@@ -24,6 +24,8 @@ import {
   Sparkles,
   Users,
   Building2,
+  Search,
+  Globe,
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -50,6 +52,7 @@ import {
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SEOSection } from '@/components/admin/seo-preview'
 
 interface JobPosting {
   id: string
@@ -84,6 +87,9 @@ interface CareerPageConfig {
   initiativeTitle: string
   initiativeDescription: string
   initiativeButtonText: string
+  // SEO
+  metaTitle: string | null
+  metaDescription: string | null
 }
 
 const emptyJob: Partial<JobPosting> = {
@@ -124,7 +130,7 @@ export default function CareerPage() {
   const [showInactive, setShowInactive] = useState(false)
   
   // Page Config States
-  const [mainTab, setMainTab] = useState<'jobs' | 'config'>('jobs')
+  const [mainTab, setMainTab] = useState<'jobs' | 'config' | 'seo'>('jobs')
   const [pageConfig, setPageConfig] = useState<CareerPageConfig>({
     heroBadgeText: 'Wir suchen dich!',
     heroTitle: 'Karriere bei NICNOA&CO.online',
@@ -141,6 +147,8 @@ export default function CareerPage() {
     initiativeTitle: 'Initiativbewerbung',
     initiativeDescription: 'Du hast kein passendes Stellenangebot gefunden? Bewirb dich trotzdem bei uns!',
     initiativeButtonText: 'Jetzt initiativ bewerben',
+    metaTitle: null,
+    metaDescription: null,
   })
   const [isLoadingConfig, setIsLoadingConfig] = useState(true)
   const [isSavingConfig, setIsSavingConfig] = useState(false)
@@ -345,15 +353,19 @@ export default function CareerPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Side: Settings */}
         <div className={`${showPreview ? 'w-1/2' : 'w-full'} overflow-y-auto p-6`}>
-          <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'jobs' | 'config')}>
-            <TabsList className="grid w-full grid-cols-2">
+          <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'jobs' | 'config' | 'seo')}>
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="jobs">
                 <Briefcase className="mr-2 h-4 w-4" />
-                Stellenangebote
+                Stellen
               </TabsTrigger>
               <TabsTrigger value="config">
                 <FileText className="mr-2 h-4 w-4" />
-                Seiten-Konfiguration
+                Konfiguration
+              </TabsTrigger>
+              <TabsTrigger value="seo">
+                <Search className="mr-2 h-4 w-4" />
+                SEO
               </TabsTrigger>
             </TabsList>
 
@@ -903,6 +915,32 @@ export default function CareerPage() {
                   </Card>
                 </div>
               )}
+            </TabsContent>
+
+            {/* SEO Tab */}
+            <TabsContent value="seo" className="space-y-6 mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5 text-primary" />
+                    SEO & Meta-Tags
+                  </CardTitle>
+                  <CardDescription>
+                    Optimiere die Sichtbarkeit der Karriere-Seite in Suchmaschinen
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SEOSection
+                    metaTitle={pageConfig.metaTitle}
+                    metaDescription={pageConfig.metaDescription}
+                    fallbackTitle="Karriere bei NICNOA | Jobs & Stellenangebote"
+                    fallbackDescription="Werde Teil des NICNOA Teams. Entdecke spannende Karrieremöglichkeiten in einem innovativen Startup."
+                    url="nicnoa.de › karriere"
+                    onTitleChange={(value) => updatePageConfig('metaTitle', value || null)}
+                    onDescriptionChange={(value) => updatePageConfig('metaDescription', value || null)}
+                  />
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { clearDemoModeCache, isDemoModeActive, getMockAdminSettings } from '@/lib/mock-data'
+import { clearTranslationApiCache } from '@/lib/translation/translation-service'
 
 // GET /api/admin/settings - Hole Platform-Einstellungen
 export async function GET() {
@@ -29,12 +30,15 @@ export async function GET() {
       })
     }
 
-    // Passwort nicht zurückgeben
-    const { smtpPassword, ...safeSettings } = settings
+    // Sensible Daten nicht vollständig zurückgeben
+    const { smtpPassword, deeplApiKey, openaiApiKey, ...safeSettings } = settings
 
     return NextResponse.json({
       ...safeSettings,
-      smtpPassword: smtpPassword ? '••••••••' : null
+      smtpPassword: smtpPassword ? '••••••••' : null,
+      // API-Keys nur als Boolean zurückgeben (ob konfiguriert)
+      deeplApiKey: deeplApiKey ? '••••••••••••••••' : null,
+      openaiApiKey: openaiApiKey ? '••••••••••••••••' : null,
     })
   } catch (error) {
     console.error('Error fetching settings:', error)
@@ -86,7 +90,11 @@ export async function PUT(request: Request) {
       useDemoMode,
       demoModeMessage,
       // Sicherheit
-      passwordProtectionEnabled
+      passwordProtectionEnabled,
+      // Übersetzungs-API
+      deeplApiKey,
+      openaiApiKey,
+      translationProvider,
     } = body
 
     // Aktualisiere Einstellungen (upsert für Singleton)
@@ -121,6 +129,17 @@ export async function PUT(request: Request) {
     if (smtpPassword !== undefined && smtpPassword !== '••••••••') {
       updateData.smtpPassword = smtpPassword
     }
+    
+    // Übersetzungs-API-Keys nur aktualisieren wenn nicht Platzhalter
+    if (deeplApiKey !== undefined && deeplApiKey !== '••••••••••••••••') {
+      updateData.deeplApiKey = deeplApiKey || null
+    }
+    if (openaiApiKey !== undefined && openaiApiKey !== '••••••••••••••••') {
+      updateData.openaiApiKey = openaiApiKey || null
+    }
+    if (translationProvider !== undefined) {
+      updateData.translationProvider = translationProvider
+    }
 
     const settings = await prisma.platformSettings.upsert({
       where: { id: 'default' },
@@ -136,6 +155,11 @@ export async function PUT(request: Request) {
       clearDemoModeCache()
     }
 
+    // Translation-API-Cache leeren wenn Keys geändert wurden
+    if (deeplApiKey !== undefined || openaiApiKey !== undefined || translationProvider !== undefined) {
+      clearTranslationApiCache()
+    }
+
     // Log the settings change
     await prisma.securityLog.create({
       data: {
@@ -148,12 +172,14 @@ export async function PUT(request: Request) {
       }
     })
 
-    // Passwort nicht zurückgeben
-    const { smtpPassword: _, ...safeSettings } = settings
+    // Sensible Daten nicht vollständig zurückgeben
+    const { smtpPassword: _, deeplApiKey: _d, openaiApiKey: _o, ...safeSettings } = settings
 
     return NextResponse.json({
       ...safeSettings,
-      smtpPassword: settings.smtpPassword ? '••••••••' : null
+      smtpPassword: settings.smtpPassword ? '••••••••' : null,
+      deeplApiKey: settings.deeplApiKey ? '••••••••••••••••' : null,
+      openaiApiKey: settings.openaiApiKey ? '••••••••••••••••' : null,
     })
   } catch (error) {
     console.error('Error updating settings:', error)

@@ -25,8 +25,11 @@ import {
   Eye,
   Loader2,
   Globe,
+  Image as ImageIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { SEOSection } from '@/components/admin/seo-preview'
+import { AIArticleGenerator } from '@/components/editor/ai-article-generator'
 
 interface Category {
   id: string
@@ -67,6 +70,9 @@ export default function NewBlogPostPage() {
   const [metaTitle, setMetaTitle] = useState('')
   const [metaDescription, setMetaDescription] = useState('')
   
+  // AI Generator
+  const [showAIGenerator, setShowAIGenerator] = useState(false)
+  
   // Options
   const [authors, setAuthors] = useState<Author[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -106,6 +112,53 @@ export default function NewBlogPostPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // AI Artikel übernehmen
+  const handleAIArticleGenerated = (article: {
+    title: string
+    slug: string
+    excerpt: string
+    content: string
+    metaTitle: string
+    metaDescription: string
+    suggestedTags: string[]
+    suggestedCategory: string
+    estimatedReadTime: number
+    featuredImage?: string
+    focusKeyword?: string
+  }) => {
+    setTitle(article.title)
+    setSlug(article.slug)
+    setExcerpt(article.excerpt)
+    setContent(article.content)
+    setMetaTitle(article.metaTitle)
+    setMetaDescription(article.metaDescription)
+    
+    // Featured Image übernehmen
+    if (article.featuredImage) {
+      setFeaturedImage(article.featuredImage)
+    }
+    
+    // Versuche passende Tags zu finden
+    const matchingTags = tags.filter((t) =>
+      article.suggestedTags.some((st) => 
+        st.toLowerCase() === t.name.toLowerCase()
+      )
+    )
+    if (matchingTags.length > 0) {
+      setSelectedTagIds(matchingTags.map((t) => t.id))
+    }
+    
+    // Versuche passende Kategorie zu finden
+    const matchingCategory = categories.find(
+      (c) => c.name.toLowerCase() === article.suggestedCategory.toLowerCase()
+    )
+    if (matchingCategory) {
+      setCategoryId(matchingCategory.id)
+    }
+    
+    toast.success('Artikel übernommen! Überprüfe die Inhalte und speichere.')
   }
 
   const handleSave = async (publishStatus?: string) => {
@@ -271,6 +324,8 @@ export default function NewBlogPostPage() {
                 onChange={setContent}
                 placeholder="Beginne hier mit dem Schreiben..."
                 editorClassName="min-h-[500px]"
+                showAIButton
+                onAIClick={() => setShowAIGenerator(true)}
               />
             </CardContent>
           </Card>
@@ -286,50 +341,17 @@ export default function NewBlogPostPage() {
                 Optimiere die Darstellung in Suchmaschinen
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="metaTitle">Meta-Titel</Label>
-                <Input
-                  id="metaTitle"
-                  placeholder={title || 'Titel für Suchmaschinen'}
-                  value={metaTitle}
-                  onChange={(e) => setMetaTitle(e.target.value)}
-                  maxLength={70}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {metaTitle.length}/70 Zeichen
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="metaDescription">Meta-Beschreibung</Label>
-                <Textarea
-                  id="metaDescription"
-                  placeholder={excerpt || 'Beschreibung für Suchmaschinen'}
-                  value={metaDescription}
-                  onChange={(e) => setMetaDescription(e.target.value)}
-                  rows={2}
-                  maxLength={160}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {metaDescription.length}/160 Zeichen
-                </p>
-              </div>
-
-              {/* Google Preview */}
-              <div className="mt-6 p-4 bg-muted/30 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-2">Google-Vorschau:</p>
-                <div className="space-y-1">
-                  <p className="text-blue-600 text-lg truncate">
-                    {metaTitle || title || 'Titel des Artikels'}
-                  </p>
-                  <p className="text-green-700 text-sm">
-                    nicnoa.de/blog/{slug || 'url-slug'}
-                  </p>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {metaDescription || excerpt || 'Beschreibung des Artikels erscheint hier...'}
-                  </p>
-                </div>
-              </div>
+            <CardContent>
+              <SEOSection
+                metaTitle={metaTitle}
+                metaDescription={metaDescription}
+                fallbackTitle={title || 'Titel des Artikels'}
+                fallbackDescription={excerpt || 'Beschreibung des Artikels erscheint hier...'}
+                url={`nicnoa.de/blog/${slug || 'url-slug'}`}
+                onTitleChange={setMetaTitle}
+                onDescriptionChange={setMetaDescription}
+                content={content}
+              />
             </CardContent>
           </Card>
         </div>
@@ -489,6 +511,14 @@ export default function NewBlogPostPage() {
           </Card>
         </div>
       </div>
+
+      {/* AI Article Generator Dialog */}
+      <AIArticleGenerator
+        open={showAIGenerator}
+        onOpenChange={setShowAIGenerator}
+        onArticleGenerated={handleAIArticleGenerated}
+        categoryId={categoryId || undefined}
+      />
     </div>
   )
 }

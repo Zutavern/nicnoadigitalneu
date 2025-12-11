@@ -27,6 +27,9 @@ export async function GET() {
         contactText: 'Können Sie nicht finden, wonach Sie suchen? Kontaktieren Sie unser',
         contactLinkText: 'Support-Team',
         contactLinkUrl: '/support',
+        // SEO
+        metaTitle: null,
+        metaDescription: null,
       })
     }
 
@@ -43,6 +46,9 @@ export async function GET() {
       contactText: c.contact_text,
       contactLinkText: c.contact_link_text,
       contactLinkUrl: c.contact_link_url,
+      // SEO
+      metaTitle: c.meta_title,
+      metaDescription: c.meta_description,
     })
   } catch (error) {
     console.error('Error fetching FAQ page config:', error)
@@ -74,6 +80,9 @@ export async function PUT(request: Request) {
       contactText,
       contactLinkText,
       contactLinkUrl,
+      // SEO
+      metaTitle,
+      metaDescription,
     } = body
 
     if (!heroTitle) {
@@ -102,6 +111,8 @@ export async function PUT(request: Request) {
           contact_text = ${contactText || null},
           contact_link_text = ${contactLinkText || 'Support-Team'},
           contact_link_url = ${contactLinkUrl || '/support'},
+          meta_title = ${metaTitle || null},
+          meta_description = ${metaDescription || null},
           updated_at = NOW()
         WHERE id = ${existing[0].id}
       `
@@ -112,12 +123,14 @@ export async function PUT(request: Request) {
           hero_badge_text, hero_title, hero_description,
           section_title, section_description,
           salon_tab_label, stylist_tab_label,
-          contact_text, contact_link_text, contact_link_url
+          contact_text, contact_link_text, contact_link_url,
+          meta_title, meta_description
         ) VALUES (
           ${heroBadgeText || null}, ${heroTitle}, ${heroDescription || null},
           ${sectionTitle || null}, ${sectionDescription || null},
           ${salonTabLabel || 'Für Salon-Space Betreiber'}, ${stylistTabLabel || 'Für Stuhlmieter'},
-          ${contactText || null}, ${contactLinkText || 'Support-Team'}, ${contactLinkUrl || '/support'}
+          ${contactText || null}, ${contactLinkText || 'Support-Team'}, ${contactLinkUrl || '/support'},
+          ${metaTitle || null}, ${metaDescription || null}
         )
       `
     }

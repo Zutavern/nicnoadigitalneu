@@ -69,13 +69,13 @@ export async function GET() {
       
       // Gesamtumsatz (alle bezahlten Buchungen)
       prisma.booking.aggregate({
-        _sum: { price: true },
+        _sum: { totalPrice: true },
         where: { isPaid: true },
       }),
       
       // Monatsumsatz (aktueller Monat)
       prisma.booking.aggregate({
-        _sum: { price: true },
+        _sum: { totalPrice: true },
         where: {
           isPaid: true,
           startTime: {
@@ -98,7 +98,7 @@ export async function GET() {
       prisma.booking.groupBy({
         by: ['stylistId'],
         _count: { id: true },
-        _sum: { price: true },
+        _sum: { totalPrice: true },
         orderBy: { _count: { id: 'desc' } },
         take: 5,
       }),
@@ -158,7 +158,7 @@ export async function GET() {
         },
       }),
       prisma.booking.aggregate({
-        _sum: { price: true },
+        _sum: { totalPrice: true },
         where: {
           isPaid: true,
           startTime: { gte: lastMonthStart, lte: lastMonthEnd },
@@ -185,8 +185,8 @@ export async function GET() {
       ? ((thisMonthBookings - lastMonthBookings) / lastMonthBookings * 100).toFixed(1) 
       : '0'
     
-    const currentMonthlyRevenue = monthlyRevenue._sum.price?.toNumber() || 0
-    const lastMonthlyRevenue = lastMonthRevenue._sum.price?.toNumber() || 0
+    const currentMonthlyRevenue = monthlyRevenue._sum.totalPrice?.toNumber() || 0
+    const lastMonthlyRevenue = lastMonthRevenue._sum.totalPrice?.toNumber() || 0
     const revenueGrowth = lastMonthlyRevenue > 0 
       ? ((currentMonthlyRevenue - lastMonthlyRevenue) / lastMonthlyRevenue * 100).toFixed(1) 
       : '0'
@@ -202,7 +202,7 @@ export async function GET() {
         completedBookings,
         pendingOnboardings,
         approvedOnboardings,
-        totalRevenue: totalRevenue._sum.price?.toNumber() || 0,
+        totalRevenue: totalRevenue._sum.totalPrice?.toNumber() || 0,
         monthlyRevenue: currentMonthlyRevenue,
       },
       
@@ -219,7 +219,7 @@ export async function GET() {
         title: b.title,
         serviceName: b.service?.name,
         customerName: b.customer ? `${b.customer.firstName} ${b.customer.lastName}` : 'Unbekannt',
-        price: b.price?.toNumber() || 0,
+        price: b.totalPrice?.toNumber() || 0,
         status: b.status,
         startTime: b.startTime,
       })),
@@ -230,7 +230,7 @@ export async function GET() {
         email: s.stylist?.email,
         image: s.stylist?.image,
         bookingCount: s._count.id,
-        totalRevenue: s._sum.price?.toNumber() || 0,
+        totalRevenue: s._sum.totalPrice?.toNumber() || 0,
       })),
       
       recentUsers,
