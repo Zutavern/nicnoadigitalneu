@@ -5,7 +5,7 @@ import {
   getUsageByModel,
   getUsageByUser,
   getDailyUsage,
-} from '@/lib/openrouter'
+} from '@/lib/openrouter/usage-tracker'
 
 // GET: Nutzungsstatistiken abrufen
 export async function GET(request: NextRequest) {

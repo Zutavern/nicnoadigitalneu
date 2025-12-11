@@ -1,24 +1,4 @@
-// OpenRouter Client & Types
-export {
-  getOpenRouterConfig,
-  clearOpenRouterConfigCache,
-  isOpenRouterEnabled,
-  calculateCost,
-  chatCompletion,
-  textCompletion,
-  translateViaOpenRouter,
-} from './client'
-
-// Usage Tracking
-export {
-  logAIUsage,
-  getUsageStats,
-  getUsageByModel,
-  getUsageByUser,
-  getDailyUsage,
-  getUserUsage,
-} from './usage-tracker'
-
+// Client-safe exports (can be imported in 'use client' components)
 // Types
 export type {
   OpenRouterConfig,
@@ -34,3 +14,7 @@ export {
   MODEL_PRICING,
   POPULAR_MODELS,
 } from './types'
+
+// Server-only exports - DO NOT import these in client components!
+// Use: import { chatCompletion } from '@/lib/openrouter/client'
+// Use: import { logAIUsage } from '@/lib/openrouter/usage-tracker'

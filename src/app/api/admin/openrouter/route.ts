@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
-import { clearOpenRouterConfigCache } from '@/lib/openrouter'
+import { clearOpenRouterConfigCache } from '@/lib/openrouter/client'
 
 const MASKED_KEY = '••••••••••••••••'
 

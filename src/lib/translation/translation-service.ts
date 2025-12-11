@@ -1,6 +1,6 @@
 import OpenAI from 'openai'
 import { prisma } from '@/lib/prisma'
-import { isOpenRouterEnabled, translateViaOpenRouter } from '@/lib/openrouter'
+import { isOpenRouterEnabled, translateViaOpenRouter } from '@/lib/openrouter/client'
 
 // Cache für API-Keys (um nicht bei jeder Übersetzung die DB abzufragen)
 interface ApiKeysCache {
