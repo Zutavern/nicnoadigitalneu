@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
+import { ServerSystemEvents } from '@/lib/analytics-server'
 
 // Vercel Cron: Runs weekly on Monday at 8:00 AM UTC
 export const runtime = 'nodejs'
@@ -120,6 +121,9 @@ export async function GET(request: Request) {
         },
       },
     })
+
+    // Track cron job completion (DB + PostHog)
+    await ServerSystemEvents.cronJobCompleted('rent_reminders', 0, sentCount)
 
     return NextResponse.json({
       success: true,

@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { createNotification } from '@/lib/notifications'
+import { ServerVideoCallEvents } from '@/lib/analytics-server'
 import { 
   triggerPusherEvent, 
   getConversationChannel, 
@@ -30,43 +31,6 @@ interface CallMissedData {
   callee: CallUser
   reason: 'no_answer' | 'rejected' | 'cancelled'
   conversationId?: string
-}
-
-// ==================== ANALYTICS ====================
-
-/**
- * Track video call events for analytics
- */
-export async function trackVideoCallEvent(
-  eventType: 'call_initiated' | 'call_answered' | 'call_ended' | 'call_missed' | 'call_rejected',
-  data: {
-    callId: string
-    callerId: string
-    calleeId: string
-    duration?: number
-    reason?: string
-  }
-) {
-  try {
-    // Store in database for analytics
-    await prisma.analyticsEvent.create({
-      data: {
-        eventType: `video_call_${eventType}`,
-        userId: data.callerId,
-        metadata: {
-          callId: data.callId,
-          callerId: data.callerId,
-          calleeId: data.calleeId,
-          duration: data.duration,
-          reason: data.reason,
-          timestamp: new Date().toISOString(),
-        },
-      },
-    })
-  } catch (error) {
-    console.error('Error tracking video call event:', error)
-    // Don't throw - analytics should not break the main flow
-  }
 }
 
 // ==================== CHAT MESSAGES ====================
@@ -196,13 +160,8 @@ export async function handleCallEnded(data: CallEndedData) {
     callId: data.callId,
   })
 
-  // Track analytics
-  await trackVideoCallEvent('call_ended', {
-    callId: data.callId,
-    callerId: caller.id,
-    calleeId: callee.id,
-    duration,
-  })
+  // Track analytics (DB + PostHog)
+  await ServerVideoCallEvents.callEnded(caller.id, callee.id, data.callId, duration)
 }
 
 // ==================== VIDEO CALL MISSED ====================
@@ -285,13 +244,8 @@ export async function handleCallMissed(data: CallMissedData) {
     conversationId: convId,
   })
 
-  // Track analytics
-  await trackVideoCallEvent('call_missed', {
-    callId: data.callId,
-    callerId: caller.id,
-    calleeId: callee.id,
-    reason,
-  })
+  // Track analytics (DB + PostHog)
+  await ServerVideoCallEvents.callMissed(caller.id, callee.id, data.callId, reason)
 }
 
 // ==================== VIDEO CALL INCOMING (for notifications) ====================
@@ -319,12 +273,8 @@ export async function handleIncomingCall(data: {
     },
   })
 
-  // Track analytics
-  await trackVideoCallEvent('call_initiated', {
-    callId: data.callId,
-    callerId: caller.id,
-    calleeId: callee.id,
-  })
+  // Track analytics (DB + PostHog)
+  await ServerVideoCallEvents.callInitiated(caller.id, callee.id, data.callId)
 }
 
 /**
@@ -335,11 +285,8 @@ export async function handleCallAnswered(data: {
   callerId: string
   calleeId: string
 }) {
-  await trackVideoCallEvent('call_answered', {
-    callId: data.callId,
-    callerId: data.callerId,
-    calleeId: data.calleeId,
-  })
+  // Track analytics (DB + PostHog)
+  await ServerVideoCallEvents.callAnswered(data.callerId, data.calleeId, data.callId)
 }
 
 /**
@@ -351,6 +298,10 @@ export async function handleCallRejected(data: {
   callee: CallUser
   conversationId?: string
 }) {
+  // Track rejection event (DB + PostHog)
+  await ServerVideoCallEvents.callRejected(data.caller.id, data.callee.id, data.callId)
+  
+  // Also handle as missed call for chat message
   await handleCallMissed({
     ...data,
     reason: 'rejected',

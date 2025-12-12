@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import emails from '@/lib/email'
+import { ServerSystemEvents } from '@/lib/analytics-server'
 
 // Vercel Cron: Runs daily at 9:00 AM UTC
 export const runtime = 'nodejs'
@@ -66,6 +67,9 @@ export async function GET(request: Request) {
           },
         })
 
+        // Track subscription warning event (DB + PostHog)
+        await ServerSystemEvents.subscriptionWarning(user.id, 'expiring', 7)
+        
         sentCount++
       } catch (err) {
         errors.push(`User ${user.email}: ${err}`)
@@ -85,6 +89,9 @@ export async function GET(request: Request) {
         },
       },
     })
+
+    // Track cron job completion (DB + PostHog)
+    await ServerSystemEvents.cronJobCompleted('subscription_warnings', 0, sentCount)
 
     return NextResponse.json({
       success: true,

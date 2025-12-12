@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { stripe, isStripeConfigured } from '@/lib/stripe-server'
 import { prisma } from '@/lib/prisma'
 import emails from '@/lib/email'
+import { ServerSubscriptionEvents } from '@/lib/analytics-server'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
@@ -69,6 +70,12 @@ export async function POST(req: NextRequest) {
         break
       }
 
+      case 'customer.subscription.trial_will_end': {
+        const subscription = event.data.object as Stripe.Subscription
+        await handleTrialWillEnd(subscription)
+        break
+      }
+
       default:
         console.log(`Unhandled event type: ${event.type}`)
     }
@@ -106,6 +113,18 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       stripeSubscriptionStatus: 'active',
     },
   })
+
+  // Track subscription created event in PostHog
+  const amount = session.amount_total ? session.amount_total / 100 : 0
+  const interval = session.metadata?.billingInterval === 'year' ? 'year' : 'month'
+  
+  await ServerSubscriptionEvents.subscriptionCreated(
+    userId,
+    session.metadata?.priceId || subscriptionId,
+    planName,
+    amount,
+    interval as 'month' | 'year'
+  )
 
   // Create welcome notification
   await prisma.notification.create({
@@ -156,36 +175,72 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     },
   })
 
+  // Track trial started if subscription is in trial
+  if (subscription.status === 'trialing' && subscription.trial_end) {
+    const trialDays = Math.ceil((subscription.trial_end * 1000 - Date.now()) / (1000 * 60 * 60 * 24))
+    await ServerSubscriptionEvents.trialStarted(
+      userId,
+      subscription.items.data[0]?.price.id || subscription.id,
+      trialDays
+    )
+  }
+
   console.log(`Subscription created for user ${userId}`)
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-  const userId = subscription.metadata?.userId
+  let targetUserId = subscription.metadata?.userId
 
-  if (!userId) {
+  if (!targetUserId) {
     // Try to find user by subscription ID
     const user = await prisma.user.findFirst({
       where: { stripeSubscriptionId: subscription.id },
     })
     if (!user) return
+    targetUserId = user.id
+  }
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        stripeSubscriptionStatus: subscription.status,
-        stripePriceId: subscription.items.data[0]?.price.id,
-        stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
-      },
-    })
-  } else {
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        stripeSubscriptionStatus: subscription.status,
-        stripePriceId: subscription.items.data[0]?.price.id,
-        stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
-      },
-    })
+  // Get old subscription status to detect changes
+  const user = await prisma.user.findUnique({
+    where: { id: targetUserId },
+    select: { 
+      stripePriceId: true, 
+      stripeSubscriptionStatus: true 
+    }
+  })
+
+  const oldPriceId = user?.stripePriceId
+  const newPriceId = subscription.items.data[0]?.price.id
+  const oldStatus = user?.stripeSubscriptionStatus
+
+  await prisma.user.update({
+    where: { id: targetUserId },
+    data: {
+      stripeSubscriptionStatus: subscription.status,
+      stripePriceId: newPriceId,
+      stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+    },
+  })
+
+  // Track plan changes
+  if (oldPriceId && newPriceId && oldPriceId !== newPriceId) {
+    // Determine if upgrade or downgrade (you'd need to compare prices here)
+    // For now, just track as upgrade
+    await ServerSubscriptionEvents.subscriptionUpgraded(
+      targetUserId,
+      oldPriceId,
+      newPriceId,
+      subscription.items.data[0]?.price.unit_amount || 0
+    )
+  }
+
+  // Track subscription renewed
+  if (oldStatus === 'past_due' && subscription.status === 'active') {
+    await ServerSubscriptionEvents.subscriptionRenewed(
+      targetUserId,
+      newPriceId || subscription.id,
+      subscription.items.data[0]?.price.unit_amount || 0
+    )
   }
 
   console.log(`Subscription updated: ${subscription.id}`)
@@ -206,6 +261,13 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       stripePriceId: null,
     },
   })
+
+  // Track subscription cancelled in PostHog
+  await ServerSubscriptionEvents.subscriptionCancelled(
+    user.id,
+    subscription.items.data[0]?.price.id || subscription.id,
+    subscription.cancellation_details?.reason || undefined
+  )
 
   // Create notification for canceled subscription
   await prisma.notification.create({
@@ -238,6 +300,14 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   })
 
   if (!user) return
+
+  // Track payment succeeded in PostHog
+  await ServerSubscriptionEvents.paymentSucceeded(
+    user.id,
+    invoice.amount_paid || 0,
+    invoice.currency?.toUpperCase() || 'EUR',
+    invoice.id
+  )
 
   // Update subscription end date
   const subscription = await stripe!.subscriptions.retrieve(subscriptionId)
@@ -278,6 +348,14 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   if (!user) return
 
   const amount = invoice.amount_due ? `${(invoice.amount_due / 100).toFixed(2)} €` : 'Unbekannt'
+
+  // Track payment failed in PostHog
+  await ServerSubscriptionEvents.paymentFailed(
+    user.id,
+    invoice.amount_due || 0,
+    invoice.last_finalization_error?.message || 'Unknown error',
+    invoice.id
+  )
 
   await prisma.user.update({
     where: { id: user.id },
@@ -329,3 +407,27 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   console.log(`Payment failed for user ${user.id}`)
 }
 
+async function handleTrialWillEnd(subscription: Stripe.Subscription) {
+  const userId = subscription.metadata?.userId
+
+  if (!userId) {
+    const user = await prisma.user.findFirst({
+      where: { stripeSubscriptionId: subscription.id },
+    })
+    if (!user) return
+
+    // Track trial ending warning
+    await ServerSubscriptionEvents.trialExpired(user.id, false)
+    return
+  }
+
+  // Track trial ending warning in PostHog
+  const trialEnd = subscription.trial_end
+  const daysRemaining = trialEnd 
+    ? Math.ceil((trialEnd * 1000 - Date.now()) / (1000 * 60 * 60 * 24))
+    : 0
+
+  // Note: This is a warning, not the actual expiry
+  // The actual trial_expired event is handled when subscription status changes
+  console.log(`Trial will end in ${daysRemaining} days for user ${userId}`)
+}

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
+import { ServerSystemEvents, trackServerEvent } from '@/lib/analytics-server'
 
 // Vercel Cron: Runs daily at 6:00 AM UTC
 export const runtime = 'nodejs'
@@ -104,6 +105,20 @@ export async function GET(request: Request) {
         },
       },
     })
+
+    // Track daily stats in PostHog (DB + PostHog)
+    await trackServerEvent('daily_platform_stats', 'system', {
+      new_users: newUsers,
+      new_bookings: newBookings,
+      completed_bookings: completedBookings,
+      total_revenue: totalRevenue._sum.amount?.toNumber() || 0,
+      new_reviews: newReviews,
+      new_rentals: newRentals,
+      date: yesterday.toISOString().split('T')[0],
+    })
+
+    // Track cron job completion
+    await ServerSystemEvents.cronJobCompleted('daily_summary', 0, sentCount)
 
     return NextResponse.json({
       success: true,
