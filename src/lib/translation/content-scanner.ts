@@ -176,6 +176,10 @@ const TRANSLATABLE_FIELDS: Record<string, { fields: string[]; priority: number }
       'allCategoriesLabel',
       // Newsletter CTA
       'newsletterTitle', 'newsletterDescription', 'newsletterButtonText',
+      // Empty State
+      'emptyPostsText',
+      // Labels
+      'readingTimeLabel',
       // SEO
       'defaultMetaTitle', 'defaultMetaDescription',
     ],
@@ -254,10 +258,27 @@ const TRANSLATABLE_FIELDS: Record<string, { fields: string[]; priority: number }
   blog_post: {
     fields: [
       'title', 'excerpt', 'content',
+      // Featured Image
+      'featuredImageAlt',
       // SEO & Open Graph
       'metaTitle', 'metaDescription', 'ogTitle', 'ogDescription',
     ],
     priority: 50,
+  },
+  
+  blog_category: {
+    fields: ['name', 'description'],
+    priority: 45,
+  },
+  
+  blog_tag: {
+    fields: ['name'],
+    priority: 40,
+  },
+  
+  blog_author: {
+    fields: ['name', 'bio', 'role'],
+    priority: 45,
   },
   
   faq: {
@@ -538,7 +559,7 @@ export async function getTranslatableContent(): Promise<TranslatableContent[]> {
 
   // 11. Blog Posts
   try {
-    const posts = await prisma.blogPost.findMany({ where: { published: true } })
+    const posts = await prisma.blogPost.findMany({ where: { status: 'PUBLISHED' } })
     const fields = TRANSLATABLE_FIELDS.blog_post
     for (const post of posts) {
       allContent.push(...extractFields(
@@ -550,6 +571,51 @@ export async function getTranslatableContent(): Promise<TranslatableContent[]> {
       ))
     }
   } catch (e) { console.warn('Error scanning blog_post:', e) }
+
+  // 11b. Blog Categories
+  try {
+    const categories = await prisma.blogCategory.findMany({ where: { isActive: true } })
+    const fields = TRANSLATABLE_FIELDS.blog_category
+    for (const cat of categories) {
+      allContent.push(...extractFields(
+        cat as unknown as Record<string, unknown>,
+        fields.fields,
+        'blog_category',
+        cat.id,
+        fields.priority
+      ))
+    }
+  } catch (e) { console.warn('Error scanning blog_category:', e) }
+
+  // 11c. Blog Tags
+  try {
+    const tags = await prisma.blogTag.findMany({ where: { isActive: true } })
+    const fields = TRANSLATABLE_FIELDS.blog_tag
+    for (const tag of tags) {
+      allContent.push(...extractFields(
+        tag as unknown as Record<string, unknown>,
+        fields.fields,
+        'blog_tag',
+        tag.id,
+        fields.priority
+      ))
+    }
+  } catch (e) { console.warn('Error scanning blog_tag:', e) }
+
+  // 11d. Blog Authors
+  try {
+    const authors = await prisma.blogAuthor.findMany({ where: { isActive: true } })
+    const fields = TRANSLATABLE_FIELDS.blog_author
+    for (const author of authors) {
+      allContent.push(...extractFields(
+        author as unknown as Record<string, unknown>,
+        fields.fields,
+        'blog_author',
+        author.id,
+        fields.priority
+      ))
+    }
+  } catch (e) { console.warn('Error scanning blog_author:', e) }
 
   // 12. FAQs
   try {

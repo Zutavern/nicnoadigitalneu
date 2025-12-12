@@ -2045,10 +2045,14 @@ model BlogPageConfig {
   defaultMetaTitle      String?  @map("default_meta_title") @db.VarChar(70)
   defaultMetaDescription String? @map("default_meta_description") @db.VarChar(160)
   
+  // Empty State & Labels
+  emptyPostsText        String?  @default("Noch keine Artikel in dieser Kategorie.") @map("empty_posts_text") @db.VarChar(200)
+  readingTimeLabel      String?  @default("Min") @map("reading_time_label") @db.VarChar(20)
+
   // Timestamps
   createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
-  
+
   @@map("blog_page_config")
 }
 

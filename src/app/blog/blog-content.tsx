@@ -53,6 +53,14 @@ interface BlogPageConfig {
   featuredTitle: string | null
   showCategoryFilter: boolean
   allCategoriesLabel: string
+  // Newsletter
+  newsletterTitle: string | null
+  newsletterDescription: string | null
+  newsletterButtonText: string | null
+  // Empty state
+  emptyPostsText?: string
+  // Reading time
+  readingTimeLabel?: string
 }
 
 interface BlogContentProps {
@@ -192,7 +200,7 @@ export function BlogContent({ posts, featuredPost, categories, config }: BlogCon
                           <span>•</span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
-                            {featuredPost.readingTime} Min
+                            {featuredPost.readingTime} {config.readingTimeLabel || 'Min'}
                           </span>
                         </div>
                       </div>
@@ -249,7 +257,7 @@ export function BlogContent({ posts, featuredPost, categories, config }: BlogCon
           {filteredPosts.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-muted-foreground text-lg">
-                Noch keine Artikel in dieser Kategorie.
+                {config.emptyPostsText || 'Noch keine Artikel in dieser Kategorie.'}
               </p>
             </div>
           ) : (
@@ -317,7 +325,7 @@ export function BlogContent({ posts, featuredPost, categories, config }: BlogCon
                           </div>
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <Clock className="h-4 w-4" />
-                            {post.readingTime} Min
+                            {post.readingTime} {config.readingTimeLabel || 'Min'}
                           </div>
                         </div>
                       </div>
@@ -339,14 +347,14 @@ export function BlogContent({ posts, featuredPost, categories, config }: BlogCon
               className="max-w-2xl mx-auto text-center"
             >
               <h2 className="text-3xl font-bold mb-4">
-                Bleib auf dem Laufenden
+                {config.newsletterTitle || 'Bleib auf dem Laufenden'}
               </h2>
               <p className="text-muted-foreground mb-8">
-                Erhalte die neuesten Tipps und Insights direkt in dein Postfach.
+                {config.newsletterDescription || 'Erhalte die neuesten Tipps und Insights direkt in dein Postfach.'}
               </p>
               <Button size="lg" asChild>
                 <Link href="/registrieren">
-                  Jetzt Mitglied werden
+                  {config.newsletterButtonText || 'Jetzt Mitglied werden'}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>

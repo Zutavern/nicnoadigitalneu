@@ -50,6 +50,10 @@ interface BlogPageConfig {
   featuredTitle: string | null
   showCategoryFilter: boolean
   allCategoriesLabel: string
+  // Newsletter
+  newsletterTitle: string | null
+  newsletterDescription: string | null
+  newsletterButtonText: string | null
 }
 
 async function getBlogData(): Promise<{
@@ -115,6 +119,9 @@ async function getBlogData(): Promise<{
     featuredTitle: 'Featured Story',
     showCategoryFilter: true,
     allCategoriesLabel: 'Alle Artikel',
+    newsletterTitle: 'Bleib auf dem Laufenden',
+    newsletterDescription: 'Erhalte die neuesten Tipps und Insights direkt in dein Postfach.',
+    newsletterButtonText: 'Jetzt Mitglied werden',
   }
 
   return {
