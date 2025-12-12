@@ -10,119 +10,207 @@ export interface TranslatableContent {
 
 // Definition der übersetzbaren Felder pro Content-Type
 const TRANSLATABLE_FIELDS: Record<string, { fields: string[]; priority: number }> = {
+  // ============================================
   // Seiten-Configs (höchste Priorität) - inkl. SEO-Metadaten
+  // ============================================
+  
   home_page_config: {
     fields: [
-      'heroTitle', 'heroSubtitle', 'heroCtaText', 'heroSecondaryCtaText',
+      // Hero Section
+      'heroBadgeText', 'heroTitleLine1', 'heroTitleLine2', 'heroTitleHighlight',
+      'heroDescription',
+      // CTAs
+      'ctaPrimaryText', 'ctaSecondaryText',
+      // Features Section
       'featuresTitle', 'featuresSubtitle',
+      // CTA Section
       'ctaTitle', 'ctaDescription', 'ctaButtonText',
       // SEO
       'metaTitle', 'metaDescription',
     ],
     priority: 100,
   },
+  
   product_page_config: {
     fields: [
-      'heroTitle', 'heroSubtitle', 'heroCtaText',
+      // Hero Section
+      'heroBadgeText', 'heroTitle', 'heroSubtitle', 'heroDescription',
+      'heroCtaText', 'heroSecondaryCtaText',
+      // Features Section
       'featuresTitle', 'featuresSubtitle',
+      // CTA Section
       'ctaTitle', 'ctaDescription', 'ctaButtonText',
       // SEO
       'metaTitle', 'metaDescription',
     ],
     priority: 100,
   },
+  
   about_us_page_config: {
     fields: [
-      'heroTitle', 'heroSubtitle',
-      'visionTitle', 'visionText',
-      'missionTitle', 'missionText',
+      // Hero Section
+      'heroBadgeText', 'heroTitle', 'heroDescription',
+      // Team Members
+      'team1Name', 'team1Role', 'team1Description',
+      'team2Name', 'team2Role', 'team2Description',
+      // Vision Section
+      'visionBadgeText', 'visionTitle', 'visionDescription',
+      // Mission Section
+      'missionBadgeText', 'missionTitle', 'missionDescription',
+      // CTA Section
       'ctaTitle', 'ctaDescription', 'ctaButtonText',
       // SEO
       'metaTitle', 'metaDescription',
     ],
     priority: 90,
   },
+  
   career_page_config: {
     fields: [
-      'heroTitle', 'heroSubtitle', 'heroDescription',
-      'benefitsTitle', 'benefitsSubtitle',
-      'ctaTitle', 'ctaDescription', 'ctaButtonText',
+      // Hero Section
+      'heroBadgeText', 'heroTitle', 'heroDescription',
       // SEO
       'metaTitle', 'metaDescription',
     ],
     priority: 80,
   },
+  
   partner_page_config: {
     fields: [
+      // Hero Section
       'heroBadgeText', 'heroTitle', 'heroDescription',
       'heroFeature1Text', 'heroFeature2Text', 'heroFeature3Text',
+      // Partner Card CTA
+      'cardCtaText', 'cardCtaButtonText',
+      // CTA Section
       'ctaTitle', 'ctaDescription', 'ctaButton1Text', 'ctaButton2Text',
       // SEO
       'metaTitle', 'metaDescription',
     ],
     priority: 80,
   },
+  
   faq_page_config: {
     fields: [
-      'heroTitle', 'heroSubtitle',
-      'ctaTitle', 'ctaDescription', 'ctaButtonText',
+      // Hero Section
+      'heroBadgeText', 'heroTitle', 'heroDescription',
+      // FAQ Section Header
+      'sectionTitle', 'sectionDescription',
+      // Tab Labels
+      'salonTabLabel', 'stylistTabLabel',
+      // Contact Section
+      'contactText', 'contactLinkText',
       // SEO
       'metaTitle', 'metaDescription',
     ],
     priority: 80,
   },
+  
   press_page_config: {
     fields: [
-      'heroTitle', 'heroSubtitle',
+      // Hero Section
+      'heroBadgeText', 'heroTitle', 'heroDescription',
+      // CTA Section
       'ctaTitle', 'ctaDescription', 'ctaButtonText',
       // SEO
       'metaTitle', 'metaDescription',
     ],
     priority: 70,
   },
+  
   roadmap_page_config: {
     fields: [
-      'heroTitle', 'heroSubtitle',
+      // Hero Section
+      'heroBadgeText', 'heroTitle', 'heroDescription',
+      // CTA Section
       'ctaTitle', 'ctaDescription', 'ctaButtonText',
       // SEO
       'metaTitle', 'metaDescription',
     ],
     priority: 70,
   },
+  
   beta_page_config: {
     fields: [
-      'heroTitle', 'heroSubtitle', 'heroDescription',
+      // Hero Section
+      'heroBadgeText', 'heroTitle', 'heroTitleHighlight', 'heroDescription',
+      'heroCtaPrimaryText', 'heroCtaSecondaryText',
+      // Benefits Section
       'benefitsTitle', 'benefitsSubtitle',
+      // Requirements Section
       'requirementsTitle', 'requirementsSubtitle',
+      // CTA Section
       'ctaTitle', 'ctaDescription', 'ctaButtonText',
       // SEO
       'metaTitle', 'metaDescription',
     ],
     priority: 60,
   },
+  
   updates_page_config: {
     fields: [
+      // Hero Section
       'heroBadgeText', 'heroTitle', 'heroTitleHighlight', 'heroDescription',
+      // CTA Section
       'ctaTitle', 'ctaDescription', 'ctaButtonText',
       // SEO
       'metaTitle', 'metaDescription',
     ],
     priority: 60,
   },
+  
   blog_page_config: {
     fields: [
-      'heroTitle', 'heroSubtitle',
+      // Hero Section
+      'heroBadgeText', 'heroTitle', 'heroDescription',
+      // Featured Section
+      'featuredTitle',
+      // Category Filter
+      'allCategoriesLabel',
+      // Newsletter CTA
+      'newsletterTitle', 'newsletterDescription', 'newsletterButtonText',
       // SEO
-      'metaTitle', 'metaDescription',
+      'defaultMetaTitle', 'defaultMetaDescription',
     ],
     priority: 60,
   },
+  
   legal_page_config: {
-    fields: ['title', 'description', 'metaTitle', 'metaDescription'],
+    fields: [
+      // Hero Section
+      'heroBadgeText', 'heroTitle', 'heroDescription',
+      // SEO
+      'metaTitle', 'metaDescription',
+    ],
     priority: 50,
   },
+  
+  // Auth-Seiten (Login/Register)
+  auth_page_config: {
+    fields: [
+      // Login Page
+      'loginTitle', 'loginSubtitle', 'loginCtaText', 'loginCtaLink',
+      'loginFeature1Text', 'loginFeature2Text', 'loginFeature3Text',
+      // Register Page
+      'registerTitle', 'registerSubtitle', 'registerCtaText', 'registerCtaLink',
+      'registerFeature1Text', 'registerFeature2Text', 'registerFeature3Text',
+    ],
+    priority: 70,
+  },
+  
+  // Globale SEO-Einstellungen
+  global_seo_config: {
+    fields: [
+      'siteName', 'titleSuffix', 'defaultMetaDescription',
+      'organizationName', 'organizationAddress',
+    ],
+    priority: 90,
+  },
 
+  // ============================================
   // Dynamische Inhalte (mittlere Priorität)
+  // ============================================
+  
   blog_post: {
     fields: [
       'title', 'excerpt', 'content',
@@ -131,68 +219,97 @@ const TRANSLATABLE_FIELDS: Record<string, { fields: string[]; priority: number }
     ],
     priority: 50,
   },
+  
   faq: {
     fields: ['question', 'answer'],
     priority: 50,
   },
+  
   testimonial: {
-    fields: ['quote', 'author', 'role', 'company'],
+    fields: ['name', 'text', 'role', 'company'],
     priority: 40,
   },
+  
   partner: {
-    fields: ['name', 'description', 'offer'],
+    fields: ['name', 'description', 'offer', 'instructions'],
     priority: 40,
   },
+  
   product_feature: {
     fields: ['title', 'description'],
     priority: 40,
   },
+  
   category_animation: {
     fields: ['title', 'description'],
     priority: 40,
   },
+  
   approach_card: {
     fields: ['title', 'description'],
     priority: 40,
   },
+  
   roadmap_item: {
     fields: ['title', 'description'],
     priority: 30,
   },
+  
   beta_benefit: {
     fields: ['title', 'description'],
     priority: 30,
   },
+  
   beta_requirement: {
     fields: ['title', 'description'],
     priority: 30,
   },
+  
   beta_timeline_item: {
     fields: ['title', 'description'],
     priority: 30,
   },
+  
   changelog_entry: {
     fields: ['title', 'description'],
     priority: 30,
   },
+  
   press_article: {
     fields: ['title', 'excerpt', 'source'],
     priority: 30,
   },
+  
   job_posting: {
-    fields: ['title', 'description', 'requirements', 'location'],
+    fields: ['title', 'description', 'requirements', 'benefits', 'location', 'type'],
     priority: 40,
   },
+  
   legal_section: {
     fields: ['title', 'content'],
     priority: 50,
   },
+  
+  // Services (für öffentliche Seiten)
+  service_category: {
+    fields: ['name', 'description'],
+    priority: 30,
+  },
+  
+  service: {
+    fields: ['name', 'description'],
+    priority: 30,
+  },
 
+  // ============================================
   // System-Texte (niedrigere Priorität)
+  // ============================================
+  
   error_message: {
     fields: ['message', 'description'],
     priority: 20,
   },
+  
   email_template: {
     fields: ['subject', 'body'],
     priority: 20,
@@ -528,6 +645,111 @@ export async function getTranslatableContent(): Promise<TranslatableContent[]> {
       ))
     }
   } catch (e) { console.warn('Error scanning error_message:', e) }
+
+  // 21. Auth Page Config (Login/Register Seiten)
+  try {
+    const config = await prisma.authPageConfig.findUnique({ where: { id: 'default' } })
+    if (config) {
+      const fields = TRANSLATABLE_FIELDS.auth_page_config
+      allContent.push(...extractFields(
+        config as unknown as Record<string, unknown>,
+        fields.fields,
+        'auth_page_config',
+        'default',
+        fields.priority
+      ))
+    }
+  } catch (e) { console.warn('Error scanning auth_page_config:', e) }
+
+  // 22. Global SEO Config
+  try {
+    const config = await prisma.globalSeoConfig.findUnique({ where: { id: 'default' } })
+    if (config) {
+      const fields = TRANSLATABLE_FIELDS.global_seo_config
+      allContent.push(...extractFields(
+        config as unknown as Record<string, unknown>,
+        fields.fields,
+        'global_seo_config',
+        'default',
+        fields.priority
+      ))
+    }
+  } catch (e) { console.warn('Error scanning global_seo_config:', e) }
+
+  // 23. Service Categories
+  try {
+    const categories = await prisma.serviceCategory.findMany({ where: { isActive: true } })
+    const fields = TRANSLATABLE_FIELDS.service_category
+    for (const c of categories) {
+      allContent.push(...extractFields(
+        c as unknown as Record<string, unknown>,
+        fields.fields,
+        'service_category',
+        c.id,
+        fields.priority
+      ))
+    }
+  } catch (e) { console.warn('Error scanning service_category:', e) }
+
+  // 24. Services
+  try {
+    const services = await prisma.service.findMany({ where: { isActive: true } })
+    const fields = TRANSLATABLE_FIELDS.service
+    for (const s of services) {
+      allContent.push(...extractFields(
+        s as unknown as Record<string, unknown>,
+        fields.fields,
+        'service',
+        s.id,
+        fields.priority
+      ))
+    }
+  } catch (e) { console.warn('Error scanning service:', e) }
+
+  // 25. Blog Page Config
+  try {
+    const configs = await prisma.blogPageConfig.findMany()
+    const fields = TRANSLATABLE_FIELDS.blog_page_config
+    for (const config of configs) {
+      allContent.push(...extractFields(
+        config as unknown as Record<string, unknown>,
+        fields.fields,
+        'blog_page_config',
+        config.id,
+        fields.priority
+      ))
+    }
+  } catch (e) { console.warn('Error scanning blog_page_config:', e) }
+
+  // 26. Legal Page Configs (Impressum, Datenschutz, AGB)
+  try {
+    const configs = await prisma.legalPageConfig.findMany()
+    const fields = TRANSLATABLE_FIELDS.legal_page_config
+    for (const config of configs) {
+      allContent.push(...extractFields(
+        config as unknown as Record<string, unknown>,
+        fields.fields,
+        'legal_page_config',
+        config.id,
+        fields.priority
+      ))
+    }
+  } catch (e) { console.warn('Error scanning legal_page_config:', e) }
+
+  // 27. Legal Sections
+  try {
+    const sections = await prisma.legalSection.findMany({ where: { isActive: true } })
+    const fields = TRANSLATABLE_FIELDS.legal_section
+    for (const s of sections) {
+      allContent.push(...extractFields(
+        s as unknown as Record<string, unknown>,
+        fields.fields,
+        'legal_section',
+        s.id,
+        fields.priority
+      ))
+    }
+  } catch (e) { console.warn('Error scanning legal_section:', e) }
 
   console.log(`📝 Content Scanner: Found ${allContent.length} translatable fields`)
   return allContent
