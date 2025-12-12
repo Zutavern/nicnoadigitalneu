@@ -7,6 +7,7 @@ import {
   useEffect,
   useCallback,
   useRef,
+  useMemo,
   type ReactNode,
 } from 'react'
 import { useSession } from 'next-auth/react'
@@ -734,6 +735,13 @@ function VideoCallWindow({
   const callStartTimeRef = useRef<number | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // Check if device is mobile (screen sharing not supported on mobile)
+  const isMobile = useMemo(() => {
+    if (typeof window === 'undefined') return false
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+      || window.innerWidth < 768
+  }, [])
+
   // Initialize Daily call
   useEffect(() => {
     if (!roomUrl || !token) return
@@ -1004,22 +1012,25 @@ function VideoCallWindow({
             </TooltipContent>
           </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={isScreenSharing ? 'default' : 'secondary'}
-                size="icon"
-                className="rounded-full h-10 w-10"
-                onClick={toggleScreenShare}
-                disabled={isJoining}
-              >
-                {isScreenSharing ? <MonitorOff className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {isScreenSharing ? 'Freigabe beenden' : 'Bildschirm teilen'}
-            </TooltipContent>
-          </Tooltip>
+          {/* Screen sharing only available on desktop */}
+          {!isMobile && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={isScreenSharing ? 'default' : 'secondary'}
+                  size="icon"
+                  className="rounded-full h-10 w-10"
+                  onClick={toggleScreenShare}
+                  disabled={isJoining}
+                >
+                  {isScreenSharing ? <MonitorOff className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isScreenSharing ? 'Freigabe beenden' : 'Bildschirm teilen'}
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           <div className="w-px h-6 bg-gray-600 mx-1" />
 
@@ -1043,3 +1054,4 @@ function VideoCallWindow({
 }
 
 export default VideoCallProvider
+

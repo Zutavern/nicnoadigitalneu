@@ -1,37 +1,49 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useState, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Users,
   Building2,
   Scissors,
   TrendingUp,
-  TrendingDown,
   DollarSign,
   UserPlus,
   Activity,
   ArrowUpRight,
   ArrowDownRight,
-  MoreHorizontal,
   FileCheck,
   Clock,
   Loader2,
   CalendarDays,
+  Settings2,
+  Eye,
+  EyeOff,
+  GripVertical,
+  RotateCcw,
+  X,
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Separator } from '@/components/ui/separator'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter,
+} from '@/components/ui/sheet'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 import Link from 'next/link'
+
+// ============== TYPES ==============
 
 interface AdminStats {
   overview: {
@@ -79,6 +91,74 @@ interface AdminStats {
   bookingsByStatus: Record<string, number>
   onboardingsByStatus: Record<string, number>
 }
+
+interface WidgetConfig {
+  id: string
+  name: string
+  description: string
+  enabled: boolean
+  icon: React.ElementType
+}
+
+// ============== WIDGET CONFIG ==============
+
+const DEFAULT_WIDGET_CONFIG: WidgetConfig[] = [
+  { id: 'statCards', name: 'Hauptstatistiken', description: 'Nutzer, Salons, Stylisten, Umsatz', enabled: true, icon: TrendingUp },
+  { id: 'quickStats', name: 'Schnellübersicht', description: 'Kompakte Statistiken', enabled: true, icon: Activity },
+  { id: 'recentBookings', name: 'Letzte Buchungen', description: 'Die neuesten Termine', enabled: true, icon: CalendarDays },
+  { id: 'onboardingStatus', name: 'Onboarding Status', description: 'Stylisten-Anträge Übersicht', enabled: true, icon: FileCheck },
+  { id: 'recentUsers', name: 'Neue Registrierungen', description: 'Neueste Benutzer', enabled: true, icon: UserPlus },
+  { id: 'topStylists', name: 'Top Stylisten', description: 'Nach Buchungsanzahl', enabled: true, icon: Scissors },
+]
+
+const STORAGE_KEY = 'admin-dashboard-widgets'
+
+// ============== HOOKS ==============
+
+function useWidgetConfig() {
+  const [widgets, setWidgets] = useState<WidgetConfig[]>(DEFAULT_WIDGET_CONFIG)
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        // Merge saved config with defaults to handle new widgets
+        const merged = DEFAULT_WIDGET_CONFIG.map(defaultWidget => {
+          const savedWidget = parsed.find((w: WidgetConfig) => w.id === defaultWidget.id)
+          return savedWidget ? { ...defaultWidget, enabled: savedWidget.enabled } : defaultWidget
+        })
+        setWidgets(merged)
+      } catch {
+        setWidgets(DEFAULT_WIDGET_CONFIG)
+      }
+    }
+    setIsLoaded(true)
+  }, [])
+
+  const saveWidgets = useCallback((newWidgets: WidgetConfig[]) => {
+    setWidgets(newWidgets)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newWidgets.map(w => ({ id: w.id, enabled: w.enabled }))))
+  }, [])
+
+  const toggleWidget = useCallback((id: string) => {
+    const newWidgets = widgets.map(w => w.id === id ? { ...w, enabled: !w.enabled } : w)
+    saveWidgets(newWidgets)
+  }, [widgets, saveWidgets])
+
+  const resetWidgets = useCallback(() => {
+    saveWidgets(DEFAULT_WIDGET_CONFIG)
+  }, [saveWidgets])
+
+  const isEnabled = useCallback((id: string) => {
+    return widgets.find(w => w.id === id)?.enabled ?? true
+  }, [widgets])
+
+  return { widgets, toggleWidget, resetWidgets, isEnabled, isLoaded }
+}
+
+// ============== WIDGET COMPONENTS ==============
 
 function StatCard({ 
   title, 
@@ -131,11 +211,19 @@ function StatCard({
   )
 }
 
-function LoadingSkeleton() {
+function QuickStatCard({ icon: Icon, value, label, color }: { icon: React.ElementType; value: string | number; label: string; color: string }) {
   return (
-    <div className="flex items-center justify-center h-64">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
+    <Card>
+      <CardContent className="p-4 flex items-center gap-4">
+        <div className={`h-10 w-10 rounded-lg ${color} flex items-center justify-center`}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <div>
+          <p className="text-2xl font-bold">{value}</p>
+          <p className="text-xs text-muted-foreground">{label}</p>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -372,10 +460,125 @@ function OnboardingStatusCard({ onboardings }: { onboardings: Record<string, num
   )
 }
 
+// ============== WIDGET SETTINGS PANEL ==============
+
+function WidgetSettingsPanel({ 
+  widgets, 
+  onToggle, 
+  onReset 
+}: { 
+  widgets: WidgetConfig[]
+  onToggle: (id: string) => void
+  onReset: () => void
+}) {
+  const enabledCount = widgets.filter(w => w.enabled).length
+
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline" size="icon" className="relative">
+          <Settings2 className="h-4 w-4" />
+          {enabledCount < widgets.length && (
+            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] text-primary-foreground flex items-center justify-center">
+              {enabledCount}
+            </span>
+          )}
+        </Button>
+      </SheetTrigger>
+      <SheetContent className="w-[400px] sm:w-[540px]">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            <Settings2 className="h-5 w-5" />
+            Dashboard Widgets
+          </SheetTitle>
+          <SheetDescription>
+            Wähle aus, welche Widgets auf deinem Dashboard angezeigt werden sollen.
+          </SheetDescription>
+        </SheetHeader>
+        
+        <div className="py-6">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">
+              {enabledCount} von {widgets.length} Widgets aktiv
+            </p>
+            <Button variant="ghost" size="sm" onClick={onReset} className="h-8 text-xs">
+              <RotateCcw className="h-3 w-3 mr-1" />
+              Zurücksetzen
+            </Button>
+          </div>
+          
+          <Separator className="mb-4" />
+          
+          <div className="space-y-4">
+            {widgets.map((widget) => {
+              const Icon = widget.icon
+              return (
+                <motion.div
+                  key={widget.id}
+                  layout
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                    widget.enabled 
+                      ? 'bg-primary/5 border-primary/20' 
+                      : 'bg-muted/30 border-transparent'
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center transition-colors ${
+                      widget.enabled 
+                        ? 'bg-primary/10 text-primary' 
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <Label 
+                        htmlFor={widget.id} 
+                        className={`font-medium cursor-pointer ${!widget.enabled && 'text-muted-foreground'}`}
+                      >
+                        {widget.name}
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {widget.description}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {widget.enabled ? (
+                      <Eye className="h-4 w-4 text-primary" />
+                    ) : (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <Switch
+                      id={widget.id}
+                      checked={widget.enabled}
+                      onCheckedChange={() => onToggle(widget.id)}
+                    />
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
+        </div>
+        
+        <SheetFooter>
+          <p className="text-xs text-muted-foreground">
+            Deine Einstellungen werden automatisch gespeichert.
+          </p>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+// ============== MAIN COMPONENT ==============
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { widgets, toggleWidget, resetWidgets, isEnabled, isLoaded } = useWidgetConfig()
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -394,7 +597,7 @@ export default function AdminDashboard() {
     fetchStats()
   }, [])
 
-  if (isLoading) {
+  if (isLoading || !isLoaded) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center">
@@ -453,6 +656,15 @@ export default function AdminDashboard() {
     },
   ]
 
+  const quickStats = [
+    { icon: Activity, value: stats.overview.completedBookings, label: 'Abgeschlossene Buchungen', color: 'bg-green-500/10 text-green-500' },
+    { icon: Clock, value: stats.overview.pendingOnboardings, label: 'Ausstehende Prüfungen', color: 'bg-yellow-500/10 text-yellow-500' },
+    { icon: Building2, value: stats.overview.totalSalonOwners, label: 'Salonbetreiber', color: 'bg-blue-500/10 text-blue-500' },
+    { icon: DollarSign, value: `€${stats.overview.totalRevenue.toLocaleString('de-DE')}`, label: 'Gesamtumsatz', color: 'bg-purple-500/10 text-purple-500' },
+  ]
+
+  const noWidgetsEnabled = widgets.every(w => !w.enabled)
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -461,78 +673,104 @@ export default function AdminDashboard() {
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Willkommen zurück! Hier ist die Übersicht Ihrer Plattform.</p>
         </div>
-        <Button>
-          <TrendingUp className="mr-2 h-4 w-4" />
-          Report generieren
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button>
+            <TrendingUp className="mr-2 h-4 w-4" />
+            Report generieren
+          </Button>
+          <WidgetSettingsPanel 
+            widgets={widgets} 
+            onToggle={toggleWidget} 
+            onReset={resetWidgets}
+          />
+        </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((stat, index) => (
-          <StatCard key={stat.title} {...stat} index={index} />
-        ))}
-      </div>
+      {/* No Widgets Message */}
+      {noWidgetsEnabled && (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <EyeOff className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Keine Widgets aktiviert</h3>
+            <p className="text-muted-foreground text-center mb-4">
+              Aktiviere Widgets über die Einstellungen, um dein Dashboard anzupassen.
+            </p>
+            <WidgetSettingsPanel 
+              widgets={widgets} 
+              onToggle={toggleWidget} 
+              onReset={resetWidgets}
+            />
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Quick Stats Row */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-              <Activity className="h-5 w-5 text-green-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.overview.completedBookings}</p>
-              <p className="text-xs text-muted-foreground">Abgeschlossene Buchungen</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-10 w-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-              <Clock className="h-5 w-5 text-yellow-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.overview.pendingOnboardings}</p>
-              <p className="text-xs text-muted-foreground">Ausstehende Prüfungen</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-              <Building2 className="h-5 w-5 text-blue-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.overview.totalSalonOwners}</p>
-              <p className="text-xs text-muted-foreground">Salonbetreiber</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-              <DollarSign className="h-5 w-5 text-purple-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">€{stats.overview.totalRevenue.toLocaleString('de-DE')}</p>
-              <p className="text-xs text-muted-foreground">Gesamtumsatz</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <AnimatePresence mode="popLayout">
+        {/* Stats Grid */}
+        {isEnabled('statCards') && (
+          <motion.div
+            key="statCards"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+          >
+            {statCards.map((stat, index) => (
+              <StatCard key={stat.title} {...stat} index={index} />
+            ))}
+          </motion.div>
+        )}
 
-      {/* Main Content */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <RecentBookingsCard bookings={stats.recentBookings} />
-        <OnboardingStatusCard onboardings={stats.onboardingsByStatus} />
-      </div>
+        {/* Quick Stats Row */}
+        {isEnabled('quickStats') && (
+          <motion.div
+            key="quickStats"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="grid gap-4 md:grid-cols-4"
+          >
+            {quickStats.map((stat, index) => (
+              <QuickStatCard key={index} {...stat} />
+            ))}
+          </motion.div>
+        )}
 
-      {/* Second Row */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <RecentUsersTable users={stats.recentUsers} />
-        <TopStylistsCard stylists={stats.topStylists} />
-      </div>
+        {/* Main Content */}
+        {(isEnabled('recentBookings') || isEnabled('onboardingStatus')) && (
+          <motion.div
+            key="mainContent"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="grid gap-4 lg:grid-cols-3"
+          >
+            {isEnabled('recentBookings') && (
+              <RecentBookingsCard bookings={stats.recentBookings} />
+            )}
+            {isEnabled('onboardingStatus') && (
+              <OnboardingStatusCard onboardings={stats.onboardingsByStatus} />
+            )}
+          </motion.div>
+        )}
+
+        {/* Second Row */}
+        {(isEnabled('recentUsers') || isEnabled('topStylists')) && (
+          <motion.div
+            key="secondRow"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="grid gap-4 lg:grid-cols-3"
+          >
+            {isEnabled('recentUsers') && (
+              <RecentUsersTable users={stats.recentUsers} />
+            )}
+            {isEnabled('topStylists') && (
+              <TopStylistsCard stylists={stats.topStylists} />
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

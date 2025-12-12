@@ -11,7 +11,6 @@ import {
   BarChart3,
   Settings,
   Shield,
-  Bell,
   HelpCircle,
   LogOut,
   ChevronLeft,
@@ -43,6 +42,9 @@ import {
   Languages,
   Search,
   LogIn,
+  DollarSign,
+  ClipboardCheck,
+  Wallet,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -53,7 +55,20 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 
-const menuItems = [
+// Type definitions for menu items
+interface MenuItem {
+  label: string
+  href?: string
+  icon: React.ComponentType<{ className?: string }>
+  children?: MenuItem[]
+}
+
+interface MenuSection {
+  title: string
+  items: MenuItem[]
+}
+
+const menuItems: MenuSection[] = [
   {
     title: 'Übersicht',
     items: [
@@ -62,28 +77,49 @@ const menuItems = [
     ],
   },
   {
-    title: 'Verwaltung',
+    title: 'Finanzen',
     items: [
-      { label: 'Benutzer', href: '/admin/users', icon: Users },
-      { label: 'Salons', href: '/admin/salons', icon: Building2 },
-      { label: 'Stylisten', href: '/admin/stylists', icon: Scissors },
-      { label: 'Dienstleistungen', href: '/admin/services', icon: Sparkles },
-      { label: 'Onboarding-Prüfung', href: '/admin/onboarding-review', icon: FileCheck },
+      {
+        label: 'Finanzen',
+        icon: Wallet,
+        children: [
+          { label: 'Abonnements', href: '/admin/subscriptions', icon: CreditCard },
+          { label: 'Umsätze', href: '/admin/revenue', icon: DollarSign },
+        ],
+      },
     ],
   },
   {
-    title: 'Finanzen',
+    title: 'Nutzerverwaltung',
     items: [
-      { label: 'Abonnements', href: '/admin/subscriptions', icon: CreditCard },
-      { label: 'Umsätze', href: '/admin/revenue', icon: BarChart3 },
+      {
+        label: 'Nutzerverwaltung',
+        icon: Users,
+        children: [
+          { label: 'Benutzer', href: '/admin/users', icon: Users },
+          { label: 'Salons', href: '/admin/salons', icon: Building2 },
+          { label: 'Stylisten', href: '/admin/stylists', icon: Scissors },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'Onboarding',
+    items: [
+      {
+        label: 'Onboarding',
+        icon: ClipboardCheck,
+        children: [
+          { label: 'Dienstleistungen', href: '/admin/services', icon: Sparkles },
+          { label: 'Onboarding-Prüfung', href: '/admin/onboarding-review', icon: FileCheck },
+        ],
+      },
     ],
   },
   {
     title: 'Kommunikation',
     items: [
       { label: 'Nachrichten', href: '/admin/messaging', icon: MessageSquare },
-      { label: 'E-Mail Templates', href: '/admin/email-templates', icon: Mail },
-      { label: 'Benachrichtigungen', href: '/admin/notifications', icon: Bell },
     ],
   },
   {
@@ -137,6 +173,14 @@ const menuItems = [
               { label: 'AGB', href: '/admin/legal/agb', icon: Scale },
             ],
           },
+          {
+            label: 'Internationalisierung',
+            icon: Languages,
+            children: [
+              { label: 'Sprachen', href: '/admin/languages', icon: Languages },
+              { label: 'Übersetzungen', href: '/admin/translations', icon: Globe },
+            ],
+          },
         ],
       },
     ],
@@ -148,19 +192,19 @@ const menuItems = [
     ],
   },
   {
-    title: 'Internationalisierung',
+    title: 'Einstellungen',
     items: [
-      { label: 'Sprachen', href: '/admin/languages', icon: Languages },
-      { label: 'Übersetzungen', href: '/admin/translations', icon: Globe },
-    ],
-  },
-  {
-    title: 'System',
-    items: [
-      { label: 'Einstellungen', href: '/admin/settings', icon: Settings },
-      { label: 'Sicherheit', href: '/admin/security', icon: Shield },
-      { label: 'SEO', href: '/admin/seo', icon: Search },
-      { label: 'Fehlermeldungen', href: '/admin/error-messages', icon: AlertTriangle },
+      {
+        label: 'Einstellungen',
+        icon: Settings,
+        children: [
+          { label: 'Systemeinstellungen', href: '/admin/settings', icon: Settings },
+          { label: 'Sicherheit', href: '/admin/security', icon: Shield },
+          { label: 'SEO', href: '/admin/seo', icon: Search },
+          { label: 'Fehlermeldungen', href: '/admin/error-messages', icon: AlertTriangle },
+          { label: 'E-Mail Templates', href: '/admin/email-templates', icon: Mail },
+        ],
+      },
     ],
   },
 ]
@@ -169,17 +213,53 @@ export function AdminSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    'cms': false,
-    'seiten': false,
-    'blog': false,
-    'rechtliches': false,
-  })
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({})
 
   // Prevent hydration mismatch by waiting for mount
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Auto-open sections based on current path
+  useEffect(() => {
+    if (!pathname) return
+    
+    const newOpenSections: Record<string, boolean> = {}
+    
+    // Check each menu section to see if current path is within it
+    menuItems.forEach((section) => {
+      section.items.forEach((item) => {
+        if (item.children) {
+          const shouldOpen = item.children.some((child) => {
+            if (child.href && pathname.startsWith(child.href)) return true
+            if (child.children) {
+              return child.children.some((grandchild) => 
+                grandchild.href && pathname.startsWith(grandchild.href)
+              )
+            }
+            return false
+          })
+          if (shouldOpen) {
+            newOpenSections[item.label.toLowerCase()] = true
+          }
+          
+          // Check third level
+          item.children.forEach((child) => {
+            if (child.children) {
+              const shouldOpenChild = child.children.some((grandchild) =>
+                grandchild.href && pathname.startsWith(grandchild.href)
+              )
+              if (shouldOpenChild) {
+                newOpenSections[child.label.toLowerCase()] = true
+              }
+            }
+          })
+        }
+      })
+    })
+    
+    setOpenSections((prev) => ({ ...prev, ...newOpenSections }))
+  }, [pathname])
 
   // Don't render until mounted to prevent hydration mismatch
   if (!mounted) {
@@ -194,6 +274,87 @@ export function AdminSidebar() {
           </div>
         </div>
       </aside>
+    )
+  }
+
+  const toggleSection = (label: string) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [label.toLowerCase()]: !prev[label.toLowerCase()],
+    }))
+  }
+
+  const renderMenuChildren = (
+    children: MenuItem[],
+    sectionIndex: number,
+    depth: number
+  ): React.ReactNode => {
+    return (
+      <ul className="space-y-1">
+        {children.map((child, childIndex) =>
+          renderMenuItem(child, sectionIndex, childIndex, depth)
+        )}
+      </ul>
+    )
+  }
+
+  const renderMenuItem = (
+    item: MenuItem,
+    sectionIndex: number,
+    itemIndex: number,
+    depth: number = 0
+  ): React.ReactNode => {
+    const key = `${sectionIndex}-${itemIndex}-${depth}-${item.label}`
+    
+    // Item with children (collapsible)
+    if (item.children && !collapsed) {
+      const isOpen = openSections[item.label.toLowerCase()] || false
+      
+      return (
+        <li key={key}>
+          <Collapsible open={isOpen} onOpenChange={() => toggleSection(item.label)}>
+            <CollapsibleTrigger
+              className={cn(
+                "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all text-muted-foreground hover:bg-muted hover:text-foreground",
+                depth > 0 && "py-2"
+              )}
+            >
+              <item.icon className={cn("h-5 w-5 flex-shrink-0", depth > 0 && "h-4 w-4")} />
+              <span className="flex-1 text-left">{item.label}</span>
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 transition-transform duration-200",
+                  isOpen && "rotate-180"
+                )}
+              />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-1 pl-4">
+              {renderMenuChildren(item.children, sectionIndex, depth + 1)}
+            </CollapsibleContent>
+          </Collapsible>
+        </li>
+      )
+    }
+
+    // Regular item (link)
+    const isActive = item.href && pathname === item.href
+    
+    return (
+      <li key={key}>
+        <Link
+          href={item.href || '#'}
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 text-sm transition-all",
+            depth === 0 ? "py-2.5" : "py-2",
+            isActive
+              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          <item.icon className={cn("flex-shrink-0", depth === 0 ? "h-5 w-5" : "h-4 w-4", collapsed && "mx-auto")} />
+          {!collapsed && <span>{item.label}</span>}
+        </Link>
+      </li>
     )
   }
 
@@ -250,129 +411,9 @@ export function AdminSidebar() {
               </h3>
             )}
             <ul className="space-y-1">
-              {section.items.map((item, itemIndex) => {
-                // Check if item has children (nested menu)
-                if (item.children && !collapsed) {
-                  return (
-                    <li key={`${sectionIndex}-${itemIndex}`}>
-                      <Collapsible
-                        open={openSections[item.label.toLowerCase()] || false}
-                        onOpenChange={(open) => {
-                          setOpenSections(prev => ({
-                            ...prev,
-                            [item.label.toLowerCase()]: open
-                          }))
-                        }}
-                      >
-                        <CollapsibleTrigger
-                          className={cn(
-                            "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all text-muted-foreground hover:bg-muted hover:text-foreground",
-                            collapsed && "justify-center"
-                          )}
-                        >
-                          <item.icon className={cn("h-5 w-5 flex-shrink-0", collapsed && "mx-auto")} />
-                          {!collapsed && (
-                            <>
-                              <span className="flex-1 text-left">{item.label}</span>
-                              <ChevronDown className={cn(
-                                "h-4 w-4 transition-transform",
-                                openSections[item.label.toLowerCase()] && "rotate-180"
-                              )} />
-                            </>
-                          )}
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-1 space-y-1 pl-4">
-                          {item.children.map((child, childIndex) => {
-                            // Check if child has children (third level)
-                            if (child.children) {
-                              return (
-                                <Collapsible
-                                  key={`${sectionIndex}-${itemIndex}-${childIndex}`}
-                                  open={openSections[child.label.toLowerCase()] || false}
-                                  onOpenChange={(open) => {
-                                    setOpenSections(prev => ({
-                                      ...prev,
-                                      [child.label.toLowerCase()]: open
-                                    }))
-                                  }}
-                                >
-                                  <CollapsibleTrigger
-                                    className={cn(
-                                      "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all text-muted-foreground hover:bg-muted hover:text-foreground"
-                                    )}
-                                  >
-                                    <child.icon className="h-4 w-4 flex-shrink-0" />
-                                    <span className="flex-1 text-left">{child.label}</span>
-                                    <ChevronDown className={cn(
-                                      "h-4 w-4 transition-transform",
-                                      openSections[child.label.toLowerCase()] && "rotate-180"
-                                    )} />
-                                  </CollapsibleTrigger>
-                                  <CollapsibleContent className="mt-1 space-y-1 pl-4">
-                                    {child.children.map((grandchild, grandchildIndex) => {
-                                      const isActive = pathname === grandchild.href
-                                      return (
-                                        <Link
-                                          key={`${sectionIndex}-${itemIndex}-${childIndex}-${grandchildIndex}`}
-                                          href={grandchild.href}
-                                          className={cn(
-                                            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all",
-                                            isActive
-                                              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                                          )}
-                                        >
-                                          <grandchild.icon className="h-4 w-4 flex-shrink-0" />
-                                          <span>{grandchild.label}</span>
-                                        </Link>
-                                      )
-                                    })}
-                                  </CollapsibleContent>
-                                </Collapsible>
-                              )
-                            }
-                            // Regular child item (no further nesting)
-                            const isActive = pathname === child.href
-                            return (
-                              <Link
-                                key={`${sectionIndex}-${itemIndex}-${childIndex}`}
-                                href={child.href}
-                                className={cn(
-                                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all",
-                                  isActive
-                                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                                )}
-                              >
-                                <child.icon className="h-4 w-4 flex-shrink-0" />
-                                <span>{child.label}</span>
-                              </Link>
-                            )
-                          })}
-                        </CollapsibleContent>
-                      </Collapsible>
-                    </li>
-                  )
-                }
-                // Regular item (no children)
-                const isActive = pathname === item.href
-                return (
-                  <li key={item.href || `${sectionIndex}-${itemIndex}`}>
-                    <Link
-                      href={item.href || '#'}
-                      className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all",
-                        isActive
-                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      )}
-                    >
-                      <item.icon className={cn("h-5 w-5 flex-shrink-0", collapsed && "mx-auto")} />
-                      {!collapsed && <span>{item.label}</span>}
-                    </Link>
-                  </li>
-                )
-              })}
+              {section.items.map((item, itemIndex) =>
+                renderMenuItem(item, sectionIndex, itemIndex)
+              )}
             </ul>
           </div>
         ))}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -209,6 +209,13 @@ export function VideoCall({
   const videoContainerRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const callStartTimeRef = useRef<number | null>(null)
+
+  // Check if device is mobile (screen sharing not supported on mobile)
+  const isMobile = useMemo(() => {
+    if (typeof window === 'undefined') return false
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+      || window.innerWidth < 768
+  }, [])
 
   // Initialize Daily call
   useEffect(() => {
@@ -444,15 +451,18 @@ export function VideoCall({
           {isVideoOff ? <VideoOff className="h-5 w-5" /> : <Video className="h-5 w-5" />}
         </Button>
 
-        <Button
-          variant={isScreenSharing ? 'default' : 'secondary'}
-          size="lg"
-          className="rounded-full h-12 w-12"
-          onClick={toggleScreenShare}
-          disabled={isJoining}
-        >
-          <Monitor className="h-5 w-5" />
-        </Button>
+        {/* Screen sharing only available on desktop */}
+        {!isMobile && (
+          <Button
+            variant={isScreenSharing ? 'default' : 'secondary'}
+            size="lg"
+            className="rounded-full h-12 w-12"
+            onClick={toggleScreenShare}
+            disabled={isJoining}
+          >
+            <Monitor className="h-5 w-5" />
+          </Button>
+        )}
 
         <Button
           variant="destructive"
@@ -468,3 +478,4 @@ export function VideoCall({
 }
 
 export default VideoCall
+
