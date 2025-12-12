@@ -135,6 +135,7 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
   const userChannelRef = useRef<Channel | null>(null)
   const incomingCallRef = useRef<IncomingCallData | null>(null)
   const activeCallRef = useRef<ActiveCallData | null>(null)
+  const callStartTimeRef = useRef<number | null>(null)
   
   // Keep refs in sync with state
   useEffect(() => {
@@ -204,6 +205,7 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
       console.log('✅ Call accepted:', data)
       if (waitingForAccept && waitingForAccept.callId === data.callId) {
         // Use the stored roomUrl and token from when we initiated the call
+        callStartTimeRef.current = Date.now()
         setActiveCall({
           callId: waitingForAccept.callId,
           roomUrl: waitingForAccept.roomUrl,
@@ -340,6 +342,7 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
         throw new Error('Anruf konnte nicht angenommen werden')
       }
 
+      callStartTimeRef.current = Date.now()
       setActiveCall({
         callId: incomingCall.callId,
         roomUrl: incomingCall.roomUrl,
@@ -380,8 +383,15 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
   }, [incomingCall])
 
   // End active call
-  const endVideoCall = useCallback(async () => {
+  const endVideoCall = useCallback(async (duration?: number) => {
     if (!activeCall) return
+
+    // Calculate duration from start time if not provided
+    const callDuration = duration ?? (
+      callStartTimeRef.current 
+        ? Math.floor((Date.now() - callStartTimeRef.current) / 1000)
+        : 0
+    )
 
     try {
       await fetch('/api/video-call/end', {
@@ -389,13 +399,15 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           callId: activeCall.callId,
-          recipientId: activeCall.otherParticipant.id,
+          otherParticipantId: activeCall.otherParticipant.id,
+          duration: callDuration,
         }),
       })
     } catch (error) {
       console.error('Error ending call:', error)
     } finally {
       setActiveCall(null)
+      callStartTimeRef.current = null
     }
   }, [activeCall])
 

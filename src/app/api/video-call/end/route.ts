@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 import { deleteRoom } from '@/lib/daily-server'
 import { triggerPusherEvent, getUserChannel, PUSHER_EVENTS } from '@/lib/pusher-server'
 import { isDemoModeActive } from '@/lib/mock-data'
+import { handleCallEnded } from '@/lib/video-call-messages'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,7 +28,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { callId, otherParticipantId } = body
+    const { callId, otherParticipantId, duration, conversationId } = body
 
     if (!callId) {
       return NextResponse.json(
@@ -34,6 +36,18 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
+
+    // Get both users' info
+    const [currentUser, otherUser] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { id: true, name: true, email: true, image: true },
+      }),
+      otherParticipantId ? prisma.user.findUnique({
+        where: { id: otherParticipantId },
+        select: { id: true, name: true, email: true, image: true },
+      }) : null,
+    ])
 
     // Notify the other participant that call ended
     if (otherParticipantId) {
@@ -44,7 +58,29 @@ export async function POST(request: Request) {
           id: session.user.id,
           name: session.user.name,
         },
+        duration: duration || 0,
         endedAt: new Date().toISOString(),
+      })
+    }
+
+    // Create chat message and track analytics
+    if (currentUser && otherUser && duration && duration > 0) {
+      await handleCallEnded({
+        callId,
+        caller: {
+          id: currentUser.id,
+          name: currentUser.name,
+          email: currentUser.email || undefined,
+          image: currentUser.image,
+        },
+        callee: {
+          id: otherUser.id,
+          name: otherUser.name,
+          email: otherUser.email || undefined,
+          image: otherUser.image,
+        },
+        duration,
+        conversationId,
       })
     }
 

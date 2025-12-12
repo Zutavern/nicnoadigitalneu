@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { triggerPusherEvent, getUserChannel, PUSHER_EVENTS } from '@/lib/pusher-server'
 import { isDemoModeActive } from '@/lib/mock-data'
+import { handleCallAnswered } from '@/lib/video-call-messages'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,6 +44,13 @@ export async function POST(request: Request) {
         name: session.user.name,
       },
       acceptedAt: new Date().toISOString(),
+    })
+
+    // Track analytics
+    await handleCallAnswered({
+      callId,
+      callerId,
+      calleeId: session.user.id,
     })
 
     return NextResponse.json({ success: true })

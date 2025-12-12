@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 import { deleteRoom } from '@/lib/daily-server'
 import { triggerPusherEvent, getUserChannel, PUSHER_EVENTS } from '@/lib/pusher-server'
 import { isDemoModeActive } from '@/lib/mock-data'
+import { handleCallRejected } from '@/lib/video-call-messages'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,7 +28,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { callId, callerId, reason } = body
+    const { callId, callerId, reason, conversationId } = body
 
     if (!callId || !callerId) {
       return NextResponse.json(
@@ -34,6 +36,18 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
+
+    // Get caller and callee info
+    const [caller, callee] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: callerId },
+        select: { id: true, name: true, email: true, image: true },
+      }),
+      prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { id: true, name: true, email: true, image: true },
+      }),
+    ])
 
     // Notify caller that call was rejected
     const callerChannel = getUserChannel(callerId)
@@ -46,6 +60,26 @@ export async function POST(request: Request) {
       reason: reason || 'declined',
       rejectedAt: new Date().toISOString(),
     })
+
+    // Create chat message and track analytics
+    if (caller && callee) {
+      await handleCallRejected({
+        callId,
+        caller: {
+          id: caller.id,
+          name: caller.name,
+          email: caller.email || undefined,
+          image: caller.image,
+        },
+        callee: {
+          id: callee.id,
+          name: callee.name,
+          email: callee.email || undefined,
+          image: callee.image,
+        },
+        conversationId,
+      })
+    }
 
     // Delete the room
     try {

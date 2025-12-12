@@ -90,6 +90,9 @@ model User {
   // Security Relations
   pendingTwoFactorAuth PendingTwoFactorAuth[]
 
+  // Analytics
+  analyticsEvents AnalyticsEvent[]
+
   @@map("users")
 }
 
@@ -498,6 +501,9 @@ enum NotificationType {
   SUBSCRIPTION_EXPIRED   // Abo abgelaufen
   SYSTEM_ALERT           // System-Benachrichtigung
   WELCOME                // Willkommens-Nachricht
+  VIDEO_CALL_INCOMING    // Eingehender Videoanruf
+  VIDEO_CALL_MISSED      // Verpasster Videoanruf
+  VIDEO_CALL_ENDED       // Videoanruf beendet
 }
 
 model Notification {
@@ -1705,6 +1711,25 @@ model EmailLog {
   @@index([status])
   @@index([createdAt])
   @@map("email_logs")
+}
+
+// ============================================
+// Analytics Events (für Video-Calls, etc.)
+// ============================================
+
+model AnalyticsEvent {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventType  String   @map("event_type") @db.VarChar(100)
+  userId     String?  @map("user_id") @db.Uuid
+  metadata   Json?    @db.JsonB
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([eventType])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("analytics_events")
 }
 
 // ============================================

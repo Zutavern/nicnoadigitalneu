@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { createVideoCall, isDailyEnabled } from '@/lib/daily-server'
 import { triggerPusherEvent, getUserChannel, PUSHER_EVENTS } from '@/lib/pusher-server'
 import { isDemoModeActive } from '@/lib/mock-data'
+import { handleIncomingCall } from '@/lib/video-call-messages'
 
 export const dynamic = 'force-dynamic'
 
@@ -94,6 +95,23 @@ export async function POST(request: Request) {
       },
       conversationId,
       createdAt: new Date().toISOString(),
+    })
+
+    // Create notification and track analytics
+    await handleIncomingCall({
+      callId: videoCall.room.name,
+      caller: {
+        id: caller.id,
+        name: caller.name,
+        email: caller.email || undefined,
+        image: caller.image,
+      },
+      callee: {
+        id: callee.id,
+        name: callee.name,
+        email: callee.email || undefined,
+        image: callee.image,
+      },
     })
 
     return NextResponse.json({
