@@ -785,7 +785,7 @@ export async function getTranslatableContent(): Promise<TranslatableContent[]> {
 
   // 22b. Global UI Config (Footer, Navigation, Static Texts)
   try {
-    const config = await prisma.globalUIConfig.findUnique({ where: { id: 'default' } })
+    const config = await (prisma as any).globalUiConfig.findUnique({ where: { id: 'default' } })
     if (config) {
       const fields = TRANSLATABLE_FIELDS.global_ui_config
       allContent.push(...extractFields(

@@ -184,7 +184,8 @@ async function getFAQPageConfig() {
 
 async function getGlobalUIConfig() {
   try {
-    const config = await prisma.globalUIConfig.findUnique({
+    // Prisma converts GlobalUIConfig to globalUiConfig (lowercase 'i')
+    const config = await (prisma as any).globalUiConfig.findUnique({
       where: { id: 'default' },
       select: {
         homeFaqButtonText: true,
