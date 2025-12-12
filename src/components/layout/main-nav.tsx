@@ -3,6 +3,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { LanguageSelector } from '@/components/language-selector'
 
 export function MainNav() {
   return (
@@ -30,6 +31,7 @@ export function MainNav() {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <LanguageSelector />
           <Link href="/login">
             <Button variant="ghost" className="text-base font-medium">
               Login

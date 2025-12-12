@@ -32,7 +32,7 @@ export {
 } from './seo-utils'
 export type { HreflangTag } from './seo-utils'
 
-// Client-side Hooks
+// Client-side Hooks - importiere direkt aus './use-translations' für Client-Komponenten
 export { 
   useLocale, 
   LocaleProvider, 
@@ -41,3 +41,9 @@ export {
   getServerTranslations,
   t,
 } from './use-translations'
+
+// Server-side Translation Application
+// HINWEIS: Für Server-Komponenten direkt aus './apply-translations' importieren:
+// import { getServerLocale, applyTranslations } from '@/lib/translation/apply-translations'
+export type { Locale } from './i18n-config'
+

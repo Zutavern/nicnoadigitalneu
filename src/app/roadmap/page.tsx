@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Loader2, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import * as LucideIcons from 'lucide-react'
+import { PageEvents } from '@/lib/analytics'
 
 interface RoadmapConfig {
   heroBadgeText: string | null
@@ -85,6 +86,7 @@ export default function RoadmapPage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    PageEvents.roadmapViewed()
     async function fetchData() {
       try {
         const [configRes, itemsRes] = await Promise.all([

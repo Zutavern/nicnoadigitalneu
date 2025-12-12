@@ -8,7 +8,7 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null
 
-// Email templates mapping - All 44 templates
+// Email templates mapping - All 45+ templates
 const templateComponents: Record<string, () => Promise<{ default: React.FC<any> }>> = {
   // Auth & Account
   'welcome': () => import('@/emails/templates/WelcomeEmail'),
@@ -17,6 +17,7 @@ const templateComponents: Record<string, () => Promise<{ default: React.FC<any> 
   'password-changed': () => import('@/emails/templates/PasswordChangedEmail'),
   'login-new-device': () => import('@/emails/templates/LoginNewDeviceEmail'),
   'account-deactivated': () => import('@/emails/templates/AccountDeactivatedEmail'),
+  'magic-link': () => import('@/emails/templates/MagicLinkEmail'),
   
   // Onboarding
   'onboarding-submitted': () => import('@/emails/templates/OnboardingSubmittedEmail'),

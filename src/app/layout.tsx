@@ -5,9 +5,11 @@ import { SessionProvider } from "@/components/providers/session-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ThemeColorProvider } from "@/components/providers/theme-color-provider";
 import { CookieConsentProvider } from "@/components/providers/cookie-consent-provider";
+import { PostHogProvider } from "@/components/providers/posthog-provider";
 import { CookieConsentBanner, CookieSettingsButton } from "@/components/cookie-consent-banner";
 import { PasswordProtection } from "@/components/password-protection";
 import { SessionGuard } from "@/components/session-guard";
+import { Toaster } from "sonner";
 import cookiesData from "@/data/cookies.json";
 
 const geistSans = Geist({
@@ -60,15 +62,18 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ThemeColorProvider />
-          <SessionProvider>
-            <CookieConsentProvider categories={cookiesData.categories}>
-              <SessionGuard />
-              <PasswordProtection />
-              {children}
-              <CookieConsentBanner />
-              <CookieSettingsButton />
-            </CookieConsentProvider>
-          </SessionProvider>
+          <PostHogProvider>
+            <SessionProvider>
+              <CookieConsentProvider categories={cookiesData.categories}>
+                <SessionGuard />
+                <PasswordProtection />
+                {children}
+                <CookieConsentBanner />
+                <CookieSettingsButton />
+                <Toaster richColors position="top-right" />
+              </CookieConsentProvider>
+            </SessionProvider>
+          </PostHogProvider>
         </ThemeProvider>
       </body>
     </html>

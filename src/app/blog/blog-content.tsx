@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Clock, ArrowRight, BookOpen } from 'lucide-react'
+import { PageEvents } from '@/lib/analytics'
 
 interface BlogPost {
   id: string
@@ -63,6 +64,10 @@ interface BlogContentProps {
 
 export function BlogContent({ posts, featuredPost, categories, config }: BlogContentProps) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+
+  useEffect(() => {
+    PageEvents.blogListViewed()
+  }, [])
 
   const filteredPosts = activeCategory
     ? posts.filter((p) => p.category?.slug === activeCategory)

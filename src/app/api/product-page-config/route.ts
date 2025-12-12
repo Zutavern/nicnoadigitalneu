@@ -1,12 +1,34 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
+import { DEFAULT_LOCALE, LOCALE_COOKIE_NAME, isValidLocale, type Locale } from '@/lib/translation/i18n-config'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-// GET - Produkt-Seiten-Konfiguration abrufen (Public)
+// Übersetzbare Felder
+const TRANSLATABLE_FIELDS = [
+  'heroBadgeText', 'heroTitle', 'heroTitleHighlight', 'heroDescription',
+  'ctaPrimaryText', 'ctaSecondaryText',
+  'trustIndicator1', 'trustIndicator2', 'trustIndicator3',
+  'dashboardTitle', 'dashboardSubtitle',
+  'featuresSectionTitle', 'featuresSectionDescription',
+  'bottomCtaTitle', 'bottomCtaDescription', 'bottomCtaButtonText',
+]
+
+// GET - Produkt-Seiten-Konfiguration abrufen (Public, mit Übersetzungen)
 export async function GET() {
   try {
+    // Locale ermitteln
+    let locale: Locale = DEFAULT_LOCALE
+    try {
+      const cookieStore = await cookies()
+      const localeCookie = cookieStore.get(LOCALE_COOKIE_NAME)
+      if (localeCookie?.value && isValidLocale(localeCookie.value)) {
+        locale = localeCookie.value as Locale
+      }
+    } catch { /* ignore */ }
+
     let config = await prisma.productPageConfig.findUnique({
       where: { id: 'default' },
     })
@@ -58,6 +80,26 @@ export async function GET() {
           bottomCtaButtonLink: '/registrieren',
         },
       })
+    }
+
+    // Übersetzungen laden und anwenden
+    if (locale !== DEFAULT_LOCALE && config) {
+      const translations = await prisma.translation.findMany({
+        where: {
+          contentType: 'product_page_config',
+          contentId: config.id,
+          languageId: locale,
+          status: 'TRANSLATED',
+          field: { in: TRANSLATABLE_FIELDS },
+        },
+        select: { field: true, value: true },
+      })
+
+      for (const t of translations) {
+        if (t.field in config) {
+          (config as Record<string, unknown>)[t.field] = t.value
+        }
+      }
     }
 
     return NextResponse.json(config, {

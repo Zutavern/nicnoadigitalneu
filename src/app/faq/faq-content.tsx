@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Building2, Users, HelpCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -8,6 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { MainNav } from '@/components/layout/main-nav'
 import { Footer } from '@/components/layout/footer'
 import Link from 'next/link'
+import { PageEvents } from '@/lib/analytics'
 
 interface FAQ {
   id: string
@@ -41,6 +42,10 @@ interface FAQContentProps {
 
 export function FAQContent({ faqs, config }: FAQContentProps) {
   const [activeSection, setActiveSection] = useState<'salon' | 'mieter'>('salon')
+
+  useEffect(() => {
+    PageEvents.faqViewed()
+  }, [])
 
   const currentFAQs = activeSection === 'salon' ? faqs.SALON_OWNER : faqs.STYLIST
 

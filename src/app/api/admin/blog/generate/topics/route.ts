@@ -116,3 +116,4 @@ Gib NUR das JSON-Array zurück, keine weiteren Erklärungen.`
     )
   }
 }
+

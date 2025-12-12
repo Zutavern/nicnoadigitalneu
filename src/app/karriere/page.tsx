@@ -30,6 +30,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import Link from 'next/link'
+import { PageEvents } from '@/lib/analytics'
 
 interface Job {
   id: string
@@ -105,6 +106,7 @@ export default function KarrierePage() {
   })
 
   useEffect(() => {
+    PageEvents.careersViewed()
     fetchJobs()
     fetchConfig()
   }, [])

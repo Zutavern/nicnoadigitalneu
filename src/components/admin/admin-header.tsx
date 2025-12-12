@@ -17,6 +17,7 @@ import { signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import { NotificationBell } from '@/components/notifications/notification-bell'
+import { LanguageSelector } from '@/components/language-selector'
 
 export function AdminHeader() {
   const { data: session } = useSession()
@@ -54,6 +55,9 @@ export function AdminHeader() {
           <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           <span className="sr-only">Theme wechseln</span>
         </Button>
+
+        {/* Language Selector */}
+        <LanguageSelector />
 
         {/* Notifications */}
         <NotificationBell />

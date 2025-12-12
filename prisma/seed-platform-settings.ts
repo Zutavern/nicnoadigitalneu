@@ -58,3 +58,4 @@ main()
     await prisma.$disconnect()
     await pool.end()
   })
+

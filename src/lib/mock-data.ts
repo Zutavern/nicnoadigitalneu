@@ -1435,90 +1435,48 @@ export function getMockConversations() {
         type: 'DIRECT',
         subject: null,
         participants: [
-          { 
-            id: 'cp-1', 
-            userId: '00000000-0000-0000-0000-000000000002',
-            role: 'ADMIN',
-            lastReadAt: null,
-            user: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', email: 'salon@nicnoa.de', image: null, role: 'SALON_OWNER' }
-          },
-          { 
-            id: 'cp-2', 
-            userId: '00000000-0000-0000-0000-000000000001',
-            role: 'MEMBER',
-            lastReadAt: null,
-            user: { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', email: 'admin@nicnoa.de', image: null, role: 'ADMIN' }
-          },
+          { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', email: 'salon@nicnoa.de', image: null, role: 'SALON_OWNER', user: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', email: 'salon@nicnoa.de', image: null, role: 'SALON_OWNER' } },
+          { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', email: 'admin@nicnoa.de', image: null, role: 'ADMIN', user: { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', email: 'admin@nicnoa.de', image: null, role: 'ADMIN' } },
         ],
         lastMessage: {
-          id: 'msg-1',
-          content: 'Vielen Dank für die schnelle Rückmeldung!',
-          createdAt: getRelativeDate(0, 0, 30),
+          content: 'Vielen Dank für die schnelle Rückmeldung! 🙌',
+          createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
           isRead: false,
         },
         unreadCount: 2,
-        createdAt: getRelativeDate(-5),
-        updatedAt: getRelativeDate(0, 0, 30),
+        updatedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
       },
       {
         id: 'conv-2',
         type: 'DIRECT',
         subject: null,
         participants: [
-          { 
-            id: 'cp-3', 
-            userId: '00000000-0000-0000-0000-000000000003',
-            role: 'MEMBER',
-            lastReadAt: null,
-            user: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', email: 'stylist@nicnoa.de', image: null, role: 'STYLIST' }
-          },
-          { 
-            id: 'cp-4', 
-            userId: '00000000-0000-0000-0000-000000000001',
-            role: 'ADMIN',
-            lastReadAt: null,
-            user: { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', email: 'admin@nicnoa.de', image: null, role: 'ADMIN' }
-          },
+          { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', email: 'stylist@nicnoa.de', image: null, role: 'STYLIST', user: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', email: 'stylist@nicnoa.de', image: null, role: 'STYLIST' } },
+          { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', email: 'admin@nicnoa.de', image: null, role: 'ADMIN', user: { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', email: 'admin@nicnoa.de', image: null, role: 'ADMIN' } },
         ],
         lastMessage: {
-          id: 'msg-2',
           content: 'Können wir den Termin auf 15 Uhr verschieben?',
-          createdAt: getRelativeDate(-1, 10, 0),
+          createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
           isRead: false,
         },
         unreadCount: 1,
-        createdAt: getRelativeDate(-10),
-        updatedAt: getRelativeDate(-1, 10, 0),
+        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
       },
       {
         id: 'conv-3',
         type: 'DIRECT',
         subject: null,
         participants: [
-          { 
-            id: 'cp-5', 
-            userId: '00000000-0000-0000-0000-000000000002',
-            role: 'ADMIN',
-            lastReadAt: null,
-            user: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', email: 'salon@nicnoa.de', image: null, role: 'SALON_OWNER' }
-          },
-          { 
-            id: 'cp-6', 
-            userId: '00000000-0000-0000-0000-000000000003',
-            role: 'MEMBER',
-            lastReadAt: null,
-            user: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', email: 'stylist@nicnoa.de', image: null, role: 'STYLIST' }
-          },
+          { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', email: 'salon@nicnoa.de', image: null, role: 'SALON_OWNER', user: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', email: 'salon@nicnoa.de', image: null, role: 'SALON_OWNER' } },
+          { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', email: 'stylist@nicnoa.de', image: null, role: 'STYLIST', user: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', email: 'stylist@nicnoa.de', image: null, role: 'STYLIST' } },
         ],
         lastMessage: {
-          id: 'msg-3',
-          content: 'Willkommen bei NICNOA! Bei Fragen stehen wir dir gerne zur Verfügung.',
-          createdAt: getRelativeDate(-7),
+          content: 'Willkommen bei NICNOA! 👋',
+          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
           isRead: true,
         },
         unreadCount: 0,
-        createdAt: getRelativeDate(-7),
-        updatedAt: getRelativeDate(-7),
+        updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
       },
     ],
     total: 3,
@@ -1526,25 +1484,101 @@ export function getMockConversations() {
 }
 
 export function getMockMessages(conversationId: string) {
-  const messages: Record<string, any[]> = {
+  const now = Date.now()
+  const messages: Record<string, unknown[]> = {
     'conv-1': [
-      { id: 'm1-1', content: 'Hallo! Ich wollte fragen, ob der Stuhl noch frei ist.', senderId: 'p2', createdAt: getRelativeDate(-5), readBy: ['p1', 'p2'] },
-      { id: 'm1-2', content: 'Ja, Stuhl 2 ist noch verfügbar! Möchtest du einen Besichtigungstermin?', senderId: 'p1', createdAt: getRelativeDate(-5, 14, 0), readBy: ['p1', 'p2'] },
-      { id: 'm1-3', content: 'Das wäre super! Passt es morgen um 10 Uhr?', senderId: 'p2', createdAt: getRelativeDate(-4), readBy: ['p1', 'p2'] },
-      { id: 'm1-4', content: 'Perfekt, bis morgen!', senderId: 'p1', createdAt: getRelativeDate(-4, 10, 0), readBy: ['p1', 'p2'] },
-      { id: 'm1-5', content: 'Vielen Dank für die schnelle Rückmeldung!', senderId: 'p1', createdAt: getRelativeDate(0, 14, 30), readBy: ['p1'] },
+      { id: 'm1-1', content: 'Hallo! Ich wollte fragen, ob der Stuhl noch frei ist.', senderId: '00000000-0000-0000-0000-000000000002', createdAt: new Date(now - 5 * 24 * 60 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', image: null } },
+      { id: 'm1-2', content: 'Ja, Stuhl 2 ist noch verfügbar! Möchtest du einen Besichtigungstermin?', senderId: '00000000-0000-0000-0000-000000000001', createdAt: new Date(now - 5 * 24 * 60 * 60 * 1000 + 14 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', image: null } },
+      { id: 'm1-3', content: 'Das wäre super! Passt es morgen um 10 Uhr?', senderId: '00000000-0000-0000-0000-000000000002', createdAt: new Date(now - 4 * 24 * 60 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', image: null } },
+      { id: 'm1-4', content: 'Perfekt, bis morgen! 🎉', senderId: '00000000-0000-0000-0000-000000000001', createdAt: new Date(now - 4 * 24 * 60 * 60 * 1000 + 10 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', image: null } },
+      { id: 'm1-5', content: 'Der Besichtigungstermin war super. Der Stuhl gefällt mir!', senderId: '00000000-0000-0000-0000-000000000002', createdAt: new Date(now - 3 * 24 * 60 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', image: null } },
+      { id: 'm1-6', content: 'Das freut mich sehr! Wann möchtest du starten?', senderId: '00000000-0000-0000-0000-000000000001', createdAt: new Date(now - 3 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', image: null } },
+      { id: 'm1-7', content: 'Am liebsten nächsten Montag. Geht das?', senderId: '00000000-0000-0000-0000-000000000002', createdAt: new Date(now - 2 * 24 * 60 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', image: null } },
+      { id: 'm1-8', content: 'Klar, ich bereite alles vor. Bis Montag! 💪', senderId: '00000000-0000-0000-0000-000000000001', createdAt: new Date(now - 2 * 24 * 60 * 60 * 1000 + 15 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', image: null } },
+      { id: 'm1-9', content: 'Vielen Dank für die schnelle Rückmeldung! 🙌', senderId: '00000000-0000-0000-0000-000000000002', createdAt: new Date(now - 30 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', image: null } },
     ],
     'conv-2': [
-      { id: 'm2-1', content: 'Hallo, ich möchte einen Termin für Balayage buchen.', senderId: 'p3', createdAt: getRelativeDate(-10), readBy: ['p2', 'p3'] },
-      { id: 'm2-2', content: 'Gerne! Wie wäre es am Freitag um 14 Uhr?', senderId: 'p2', createdAt: getRelativeDate(-10, 11, 0), readBy: ['p2', 'p3'] },
-      { id: 'm2-3', content: 'Das passt! Bis dann.', senderId: 'p3', createdAt: getRelativeDate(-10, 12, 0), readBy: ['p2', 'p3'] },
-      { id: 'm2-4', content: 'Können wir den Termin auf 15 Uhr verschieben?', senderId: 'p3', createdAt: getRelativeDate(-1, 10, 0), readBy: ['p3'] },
+      { id: 'm2-1', content: 'Hallo, ich bin neu auf der Plattform!', senderId: '00000000-0000-0000-0000-000000000003', createdAt: new Date(now - 10 * 24 * 60 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', image: null } },
+      { id: 'm2-2', content: 'Herzlich willkommen! Wie kann ich dir helfen? 😊', senderId: '00000000-0000-0000-0000-000000000001', createdAt: new Date(now - 10 * 24 * 60 * 60 * 1000 + 11 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', image: null } },
+      { id: 'm2-3', content: 'Ich suche einen Stuhl in München. Gibt es da was?', senderId: '00000000-0000-0000-0000-000000000003', createdAt: new Date(now - 10 * 24 * 60 * 60 * 1000 + 12 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', image: null } },
+      { id: 'm2-4', content: 'Ja, wir haben mehrere Partner in München! Ich schicke dir gleich eine Liste.', senderId: '00000000-0000-0000-0000-000000000001', createdAt: new Date(now - 9 * 24 * 60 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', image: null } },
+      { id: 'm2-5', content: 'Super, danke! 💇‍♀️', senderId: '00000000-0000-0000-0000-000000000003', createdAt: new Date(now - 9 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', image: null } },
+      { id: 'm2-6', content: 'Können wir den Termin auf 15 Uhr verschieben?', senderId: '00000000-0000-0000-0000-000000000003', createdAt: new Date(now - 1 * 24 * 60 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', image: null } },
     ],
     'conv-3': [
-      { id: 'm3-1', content: 'Willkommen bei NICNOA! Bei Fragen stehen wir dir gerne zur Verfügung.', senderId: 'p4', createdAt: getRelativeDate(-7), readBy: ['p2', 'p4'] },
+      { id: 'm3-1', content: 'Willkommen bei NICNOA! 👋', senderId: '00000000-0000-0000-0000-000000000002', createdAt: new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', image: null } },
+      { id: 'm3-2', content: 'Danke! Ich freue mich auf die Zusammenarbeit.', senderId: '00000000-0000-0000-0000-000000000003', createdAt: new Date(now - 7 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', image: null } },
+      { id: 'm3-3', content: 'Ich auch! Bei Fragen meld dich einfach.', senderId: '00000000-0000-0000-0000-000000000002', createdAt: new Date(now - 7 * 24 * 60 * 60 * 1000 + 45 * 60 * 1000).toISOString(), sender: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', image: null } },
     ],
   }
   return messages[conversationId] || []
+}
+
+// Mock Online Users for Demo Mode
+export function getMockOnlineUsers() {
+  return [
+    { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', email: 'salon@nicnoa.de', image: null, role: 'SALON_OWNER', isOnline: true, lastSeenAt: new Date().toISOString() },
+    { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', email: 'stylist@nicnoa.de', image: null, role: 'STYLIST', isOnline: false, lastSeenAt: getRelativeDate(0, -30, 0) },
+  ]
+}
+
+// Simulate Demo Typing
+let demoTypingTimeout: NodeJS.Timeout | null = null
+export function simulateDemoTyping(callback: (isTyping: boolean, userName: string) => void) {
+  // Random typing simulation every 10-30 seconds
+  const scheduleTyping = () => {
+    const delay = Math.random() * 20000 + 10000 // 10-30 seconds
+    demoTypingTimeout = setTimeout(() => {
+      const users = ['Salon Betreiber', 'Stylist Test']
+      const randomUser = users[Math.floor(Math.random() * users.length)]
+      
+      // Start typing
+      callback(true, randomUser)
+      
+      // Stop typing after 2-4 seconds
+      setTimeout(() => {
+        callback(false, randomUser)
+        scheduleTyping()
+      }, Math.random() * 2000 + 2000)
+    }, delay)
+  }
+  
+  scheduleTyping()
+  
+  return () => {
+    if (demoTypingTimeout) {
+      clearTimeout(demoTypingTimeout)
+    }
+  }
+}
+
+// Simulate Demo Message
+export function simulateDemoMessage(conversationId: string): { message: unknown } | null {
+  const demoMessages = [
+    'Hey, alles klar bei dir? 👋',
+    'Kannst du mir kurz helfen?',
+    'Der Termin morgen passt mir leider nicht mehr...',
+    'Perfekt, danke dir! 🙌',
+    'Wann hast du Zeit für ein kurzes Gespräch?',
+    'Ich schicke dir gleich die Details.',
+  ]
+  
+  const randomContent = demoMessages[Math.floor(Math.random() * demoMessages.length)]
+  const senders = [
+    { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', image: null },
+    { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', image: null },
+  ]
+  const randomSender = senders[Math.floor(Math.random() * senders.length)]
+  
+  return {
+    message: {
+      id: `demo-${Date.now()}`,
+      content: randomContent,
+      senderId: randomSender.id,
+      createdAt: new Date().toISOString(),
+      sender: randomSender,
+    },
+  }
 }
 
 // ============================================

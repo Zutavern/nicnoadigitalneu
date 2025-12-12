@@ -14,6 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Link from 'next/link'
 import { NotificationBell } from '@/components/notifications/notification-bell'
+import { LanguageSelector } from '@/components/language-selector'
 
 interface DashboardHeaderProps {
   baseUrl: string
@@ -48,6 +49,9 @@ export function DashboardHeader({ baseUrl, accentColor = 'primary' }: DashboardH
 
       {/* Right Side */}
       <div className="flex items-center gap-4">
+        {/* Language Selector */}
+        <LanguageSelector />
+
         {/* Notifications */}
         <NotificationBell />
 

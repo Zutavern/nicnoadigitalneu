@@ -31,14 +31,13 @@ export async function GET() {
     }
 
     // Sensible Daten nicht vollständig zurückgeben
-    const { smtpPassword, deeplApiKey, openaiApiKey, ...safeSettings } = settings
+    const { smtpPassword, deeplApiKey, ...safeSettings } = settings
 
     return NextResponse.json({
       ...safeSettings,
       smtpPassword: smtpPassword ? '••••••••' : null,
-      // API-Keys nur als Boolean zurückgeben (ob konfiguriert)
+      // API-Key nur als Maske zurückgeben (ob konfiguriert)
       deeplApiKey: deeplApiKey ? '••••••••••••••••' : null,
-      openaiApiKey: openaiApiKey ? '••••••••••••••••' : null,
     })
   } catch (error) {
     console.error('Error fetching settings:', error)
@@ -93,7 +92,6 @@ export async function PUT(request: Request) {
       passwordProtectionEnabled,
       // Übersetzungs-API
       deeplApiKey,
-      openaiApiKey,
       translationProvider,
     } = body
 
@@ -130,12 +128,9 @@ export async function PUT(request: Request) {
       updateData.smtpPassword = smtpPassword
     }
     
-    // Übersetzungs-API-Keys nur aktualisieren wenn nicht Platzhalter
+    // Übersetzungs-API-Key nur aktualisieren wenn nicht Platzhalter
     if (deeplApiKey !== undefined && deeplApiKey !== '••••••••••••••••') {
       updateData.deeplApiKey = deeplApiKey || null
-    }
-    if (openaiApiKey !== undefined && openaiApiKey !== '••••••••••••••••') {
-      updateData.openaiApiKey = openaiApiKey || null
     }
     if (translationProvider !== undefined) {
       updateData.translationProvider = translationProvider
@@ -155,8 +150,8 @@ export async function PUT(request: Request) {
       clearDemoModeCache()
     }
 
-    // Translation-API-Cache leeren wenn Keys geändert wurden
-    if (deeplApiKey !== undefined || openaiApiKey !== undefined || translationProvider !== undefined) {
+    // Translation-API-Cache leeren wenn Key oder Provider geändert wurde
+    if (deeplApiKey !== undefined || translationProvider !== undefined) {
       clearTranslationApiCache()
     }
 
@@ -173,13 +168,12 @@ export async function PUT(request: Request) {
     })
 
     // Sensible Daten nicht vollständig zurückgeben
-    const { smtpPassword: _, deeplApiKey: _d, openaiApiKey: _o, ...safeSettings } = settings
+    const { smtpPassword: _, deeplApiKey: _d, ...safeSettings } = settings
 
     return NextResponse.json({
       ...safeSettings,
       smtpPassword: settings.smtpPassword ? '••••••••' : null,
       deeplApiKey: settings.deeplApiKey ? '••••••••••••••••' : null,
-      openaiApiKey: settings.openaiApiKey ? '••••••••••••••••' : null,
     })
   } catch (error) {
     console.error('Error updating settings:', error)

@@ -2,9 +2,25 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import emails from '@/lib/email'
 import crypto from 'crypto'
+import { checkRateLimit, logRateLimitedAction, rateLimits, rateLimitErrorResponse } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
   try {
+    const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown'
+
+    // Rate limiting check
+    const rateLimit = await checkRateLimit({
+      ...rateLimits.passwordReset,
+      identifier: ipAddress,
+    })
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(rateLimitErrorResponse(rateLimit), { status: 429 })
+    }
+
+    // Log the attempt for rate limiting
+    await logRateLimitedAction(ipAddress, rateLimits.passwordReset.action)
+
     const { email } = await request.json()
 
     if (!email) {
@@ -77,6 +93,7 @@ export async function POST(request: Request) {
     )
   }
 }
+
 
 
 

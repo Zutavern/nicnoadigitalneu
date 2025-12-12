@@ -34,8 +34,11 @@ import {
   ChevronDown,
   ChevronUp,
   Code2,
+  BarChart3,
+  MessageCircle,
+  Video,
 } from 'lucide-react'
-import { POPULAR_MODELS } from '@/lib/openrouter'
+import { POPULAR_MODELS, MODEL_GROUPS } from '@/lib/openrouter'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -45,7 +48,9 @@ import { Badge } from '@/components/ui/badge'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
@@ -83,7 +88,6 @@ interface PlatformSettings {
   passwordProtectionEnabled: boolean
   // Übersetzungs-API
   deeplApiKey: string | null
-  openaiApiKey: string | null
   translationProvider: string | null
 }
 
@@ -113,10 +117,12 @@ export default function SettingsPage() {
   const [passwordProtectionEnabled, setPasswordProtectionEnabled] = useState(true)
   // Übersetzungs-API
   const [deeplApiKey, setDeeplApiKey] = useState('')
-  const [openaiApiKey, setOpenaiApiKey] = useState('')
   const [translationProvider, setTranslationProvider] = useState('auto')
+  const [translationModel, setTranslationModel] = useState('openai/gpt-4o-mini')
   const [showDeeplKey, setShowDeeplKey] = useState(false)
-  const [showOpenaiKey, setShowOpenaiKey] = useState(false)
+  const [isTestingDeepL, setIsTestingDeepL] = useState(false)
+  const [deeplKeyValid, setDeeplKeyValid] = useState<boolean | null>(null)
+  const [deeplUsage, setDeeplUsage] = useState<{ remaining: number; percentUsed: number } | null>(null)
   
   // OpenRouter
   const [openRouterApiKey, setOpenRouterApiKey] = useState('')
@@ -126,6 +132,7 @@ export default function SettingsPage() {
   const [openRouterSiteName, setOpenRouterSiteName] = useState('NICNOA Platform')
   const [showOpenRouterKey, setShowOpenRouterKey] = useState(false)
   const [isTestingOpenRouter, setIsTestingOpenRouter] = useState(false)
+  const [openRouterKeyValid, setOpenRouterKeyValid] = useState<boolean | null>(null)
   const [openRouterUsage, setOpenRouterUsage] = useState<{
     today: { totalCostUsd: number; totalRequests: number }
     thisMonth: { totalCostUsd: number; totalRequests: number }
@@ -138,11 +145,46 @@ export default function SettingsPage() {
   const [defaultArticlePrompt, setDefaultArticlePrompt] = useState('')
   const [showArticlePrompt, setShowArticlePrompt] = useState(false)
   const [isSavingTone, setIsSavingTone] = useState(false)
+  
+  // PostHog Analytics
+  const [posthogApiKey, setPosthogApiKey] = useState('')
+  const [posthogHost, setPosthogHost] = useState('https://eu.i.posthog.com')
+  const [posthogProjectId, setPosthogProjectId] = useState('')
+  const [posthogEnabled, setPosthogEnabled] = useState(false)
+  const [posthogPersonalApiKey, setPosthogPersonalApiKey] = useState('')
+  const [showPosthogApiKey, setShowPosthogApiKey] = useState(false)
+  const [showPosthogPersonalKey, setShowPosthogPersonalKey] = useState(false)
+  const [isTestingPosthog, setIsTestingPosthog] = useState(false)
+  const [posthogKeyValid, setPosthogKeyValid] = useState<boolean | null>(null)
+  const [isSavingPosthog, setIsSavingPosthog] = useState(false)
+
+  // Pusher Real-Time Chat
+  const [pusherAppId, setPusherAppId] = useState('')
+  const [pusherKey, setPusherKey] = useState('')
+  const [pusherSecret, setPusherSecret] = useState('')
+  const [pusherCluster, setPusherCluster] = useState('eu')
+  const [pusherEnabled, setPusherEnabled] = useState(false)
+  const [showPusherSecret, setShowPusherSecret] = useState(false)
+  const [isTestingPusher, setIsTestingPusher] = useState(false)
+  const [pusherTestResult, setPusherTestResult] = useState<boolean | null>(null)
+  
+  // Daily Video Call State
+  const [dailyApiKey, setDailyApiKey] = useState('')
+  const [dailyDomain, setDailyDomain] = useState('')
+  const [dailyEnabled, setDailyEnabled] = useState(false)
+  const [showDailyApiKey, setShowDailyApiKey] = useState(false)
+  const [isTestingDaily, setIsTestingDaily] = useState(false)
+  const [dailyTestResult, setDailyTestResult] = useState<boolean | null>(null)
+  const [isSavingDaily, setIsSavingDaily] = useState(false)
+  const [isSavingPusher, setIsSavingPusher] = useState(false)
 
   useEffect(() => {
     fetchSettings()
     fetchOpenRouterConfig()
     fetchToneOfVoice()
+    fetchPosthogConfig()
+    fetchPusherConfig()
+    fetchDailyConfig()
   }, [])
 
   const fetchSettings = async () => {
@@ -172,8 +214,8 @@ export default function SettingsPage() {
       setPasswordProtectionEnabled(data.passwordProtectionEnabled ?? true)
       // Übersetzungs-API - nur Masken anzeigen wenn vorhanden
       setDeeplApiKey(data.deeplApiKey ? '••••••••••••••••' : '')
-      setOpenaiApiKey(data.openaiApiKey ? '••••••••••••••••' : '')
       setTranslationProvider(data.translationProvider || 'auto')
+      setDeeplKeyValid(data.deeplApiKey ? true : null)
     } catch (error) {
       console.error('Error fetching settings:', error)
       toast.error('Fehler beim Laden der Einstellungen')
@@ -245,6 +287,7 @@ export default function SettingsPage() {
     }
 
     setIsTestingOpenRouter(true)
+    setOpenRouterKeyValid(null)
     try {
       const res = await fetch('/api/admin/openrouter', {
         method: 'POST',
@@ -255,14 +298,50 @@ export default function SettingsPage() {
       const data = await res.json()
 
       if (data.valid) {
+        setOpenRouterKeyValid(true)
         toast.success(data.message)
       } else {
+        setOpenRouterKeyValid(false)
         toast.error(data.error || 'Ungültiger API Key')
       }
     } catch (error) {
+      setOpenRouterKeyValid(false)
       toast.error('Verbindungsfehler')
     } finally {
       setIsTestingOpenRouter(false)
+    }
+  }
+
+  const testDeeplKey = async () => {
+    if (!deeplApiKey || deeplApiKey === '••••••••••••••••') {
+      toast.error('Bitte gib einen API Key ein')
+      return
+    }
+
+    setIsTestingDeepL(true)
+    setDeeplKeyValid(null)
+    try {
+      const res = await fetch('/api/admin/settings/test-deepl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: deeplApiKey }),
+      })
+
+      const data = await res.json()
+
+      if (data.valid) {
+        setDeeplKeyValid(true)
+        setDeeplUsage(data.usage ? { remaining: data.usage.remaining, percentUsed: data.usage.percentUsed } : null)
+        toast.success(data.message)
+      } else {
+        setDeeplKeyValid(false)
+        toast.error(data.error || 'Ungültiger API Key')
+      }
+    } catch (error) {
+      setDeeplKeyValid(false)
+      toast.error('Verbindungsfehler')
+    } finally {
+      setIsTestingDeepL(false)
     }
   }
 
@@ -305,6 +384,286 @@ export default function SettingsPage() {
     }
   }
 
+  const fetchPosthogConfig = async () => {
+    try {
+      const res = await fetch('/api/admin/posthog')
+      if (res.ok) {
+        const data = await res.json()
+        setPosthogApiKey(data.hasApiKey ? '••••••••••••••••' : '')
+        setPosthogHost(data.posthogHost || 'https://eu.i.posthog.com')
+        setPosthogProjectId(data.posthogProjectId || '')
+        setPosthogEnabled(data.posthogEnabled || false)
+        setPosthogPersonalApiKey(data.hasPersonalApiKey ? '••••••••••••••••' : '')
+        setPosthogKeyValid(data.hasApiKey ? true : null)
+      }
+    } catch (error) {
+      console.error('Error fetching PostHog config:', error)
+    }
+  }
+
+  const savePosthogConfig = async () => {
+    setIsSavingPosthog(true)
+    try {
+      // Prepare data - only send keys if they are not masked placeholders
+      const isMasked = (val: string) => val === '••••••••••••••••'
+      const payload: Record<string, unknown> = {
+        posthogHost,
+        posthogProjectId,
+        posthogEnabled,
+      }
+      
+      // Only include API keys if they are actual values (not masked)
+      if (posthogApiKey && !isMasked(posthogApiKey)) {
+        payload.posthogApiKey = posthogApiKey
+      }
+      if (posthogPersonalApiKey && !isMasked(posthogPersonalApiKey)) {
+        payload.posthogPersonalApiKey = posthogPersonalApiKey
+      }
+
+      console.log('Saving PostHog config:', { ...payload, posthogApiKey: payload.posthogApiKey ? '***' : undefined })
+
+      const res = await fetch('/api/admin/posthog', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to save')
+      }
+
+      const data = await res.json()
+      console.log('PostHog config saved:', data)
+      
+      setPosthogApiKey(data.hasApiKey ? '••••••••••••••••' : '')
+      setPosthogPersonalApiKey(data.hasPersonalApiKey ? '••••••••••••••••' : '')
+      toast.success('PostHog-Einstellungen gespeichert!')
+    } catch (error) {
+      console.error('Error saving PostHog config:', error)
+      toast.error(error instanceof Error ? error.message : 'Fehler beim Speichern')
+    } finally {
+      setIsSavingPosthog(false)
+    }
+  }
+
+  const testPosthogConnection = async () => {
+    if (!posthogApiKey || posthogApiKey === '••••••••••••••••') {
+      toast.error('Bitte gib einen API Key ein')
+      return
+    }
+
+    setIsTestingPosthog(true)
+    setPosthogKeyValid(null)
+    try {
+      const res = await fetch('/api/admin/posthog/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: posthogApiKey, host: posthogHost }),
+      })
+
+      const data = await res.json()
+
+      if (data.valid) {
+        setPosthogKeyValid(true)
+        toast.success(data.message || 'Verbindung erfolgreich!')
+        // Auto-update host if a working one was found
+        if (data.workingHost && data.workingHost !== posthogHost) {
+          setPosthogHost(data.workingHost)
+          toast.info(`Host wurde auf ${data.workingHost} aktualisiert`)
+        }
+      } else {
+        setPosthogKeyValid(false)
+        // Show detailed error
+        const errorMsg = data.error || 'Verbindung fehlgeschlagen'
+        toast.error(errorMsg, {
+          description: data.suggestion ? data.suggestion : undefined,
+          duration: 8000,
+        })
+        // Log tried hosts for debugging
+        if (data.triedHosts) {
+          console.log('PostHog Test - Tried hosts:', data.triedHosts)
+        }
+      }
+    } catch (error) {
+      setPosthogKeyValid(false)
+      toast.error('Verbindungsfehler - Netzwerkproblem')
+    } finally {
+      setIsTestingPosthog(false)
+    }
+  }
+
+  // ==================== PUSHER CONFIG ====================
+  const fetchPusherConfig = async () => {
+    try {
+      const res = await fetch('/api/admin/pusher')
+      if (res.ok) {
+        const data = await res.json()
+        setPusherAppId(data.pusherAppId || '')
+        setPusherKey(data.pusherKey || '')
+        setPusherCluster(data.pusherCluster || 'eu')
+        setPusherEnabled(data.pusherEnabled || false)
+        setPusherSecret(data.hasSecret ? '••••••••••••••••' : '')
+        setPusherTestResult(data.hasSecret ? true : null)
+      }
+    } catch (error) {
+      console.error('Error fetching Pusher config:', error)
+    }
+  }
+
+  const savePusherConfig = async () => {
+    setIsSavingPusher(true)
+    try {
+      const isMasked = (val: string) => val === '••••••••••••••••'
+      const payload: Record<string, unknown> = {
+        pusherAppId,
+        pusherKey,
+        pusherCluster,
+        pusherEnabled,
+      }
+
+      if (pusherSecret && !isMasked(pusherSecret)) {
+        payload.pusherSecret = pusherSecret
+      }
+
+      const res = await fetch('/api/admin/pusher', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to save')
+      }
+
+      const data = await res.json()
+      setPusherSecret(data.hasSecret ? '••••••••••••••••' : '')
+      toast.success('Pusher-Einstellungen gespeichert!')
+    } catch (error) {
+      console.error('Error saving Pusher config:', error)
+      toast.error(error instanceof Error ? error.message : 'Fehler beim Speichern')
+    } finally {
+      setIsSavingPusher(false)
+    }
+  }
+
+  const testPusherConnection = async () => {
+    // Prüfe nur ob Basisdaten vorhanden sind - Secret kann maskiert sein
+    if (!pusherAppId || !pusherKey) {
+      toast.error('Bitte App ID und Key ausfüllen')
+      return
+    }
+
+    // Wenn kein Secret (auch nicht maskiert) vorhanden ist
+    if (!pusherSecret) {
+      toast.error('Bitte Secret eingeben und speichern')
+      return
+    }
+
+    setIsTestingPusher(true)
+    setPusherTestResult(null)
+    try {
+      const res = await fetch('/api/admin/pusher', {
+        method: 'POST',
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        setPusherTestResult(true)
+        toast.success(data.message || 'Verbindung erfolgreich!')
+      } else {
+        setPusherTestResult(false)
+        toast.error(data.error || 'Verbindungstest fehlgeschlagen')
+      }
+    } catch (error) {
+      setPusherTestResult(false)
+      toast.error('Verbindungsfehler - Netzwerkproblem')
+    } finally {
+      setIsTestingPusher(false)
+    }
+  }
+
+  // Daily.co Video Call Functions
+  const fetchDailyConfig = async () => {
+    try {
+      const res = await fetch('/api/admin/video-call')
+      if (res.ok) {
+        const data = await res.json()
+        setDailyDomain(data.domain || '')
+        setDailyEnabled(data.enabled || false)
+        setDailyApiKey(data.apiKey || '')
+        setDailyTestResult(data.apiKey ? true : null)
+      }
+    } catch (error) {
+      console.error('Error fetching Daily config:', error)
+    }
+  }
+
+  const saveDailyConfig = async () => {
+    setIsSavingDaily(true)
+    try {
+      const isMasked = (val: string) => val.startsWith('***')
+      const payload: Record<string, unknown> = {
+        domain: dailyDomain,
+        enabled: dailyEnabled,
+      }
+
+      if (dailyApiKey && !isMasked(dailyApiKey)) {
+        payload.apiKey = dailyApiKey
+      }
+
+      const res = await fetch('/api/admin/video-call', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to save')
+      }
+
+      toast.success('Video-Call-Einstellungen gespeichert!')
+      fetchDailyConfig() // Refresh to get masked key
+    } catch (error) {
+      console.error('Error saving Daily config:', error)
+      toast.error(error instanceof Error ? error.message : 'Fehler beim Speichern')
+    } finally {
+      setIsSavingDaily(false)
+    }
+  }
+
+  const testDailyConnection = async () => {
+    // Wenn der Key leer ist und nicht gespeichert wurde
+    if (!dailyApiKey) {
+      toast.error('Bitte Daily API Key eingeben und speichern')
+      return
+    }
+
+    setIsTestingDaily(true)
+    setDailyTestResult(null)
+    try {
+      const res = await fetch('/api/admin/video-call', {
+        method: 'POST',
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        setDailyTestResult(true)
+        toast.success(data.message || 'Verbindung erfolgreich!')
+      } else {
+        setDailyTestResult(false)
+        toast.error(data.message || 'Verbindungstest fehlgeschlagen')
+      }
+    } catch (error) {
+      setDailyTestResult(false)
+      toast.error('Verbindungsfehler - Netzwerkproblem')
+    } finally {
+      setIsTestingDaily(false)
+    }
+  }
+
   const saveSettings = async () => {
     setIsSaving(true)
     try {
@@ -331,7 +690,6 @@ export default function SettingsPage() {
           passwordProtectionEnabled,
           // Nur senden wenn geändert (nicht die Maske)
           deeplApiKey: deeplApiKey !== '••••••••••••••••' ? deeplApiKey : undefined,
-          openaiApiKey: openaiApiKey !== '••••••••••••••••' ? openaiApiKey : undefined,
           translationProvider,
         }),
       })
@@ -457,7 +815,7 @@ export default function SettingsPage() {
       </motion.div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-9">
+        <TabsList className="grid w-full grid-cols-12">
           <TabsTrigger value="general">Allgemein</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="billing">Abrechnung</TabsTrigger>
@@ -466,6 +824,18 @@ export default function SettingsPage() {
           <TabsTrigger value="openrouter" className="gap-1">
             <Bot className="h-3.5 w-3.5" />
             OpenRouter
+          </TabsTrigger>
+          <TabsTrigger value="posthog" className="gap-1">
+            <BarChart3 className="h-3.5 w-3.5" />
+            PostHog
+          </TabsTrigger>
+          <TabsTrigger value="pusher" className="gap-1">
+            <MessageCircle className="h-3.5 w-3.5" />
+            Pusher
+          </TabsTrigger>
+          <TabsTrigger value="daily" className="gap-1">
+            <Video className="h-3.5 w-3.5" />
+            Video
           </TabsTrigger>
           <TabsTrigger value="tone" className="gap-1">
             <MessageSquareQuote className="h-3.5 w-3.5" />
@@ -774,33 +1144,60 @@ export default function SettingsPage() {
                   Übersetzungs-API
                 </CardTitle>
                 <CardDescription>
-                  Konfigurieren Sie die API-Schlüssel für automatische Übersetzungen. 
-                  DeepL wird bevorzugt, OpenAI dient als Fallback.
+                  Konfigurieren Sie die APIs für automatische Übersetzungen. 
+                  DeepL wird bevorzugt, OpenRouter (KI) dient als Fallback.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Status-Übersicht */}
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className={`p-4 rounded-lg border ${deeplApiKey ? 'bg-green-500/5 border-green-500/20' : 'bg-amber-500/5 border-amber-500/20'}`}>
+                  <div className={`p-4 rounded-lg border ${deeplKeyValid ? 'bg-green-500/5 border-green-500/20' : deeplApiKey ? 'bg-amber-500/5 border-amber-500/20' : 'bg-muted/50 border-border'}`}>
                     <div className="flex items-center gap-3 mb-2">
                       <span className="font-medium">DeepL</span>
-                      <Badge className={deeplApiKey ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}>
-                        {deeplApiKey ? 'Konfiguriert' : 'Nicht konfiguriert'}
-                      </Badge>
+                      {deeplKeyValid === true && (
+                        <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Verifiziert
+                        </Badge>
+                      )}
+                      {deeplKeyValid === false && (
+                        <Badge className="bg-red-500/10 text-red-500 border-red-500/20">
+                          <XCircle className="h-3 w-3 mr-1" />
+                          Ungültig
+                        </Badge>
+                      )}
+                      {deeplKeyValid === null && deeplApiKey && (
+                        <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20">
+                          Nicht getestet
+                        </Badge>
+                      )}
+                      {!deeplApiKey && (
+                        <Badge variant="secondary">Nicht konfiguriert</Badge>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Hochwertige Übersetzungen für die meisten europäischen Sprachen
+                      Hochwertige Übersetzungen für europäische Sprachen
                     </p>
+                    {deeplUsage && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {deeplUsage.remaining.toLocaleString()} Zeichen verfügbar ({deeplUsage.percentUsed}% verwendet)
+                      </p>
+                    )}
                   </div>
-                  <div className={`p-4 rounded-lg border ${openaiApiKey ? 'bg-green-500/5 border-green-500/20' : 'bg-amber-500/5 border-amber-500/20'}`}>
+                  <div className={`p-4 rounded-lg border ${openRouterEnabled && openRouterApiKey ? 'bg-green-500/5 border-green-500/20' : 'bg-muted/50 border-border'}`}>
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="font-medium">OpenAI</span>
-                      <Badge className={openaiApiKey ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}>
-                        {openaiApiKey ? 'Konfiguriert' : 'Nicht konfiguriert'}
-                      </Badge>
+                      <span className="font-medium">OpenRouter (KI)</span>
+                      {openRouterEnabled && openRouterApiKey ? (
+                        <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Aktiv
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">Nicht aktiv</Badge>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Fallback für Sprachen, die DeepL nicht unterstützt (z.B. Kroatisch)
+                      Fallback für Sprachen, die DeepL nicht unterstützt
                     </p>
                   </div>
                 </div>
@@ -815,11 +1212,11 @@ export default function SettingsPage() {
                     <SelectContent>
                       <SelectItem value="auto">Automatisch (DeepL bevorzugt)</SelectItem>
                       <SelectItem value="deepl">Nur DeepL</SelectItem>
-                      <SelectItem value="openai">Nur OpenAI</SelectItem>
+                      <SelectItem value="openrouter">Nur OpenRouter (KI)</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    &quot;Automatisch&quot; nutzt DeepL wenn verfügbar, sonst OpenAI
+                    &quot;Automatisch&quot; nutzt DeepL wenn verfügbar, sonst OpenRouter
                   </p>
                 </div>
 
@@ -832,9 +1229,13 @@ export default function SettingsPage() {
                         id="deeplApiKey"
                         type={showDeeplKey ? 'text' : 'password'}
                         value={deeplApiKey}
-                        onChange={(e) => setDeeplApiKey(e.target.value)}
+                        onChange={(e) => {
+                          setDeeplApiKey(e.target.value)
+                          setDeeplKeyValid(null)
+                          setDeeplUsage(null)
+                        }}
                         placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx"
-                        className="pr-10"
+                        className={`pr-10 ${deeplKeyValid === true ? 'border-green-500' : deeplKeyValid === false ? 'border-red-500' : ''}`}
                       />
                       <Button
                         type="button"
@@ -848,10 +1249,24 @@ export default function SettingsPage() {
                     </div>
                     <Button
                       variant="outline"
+                      onClick={testDeeplKey}
+                      disabled={isTestingDeepL || !deeplApiKey}
+                    >
+                      {isTestingDeepL ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : deeplKeyValid === true ? (
+                        <Check className="mr-2 h-4 w-4 text-green-500" />
+                      ) : (
+                        <Zap className="mr-2 h-4 w-4" />
+                      )}
+                      Testen
+                    </Button>
+                    <Button
+                      variant="outline"
                       onClick={() => window.open('https://www.deepl.com/pro-api', '_blank')}
                     >
                       <ExternalLink className="mr-2 h-4 w-4" />
-                      API Key holen
+                      Key holen
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -859,53 +1274,59 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
-                {/* OpenAI API Key */}
+                {/* OpenRouter Model Selection */}
                 <div className="space-y-2">
-                  <Label htmlFor="openaiApiKey">OpenAI API-Schlüssel</Label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Input
-                        id="openaiApiKey"
-                        type={showOpenaiKey ? 'text' : 'password'}
-                        value={openaiApiKey}
-                        onChange={(e) => setOpenaiApiKey(e.target.value)}
-                        placeholder="sk-..."
-                        className="pr-10"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                        onClick={() => setShowOpenaiKey(!showOpenaiKey)}
-                      >
-                        {showOpenaiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => window.open('https://platform.openai.com/api-keys', '_blank')}
-                    >
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      API Key holen
-                    </Button>
-                  </div>
+                  <Label>KI-Modell für Übersetzungen (via OpenRouter)</Label>
+                  <Select value={translationModel} onValueChange={setTranslationModel}>
+                    <SelectTrigger className="w-full md:w-[400px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {POPULAR_MODELS.filter(m => m.provider === 'OpenAI').map((model) => (
+                        <SelectItem key={model.id} value={model.id}>
+                          <div className="flex items-center gap-2">
+                            <span>{model.name}</span>
+                            {model.recommended && (
+                              <Badge variant="secondary" className="text-xs">Empfohlen</Badge>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="anthropic/claude-3-haiku">Claude 3 Haiku (schnell & günstig)</SelectItem>
+                      <SelectItem value="google/gemini-flash-1.5">Gemini Flash 1.5 (sehr günstig)</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <p className="text-xs text-muted-foreground">
-                    Verwendet GPT-4o-mini für kostengünstige Übersetzungen
+                    Wird verwendet wenn DeepL nicht verfügbar ist oder die Sprache nicht unterstützt
                   </p>
                 </div>
 
-                {/* Hinweis wenn keine Keys */}
-                {!deeplApiKey && !openaiApiKey && (
+                {/* Hinweis wenn keine APIs konfiguriert */}
+                {!deeplApiKey && (!openRouterEnabled || !openRouterApiKey) && (
                   <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
                     <div className="flex items-start gap-3">
                       <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                       <div>
-                        <h4 className="font-medium text-amber-500">Keine API-Schlüssel konfiguriert</h4>
+                        <h4 className="font-medium text-amber-500">Keine Übersetzungs-API konfiguriert</h4>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Für automatische Übersetzungen benötigen Sie mindestens einen API-Schlüssel 
-                          (DeepL oder OpenAI). Ohne konfigurierte Keys können keine Übersetzungen 
-                          durchgeführt werden.
+                          Für automatische Übersetzungen benötigst du entweder einen DeepL API-Schlüssel 
+                          oder einen aktiven OpenRouter-Account (konfigurierbar im OpenRouter-Tab).
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Info wenn OpenRouter nicht aktiv */}
+                {!openRouterEnabled && deeplApiKey && (
+                  <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Bot className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-blue-500">OpenRouter als Fallback</h4>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Einige Sprachen (z.B. Kroatisch, Thai, Vietnamesisch) werden von DeepL nicht unterstützt. 
+                          Aktiviere OpenRouter im OpenRouter-Tab, um auch diese Sprachen übersetzen zu können.
                         </p>
                       </div>
                     </div>
@@ -1059,20 +1480,28 @@ export default function SettingsPage() {
                 <div className="space-y-2">
                   <Label>Standard-Modell</Label>
                   <Select value={openRouterDefaultModel} onValueChange={setOpenRouterDefaultModel}>
-                    <SelectTrigger className="w-full md:w-[400px]">
+                    <SelectTrigger className="w-full md:w-[500px]">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      {POPULAR_MODELS.map((model) => (
-                        <SelectItem key={model.id} value={model.id}>
-                          <div className="flex items-center gap-2">
-                            <span>{model.name}</span>
-                            <span className="text-xs text-muted-foreground">({model.provider})</span>
-                            {model.recommended && (
-                              <Badge variant="secondary" className="text-xs">Empfohlen</Badge>
-                            )}
-                          </div>
-                        </SelectItem>
+                    <SelectContent className="max-h-[400px]">
+                      {Object.entries(MODEL_GROUPS).map(([key, group]) => (
+                        <SelectGroup key={key}>
+                          <SelectLabel className="text-xs font-semibold">{group.label}</SelectLabel>
+                          {group.models.map((model) => (
+                            <SelectItem key={model.id} value={model.id}>
+                              <div className="flex items-center gap-2">
+                                <span>{model.name}</span>
+                                <span className="text-xs text-muted-foreground">({model.provider})</span>
+                                {model.recommended && (
+                                  <Badge variant="secondary" className="text-xs">Empfohlen</Badge>
+                                )}
+                                {model.description && (
+                                  <span className="text-xs text-muted-foreground hidden md:inline">• {model.description}</span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
                       ))}
                     </SelectContent>
                   </Select>
@@ -1134,6 +1563,661 @@ export default function SettingsPage() {
                 <Save className="mr-2 h-4 w-4" />
               )}
               OpenRouter-Einstellungen speichern
+            </Button>
+          </motion.div>
+        </TabsContent>
+
+        {/* PostHog Analytics Settings */}
+        <TabsContent value="posthog" className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            {/* Status Card */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    {posthogEnabled && posthogApiKey ? (
+                      <CheckCircle className="h-8 w-8 text-green-500" />
+                    ) : (
+                      <XCircle className="h-8 w-8 text-amber-500" />
+                    )}
+                    <div>
+                      <p className="text-sm text-muted-foreground">Status</p>
+                      <p className="font-semibold">
+                        {posthogEnabled && posthogApiKey ? 'Aktiv' : 'Inaktiv'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <Globe className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Region</p>
+                      <p className="font-semibold">
+                        {posthogHost?.includes('eu.') ? 'EU' : 'US'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <Activity className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Events</p>
+                      <p className="font-semibold">
+                        {posthogEnabled ? 'Werden getracked' : 'Pausiert'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Konfiguration */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  PostHog Konfiguration
+                </CardTitle>
+                <CardDescription>
+                  PostHog ist ein Open-Source Product Analytics Tool.
+                  Tracke Nutzerverhalten, Conversions und mehr.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Enable/Disable */}
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div>
+                    <Label className="text-base">PostHog aktivieren</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Aktiviert das Event-Tracking auf allen Seiten
+                    </p>
+                  </div>
+                  <Switch
+                    checked={posthogEnabled}
+                    onCheckedChange={setPosthogEnabled}
+                  />
+                </div>
+
+                {/* API Key (Client-side) */}
+                <div className="space-y-2">
+                  <Label htmlFor="posthogApiKey">Project API Key (Client-side)</Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        id="posthogApiKey"
+                        type={showPosthogApiKey ? 'text' : 'password'}
+                        value={posthogApiKey}
+                        onChange={(e) => {
+                          setPosthogApiKey(e.target.value)
+                          setPosthogKeyValid(null)
+                        }}
+                        placeholder="phc_..."
+                        className={`pr-10 ${posthogKeyValid === true ? 'border-green-500' : posthogKeyValid === false ? 'border-red-500' : ''}`}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                        onClick={() => setShowPosthogApiKey(!showPosthogApiKey)}
+                      >
+                        {showPosthogApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={testPosthogConnection}
+                      disabled={isTestingPosthog}
+                    >
+                      {isTestingPosthog ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : posthogKeyValid === true ? (
+                        <Check className="mr-2 h-4 w-4 text-green-500" />
+                      ) : (
+                        <Zap className="mr-2 h-4 w-4" />
+                      )}
+                      Testen
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Der Project API Key beginnt mit &quot;phc_&quot; und wird für das Client-side Tracking verwendet
+                  </p>
+                </div>
+
+                {/* Personal API Key (Server-side) */}
+                <div className="space-y-2">
+                  <Label htmlFor="posthogPersonalApiKey">Personal API Key (Server-side, optional)</Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        id="posthogPersonalApiKey"
+                        type={showPosthogPersonalKey ? 'text' : 'password'}
+                        value={posthogPersonalApiKey}
+                        onChange={(e) => setPosthogPersonalApiKey(e.target.value)}
+                        placeholder="phx_..."
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                        onClick={() => setShowPosthogPersonalKey(!showPosthogPersonalKey)}
+                      >
+                        {showPosthogPersonalKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Der Personal API Key wird für Server-side API-Abfragen benötigt (Dashboard-Daten)
+                  </p>
+                </div>
+
+                {/* Host URL */}
+                <div className="space-y-2">
+                  <Label htmlFor="posthogHost">Host URL</Label>
+                  <Select value={posthogHost} onValueChange={setPosthogHost}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="https://eu.i.posthog.com">EU Cloud (eu.i.posthog.com)</SelectItem>
+                      <SelectItem value="https://us.i.posthog.com">US Cloud (us.i.posthog.com)</SelectItem>
+                      <SelectItem value="https://app.posthog.com">Legacy (app.posthog.com)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Wähle die Region deines PostHog-Projekts
+                  </p>
+                </div>
+
+                {/* Project ID */}
+                <div className="space-y-2">
+                  <Label htmlFor="posthogProjectId">Project ID (optional)</Label>
+                  <Input
+                    id="posthogProjectId"
+                    value={posthogProjectId}
+                    onChange={(e) => setPosthogProjectId(e.target.value)}
+                    placeholder="12345"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Die numerische Project ID aus deinem PostHog Dashboard
+                  </p>
+                </div>
+
+                {/* Info Box */}
+                <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <BarChart3 className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-blue-500">Was wird getrackt?</h4>
+                      <ul className="text-sm text-muted-foreground mt-2 space-y-1 list-disc list-inside">
+                        <li>Pageviews auf allen Seiten</li>
+                        <li>Login & Registrierungs-Events</li>
+                        <li>Button-Klicks (Autocapture)</li>
+                        <li>Formular-Submissions</li>
+                        <li>Session-Dauer und Bounce Rate</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Links */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => window.open('https://eu.posthog.com', '_blank')}
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    PostHog Dashboard
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => window.open('https://posthog.com/docs', '_blank')}
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Dokumentation
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Save Button */}
+            <Button onClick={savePosthogConfig} disabled={isSavingPosthog} className="w-full">
+              {isSavingPosthog ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              PostHog-Einstellungen speichern
+            </Button>
+          </motion.div>
+        </TabsContent>
+
+        {/* Pusher Real-Time Chat Settings */}
+        <TabsContent value="pusher" className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            {/* Status Card */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Status</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    {pusherEnabled ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <span className="font-medium text-green-600">Aktiv</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-5 w-5 text-gray-400" />
+                        <span className="font-medium text-gray-500">Inaktiv</span>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Verbindungstest</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    {pusherTestResult === true ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <span className="font-medium text-green-600">Verbunden</span>
+                      </>
+                    ) : pusherTestResult === false ? (
+                      <>
+                        <XCircle className="h-5 w-5 text-red-500" />
+                        <span className="font-medium text-red-600">Fehlgeschlagen</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle className="h-5 w-5 text-amber-500" />
+                        <span className="font-medium text-amber-600">Nicht getestet</span>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Cluster</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Badge variant="outline" className="text-lg">
+                    {pusherCluster.toUpperCase()}
+                  </Badge>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Info Banner */}
+            <Card className="border-blue-500/30 bg-blue-500/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4 text-blue-500" />
+                  Echtzeit-Chat mit Pusher
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Pusher ermöglicht Echtzeit-Features wie Online-Status, Typing-Indikatoren und 
+                  sofortige Nachrichtenübermittlung.{' '}
+                  <a 
+                    href="https://dashboard.pusher.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline inline-flex items-center gap-1"
+                  >
+                    Pusher Dashboard öffnen
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Configuration */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Pusher Channels Konfiguration
+                </CardTitle>
+                <CardDescription>
+                  Erstelle eine App auf pusher.com und kopiere die Credentials hierher.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="pusher-enabled" className="text-base">
+                      Pusher aktivieren
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Echtzeit-Features für Chat aktivieren
+                    </p>
+                  </div>
+                  <Switch
+                    id="pusher-enabled"
+                    checked={pusherEnabled}
+                    onCheckedChange={setPusherEnabled}
+                  />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="pusher-app-id">App ID</Label>
+                    <Input
+                      id="pusher-app-id"
+                      value={pusherAppId}
+                      onChange={(e) => setPusherAppId(e.target.value)}
+                      placeholder="z.B. 1234567"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pusher-key">Key</Label>
+                    <Input
+                      id="pusher-key"
+                      value={pusherKey}
+                      onChange={(e) => setPusherKey(e.target.value)}
+                      placeholder="z.B. a1b2c3d4e5f6g7h8i9j0"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="pusher-secret">Secret</Label>
+                  <div className="relative">
+                    <Input
+                      id="pusher-secret"
+                      type={showPusherSecret ? 'text' : 'password'}
+                      value={pusherSecret}
+                      onChange={(e) => setPusherSecret(e.target.value)}
+                      placeholder="Dein Pusher Secret"
+                      className="pr-20"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7"
+                      onClick={() => setShowPusherSecret(!showPusherSecret)}
+                    >
+                      {showPusherSecret ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Das Secret wird sicher gespeichert und nie an Clients gesendet.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="pusher-cluster">Cluster</Label>
+                  <Select value={pusherCluster} onValueChange={setPusherCluster}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="eu">EU (eu) - Europa</SelectItem>
+                      <SelectItem value="us2">US East (us2)</SelectItem>
+                      <SelectItem value="us3">US West (us3)</SelectItem>
+                      <SelectItem value="ap1">Asia Pacific (ap1)</SelectItem>
+                      <SelectItem value="ap2">Asia Pacific (ap2)</SelectItem>
+                      <SelectItem value="ap3">Asia Pacific (ap3)</SelectItem>
+                      <SelectItem value="ap4">Asia Pacific (ap4)</SelectItem>
+                      <SelectItem value="mt1">Mumbai (mt1)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Wähle den Cluster, der deiner App in Pusher zugewiesen wurde.
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={testPusherConnection}
+                    disabled={isTestingPusher || !pusherAppId || !pusherKey || !pusherSecret}
+                  >
+                    {isTestingPusher ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <FlaskConical className="mr-2 h-4 w-4" />
+                    )}
+                    Verbindung testen
+                  </Button>
+                </div>
+                {pusherSecret === '••••••••••••••••' && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    ℹ️ Secret ist gespeichert. Test verwendet den Server-seitig gespeicherten Key.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Save Button */}
+            <Button
+              onClick={savePusherConfig}
+              disabled={isSavingPusher}
+              className="w-full"
+            >
+              {isSavingPusher ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              Pusher-Einstellungen speichern
+            </Button>
+          </motion.div>
+        </TabsContent>
+
+        {/* Daily Video Call Settings */}
+        <TabsContent value="daily" className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            {/* Status Cards */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    {dailyEnabled ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <span className="font-medium text-green-600">Aktiv</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-5 w-5 text-gray-400" />
+                        <span className="font-medium text-gray-500">Deaktiviert</span>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Verbindung
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    {dailyTestResult === true ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <span className="font-medium text-green-600">Verbunden</span>
+                      </>
+                    ) : dailyTestResult === false ? (
+                      <>
+                        <XCircle className="h-5 w-5 text-red-500" />
+                        <span className="font-medium text-red-600">Fehlgeschlagen</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle className="h-5 w-5 text-amber-500" />
+                        <span className="font-medium text-amber-600">Nicht getestet</span>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Info Banner */}
+            <Card className="bg-gradient-to-r from-violet-500/10 to-purple-500/10 border-violet-500/20">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-full bg-violet-500/20 flex items-center justify-center">
+                    <Video className="h-5 w-5 text-violet-600" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-medium">Daily.co für Video-Calls</p>
+                    <p className="text-sm text-muted-foreground">
+                      Mit Daily.co können Nutzer direkt im Chat Videoanrufe starten.
+                      1:1 Calls sind kostenlos, für Gruppen-Calls wird ein kostenpflichtiger Plan benötigt.
+                    </p>
+                    <a
+                      href="https://dashboard.daily.co/developers"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm text-violet-600 hover:text-violet-700"
+                    >
+                      Zum Daily Dashboard
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Configuration Card */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Daily.co Konfiguration</CardTitle>
+                    <CardDescription>
+                      Gib deine Daily.co API-Zugangsdaten ein
+                    </CardDescription>
+                  </div>
+                  <Switch
+                    id="daily-enabled"
+                    checked={dailyEnabled}
+                    onCheckedChange={setDailyEnabled}
+                  />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="daily-api-key">API Key</Label>
+                  <div className="relative">
+                    <Input
+                      id="daily-api-key"
+                      type={showDailyApiKey ? 'text' : 'password'}
+                      value={dailyApiKey}
+                      onChange={(e) => setDailyApiKey(e.target.value)}
+                      placeholder="Dein Daily API Key"
+                      className="pr-20"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7"
+                      onClick={() => setShowDailyApiKey(!showDailyApiKey)}
+                    >
+                      {showDailyApiKey ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Den API Key findest du im Daily Dashboard unter Developers → API Keys.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="daily-domain">Domain (optional)</Label>
+                  <Input
+                    id="daily-domain"
+                    value={dailyDomain}
+                    onChange={(e) => setDailyDomain(e.target.value)}
+                    placeholder="z.B. nicnoa (für nicnoa.daily.co)"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Optional: Dein Daily-Subdomain für benutzerdefinierte Room-URLs.
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={testDailyConnection}
+                    disabled={isTestingDaily || !dailyApiKey}
+                  >
+                    {isTestingDaily ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <FlaskConical className="mr-2 h-4 w-4" />
+                    )}
+                    Verbindung testen
+                  </Button>
+                </div>
+                {dailyApiKey?.startsWith('***') && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    ℹ️ API Key ist gespeichert. Test verwendet den Server-seitig gespeicherten Key.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Save Button */}
+            <Button
+              onClick={saveDailyConfig}
+              disabled={isSavingDaily}
+              className="w-full"
+            >
+              {isSavingDaily ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              Video-Call-Einstellungen speichern
             </Button>
           </motion.div>
         </TabsContent>

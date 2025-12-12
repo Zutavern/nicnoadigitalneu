@@ -120,6 +120,7 @@ export default function TranslationsAdminPage() {
   // Dialogs
   const [clearFailedDialog, setClearFailedDialog] = useState(false)
   const [retryAllDialog, setRetryAllDialog] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
 
   const fetchData = useCallback(async () => {
     try {
@@ -166,13 +167,13 @@ export default function TranslationsAdminPage() {
     fetchData()
   }, [fetchData])
 
-  // Auto-refresh alle 30 Sekunden wenn Jobs laufen
+  // Auto-refresh alle 3 Sekunden während Verarbeitung läuft oder Jobs pending sind
   useEffect(() => {
-    if (stats?.processingJobs && stats.processingJobs > 0) {
-      const interval = setInterval(fetchData, 30000)
+    if (isProcessing || (stats?.pendingJobs && stats.pendingJobs > 0) || (stats?.processingJobs && stats.processingJobs > 0)) {
+      const interval = setInterval(fetchData, 3000)
       return () => clearInterval(interval)
     }
-  }, [stats?.processingJobs, fetchData])
+  }, [isProcessing, stats?.pendingJobs, stats?.processingJobs, fetchData])
 
   const handleClearFailed = async () => {
     try {
@@ -224,6 +225,28 @@ export default function TranslationsAdminPage() {
     }
   }
 
+  const handleProcessQueue = async () => {
+    if (isProcessing) return
+    
+    setIsProcessing(true)
+    try {
+      // ?all=true verarbeitet ALLE pending Jobs, nicht nur einen Batch
+      const res = await fetch('/api/cron/process-translations?all=true')
+      const data = await res.json()
+      
+      if (data.error) {
+        toast.error(data.error)
+      } else {
+        toast.success(`${data.successful || 0} von ${data.processed || 0} Übersetzungen verarbeitet`)
+        await fetchData()
+      }
+    } catch (error) {
+      toast.error('Fehler beim Verarbeiten der Queue')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PENDING':
@@ -265,13 +288,26 @@ export default function TranslationsAdminPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {stats && stats.pendingJobs > 0 && (
+            <Button
+              onClick={handleProcessQueue}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Play className="h-4 w-4 mr-2" />
+              )}
+              Queue verarbeiten ({stats.pendingJobs})
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={fetchData}
             disabled={isLoading}
           >
-            <RefreshCw className={cn('h-4 w-4 mr-2', isLoading && 'animate-spin')} />
-            Aktualisieren
+            <RefreshCw className={cn('h-4 w-4 mr-2', (isLoading || isProcessing || (stats?.pendingJobs && stats.pendingJobs > 0)) && 'animate-spin')} />
+            {isProcessing || (stats?.pendingJobs && stats.pendingJobs > 0) ? 'Auto-Refresh...' : 'Aktualisieren'}
           </Button>
         </div>
       </div>
@@ -725,3 +761,4 @@ export default function TranslationsAdminPage() {
     </div>
   )
 }
+

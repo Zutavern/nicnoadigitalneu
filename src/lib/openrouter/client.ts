@@ -120,12 +120,15 @@ export async function chatCompletion(
   }
   
   try {
+    // Stelle sicher, dass Header nur ASCII-Zeichen enthalten
+    const sanitizeHeader = (str: string) => str.replace(/[^\x00-\x7F]/g, '')
+    
     const response = await fetch(OPENROUTER_API_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${config.apiKey}`,
-        'HTTP-Referer': config.siteUrl || 'https://nicnoa.de',
-        'X-Title': config.siteName || 'NICNOA Platform',
+        'HTTP-Referer': sanitizeHeader(config.siteUrl || 'https://nicnoa.de'),
+        'X-Title': sanitizeHeader(config.siteName || 'NICNOA Platform'),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(requestBody),
@@ -233,3 +236,4 @@ export async function translateViaOpenRouter(
   
   return result.content
 }
+

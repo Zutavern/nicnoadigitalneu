@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { checkRateLimit, logRateLimitedAction, rateLimits, rateLimitErrorResponse } from '@/lib/rate-limit'
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name muss mindestens 2 Zeichen lang sein"),
@@ -18,6 +19,21 @@ const registerSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown'
+
+    // Rate limiting check
+    const rateLimit = await checkRateLimit({
+      ...rateLimits.register,
+      identifier: ipAddress,
+    })
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(rateLimitErrorResponse(rateLimit), { status: 429 })
+    }
+
+    // Log the attempt for rate limiting
+    await logRateLimitedAction(ipAddress, rateLimits.register.action)
+
     const body = await request.json()
     const validatedData = registerSchema.parse(body)
 

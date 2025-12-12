@@ -31,19 +31,23 @@ export async function POST() {
     
     // Generate backup codes
     const backupCodes = generateBackupCodes(8)
+    
+    // Store codes without dashes for comparison
+    const storedBackupCodes = backupCodes.map(code => code.replace(/-/g, ''))
 
-    // Store secret temporarily (will be confirmed when user verifies)
+    // Store secret and backup codes temporarily (will be confirmed when user verifies)
     await prisma.user.update({
       where: { id: user.id },
       data: {
         twoFactorSecret: secret,
+        twoFactorBackupCodes: storedBackupCodes,
       },
     })
 
     return NextResponse.json({
       secret,
       qrCode,
-      backupCodes,
+      backupCodes, // Return formatted codes with dashes for user display
     })
   } catch (error) {
     console.error('2FA setup error:', error)
@@ -53,6 +57,7 @@ export async function POST() {
     )
   }
 }
+
 
 
 

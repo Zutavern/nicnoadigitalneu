@@ -1,5 +1,23 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
+import { DEFAULT_LOCALE, LOCALE_COOKIE_NAME, isValidLocale, type Locale } from '@/lib/translation/i18n-config'
+
+// Übersetzbaren Felder der Homepage-Konfiguration
+const TRANSLATABLE_FIELDS = [
+  'heroBadgeText',
+  'heroTitleLine1',
+  'heroTitleLine2',
+  'heroTitleHighlight',
+  'heroDescription',
+  'ctaPrimaryText',
+  'ctaSecondaryText',
+  'trustIndicator1',
+  'trustIndicator2',
+  'trustIndicator3',
+  'dashboardTitle',
+  'dashboardSubtitle',
+]
 
 // Default Homepage Config
 const defaultConfig = {
@@ -52,10 +70,47 @@ export const dynamic = 'force-dynamic'
 // GET - Hole Homepage-Konfiguration (öffentlich, kein Cache)
 export async function GET() {
   try {
+    // Locale aus Cookie ermitteln
+    let locale: Locale = DEFAULT_LOCALE
+    try {
+      const cookieStore = await cookies()
+      const localeCookie = cookieStore.get(LOCALE_COOKIE_NAME)
+      if (localeCookie?.value && isValidLocale(localeCookie.value)) {
+        locale = localeCookie.value as Locale
+      }
+    } catch {
+      // Cookies nicht verfügbar
+    }
+
     // CMS-Inhalte werden IMMER aus der echten Datenbank geladen
-    // Der Demo-Modus beeinflusst nur operative Daten (User, Buchungen, etc.)
     const config = await prisma.homePageConfig.findFirst()
-    return NextResponse.json(config || defaultConfig)
+    const result = config || defaultConfig
+
+    // Übersetzungen laden und anwenden wenn nicht Deutsch
+    if (locale !== DEFAULT_LOCALE && config?.id) {
+      const translations = await prisma.translation.findMany({
+        where: {
+          contentType: 'homepage_config',
+          contentId: config.id,
+          languageId: locale,
+          status: 'TRANSLATED',
+          field: { in: TRANSLATABLE_FIELDS },
+        },
+        select: {
+          field: true,
+          value: true,
+        },
+      })
+
+      // Übersetzungen auf Config anwenden
+      for (const t of translations) {
+        if (t.field in result) {
+          (result as Record<string, unknown>)[t.field] = t.value
+        }
+      }
+    }
+
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Error fetching homepage config:', error)
     return NextResponse.json(defaultConfig)

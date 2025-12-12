@@ -4,7 +4,8 @@ import { translateText } from '@/lib/translation/translation-service'
 import { createHash } from 'crypto'
 
 // Konfiguration
-const BATCH_SIZE = 10 // Anzahl Jobs pro Durchlauf
+const BATCH_SIZE = 10 // Anzahl Jobs pro Durchlauf (für Cron)
+const MAX_BATCH_SIZE = 100 // Maximum für manuellen Aufruf
 const MAX_ATTEMPTS = 3
 
 // Authentifizierung für Cron-Jobs (via Vercel Cron Secret oder API Key)
@@ -37,6 +38,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Parameter für manuellen Aufruf: ?all=true verarbeitet alle pending Jobs
+  const url = new URL(request.url)
+  const processAll = url.searchParams.get('all') === 'true'
+  const batchSize = processAll ? MAX_BATCH_SIZE : BATCH_SIZE
+
   const startTime = Date.now()
   const results = {
     processed: 0,
@@ -44,34 +50,36 @@ export async function GET(request: NextRequest) {
     failed: 0,
     skipped: 0,
     errors: [] as string[],
+    hasMore: false,
   }
 
   try {
-    // 1. Pending Jobs holen (nach Priorität und Alter sortiert)
-    const jobs = await prisma.translationJob.findMany({
-      where: {
-        status: 'PENDING',
-        attempts: { lt: MAX_ATTEMPTS },
-      },
-      orderBy: [
-        { priority: 'desc' },
-        { createdAt: 'asc' },
-      ],
-      take: BATCH_SIZE,
-      include: {
-        language: true,
-      },
-    })
-
-    if (jobs.length === 0) {
-      return NextResponse.json({
-        message: 'No pending jobs',
-        ...results,
-        duration: Date.now() - startTime,
+    // Schleife: Verarbeite Batches bis keine Jobs mehr da sind (bei processAll)
+    let continueProcessing = true
+    
+    while (continueProcessing) {
+      // 1. Pending Jobs holen (nach Priorität und Alter sortiert)
+      const jobs = await prisma.translationJob.findMany({
+        where: {
+          status: 'PENDING',
+          attempts: { lt: MAX_ATTEMPTS },
+        },
+        orderBy: [
+          { priority: 'desc' },
+          { createdAt: 'asc' },
+        ],
+        take: batchSize,
+        include: {
+          language: true,
+        },
       })
-    }
 
-    console.log(`[Translation Worker] Processing ${jobs.length} jobs...`)
+      if (jobs.length === 0) {
+        continueProcessing = false
+        break
+      }
+
+      console.log(`[Translation Worker] Processing ${jobs.length} jobs...`)
 
     // 2. Jobs verarbeiten
     for (const job of jobs) {
@@ -167,7 +175,22 @@ export async function GET(request: NextRequest) {
       }
 
       // Kurze Pause zwischen Jobs für Rate Limiting
-      await new Promise(resolve => setTimeout(resolve, 200))
+        await new Promise(resolve => setTimeout(resolve, 200))
+      }
+
+      // Bei Cron (nicht processAll): Nach einem Batch aufhören
+      if (!processAll) {
+        // Prüfe ob noch mehr Jobs pending sind
+        const remainingCount = await prisma.translationJob.count({
+          where: {
+            status: 'PENDING',
+            attempts: { lt: MAX_ATTEMPTS },
+          },
+        })
+        results.hasMore = remainingCount > 0
+        continueProcessing = false
+      }
+      // Bei processAll: Weiter bis keine Jobs mehr da sind
     }
 
     // 3. Ergebnis zurückgeben
@@ -229,3 +252,4 @@ export async function POST(request: NextRequest) {
     jobIds: jobs.map(j => j.id),
   })
 }
+

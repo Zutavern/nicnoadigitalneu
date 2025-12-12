@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { isDemoModeActive } from '@/lib/mock-data'
 
 // POST /api/messages/conversations/[id]/read - Konversation als gelesen markieren
 export async function POST(
@@ -8,6 +9,11 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Demo-Modus - einfach Success zurückgeben
+    if (await isDemoModeActive()) {
+      return NextResponse.json({ success: true })
+    }
+
     const session = await auth()
 
     if (!session?.user?.id) {
@@ -48,6 +54,7 @@ export async function POST(
     )
   }
 }
+
 
 
 

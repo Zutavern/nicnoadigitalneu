@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
 import { FAQContent } from './faq-content'
+import { getServerLocale, applyTranslations, applyConfigTranslations } from '@/lib/translation/apply-translations'
 
 export const metadata: Metadata = {
   title: 'FAQ | nicnoa',
@@ -109,11 +110,45 @@ async function getFAQPageConfig(): Promise<FAQPageConfig> {
 }
 
 export default async function FAQPage() {
+  // Aktuelle Sprache ermitteln
+  const locale = await getServerLocale()
+  
   // Daten werden parallel auf dem Server geladen - kein Wasserfall!
   const [faqs, config] = await Promise.all([
     getFAQs(),
     getFAQPageConfig(),
   ])
 
-  return <FAQContent faqs={faqs} config={config} />
+  // Übersetzungen anwenden
+  const translatedFaqs = {
+    SALON_OWNER: await applyTranslations(
+      faqs.SALON_OWNER,
+      'faq',
+      locale,
+      ['question', 'answer']
+    ),
+    STYLIST: await applyTranslations(
+      faqs.STYLIST,
+      'faq',
+      locale,
+      ['question', 'answer']
+    ),
+  }
+
+  // Config ID für Übersetzungen ermitteln
+  let configId = 'default'
+  try {
+    const dbConfig = await prisma.fAQPageConfig.findFirst({ select: { id: true } })
+    if (dbConfig) configId = dbConfig.id
+  } catch { /* ignore */ }
+
+  const translatedConfig = await applyConfigTranslations(
+    config,
+    'faq_page_config',
+    configId,
+    locale,
+    ['heroBadgeText', 'heroTitle', 'heroDescription', 'sectionTitle', 'sectionDescription', 'salonTabLabel', 'stylistTabLabel', 'contactText', 'contactLinkText']
+  )
+
+  return <FAQContent faqs={translatedFaqs} config={translatedConfig || config} />
 }

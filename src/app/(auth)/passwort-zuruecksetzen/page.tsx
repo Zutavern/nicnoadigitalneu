@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Lock, ArrowLeft, CheckCircle2, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { AuthEvents } from '@/lib/analytics'
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams()
@@ -27,11 +28,13 @@ function ResetPasswordForm() {
     setError('')
 
     if (password !== confirmPassword) {
+      AuthEvents.passwordResetFailed('password_mismatch')
       setError('Passwörter stimmen nicht überein')
       return
     }
 
     if (password.length < 8) {
+      AuthEvents.passwordResetFailed('password_too_short')
       setError('Passwort muss mindestens 8 Zeichen lang sein')
       return
     }
@@ -48,9 +51,11 @@ function ResetPasswordForm() {
       const data = await response.json()
 
       if (!response.ok) {
+        AuthEvents.passwordResetFailed(data.error || 'reset_failed')
         throw new Error(data.error || 'Ein Fehler ist aufgetreten')
       }
 
+      AuthEvents.passwordResetCompleted()
       setIsSuccess(true)
       
       // Redirect to login after 3 seconds
@@ -245,6 +250,7 @@ export default function ResetPasswordPage() {
     </div>
   )
 }
+
 
 
 

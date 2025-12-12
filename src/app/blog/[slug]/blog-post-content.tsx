@@ -22,6 +22,7 @@ import {
   ChevronUp,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { PageEvents } from '@/lib/analytics'
 
 interface BlogPost {
   id: string
@@ -88,6 +89,11 @@ interface BlogPostContentProps {
 export function BlogPostContent({ post, relatedPosts }: BlogPostContentProps) {
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [readProgress, setReadProgress] = useState(0)
+
+  // Track blog article view
+  useEffect(() => {
+    PageEvents.blogArticleViewed(post.slug, post.title)
+  }, [post.slug, post.title])
 
   useEffect(() => {
     const handleScroll = () => {

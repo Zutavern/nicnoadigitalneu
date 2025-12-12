@@ -905,6 +905,20 @@ async function main() {
       category: 'auth',
       isSystem: true,
     },
+    {
+      slug: 'magic-link',
+      name: 'Magic Link Login',
+      description: 'Anmelde-Link ohne Passwort',
+      subject: 'Dein Magic Link für NICNOA',
+      content: {
+        headline: 'Anmeldung per Magic Link',
+        body: 'du hast einen Login-Link angefordert. Klicke auf den Button unten, um dich ohne Passwort anzumelden.',
+        buttonText: 'Jetzt anmelden',
+        footer: 'Falls du diese Anfrage nicht gestellt hast, ignoriere diese E-Mail.',
+      },
+      category: 'auth',
+      isSystem: true,
+    },
     // Onboarding
     {
       slug: 'onboarding-submitted',

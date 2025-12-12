@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { isDemoModeActive, getMockMessages, getMockConversations } from '@/lib/mock-data'
 
 // GET /api/messages/conversations/[id] - Einzelne Konversation mit Nachrichten
 export async function GET(
@@ -8,6 +9,34 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
+
+    // Demo-Modus prüfen
+    if (await isDemoModeActive()) {
+      const mockConvs = getMockConversations()
+      const mockConv = mockConvs.conversations.find((c: { id: string }) => c.id === id)
+      const mockMessages = getMockMessages(id)
+      
+      if (mockConv) {
+        return NextResponse.json({
+          conversation: {
+            id: mockConv.id,
+            type: mockConv.type,
+            subject: mockConv.subject,
+            participants: mockConv.participants.map((p: { user: { id: string; name: string; image: string | null; role: string } }) => ({
+              id: p.user.id,
+              name: p.user.name,
+              image: p.user.image,
+              role: p.user.role,
+            })),
+          },
+          messages: mockMessages,
+          hasMore: false,
+          nextCursor: null,
+        })
+      }
+    }
+
     const session = await auth()
 
     if (!session?.user?.id) {
@@ -17,7 +46,6 @@ export async function GET(
       )
     }
 
-    const { id } = await params
     const { searchParams } = new URL(request.url)
     const take = parseInt(searchParams.get('take') || '50')
     const cursor = searchParams.get('cursor')

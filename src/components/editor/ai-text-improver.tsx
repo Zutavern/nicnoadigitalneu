@@ -14,35 +14,173 @@ import {
   Wand2,
   Minimize2,
   Maximize2,
-  MessageSquare,
   Briefcase,
   Coffee,
   SpellCheck,
   Check,
-  X,
   RotateCcw,
+  Lightbulb,
+  Heart,
+  Target,
+  BookOpen,
+  Smile,
+  ListChecks,
+  MessageCircleQuestion,
+  Megaphone,
+  GraduationCap,
+  Flame,
+  Shield,
+  Pen,
+  ArrowRight,
+  Laugh,
+  SearchCheck,
+  AlertCircle,
+  FileText,
+  Heading,
+  Link2,
+  Quote,
+  BarChart3,
+  Layers,
+  Scissors,
+  Scale,
+  Eye,
+  Sparkle,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 interface AITextImproverProps {
   editor: Editor | null
 }
 
-type ImprovementType = 'improve' | 'shorter' | 'longer' | 'professional' | 'casual' | 'fix-grammar'
+type ImprovementType = 
+  | 'improve' 
+  | 'shorter' 
+  | 'longer' 
+  | 'professional' 
+  | 'casual' 
+  | 'fix-grammar'
+  | 'simplify'
+  | 'persuasive'
+  | 'seo-optimize'
+  | 'summarize'
+  | 'friendly'
+  | 'bullet-points'
+  | 'add-questions'
+  | 'add-cta'
+  | 'academic'
+  | 'urgent'
+  | 'trustworthy'
+  | 'active-voice'
+  | 'storytelling'
+  | 'humorous'
+  // Überprüfung
+  | 'fact-check'
+  | 'find-issues'
+  | 'check-clarity'
+  | 'check-logic'
+  // Erweitern
+  | 'add-examples'
+  | 'add-statistics'
+  | 'add-quotes'
+  | 'add-transitions'
+  // SEO & Content
+  | 'generate-headline'
+  | 'generate-teaser'
+  | 'generate-meta'
+  // Weitere
+  | 'make-specific'
+  | 'neutral-tone'
+  | 'split-paragraphs'
+  | 'polish'
 
-const IMPROVEMENT_OPTIONS: Array<{
+interface ImprovementOption {
   type: ImprovementType
   label: string
   icon: React.ReactNode
   description: string
-}> = [
-  { type: 'improve', label: 'Verbessern', icon: <Wand2 className="h-4 w-4" />, description: 'Klarer und ansprechender' },
-  { type: 'shorter', label: 'Kürzer', icon: <Minimize2 className="h-4 w-4" />, description: 'Auf das Wesentliche' },
-  { type: 'longer', label: 'Länger', icon: <Maximize2 className="h-4 w-4" />, description: 'Mit mehr Details' },
-  { type: 'professional', label: 'Professioneller', icon: <Briefcase className="h-4 w-4" />, description: 'Formeller Ton' },
-  { type: 'casual', label: 'Lockerer', icon: <Coffee className="h-4 w-4" />, description: 'Entspannter Ton' },
-  { type: 'fix-grammar', label: 'Korrigieren', icon: <SpellCheck className="h-4 w-4" />, description: 'Grammatik & Rechtschreibung' },
+}
+
+interface ImprovementCategory {
+  label: string
+  options: ImprovementOption[]
+}
+
+const IMPROVEMENT_CATEGORIES: ImprovementCategory[] = [
+  {
+    label: '✓ Überprüfung',
+    options: [
+      { type: 'fact-check', label: 'Faktencheck', icon: <SearchCheck className="h-4 w-4" />, description: 'Aussagen prüfen' },
+      { type: 'find-issues', label: 'Probleme', icon: <AlertCircle className="h-4 w-4" />, description: 'Schwächen finden' },
+      { type: 'check-clarity', label: 'Klarheit', icon: <Eye className="h-4 w-4" />, description: 'Verständlich?' },
+      { type: 'check-logic', label: 'Logik', icon: <Scale className="h-4 w-4" />, description: 'Konsistenz prüfen' },
+    ]
+  },
+  {
+    label: '✨ Grundlagen',
+    options: [
+      { type: 'improve', label: 'Verbessern', icon: <Wand2 className="h-4 w-4" />, description: 'Allgemein besser' },
+      { type: 'fix-grammar', label: 'Korrigieren', icon: <SpellCheck className="h-4 w-4" />, description: 'Grammatik & Co' },
+      { type: 'simplify', label: 'Vereinfachen', icon: <Lightbulb className="h-4 w-4" />, description: 'Leichter' },
+      { type: 'active-voice', label: 'Aktivieren', icon: <ArrowRight className="h-4 w-4" />, description: 'Aktive Sprache' },
+      { type: 'polish', label: 'Polieren', icon: <Sparkle className="h-4 w-4" />, description: 'Feinschliff' },
+    ]
+  },
+  {
+    label: '📐 Struktur',
+    options: [
+      { type: 'shorter', label: 'Kürzer', icon: <Minimize2 className="h-4 w-4" />, description: 'Komprimieren' },
+      { type: 'longer', label: 'Länger', icon: <Maximize2 className="h-4 w-4" />, description: 'Ausbauen' },
+      { type: 'summarize', label: 'Zusammenfassen', icon: <BookOpen className="h-4 w-4" />, description: 'Kernaussagen' },
+      { type: 'bullet-points', label: 'Aufzählung', icon: <ListChecks className="h-4 w-4" />, description: 'Als Liste' },
+      { type: 'split-paragraphs', label: 'Absätze', icon: <Layers className="h-4 w-4" />, description: 'Aufteilen' },
+      { type: 'add-transitions', label: 'Übergänge', icon: <Link2 className="h-4 w-4" />, description: 'Verbinden' },
+    ]
+  },
+  {
+    label: '🎭 Tonalität',
+    options: [
+      { type: 'professional', label: 'Professionell', icon: <Briefcase className="h-4 w-4" />, description: 'Formell' },
+      { type: 'casual', label: 'Locker', icon: <Coffee className="h-4 w-4" />, description: 'Entspannt' },
+      { type: 'friendly', label: 'Freundlich', icon: <Smile className="h-4 w-4" />, description: 'Einladend' },
+      { type: 'academic', label: 'Akademisch', icon: <GraduationCap className="h-4 w-4" />, description: 'Wissenschaftlich' },
+      { type: 'humorous', label: 'Humorvoll', icon: <Laugh className="h-4 w-4" />, description: 'Mit Witz' },
+      { type: 'neutral-tone', label: 'Neutral', icon: <Scale className="h-4 w-4" />, description: 'Sachlich' },
+    ]
+  },
+  {
+    label: '📣 Marketing',
+    options: [
+      { type: 'persuasive', label: 'Überzeugend', icon: <Heart className="h-4 w-4" />, description: 'Emotional' },
+      { type: 'urgent', label: 'Dringlich', icon: <Flame className="h-4 w-4" />, description: 'FOMO' },
+      { type: 'trustworthy', label: 'Vertrauensvoll', icon: <Shield className="h-4 w-4" />, description: 'Seriös' },
+      { type: 'add-cta', label: 'Call-to-Action', icon: <Megaphone className="h-4 w-4" />, description: 'Aufforderung' },
+      { type: 'storytelling', label: 'Erzählerisch', icon: <Pen className="h-4 w-4" />, description: 'Geschichte' },
+    ]
+  },
+  {
+    label: '➕ Erweitern',
+    options: [
+      { type: 'add-examples', label: 'Beispiele', icon: <FileText className="h-4 w-4" />, description: 'Konkretisieren' },
+      { type: 'add-statistics', label: 'Statistiken', icon: <BarChart3 className="h-4 w-4" />, description: 'Zahlen & Daten' },
+      { type: 'add-quotes', label: 'Zitate', icon: <Quote className="h-4 w-4" />, description: 'Expertenmeinung' },
+      { type: 'add-questions', label: 'Fragen', icon: <MessageCircleQuestion className="h-4 w-4" />, description: 'Interaktiv' },
+      { type: 'make-specific', label: 'Konkretisieren', icon: <Scissors className="h-4 w-4" />, description: 'Details hinzu' },
+    ]
+  },
+  {
+    label: '🎯 SEO & Content',
+    options: [
+      { type: 'seo-optimize', label: 'SEO', icon: <Target className="h-4 w-4" />, description: 'Optimieren' },
+      { type: 'generate-headline', label: 'Headline', icon: <Heading className="h-4 w-4" />, description: 'Überschrift' },
+      { type: 'generate-teaser', label: 'Teaser', icon: <Sparkles className="h-4 w-4" />, description: 'Anreißer' },
+      { type: 'generate-meta', label: 'Meta-Text', icon: <FileText className="h-4 w-4" />, description: 'Beschreibung' },
+    ]
+  },
 ]
+
+// Flache Liste für einfachen Zugriff
+const IMPROVEMENT_OPTIONS = IMPROVEMENT_CATEGORIES.flatMap(cat => cat.options)
 
 export function AITextImprover({ editor }: AITextImproverProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -50,13 +188,13 @@ export function AITextImprover({ editor }: AITextImproverProps) {
   const [isImproving, setIsImproving] = useState(false)
   const [improvedText, setImprovedText] = useState('')
   const [activeType, setActiveType] = useState<ImprovementType | null>(null)
-  const buttonRef = useRef<HTMLButtonElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [buttonPosition, setButtonPosition] = useState({ top: 0, left: 0 })
   const [showButton, setShowButton] = useState(false)
 
   // Überwache Text-Selektion
   const handleSelectionChange = useCallback(() => {
-    if (!editor) return
+    if (!editor || isOpen) return // Nicht aktualisieren wenn Popover offen
 
     const { from, to } = editor.state.selection
     const text = editor.state.doc.textBetween(from, to, ' ')
@@ -64,23 +202,24 @@ export function AITextImprover({ editor }: AITextImproverProps) {
     if (text.trim().length > 10) {
       setSelectedText(text)
       
-      // Berechne Position für den Button
+      // Berechne Position für den Button - rechts von der Selektion
       const domSelection = window.getSelection()
       if (domSelection && domSelection.rangeCount > 0) {
         const range = domSelection.getRangeAt(0)
         const rect = range.getBoundingClientRect()
         
+        // Position rechts neben dem Ende der Selektion
         setButtonPosition({
-          top: rect.top - 45,
-          left: rect.left + rect.width / 2 - 50,
+          top: rect.top + window.scrollY + (rect.height / 2) - 14, // Vertikal zentriert
+          left: rect.right + window.scrollX + 8, // 8px rechts vom Ende
         })
         setShowButton(true)
       }
-    } else {
+    } else if (!isOpen) {
       setShowButton(false)
       setSelectedText('')
     }
-  }, [editor])
+  }, [editor, isOpen])
 
   useEffect(() => {
     if (!editor) return
@@ -89,7 +228,7 @@ export function AITextImprover({ editor }: AITextImproverProps) {
     
     // Auch auf mouseup reagieren für bessere UX
     const handleMouseUp = () => {
-      setTimeout(handleSelectionChange, 10)
+      setTimeout(handleSelectionChange, 50)
     }
     
     document.addEventListener('mouseup', handleMouseUp)
@@ -100,17 +239,20 @@ export function AITextImprover({ editor }: AITextImproverProps) {
     }
   }, [editor, handleSelectionChange])
 
-  // Verstecke Button wenn irgendwo geklickt wird (außer auf den Button selbst)
+  // Verstecke Button wenn Escape gedrückt wird
   useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (buttonRef.current && !buttonRef.current.contains(e.target as Node) && !isOpen) {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false)
         setShowButton(false)
+        setImprovedText('')
+        setActiveType(null)
       }
     }
 
-    document.addEventListener('click', handleClick)
-    return () => document.removeEventListener('click', handleClick)
-  }, [isOpen])
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   const improveText = async (type: ImprovementType) => {
     if (!selectedText.trim()) return
@@ -148,6 +290,10 @@ export function AITextImprover({ editor }: AITextImproverProps) {
     editor.chain().focus().deleteRange({ from, to }).insertContent(improvedText).run()
 
     toast.success('Text ersetzt!')
+    handleClose()
+  }
+
+  const handleClose = () => {
     setIsOpen(false)
     setShowButton(false)
     setImprovedText('')
@@ -163,31 +309,64 @@ export function AITextImprover({ editor }: AITextImproverProps) {
 
   return (
     <>
-      {/* Floating Button bei Selektion */}
-      {showButton && !isOpen && (
+      {/* Floating AI Button - rechts neben der Selektion */}
+      {(showButton || isOpen) && (
         <div
-          className="fixed z-50 animate-in fade-in slide-in-from-bottom-2"
+          ref={containerRef}
+          className="fixed z-50"
           style={{
             top: `${buttonPosition.top}px`,
             left: `${buttonPosition.left}px`,
           }}
         >
-          <Popover open={isOpen} onOpenChange={setIsOpen}>
+          <Popover 
+            open={isOpen} 
+            onOpenChange={(open) => {
+              setIsOpen(open)
+              if (!open) {
+                // Kurze Verzögerung damit Selektion erhalten bleibt
+                setTimeout(() => {
+                  if (!isOpen) {
+                    setShowButton(false)
+                    setImprovedText('')
+                    setActiveType(null)
+                  }
+                }, 100)
+              }
+            }}
+          >
             <PopoverTrigger asChild>
-              <Button
-                ref={buttonRef}
-                size="sm"
-                className="gap-1.5 shadow-lg bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600"
+              <button
+                className={cn(
+                  "flex items-center justify-center rounded-full shadow-lg transition-all",
+                  "bg-background border border-border hover:border-violet-500/50 hover:bg-violet-500/10",
+                  "animate-in fade-in zoom-in-95 duration-150",
+                  isOpen 
+                    ? "h-8 w-8 bg-violet-500/10 border-violet-500/50" 
+                    : "h-7 w-7"
+                )}
+                title="KI Text verbessern"
               >
-                <Sparkles className="h-3.5 w-3.5" />
-                KI-Verbesserung
-              </Button>
+                <Sparkles className={cn(
+                  "transition-colors",
+                  isOpen ? "h-4 w-4 text-violet-500" : "h-3.5 w-3.5 text-muted-foreground hover:text-violet-500"
+                )} />
+              </button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="center" side="top">
-              <div className="p-3 border-b">
+            <PopoverContent 
+              className="w-80 p-0" 
+              align="start" 
+              side="right"
+              sideOffset={8}
+              onInteractOutside={(e) => {
+                // Verhindere Schließen wenn auf den Editor geklickt wird
+                e.preventDefault()
+              }}
+            >
+              <div className="p-3 border-b bg-gradient-to-r from-violet-500/5 to-purple-500/5">
                 <h4 className="font-medium flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  Text verbessern
+                  <Sparkles className="h-4 w-4 text-violet-500" />
+                  Text mit KI verbessern
                 </h4>
                 <p className="text-xs text-muted-foreground mt-1">
                   {selectedText.length} Zeichen ausgewählt
@@ -195,28 +374,37 @@ export function AITextImprover({ editor }: AITextImproverProps) {
               </div>
 
               {!improvedText ? (
-                <div className="p-2 grid grid-cols-2 gap-1">
-                  {IMPROVEMENT_OPTIONS.map((option) => (
-                    <button
-                      key={option.type}
-                      onClick={() => improveText(option.type)}
-                      disabled={isImproving}
-                      className={`flex items-center gap-2 p-2 text-left rounded-lg transition-colors ${
-                        isImproving && activeType === option.type
-                          ? 'bg-primary/10'
-                          : 'hover:bg-muted'
-                      }`}
-                    >
-                      {isImproving && activeType === option.type ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                      ) : (
-                        <span className="text-primary">{option.icon}</span>
-                      )}
-                      <div>
-                        <p className="text-sm font-medium">{option.label}</p>
-                        <p className="text-xs text-muted-foreground">{option.description}</p>
+                <div className="max-h-[350px] overflow-y-auto">
+                  {IMPROVEMENT_CATEGORIES.map((category) => (
+                    <div key={category.label}>
+                      <div className="px-3 py-1.5 bg-muted/30 border-y border-border/50">
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          {category.label}
+                        </span>
                       </div>
-                    </button>
+                      <div className="p-1.5 grid grid-cols-3 gap-1">
+                        {category.options.map((option) => (
+                          <button
+                            key={option.type}
+                            onClick={() => improveText(option.type)}
+                            disabled={isImproving}
+                            className={cn(
+                              "flex flex-col items-center gap-1 p-2 text-center rounded-lg transition-colors",
+                              isImproving && activeType === option.type
+                                ? 'bg-violet-500/10'
+                                : 'hover:bg-muted'
+                            )}
+                          >
+                            {isImproving && activeType === option.type ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
+                            ) : (
+                              <span className="text-violet-500">{option.icon}</span>
+                            )}
+                            <p className="text-xs font-medium leading-tight">{option.label}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -239,7 +427,7 @@ export function AITextImprover({ editor }: AITextImproverProps) {
                     </Button>
                     <Button
                       size="sm"
-                      className="flex-1"
+                      className="flex-1 bg-violet-500 hover:bg-violet-600"
                       onClick={applyImprovement}
                     >
                       <Check className="mr-1 h-3 w-3" />
@@ -248,6 +436,16 @@ export function AITextImprover({ editor }: AITextImproverProps) {
                   </div>
                 </div>
               )}
+
+              {/* Schließen Button */}
+              <div className="p-2 border-t">
+                <button
+                  onClick={handleClose}
+                  className="w-full text-xs text-muted-foreground hover:text-foreground text-center py-1"
+                >
+                  Schließen (Esc)
+                </button>
+              </div>
             </PopoverContent>
           </Popover>
         </div>
@@ -255,3 +453,4 @@ export function AITextImprover({ editor }: AITextImproverProps) {
     </>
   )
 }
+

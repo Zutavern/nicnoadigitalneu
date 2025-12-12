@@ -139,7 +139,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       // Prüfe ob User noch aktive Session hat (für Session-Invalidierung)
-      if (token.id) {
+      // WICHTIG: Überspringe diese Prüfung bei neuem Login (user ist gesetzt)
+      // da die activeSession erst im signIn Event erstellt wird
+      if (token.id && !user) {
         try {
           const activeSession = await prisma.activeSession.findFirst({
             where: {

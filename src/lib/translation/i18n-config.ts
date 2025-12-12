@@ -1,6 +1,7 @@
 // i18n Konfiguration
 
 export const DEFAULT_LOCALE = 'de'
+export const FALLBACK_LOCALE = 'en' // Englisch als Fallback wenn Browser-Sprache nicht verfügbar
 
 export const SUPPORTED_LOCALES = [
   'de', 'en', 'fr', 'es', 'it', 'pt', 'nl', 'pl', 'cs', 'sv',
@@ -44,7 +45,8 @@ export function getLocaleFromHeaders(headers: Headers): Locale {
     }
   }
 
-  return DEFAULT_LOCALE
+  // Fallback: Englisch (wenn Browser-Sprache nicht verfügbar)
+  return FALLBACK_LOCALE as Locale
 }
 
 // Prüfen ob Locale gültig ist
@@ -80,3 +82,4 @@ export function addLocaleToPath(pathname: string, locale: Locale): string {
   }
   return `/${locale}${pathname}`
 }
+

@@ -431,17 +431,19 @@ export default function LanguagesAdminPage() {
               <AlertTriangle className="h-5 w-5 text-amber-500" />
               {deactivateDialog?.flag} {deactivateDialog?.nativeName} deaktivieren?
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <p>Diese Aktion wird:</p>
-              <ul className="list-disc list-inside space-y-1 text-sm">
-                <li>301-Redirects für alle /{deactivateDialog?.id}/ URLs aktivieren</li>
-                <li>{deactivateDialog?.nativeName} aus allen hreflang-Tags entfernen</li>
-                <li>{deactivateDialog?.nativeName} aus der Sitemap entfernen</li>
-                <li>Google wird die Änderung in 2-4 Wochen übernehmen</li>
-              </ul>
-              <p className="text-primary font-medium">
-                Die Übersetzungen bleiben erhalten und können reaktiviert werden.
-              </p>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <span>Diese Aktion wird:</span>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>301-Redirects für alle /{deactivateDialog?.id}/ URLs aktivieren</li>
+                  <li>{deactivateDialog?.nativeName} aus allen hreflang-Tags entfernen</li>
+                  <li>{deactivateDialog?.nativeName} aus der Sitemap entfernen</li>
+                  <li>Google wird die Änderung in 2-4 Wochen übernehmen</li>
+                </ul>
+                <span className="text-primary font-medium block">
+                  Die Übersetzungen bleiben erhalten und können reaktiviert werden.
+                </span>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -518,3 +520,4 @@ export default function LanguagesAdminPage() {
     </div>
   )
 }
+

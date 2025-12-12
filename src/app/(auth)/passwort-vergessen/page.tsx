@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Mail, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react'
+import { AuthEvents } from '@/lib/analytics'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -30,9 +31,11 @@ export default function ForgotPasswordPage() {
       const data = await response.json()
 
       if (!response.ok) {
+        AuthEvents.passwordResetFailed(data.error || 'request_failed')
         throw new Error(data.error || 'Ein Fehler ist aufgetreten')
       }
 
+      AuthEvents.passwordResetRequested()
       setIsSuccess(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten')
@@ -141,6 +144,7 @@ export default function ForgotPasswordPage() {
     </div>
   )
 }
+
 
 
 

@@ -16,7 +16,7 @@ const prisma = new PrismaClient({ adapter })
 // Alle europäischen Sprachen
 const europeanLanguages = [
   { id: 'de', name: 'German', nativeName: 'Deutsch', flag: '🇩🇪', isDefault: true, isActive: true, sortOrder: 1 },
-  { id: 'en', name: 'English', nativeName: 'English', flag: '🇬🇧', isDefault: false, isActive: false, sortOrder: 2 },
+  { id: 'en', name: 'English', nativeName: 'English', flag: '🇬🇧', isDefault: false, isActive: true, sortOrder: 2 },
   { id: 'fr', name: 'French', nativeName: 'Français', flag: '🇫🇷', isDefault: false, isActive: false, sortOrder: 3 },
   { id: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸', isDefault: false, isActive: false, sortOrder: 4 },
   { id: 'it', name: 'Italian', nativeName: 'Italiano', flag: '🇮🇹', isDefault: false, isActive: false, sortOrder: 5 },
@@ -51,10 +51,11 @@ async function seedLanguages() {
         nativeName: lang.nativeName,
         flag: lang.flag,
         sortOrder: lang.sortOrder,
+        isActive: lang.isActive, // Aktivierungsstatus auch beim Update setzen
       },
       create: lang,
     })
-    console.log(`  ✓ ${lang.flag} ${lang.nativeName} (${lang.id})`)
+    console.log(`  ✓ ${lang.flag} ${lang.nativeName} (${lang.id}) ${lang.isActive ? '✓' : '○'}`)
   }
   
   console.log(`\n✅ ${europeanLanguages.length} languages seeded successfully!`)
@@ -68,3 +69,4 @@ seedLanguages()
   .finally(async () => {
     await prisma.$disconnect()
   })
+

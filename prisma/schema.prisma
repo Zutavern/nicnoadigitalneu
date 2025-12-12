@@ -36,15 +36,22 @@ model User {
   // Security
   twoFactorEnabled           Boolean   @default(false) @map("two_factor_enabled")
   twoFactorSecret            String?   @map("two_factor_secret")
+  twoFactorBackupCodes       String[]  @default([]) @map("two_factor_backup_codes")
   passwordResetToken         String?   @map("password_reset_token")
   passwordResetExpires       DateTime? @map("password_reset_expires") @db.Timestamptz
   emailVerificationToken     String?   @map("email_verification_token")
   emailVerificationExpires   DateTime? @map("email_verification_expires") @db.Timestamptz
+  magicLinkToken             String?   @map("magic_link_token")
+  magicLinkExpires           DateTime? @map("magic_link_expires") @db.Timestamptz
   passwordChangedAt          DateTime? @map("password_changed_at") @db.Timestamptz
   lastLoginAt                DateTime? @map("last_login_at") @db.Timestamptz
   lastLoginIp                String?   @map("last_login_ip") @db.VarChar(50)
   lastLoginDevice            String?   @map("last_login_device") @db.VarChar(255)
   loginNotificationsEnabled  Boolean   @default(true) @map("login_notifications_enabled")
+  
+  // Presence / Chat
+  lastSeenAt                 DateTime? @map("last_seen_at") @db.Timestamptz
+  isOnline                   Boolean   @default(false) @map("is_online")
   
   // Stripe Fields
   stripeCustomerId         String?   @unique @map("stripe_customer_id")
@@ -79,6 +86,9 @@ model User {
   
   // Blog Relations
   blogAuthor    BlogAuthor?
+  
+  // Security Relations
+  pendingTwoFactorAuth PendingTwoFactorAuth[]
 
   @@map("users")
 }
@@ -1000,6 +1010,25 @@ model PlatformSettings {
   blogToneOfVoicePrompt     String?  @map("blog_tone_of_voice_prompt") @db.Text
   blogArticleSystemPrompt   String?  @map("blog_article_system_prompt") @db.Text
 
+  // PostHog Analytics
+  posthogApiKey             String?  @map("posthog_api_key") @db.VarChar(500)
+  posthogHost               String?  @default("https://eu.i.posthog.com") @map("posthog_host") @db.VarChar(255)
+  posthogProjectId          String?  @map("posthog_project_id") @db.VarChar(100)
+  posthogEnabled            Boolean  @default(false) @map("posthog_enabled")
+  posthogPersonalApiKey     String?  @map("posthog_personal_api_key") @db.VarChar(500) // Für Server-Side API Calls
+
+  // Pusher Real-Time Chat
+  pusherAppId               String?  @map("pusher_app_id") @db.VarChar(100)
+  pusherKey                 String?  @map("pusher_key") @db.VarChar(100)
+  pusherSecret              String?  @map("pusher_secret") @db.VarChar(255)
+  pusherCluster             String?  @default("eu") @map("pusher_cluster") @db.VarChar(20)
+  pusherEnabled             Boolean  @default(false) @map("pusher_enabled")
+
+  // Daily.co Video Calls
+  dailyApiKey               String?  @map("daily_api_key") @db.VarChar(500)
+  dailyDomain               String?  @map("daily_domain") @db.VarChar(100) // z.B. "nicnoa" für nicnoa.daily.co
+  dailyEnabled              Boolean  @default(false) @map("daily_enabled")
+
   // Timestamps
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -1499,6 +1528,34 @@ model ActiveSession {
   @@index([isActive])
   @@index([lastActiveAt])
   @@map("active_sessions")
+}
+
+// ============================================
+// Pending Two-Factor Authentication
+// ============================================
+
+model PendingTwoFactorAuth {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  token       String   @unique @db.VarChar(64)
+  
+  // Device Info for security
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  userAgent   String?  @map("user_agent") @db.Text
+  
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz
+  
+  // Attempts tracking
+  attempts    Int      @default(0)
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("pending_two_factor_auth")
 }
 
 // ============================================
@@ -2066,6 +2123,81 @@ model HomePageConfig {
   updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
   
   @@map("home_page_config")
+}
+
+// ============================================
+// Auth Pages Config (Login & Registration)
+// ============================================
+
+model AuthPageConfig {
+  id                    String   @id @default("default")
+  
+  // Layout
+  layout                String   @default("split") @db.VarChar(20) // "split" = Links Form, Rechts Bild
+  formPosition          String   @default("left") @map("form_position") @db.VarChar(10) // "left" | "right"
+  backgroundColor       String   @default("dark") @map("background_color") @db.VarChar(20) // "dark" | "light"
+  
+  // Login Page Image
+  loginImageUrl         String?  @map("login_image_url") @db.Text
+  loginImageAlt         String?  @map("login_image_alt") @db.VarChar(200)
+  loginImageOverlay     Int      @default(0) @map("login_image_overlay")
+  
+  // Login Page Texts
+  loginTitle            String   @default("Anmelden") @map("login_title") @db.VarChar(100)
+  loginSubtitle         String?  @default("Willkommen zurück! Melden Sie sich an, um fortzufahren.") @map("login_subtitle") @db.Text
+  loginCtaText          String?  @default("Noch kein Konto?") @map("login_cta_text") @db.VarChar(100)
+  loginCtaLink          String?  @default("Jetzt registrieren") @map("login_cta_link") @db.VarChar(100)
+  
+  // Login Features (Bullets links)
+  showLoginFeatures     Boolean  @default(true) @map("show_login_features")
+  loginFeature1Icon     String?  @default("scissors") @map("login_feature_1_icon") @db.VarChar(50)
+  loginFeature1Text     String?  @default("Termine verwalten") @map("login_feature_1_text") @db.VarChar(100)
+  loginFeature2Icon     String?  @default("briefcase") @map("login_feature_2_icon") @db.VarChar(50)
+  loginFeature2Text     String?  @default("Stuhlvermietung optimieren") @map("login_feature_2_text") @db.VarChar(100)
+  loginFeature3Icon     String?  @default("bar-chart-3") @map("login_feature_3_icon") @db.VarChar(50)
+  loginFeature3Text     String?  @default("Umsätze analysieren") @map("login_feature_3_text") @db.VarChar(100)
+  
+  // Registration Page Image
+  registerImageUrl      String?  @map("register_image_url") @db.Text
+  registerImageAlt      String?  @map("register_image_alt") @db.VarChar(200)
+  registerImageOverlay  Int      @default(0) @map("register_image_overlay")
+  
+  // Registration Page Texts
+  registerTitle         String   @default("Konto erstellen") @map("register_title") @db.VarChar(100)
+  registerSubtitle      String?  @default("Starten Sie jetzt und revolutionieren Sie Ihr Salon-Management.") @map("register_subtitle") @db.Text
+  registerCtaText       String?  @default("Bereits ein Konto?") @map("register_cta_text") @db.VarChar(100)
+  registerCtaLink       String?  @default("Jetzt anmelden") @map("register_cta_link") @db.VarChar(100)
+  
+  // Registration Benefits
+  showRegisterBenefits  Boolean  @default(true) @map("show_register_benefits")
+  registerBenefit1Icon  String?  @default("check-circle") @map("register_benefit_1_icon") @db.VarChar(50)
+  registerBenefit1Text  String?  @default("14 Tage kostenlos testen") @map("register_benefit_1_text") @db.VarChar(100)
+  registerBenefit2Icon  String?  @default("credit-card") @map("register_benefit_2_icon") @db.VarChar(50)
+  registerBenefit2Text  String?  @default("Keine Kreditkarte erforderlich") @map("register_benefit_2_text") @db.VarChar(100)
+  registerBenefit3Icon  String?  @default("shield") @map("register_benefit_3_icon") @db.VarChar(50)
+  registerBenefit3Text  String?  @default("DSGVO-konform & sicher") @map("register_benefit_3_text") @db.VarChar(100)
+  
+  // Social Login Settings
+  showGoogleLogin       Boolean  @default(true) @map("show_google_login")
+  showAppleLogin        Boolean  @default(false) @map("show_apple_login")
+  showLinkedInLogin     Boolean  @default(true) @map("show_linkedin_login")
+  showFacebookLogin     Boolean  @default(true) @map("show_facebook_login")
+  
+  // Branding
+  showLogo              Boolean  @default(true) @map("show_logo")
+  logoPosition          String   @default("form") @map("logo_position") @db.VarChar(20) // "form" | "image" | "both"
+  
+  // SEO
+  loginMetaTitle        String?  @map("login_meta_title") @db.VarChar(70)
+  loginMetaDescription  String?  @map("login_meta_description") @db.VarChar(160)
+  registerMetaTitle     String?  @map("register_meta_title") @db.VarChar(70)
+  registerMetaDescription String? @map("register_meta_description") @db.VarChar(160)
+  
+  // Timestamps
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  @@map("auth_page_config")
 }
 
 // ============================================

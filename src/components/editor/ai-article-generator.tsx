@@ -807,77 +807,95 @@ export function AIArticleGenerator({
                 </div>
               </div>
 
-              {/* Unsplash Image Selection */}
+              {/* Featured Image Selection */}
               <div className="space-y-3">
                 <Label className="flex items-center gap-2">
                   <ImageIcon className="h-4 w-4" />
-                  Featured Image auswählen
+                  Featured Image
                 </Label>
-                {isLoadingImages ? (
-                  <div className="flex items-center justify-center py-8 border rounded-lg">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : unsplashImages.length > 0 ? (
-                  <div className="grid grid-cols-3 gap-2">
-                    {unsplashImages.map((img) => (
-                      <button
-                        key={img.id}
-                        onClick={() => setSelectedImageUrl(selectedImageUrl === img.url ? '' : img.url)}
-                        className={`relative aspect-video rounded-lg overflow-hidden border-2 transition-all ${
-                          selectedImageUrl === img.url
-                            ? 'border-primary ring-2 ring-primary/20'
-                            : 'border-transparent hover:border-primary/50'
-                        }`}
-                      >
-                        <img
-                          src={img.thumb}
-                          alt={img.alt}
-                          className="w-full h-full object-cover"
-                        />
-                        {selectedImageUrl === img.url && (
-                          <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                            <Check className="h-8 w-8 text-white drop-shadow-lg" />
-                          </div>
-                        )}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-1">
-                          <p className="text-[10px] text-white truncate">
-                            📷 {img.photographer}
-                          </p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
+                
+                {/* Unsplash Link */}
+                <div className="p-3 bg-muted/50 rounded-lg border space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    💡 Such dir ein passendes Bild bei Unsplash und füge die URL unten ein:
+                  </p>
                   <div className="flex flex-wrap gap-2">
-                    {editedArticle.unsplashLinks.map((link, i) => (
+                    {editedArticle.unsplashSearchTerms?.length > 0 ? (
+                      editedArticle.unsplashSearchTerms.map((term, i) => (
+                        <Button
+                          key={i}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(`https://unsplash.com/s/photos/${encodeURIComponent(term)}`, '_blank')}
+                        >
+                          <Search className="mr-1 h-3 w-3" />
+                          {term}
+                        </Button>
+                      ))
+                    ) : (
                       <Button
-                        key={i}
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(link, '_blank')}
+                        onClick={() => window.open('https://unsplash.com', '_blank')}
                       >
                         <ExternalLink className="mr-1 h-3 w-3" />
-                        {editedArticle.unsplashSearchTerms[i]}
+                        Unsplash öffnen
                       </Button>
-                    ))}
+                    )}
                   </div>
-                )}
+                </div>
+
+                {/* Image URL Input */}
+                <div className="space-y-2">
+                  <Label htmlFor="imageUrl" className="text-sm">Bild-URL einfügen</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="imageUrl"
+                      value={selectedImageUrl}
+                      onChange={(e) => setSelectedImageUrl(e.target.value)}
+                      placeholder="https://images.unsplash.com/..."
+                      className="flex-1"
+                    />
+                    {selectedImageUrl && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedImageUrl('')}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Image Preview */}
                 {selectedImageUrl && (
-                  <div className="flex items-center gap-2 p-2 bg-green-500/10 border border-green-500/30 rounded-lg">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm text-green-600 dark:text-green-400">
-                      Bild ausgewählt - wird als Featured Image übernommen
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="ml-auto h-6 w-6 p-0"
-                      onClick={() => setSelectedImageUrl('')}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                  <div className="space-y-2">
+                    <div className="relative aspect-video rounded-lg overflow-hidden border bg-muted">
+                      <img
+                        src={selectedImageUrl}
+                        alt="Vorschau"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/placeholder-image.svg'
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 p-2 bg-green-500/10 border border-green-500/30 rounded-lg">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span className="text-sm text-green-600 dark:text-green-400">
+                        Bild wird als Featured Image übernommen
+                      </span>
+                    </div>
                   </div>
                 )}
+
+                {/* Optional: File Upload */}
+                <div className="pt-2 border-t">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Oder lade ein eigenes Bild hoch (nach dem Speichern im Blog-Editor möglich)
+                  </p>
+                </div>
               </div>
 
               {/* Content Preview */}
@@ -999,3 +1017,4 @@ export function AIArticleGenerator({
     </Dialog>
   )
 }
+

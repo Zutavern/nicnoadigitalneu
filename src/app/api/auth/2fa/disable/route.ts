@@ -32,12 +32,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Ungültiger Code' }, { status: 400 })
     }
 
-    // Disable 2FA
+    // Disable 2FA and clear backup codes
     await prisma.user.update({
       where: { id: user.id },
       data: {
         twoFactorEnabled: false,
         twoFactorSecret: null,
+        twoFactorBackupCodes: [],
       },
     })
 
@@ -74,6 +75,7 @@ export async function POST(request: Request) {
     )
   }
 }
+
 
 
 

@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { MainNav } from '@/components/layout/main-nav'
 import { Footer } from '@/components/layout/footer'
@@ -16,6 +17,7 @@ import {
   LucideIcon
 } from 'lucide-react'
 import { FeatureShowcase } from '@/components/sections/feature-showcase'
+import { PageEvents } from '@/lib/analytics'
 
 const features = [
   {
@@ -114,6 +116,10 @@ const FeatureCard = ({
 )
 
 export default function FeaturesPage() {
+  useEffect(() => {
+    PageEvents.featuresViewed()
+  }, [])
+
   return (
     <main className="min-h-screen bg-background">
       <MainNav />

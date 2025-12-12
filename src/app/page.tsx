@@ -5,6 +5,8 @@ import { Hero } from '@/components/sections/hero'
 import { TestimonialsSection } from '@/components/sections/testimonials-section'
 import { HomepageFAQSection } from '@/components/sections/homepage-faq-section'
 import { Footer } from '@/components/layout/footer'
+import { getServerLocale, applyTranslations, applyConfigTranslations } from '@/lib/translation/apply-translations'
+import { HomepageTracker } from '@/components/analytics/page-tracker'
 
 export const metadata: Metadata = {
   title: 'NICNOA&CO.online - Moderne Salon-Space Verwaltung',
@@ -181,6 +183,9 @@ async function getFAQPageConfig() {
 }
 
 export default async function Home() {
+  // Aktuelle Sprache ermitteln
+  const locale = await getServerLocale()
+  
   // Daten werden auf dem Server geladen - kein Wasserfall!
   const [testimonials, homepageFaqs, faqConfig] = await Promise.all([
     getTestimonials(),
@@ -188,18 +193,58 @@ export default async function Home() {
     getFAQPageConfig(),
   ])
 
+  // Übersetzungen anwenden
+  const translatedTestimonials = {
+    STYLIST: await applyTranslations(
+      testimonials.STYLIST,
+      'testimonial',
+      locale,
+      ['text', 'name', 'company']
+    ),
+    SALON_OWNER: await applyTranslations(
+      testimonials.SALON_OWNER,
+      'testimonial',
+      locale,
+      ['text', 'name', 'company']
+    ),
+  }
+
+  const translatedFaqs = {
+    STYLIST: await applyTranslations(
+      homepageFaqs.STYLIST,
+      'faq',
+      locale,
+      ['question', 'answer']
+    ),
+    SALON_OWNER: await applyTranslations(
+      homepageFaqs.SALON_OWNER,
+      'faq',
+      locale,
+      ['question', 'answer']
+    ),
+  }
+
+  const translatedFaqConfig = await applyConfigTranslations(
+    faqConfig,
+    'faq_page_config',
+    'default',
+    locale,
+    ['sectionTitle', 'sectionDescription', 'salonTabLabel', 'stylistTabLabel']
+  )
+
   return (
     <main className="relative min-h-screen">
+      <HomepageTracker />
       <MainNav />
       <Hero />
-      <TestimonialsSection testimonials={testimonials} />
+      <TestimonialsSection testimonials={translatedTestimonials} />
       <HomepageFAQSection 
-        faqs={homepageFaqs}
+        faqs={translatedFaqs}
         config={{
-          sectionTitle: faqConfig?.sectionTitle || 'Häufig gestellte Fragen',
-          sectionDescription: faqConfig?.sectionDescription || 'Finden Sie schnelle Antworten auf die wichtigsten Fragen zu unserer Plattform.',
-          salonTabLabel: faqConfig?.salonTabLabel || 'Für Salonbesitzer',
-          stylistTabLabel: faqConfig?.stylistTabLabel || 'Für Stuhlmieter',
+          sectionTitle: translatedFaqConfig?.sectionTitle || 'Häufig gestellte Fragen',
+          sectionDescription: translatedFaqConfig?.sectionDescription || 'Finden Sie schnelle Antworten auf die wichtigsten Fragen zu unserer Plattform.',
+          salonTabLabel: translatedFaqConfig?.salonTabLabel || 'Für Salonbesitzer',
+          stylistTabLabel: translatedFaqConfig?.stylistTabLabel || 'Für Stuhlmieter',
           buttonText: 'Noch mehr Fragen & Antworten',
           buttonLink: '/faq',
         }}
