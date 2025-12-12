@@ -5,16 +5,13 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    // Prisma converts GlobalUIConfig to globalUiConfig (lowercase 'i')
-    const prismaAny = prisma as any
-    
-    let config = await prismaAny.globalUiConfig.findUnique({
+    let config = await prisma.globalUIConfig.findUnique({
       where: { id: 'default' },
     })
 
     // Create default if not exists
     if (!config) {
-      config = await prismaAny.globalUiConfig.create({
+      config = await prisma.globalUIConfig.create({
         data: { id: 'default' },
       })
     }

@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react'
 import { StylistSidebar } from '@/components/dashboard/stylist-sidebar'
 import { SalonSidebar } from '@/components/dashboard/salon-sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
+import { VideoCallProvider } from '@/components/providers/video-call-provider'
 import { UserRole } from '@prisma/client'
 
 export default function DashboardLayout({
@@ -45,15 +46,17 @@ export default function DashboardLayout({
 
   // Show sidebar even while loading
   return (
-    <div className="min-h-screen bg-background">
-      {getSidebar()}
-      <div className="pl-[280px] transition-all duration-300">
-        <DashboardHeader baseUrl={getBaseUrl()} accentColor={getAccentColor()} />
-        <main className="p-6">
-          {children}
-        </main>
+    <VideoCallProvider>
+      <div className="min-h-screen bg-background">
+        {getSidebar()}
+        <div className="pl-[280px] transition-all duration-300">
+          <DashboardHeader baseUrl={getBaseUrl()} accentColor={getAccentColor()} />
+          <main className="p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </VideoCallProvider>
   )
 }
 
