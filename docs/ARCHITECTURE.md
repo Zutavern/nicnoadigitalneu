@@ -2,8 +2,8 @@
 
 ## 📐 System-Architektur Dokumentation
 
-**Version:** 1.1  
-**Datum:** 10. Dezember 2025  
+**Version:** 1.2  
+**Datum:** 12. Dezember 2025  
 **Status:** Produktiv
 
 ---
@@ -114,7 +114,16 @@ NICNOA ist eine B2B SaaS-Plattform für die Friseurbranche, die Salon-Besitzer u
 | **Resend** | 6.5.2 | E-Mail |
 | **React Email** | 5.0.5 | E-Mail Templates |
 
-### 2.3 Infrastruktur
+### 2.3 Real-time & Analytics
+
+| Technologie | Version | Verwendung |
+|-------------|---------|------------|
+| **Pusher** | 6.x | Real-time Messaging |
+| **pusher-js** | 8.x | Client-side Real-time |
+| **Daily.co** | Latest | Video Calls |
+| **PostHog** | 1.x | Product Analytics |
+
+### 2.4 Infrastruktur
 
 | Service | Verwendung |
 |---------|------------|
@@ -123,6 +132,9 @@ NICNOA ist eine B2B SaaS-Plattform für die Friseurbranche, die Salon-Besitzer u
 | **Vercel Blob** | File Storage |
 | **Stripe** | Payment Processing |
 | **Resend** | Transactional Email |
+| **Pusher** | Real-time WebSockets |
+| **Daily.co** | Video Conferencing |
+| **PostHog** | Analytics & Heatmaps |
 | **GitHub** | Version Control |
 
 ---
@@ -887,28 +899,260 @@ Feature-Kategorien:
 
 ---
 
-## 14. Nächste Schritte
+## 14. Real-time Kommunikation (Pusher)
 
-### 14.1 Kurzfristig (Phase 4)
+### 14.1 Architektur-Übersicht
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         PUSHER REAL-TIME ARCHITEKTUR                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    Client A                     Pusher                      Client B
+        │                          │                            │
+        │  1. Subscribe to         │                            │
+        │  presence-conversation-X │                            │
+        │─────────────────────────>│                            │
+        │                          │                            │
+        │                          │  2. Subscribe to           │
+        │                          │  presence-conversation-X   │
+        │                          │<───────────────────────────│
+        │                          │                            │
+        │  3. Send Message         │                            │
+        │  via API                 │                            │
+        │                          │                            │
+        │         Server           │                            │
+        │            │             │                            │
+        │            │ 4. Trigger  │                            │
+        │            │ new-message │                            │
+        │            │────────────>│  5. Broadcast              │
+        │            │             │────────────────────────────>│
+        │                          │                            │
+```
+
+### 14.2 Pusher Events
+
+| Event | Kanal | Beschreibung |
+|-------|-------|--------------|
+| `new-message` | `presence-conversation-{id}` | Neue Nachricht |
+| `user-typing` | `presence-conversation-{id}` | Benutzer tippt |
+| `user-stopped-typing` | `presence-conversation-{id}` | Tippen beendet |
+| `incoming-call` | `private-user-{id}` | Eingehender Video-Anruf |
+| `call-accepted` | `private-user-{id}` | Anruf angenommen |
+| `call-rejected` | `private-user-{id}` | Anruf abgelehnt |
+| `call-ended` | `private-user-{id}` | Anruf beendet |
+
+### 14.3 Server-Konfiguration
+
+```typescript
+// src/lib/pusher-server.ts
+import Pusher from 'pusher'
+
+export async function getPusherServer(): Promise<Pusher | null> {
+  const config = await getPusherConfig()
+  if (!config) return null
+  
+  return new Pusher({
+    appId: config.pusherAppId,
+    key: config.pusherKey,
+    secret: config.pusherSecret,
+    cluster: config.pusherCluster,
+    useTLS: true,
+  })
+}
+
+export async function triggerEvent(
+  channel: string,
+  event: string,
+  data: unknown
+) {
+  const pusher = await getPusherServer()
+  if (pusher) {
+    await pusher.trigger(channel, event, data)
+  }
+}
+```
+
+### 14.4 Client-Konfiguration
+
+```typescript
+// src/lib/pusher-client.ts
+import PusherClient from 'pusher-js'
+
+let pusherInstance: PusherClient | null = null
+
+export function getPusherClient(config: PusherConfig): PusherClient {
+  if (!pusherInstance) {
+    pusherInstance = new PusherClient(config.key, {
+      cluster: config.cluster,
+      authEndpoint: '/api/pusher/auth',
+    })
+  }
+  return pusherInstance
+}
+```
+
+---
+
+## 15. Video Calls (Daily.co)
+
+### 15.1 Architektur-Übersicht
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         DAILY.CO VIDEO CALL FLOW                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    Anrufer                    NICNOA Server                  Empfänger
+        │                           │                            │
+        │  1. POST /video-call/     │                            │
+        │     initiate              │                            │
+        │──────────────────────────>│                            │
+        │                           │                            │
+        │                           │  2. Create Daily Room      │
+        │                           │  + Generate Tokens         │
+        │                           │                            │
+        │                           │  3. Pusher: incoming-call  │
+        │                           │───────────────────────────>│
+        │                           │                            │
+        │  4. Return room URL       │                            │
+        │  + caller token           │                            │
+        │<──────────────────────────│                            │
+        │                           │                            │
+        │                           │  5. POST /video-call/      │
+        │                           │     accept                 │
+        │                           │<───────────────────────────│
+        │                           │                            │
+        │  6. Pusher: call-accepted │                            │
+        │<──────────────────────────│                            │
+        │                           │                            │
+        │       7. Both join Daily Room via iframe               │
+        │<═══════════════════════════════════════════════════════>│
+        │                           │                            │
+```
+
+### 15.2 Daily.co Server-Integration
+
+```typescript
+// src/lib/daily-server.ts
+export async function createVideoCall(
+  callerId: string,
+  callerName: string,
+  calleeId: string,
+  calleeName: string
+) {
+  // 1. Create temporary room
+  const room = await createRoom(`call-${Date.now()}`)
+  
+  // 2. Generate tokens for both participants
+  const callerToken = await createMeetingToken(room.name, callerId, callerName, true)
+  const calleeToken = await createMeetingToken(room.name, calleeId, calleeName, false)
+  
+  return {
+    roomName: room.name,
+    roomUrl: room.url,
+    callerToken,
+    calleeToken,
+  }
+}
+```
+
+### 15.3 Video Call Komponenten
+
+| Komponente | Beschreibung |
+|------------|--------------|
+| `VideoCall` | Daily.co Iframe-Einbettung mit Steuerungen |
+| `IncomingCallModal` | Modal für eingehende Anrufe mit Klingelton |
+
+---
+
+## 16. Analytics (PostHog)
+
+### 16.1 Integration
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         POSTHOG ANALYTICS ARCHITEKTUR                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                              ┌───────────────┐
+                              │   PostHog     │
+                              │   Cloud       │
+                              └───────┬───────┘
+                                      │
+                    ┌─────────────────┼─────────────────┐
+                    │                 │                 │
+                    ▼                 ▼                 ▼
+           ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+           │  Page Views   │  │  User Events  │  │   Heatmaps    │
+           │               │  │               │  │               │
+           │  - Views      │  │  - Clicks     │  │  - Scroll     │
+           │  - Referrer   │  │  - Forms      │  │  - Click maps │
+           │  - Duration   │  │  - Searches   │  │  - Movement   │
+           └───────────────┘  └───────────────┘  └───────────────┘
+```
+
+### 16.2 Provider-Setup
+
+```typescript
+// src/components/providers/posthog-provider.tsx
+'use client'
+
+import posthog from 'posthog-js'
+import { PostHogProvider as PHProvider } from 'posthog-js/react'
+
+export function PostHogProvider({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+      api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+      capture_pageview: true,
+      capture_pageleave: true,
+    })
+  }, [])
+
+  return <PHProvider client={posthog}>{children}</PHProvider>
+}
+```
+
+### 16.3 Admin Analytics Dashboard
+
+Das Admin-Dashboard bietet:
+- **Übersicht**: Besucher, Page Views, Sessions
+- **Revenue Analytics**: Umsatz-Trends, MRR, Churn
+- **Heatmaps**: Click- und Scroll-Analysen
+- **Events**: Benutzerdefinierte Event-Tracking
+
+---
+
+## 17. Nächste Schritte
+
+### 17.1 Abgeschlossen (Phase 4)
 - [x] Cron-Jobs für E-Mail-Erinnerungen
-- [ ] Stripe Produkte/Preise synchronisieren
 - [x] Design-System mit konfigurierbaren Tokens
 - [x] Produkt-Seite CMS
+- [x] Echtzeit-Chat mit Pusher
+- [x] Video Calls mit Daily.co
+- [x] PostHog Analytics Integration
 
-### 14.2 Mittelfristig (Phase 5)
-- [ ] Echtzeit-Benachrichtigungen (WebSocket)
+### 17.2 Kurzfristig (Phase 5)
+- [ ] Stripe Produkte/Preise synchronisieren
 - [ ] Kalender-Integration (Google/Outlook)
-- [ ] Mobile App (React Native)
+- [ ] Push-Benachrichtigungen (Web Push)
 
-### 14.3 Langfristig (Phase 6)
+### 17.3 Mittelfristig (Phase 6)
+- [ ] Mobile App (React Native)
 - [ ] KI-gestützte Terminplanung
 - [ ] Multi-Sprachen-Support
+
+### 17.4 Langfristig (Phase 7)
 - [ ] White-Label für große Ketten
+- [ ] Marketplace für Stylisten-Produkte
+- [ ] AI Chatbot für Kundenservice
 
 ---
 
 **Dokumentation gepflegt von:** NICNOA Development Team  
-**Letzte Aktualisierung:** 10. Dezember 2025
+**Letzte Aktualisierung:** 12. Dezember 2025
 
 
 

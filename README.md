@@ -62,12 +62,15 @@
 ### Für Admins
 - 👥 Benutzerverwaltung
 - 🔐 Onboarding-Prüfung
-- 📊 Plattform-Analytics
+- 📊 Plattform-Analytics mit PostHog
 - 💳 Abo-Verwaltung
 - 📧 E-Mail-Template-Editor
 - 🔒 Security-Dashboard
 - 🎨 Design-System mit konfigurierbaren Presets
 - 📝 CMS für alle Marketing-Seiten
+- 💬 Echtzeit-Chat mit Pusher
+- 📹 Video Calls mit Daily.co
+- 📈 Revenue Analytics & Heatmaps
 
 ---
 
@@ -93,12 +96,22 @@
 | [Stripe](https://stripe.com/) | 20.0.0 | Zahlungen |
 | [Resend](https://resend.com/) | 6.5.2 | E-Mails |
 
+### Real-time & Analytics
+| Technologie | Version | Verwendung |
+|-------------|---------|------------|
+| [Pusher](https://pusher.com/) | 6.x | Real-time Messaging |
+| [Daily.co](https://daily.co/) | Latest | Video Calls |
+| [PostHog](https://posthog.com/) | 1.x | Product Analytics |
+
 ### Infrastruktur
 | Service | Verwendung |
 |---------|------------|
 | [Vercel](https://vercel.com/) | Hosting & Deployment |
 | [Neon](https://neon.tech/) | PostgreSQL Database |
 | [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) | File Storage |
+| [Pusher](https://pusher.com/) | WebSocket Server |
+| [Daily.co](https://daily.co/) | Video Infrastructure |
+| [PostHog](https://posthog.com/) | Analytics Platform |
 
 ---
 
@@ -193,8 +206,9 @@ nicnoa/
 | Dokument | Beschreibung |
 |----------|--------------|
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System-Architektur, Design-System & CMS |
-| [API.md](docs/API.md) | REST API Dokumentation (100+ Endpunkte) |
+| [API.md](docs/API.md) | REST API Dokumentation (130+ Endpunkte) |
 | [DATABASE.md](docs/DATABASE.md) | Datenbank-Schema & Relationen (50+ Tabellen) |
+| [REALTIME.md](docs/REALTIME.md) | Real-time Chat, Video Calls & Analytics |
 | [DEVELOPMENT.md](docs/DEVELOPMENT.md) | Entwickler-Setup & Guidelines |
 | [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deployment-Anleitung |
 | [PRD-Email-Notification-System.md](docs/PRD-Email-Notification-System.md) | E-Mail System PRD |

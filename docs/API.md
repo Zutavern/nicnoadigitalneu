@@ -2,7 +2,7 @@
 
 ## 📡 REST API Reference
 
-**Version:** 1.1  
+**Version:** 1.2  
 **Base URL:** `https://nicnoa.vercel.app/api`  
 **Authentifizierung:** NextAuth.js Session Cookie
 
@@ -22,7 +22,10 @@
 10. [Referral APIs](#10-referral-apis)
 11. [CMS APIs](#11-cms-apis)
 12. [Platform APIs](#12-platform-apis)
-13. [Error Handling](#13-error-handling)
+13. [Real-time APIs (Pusher)](#13-real-time-apis-pusher)
+14. [Video Call APIs (Daily.co)](#14-video-call-apis-dailyco)
+15. [Analytics APIs (PostHog)](#15-analytics-apis-posthog)
+16. [Error Handling](#16-error-handling)
 
 ---
 
@@ -820,7 +823,335 @@ Fehlermeldung aktualisieren.
 
 ---
 
-## 13. Error Handling
+## 13. Real-time APIs (Pusher)
+
+### Konfiguration
+
+#### GET /api/pusher/config
+Pusher-Konfiguration für Client abrufen.
+
+**Response:**
+```json
+{
+  "enabled": true,
+  "key": "abc123",
+  "cluster": "eu"
+}
+```
+
+### Authentifizierung
+
+#### POST /api/pusher/auth
+Kanal-Authentifizierung für Pusher.
+
+**Request Body:**
+```json
+{
+  "socket_id": "123.456",
+  "channel_name": "presence-conversation-uuid"
+}
+```
+
+**Response:**
+```json
+{
+  "auth": "abc123:signature",
+  "channel_data": "{\"user_id\":\"uuid\",\"user_info\":{\"name\":\"Max\",\"role\":\"STYLIST\"}}"
+}
+```
+
+### Presence
+
+#### POST /api/pusher/presence
+Presence-Status aktualisieren.
+
+**Request Body:**
+```json
+{
+  "status": "online"
+}
+```
+
+### Typing
+
+#### POST /api/pusher/typing
+Typing-Event senden.
+
+**Request Body:**
+```json
+{
+  "conversationId": "uuid",
+  "isTyping": true
+}
+```
+
+### Admin
+
+#### GET /api/admin/pusher
+Pusher-Konfiguration für Admin abrufen.
+
+**Response:**
+```json
+{
+  "pusherAppId": "123456",
+  "pusherKey": "abc123",
+  "pusherCluster": "eu",
+  "pusherEnabled": true,
+  "hasSecret": true
+}
+```
+
+#### PUT /api/admin/pusher
+Pusher-Konfiguration aktualisieren.
+
+**Request Body:**
+```json
+{
+  "pusherAppId": "123456",
+  "pusherKey": "abc123",
+  "pusherSecret": "secret",
+  "pusherCluster": "eu",
+  "pusherEnabled": true
+}
+```
+
+#### POST /api/admin/pusher
+Pusher-Verbindung testen.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Verbindung erfolgreich!"
+}
+```
+
+---
+
+## 14. Video Call APIs (Daily.co)
+
+### Konfiguration
+
+#### GET /api/video-call/config
+Daily.co-Konfiguration für Client abrufen.
+
+**Response:**
+```json
+{
+  "enabled": true,
+  "domain": "nicnoa"
+}
+```
+
+### Anruf-Management
+
+#### POST /api/video-call/initiate
+Video-Anruf starten.
+
+**Request Body:**
+```json
+{
+  "calleeId": "uuid"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "roomUrl": "https://nicnoa.daily.co/call-123",
+  "token": "eyJ...",
+  "roomName": "call-123"
+}
+```
+
+#### POST /api/video-call/accept
+Eingehenden Anruf annehmen.
+
+**Request Body:**
+```json
+{
+  "callerId": "uuid",
+  "roomName": "call-123"
+}
+```
+
+#### POST /api/video-call/reject
+Eingehenden Anruf ablehnen.
+
+**Request Body:**
+```json
+{
+  "callerId": "uuid",
+  "roomName": "call-123"
+}
+```
+
+#### POST /api/video-call/end
+Aktiven Anruf beenden.
+
+**Request Body:**
+```json
+{
+  "participantId": "uuid",
+  "roomName": "call-123"
+}
+```
+
+### Admin
+
+#### GET /api/admin/video-call
+Daily.co-Konfiguration für Admin abrufen.
+
+**Response:**
+```json
+{
+  "dailyApiKey": "***masked***",
+  "dailyDomain": "nicnoa",
+  "dailyEnabled": true
+}
+```
+
+#### PUT /api/admin/video-call
+Daily.co-Konfiguration aktualisieren.
+
+**Request Body:**
+```json
+{
+  "dailyApiKey": "your-api-key",
+  "dailyDomain": "nicnoa",
+  "dailyEnabled": true
+}
+```
+
+#### POST /api/admin/video-call
+Daily.co-Verbindung testen.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Verbindung erfolgreich!"
+}
+```
+
+---
+
+## 15. Analytics APIs (PostHog)
+
+### Öffentlich
+
+#### GET /api/platform/posthog-config
+PostHog-Konfiguration für Client abrufen.
+
+**Response:**
+```json
+{
+  "enabled": true,
+  "key": "phc_xxx",
+  "host": "https://eu.posthog.com"
+}
+```
+
+### Admin
+
+#### GET /api/admin/posthog
+PostHog-Konfiguration für Admin abrufen.
+
+**Response:**
+```json
+{
+  "posthogProjectKey": "phc_xxx",
+  "posthogHost": "https://eu.posthog.com",
+  "posthogEnabled": true
+}
+```
+
+#### PUT /api/admin/posthog
+PostHog-Konfiguration aktualisieren.
+
+**Request Body:**
+```json
+{
+  "posthogProjectKey": "phc_xxx",
+  "posthogHost": "https://eu.posthog.com",
+  "posthogEnabled": true
+}
+```
+
+#### POST /api/admin/posthog/test
+PostHog-Verbindung testen.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Verbindung erfolgreich!"
+}
+```
+
+### Analytics-Daten
+
+#### GET /api/admin/analytics/posthog
+PostHog Analytics-Daten abrufen.
+
+**Query Parameters:**
+| Parameter | Typ | Beschreibung |
+|-----------|-----|--------------|
+| `period` | string | `day`, `week`, `month` |
+
+**Response:**
+```json
+{
+  "visitors": 1500,
+  "pageViews": 5000,
+  "sessions": 2000,
+  "avgSessionDuration": 180,
+  "topPages": [...],
+  "topReferrers": [...]
+}
+```
+
+#### GET /api/admin/analytics/revenue
+Revenue Analytics abrufen.
+
+**Query Parameters:**
+| Parameter | Typ | Beschreibung |
+|-----------|-----|--------------|
+| `period` | string | `day`, `week`, `month`, `year` |
+
+**Response:**
+```json
+{
+  "totalRevenue": 50000,
+  "mrr": 5000,
+  "arr": 60000,
+  "churnRate": 2.5,
+  "revenueByPlan": [...],
+  "revenueHistory": [...]
+}
+```
+
+#### GET /api/admin/analytics/heatmaps
+Heatmap-Daten abrufen.
+
+**Query Parameters:**
+| Parameter | Typ | Beschreibung |
+|-----------|-----|--------------|
+| `page` | string | URL-Pfad (z.B. `/`, `/preise`) |
+
+**Response:**
+```json
+{
+  "clicks": [...],
+  "scrollDepth": 75,
+  "rageclicks": 5
+}
+```
+
+---
+
+## 16. Error Handling
 
 ### Standard-Fehlerformat
 
@@ -925,7 +1256,7 @@ Warnt vor ablaufenden Abonnements.
 
 ---
 
-**Letzte Aktualisierung:** 10. Dezember 2025
+**Letzte Aktualisierung:** 12. Dezember 2025
 
 
 

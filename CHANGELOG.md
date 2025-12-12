@@ -10,9 +10,116 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 ## [Unreleased]
 
 ### Geplant
-- Echtzeit-Benachrichtigungen (WebSocket)
 - Kalender-Integration (Google/Outlook)
 - Mobile App (React Native)
+- KI-gestützte Terminplanung
+
+---
+
+## [1.2.0] - 2025-12-12
+
+### Hinzugefügt
+
+#### PostHog Analytics Integration
+- PostHog Provider für clientseitiges Tracking
+- Admin Analytics Dashboard mit interaktiven Charts
+- Revenue Analytics mit Umsatzübersichten
+- Heatmaps Viewer für UX-Analyse
+- Admin-Einstellungen für PostHog-Konfiguration
+- API-Endpunkte:
+  - `/api/platform/posthog-config` - Öffentliche PostHog-Konfiguration
+  - `/api/admin/posthog` - Admin-Konfiguration (GET/PUT)
+  - `/api/admin/posthog/test` - Verbindungstest
+  - `/api/admin/analytics/posthog` - Analytics-Daten
+  - `/api/admin/analytics/revenue` - Revenue-Daten
+  - `/api/admin/analytics/heatmaps` - Heatmap-Daten
+
+#### Pusher Real-time Chat System
+- Echtzeit-Messaging mit Pusher Channels
+- Presence-Kanäle für Online-Status
+- Typing-Indicators (Schreibt gerade...)
+- Real-time Nachrichtenübermittlung
+- Moderne Chat-UI mit Demo-Modus-Unterstützung
+- Server- und Client-Bibliotheken (`pusher-server.ts`, `pusher-client.ts`)
+- API-Endpunkte:
+  - `/api/pusher/config` - Client-Konfiguration
+  - `/api/pusher/auth` - Kanal-Authentifizierung
+  - `/api/pusher/presence` - Presence-Updates
+  - `/api/pusher/typing` - Typing-Events
+  - `/api/admin/pusher` - Admin-Konfiguration (GET/PUT/POST)
+
+#### Daily.co Video Calls
+- Integrierte Video-Anrufe im Chat
+- Server-seitige Daily.co API-Integration
+- Video-Anruf nur wenn Empfänger online
+- Eingehender Anruf Modal mit Klingelton
+- Anruf-Steuerung (Mute, Video, Screenshare)
+- Admin kann Video-Calls komplett deaktivieren
+- API-Endpunkte:
+  - `/api/video-call/config` - Client-Konfiguration
+  - `/api/video-call/initiate` - Anruf starten
+  - `/api/video-call/accept` - Anruf annehmen
+  - `/api/video-call/reject` - Anruf ablehnen
+  - `/api/video-call/end` - Anruf beenden
+  - `/api/admin/video-call` - Admin-Konfiguration (GET/PUT/POST)
+
+#### Kontaktinfo im Chat
+- Kontakt-Sheet mit Benutzer-Stammdaten
+- Zeigt Name, E-Mail, Telefon, Stadt, Registrierungsdatum
+- Rollenspezifische Informationen (Salon, Stylist)
+- Social Media Links und Bio
+- Telefon-Button mit `tel:` Link-Integration
+- API-Endpunkt: `/api/messages/users/[id]` - Benutzerdetails
+
+#### Magic Link Authentifizierung
+- Passwortlose Anmeldung per E-Mail-Link
+- Sichere Token-Generierung
+- 2FA-Unterstützung für Magic Links
+- Neues E-Mail-Template: `MagicLinkEmail`
+- API-Endpunkte:
+  - `/api/auth/magic-link/send` - Magic Link senden
+  - `/api/auth/magic-link/verify` - Link verifizieren
+  - `/api/auth/magic-link/complete-2fa` - 2FA nach Magic Link
+
+#### Erweitertes Login-System
+- Separates 2FA-Login-Flow
+- Verbesserte Auth-Page-Konfiguration
+- API-Endpunkte:
+  - `/api/auth/login` - Standard-Login
+  - `/api/auth/2fa/login-verify` - 2FA bei Login verifizieren
+  - `/api/auth-page-config` - Login-Seiten-Konfiguration
+
+#### Sprachen-Management
+- Aktive Sprachen API
+- Sprachauswahl-Komponente
+- API-Endpunkt: `/api/languages/active`
+
+### Geändert
+- Datenbank-Schema erweitert:
+  - `PlatformSettings`: Neue Felder für Pusher, Daily.co, PostHog
+  - `User`: Neue Felder `isOnline`, `lastSeenAt` für Presence
+- Admin-Settings Seite um 3 neue Tabs erweitert (Pusher, Daily, PostHog)
+- Messaging-Seite komplett überarbeitet mit RealtimeChat-Komponente
+- Mock-Daten erweitert für Chat Demo-Modus
+
+### Verbessert
+- Test-Button Logik für maskierte API-Keys (Pusher, Daily.co)
+- Info-Hinweise wenn API-Keys gespeichert sind
+- Hydration-Fehler in Analytics behoben
+- SessionProvider-Wrapper Probleme gelöst
+
+### Neue Komponenten
+- `src/components/chat/realtime-chat.tsx` - Echtzeit Chat UI
+- `src/components/chat/video-call.tsx` - Video Call & Incoming Call Modal
+- `src/components/analytics/page-tracker.tsx` - PostHog Page Tracker
+- `src/components/providers/posthog-provider.tsx` - PostHog Provider
+- `src/components/ui/skeleton.tsx` - Skeleton Loading Component
+- `src/components/language-selector.tsx` - Sprach-Auswahl
+
+### Neue Libraries
+- `pusher` (Server) & `pusher-js` (Client) - Real-time Messaging
+- `@daily-co/daily-js` - Video Calls
+- `posthog-js` - Analytics
 
 ---
 
@@ -181,6 +288,7 @@ Die erste vollständige Version der NICNOA-Plattform.
 
 | Version | Datum | Beschreibung |
 |---------|-------|--------------|
+| 1.2.0 | 2025-12-12 | PostHog Analytics, Pusher Chat, Daily.co Video, Magic Links |
 | 1.1.0 | 2025-12-10 | Design-System, Produkt-Seite CMS, Cron-Jobs |
 | 1.0.0 | 2025-12-06 | Initial Release |
 
@@ -192,7 +300,8 @@ Die erste vollständige Version der NICNOA-Plattform.
 
 ---
 
-[Unreleased]: https://github.com/your-org/nicnoa/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/your-org/nicnoa/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/your-org/nicnoa/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/your-org/nicnoa/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/your-org/nicnoa/releases/tag/v1.0.0
 
