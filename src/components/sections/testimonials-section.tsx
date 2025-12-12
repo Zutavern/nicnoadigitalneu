@@ -15,6 +15,22 @@ interface Testimonial {
   company: string | null
 }
 
+interface SectionConfig {
+  testimonialsBadgeText: string
+  testimonialsTitle: string
+  testimonialsDescription: string
+  testimonialsStylistTab: string
+  testimonialsSalonTab: string
+}
+
+const defaultSectionConfig: SectionConfig = {
+  testimonialsBadgeText: 'Testimonials',
+  testimonialsTitle: 'Was unsere Nutzer sagen',
+  testimonialsDescription: 'Erfahren Sie, wie NICNOA&CO.online das Leben von Stylisten und Salonbesitzern verändert',
+  testimonialsStylistTab: 'Stuhlmietern',
+  testimonialsSalonTab: 'Salonbesitzer',
+}
+
 interface TestimonialsSectionProps {
   testimonials: {
     STYLIST: Testimonial[]
@@ -24,9 +40,26 @@ interface TestimonialsSectionProps {
 
 export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) {
   const [activeTab, setActiveTab] = useState<'STYLIST' | 'SALON_OWNER'>('STYLIST')
+  const [config, setConfig] = useState<SectionConfig>(defaultSectionConfig)
 
   const hasAnyTestimonials = testimonials.STYLIST.length > 0 || testimonials.SALON_OWNER.length > 0
   const currentTestimonials = testimonials[activeTab]
+
+  // Load config from API
+  useEffect(() => {
+    async function loadConfig() {
+      try {
+        const res = await fetch('/api/global-ui-config')
+        if (res.ok) {
+          const data = await res.json()
+          setConfig({ ...defaultSectionConfig, ...data })
+        }
+      } catch (error) {
+        console.error('Failed to load section config:', error)
+      }
+    }
+    loadConfig()
+  }, [])
 
   // Auto-switch to tab with content if current tab is empty
   useEffect(() => {
@@ -71,17 +104,17 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
             <div className="border border-primary/20 py-1 px-4 rounded-lg bg-primary/10">
               <div className="flex items-center gap-2">
                 <Quote className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">Testimonials</span>
+                <span className="text-sm font-medium text-primary">{config.testimonialsBadgeText}</span>
               </div>
             </div>
           </div>
           
           <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tighter text-center">
-            Was unsere Nutzer sagen
+            {config.testimonialsTitle}
           </h2>
           
           <p className="text-center mt-5 text-muted-foreground opacity-75">
-            Erfahren Sie, wie NICNOA&CO.online das Leben von Stylisten und Salonbesitzern verändert
+            {config.testimonialsDescription}
           </p>
         </motion.div>
 
@@ -94,7 +127,7 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
                 className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
                 <Scissors className="h-4 w-4" />
-                Stuhlmietern
+                {config.testimonialsStylistTab}
                 <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-xs font-medium">
                   {testimonials.STYLIST.length}
                 </span>
@@ -104,7 +137,7 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
                 className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
                 <Building2 className="h-4 w-4" />
-                Salonbesitzer
+                {config.testimonialsSalonTab}
                 <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-xs font-medium">
                   {testimonials.SALON_OWNER.length}
                 </span>
@@ -142,5 +175,3 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
     </section>
   )
 }
-
-

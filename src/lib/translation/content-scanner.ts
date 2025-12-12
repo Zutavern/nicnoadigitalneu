@@ -21,6 +21,13 @@ const TRANSLATABLE_FIELDS: Record<string, { fields: string[]; priority: number }
       'heroDescription',
       // CTAs
       'ctaPrimaryText', 'ctaSecondaryText',
+      // Trust Indicators
+      'trustIndicator1', 'trustIndicator2', 'trustIndicator3',
+      // Dashboard Preview
+      'dashboardTitle', 'dashboardSubtitle',
+      'dashboardStat1Label', 'dashboardStat2Label', 'dashboardStat3Label',
+      'dashboardNotifTitle', 'dashboardNotifSubtitle',
+      'dashboardBadgeTitle', 'dashboardBadgeSubtitle',
       // Features Section
       'featuresTitle', 'featuresSubtitle',
       // CTA Section
@@ -205,6 +212,39 @@ const TRANSLATABLE_FIELDS: Record<string, { fields: string[]; priority: number }
       'organizationName', 'organizationAddress',
     ],
     priority: 90,
+  },
+  
+  // Globale UI-Texte (Footer, Navigation, etc.)
+  global_ui_config: {
+    fields: [
+      // Navigation
+      'navProductLabel', 'navCompanyLabel', 'navFaqLabel', 'navPricingLabel',
+      'navLoginLabel', 'navRegisterLabel',
+      // Footer
+      'footerDescription',
+      'footerProductTitle', 'footerCompanyTitle', 'footerResourcesTitle',
+      'footerFeaturesLabel', 'footerPricingLabel', 'footerRoadmapLabel',
+      'footerUpdatesLabel', 'footerBetaLabel',
+      'footerAboutLabel', 'footerPartnerLabel', 'footerCareerLabel',
+      'footerBlogLabel', 'footerPressLabel',
+      'footerDocsLabel', 'footerSupportLabel', 'footerApiLabel',
+      'footerFaqLabel', 'footerStatusLabel',
+      'footerPrivacyLabel', 'footerImprintLabel', 'footerTermsLabel',
+      'footerCopyright',
+      // Testimonials Section
+      'testimonialsBadgeText', 'testimonialsTitle', 'testimonialsDescription',
+      'testimonialsStylistTab', 'testimonialsSalonTab',
+      // Homepage FAQ Section
+      'homeFaqButtonText',
+      // Empty States
+      'emptyFaqText', 'emptyDataText', 'emptySearchText',
+      // Cookie Consent
+      'cookieTitle', 'cookieDescription', 'cookieAcceptAll',
+      'cookieRejectAll', 'cookieCustomize', 'cookieSaveSettings',
+      // General UI
+      'loadingText', 'errorTitle', 'errorDescription', 'backToHomeText',
+    ],
+    priority: 95,
   },
 
   // ============================================
@@ -675,6 +715,21 @@ export async function getTranslatableContent(): Promise<TranslatableContent[]> {
       ))
     }
   } catch (e) { console.warn('Error scanning global_seo_config:', e) }
+
+  // 22b. Global UI Config (Footer, Navigation, Static Texts)
+  try {
+    const config = await prisma.globalUIConfig.findUnique({ where: { id: 'default' } })
+    if (config) {
+      const fields = TRANSLATABLE_FIELDS.global_ui_config
+      allContent.push(...extractFields(
+        config as unknown as Record<string, unknown>,
+        fields.fields,
+        'global_ui_config',
+        'default',
+        fields.priority
+      ))
+    }
+  } catch (e) { console.warn('Error scanning global_ui_config:', e) }
 
   // 23. Service Categories
   try {

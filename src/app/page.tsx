@@ -182,15 +182,31 @@ async function getFAQPageConfig() {
   }
 }
 
+async function getGlobalUIConfig() {
+  try {
+    const config = await prisma.globalUIConfig.findUnique({
+      where: { id: 'default' },
+      select: {
+        homeFaqButtonText: true,
+      },
+    })
+    return config
+  } catch (error) {
+    console.error('Error fetching GlobalUIConfig:', error)
+    return null
+  }
+}
+
 export default async function Home() {
   // Aktuelle Sprache ermitteln
   const locale = await getServerLocale()
   
   // Daten werden auf dem Server geladen - kein Wasserfall!
-  const [testimonials, homepageFaqs, faqConfig] = await Promise.all([
+  const [testimonials, homepageFaqs, faqConfig, globalUIConfig] = await Promise.all([
     getTestimonials(),
     getHomepageFAQs(),
     getFAQPageConfig(),
+    getGlobalUIConfig(),
   ])
 
   // Übersetzungen anwenden
@@ -245,7 +261,7 @@ export default async function Home() {
           sectionDescription: translatedFaqConfig?.sectionDescription || 'Finden Sie schnelle Antworten auf die wichtigsten Fragen zu unserer Plattform.',
           salonTabLabel: translatedFaqConfig?.salonTabLabel || 'Für Salonbesitzer',
           stylistTabLabel: translatedFaqConfig?.stylistTabLabel || 'Für Stuhlmieter',
-          buttonText: 'Noch mehr Fragen & Antworten',
+          buttonText: globalUIConfig?.homeFaqButtonText || 'Noch mehr Fragen & Antworten',
           buttonLink: '/faq',
         }}
       />

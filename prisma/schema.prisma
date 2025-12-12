@@ -2097,6 +2097,17 @@ model HomePageConfig {
   dashboardTitle        String?  @default("NICNOA Dashboard") @map("dashboard_title") @db.VarChar(100)
   dashboardSubtitle     String?  @default("Salon Overview") @map("dashboard_subtitle") @db.VarChar(100)
   
+  // Dashboard Stats Labels
+  dashboardStat1Label   String?  @default("Buchungen") @map("dashboard_stat_1_label") @db.VarChar(50)
+  dashboardStat2Label   String?  @default("Auslastung") @map("dashboard_stat_2_label") @db.VarChar(50)
+  dashboardStat3Label   String?  @default("Umsatz") @map("dashboard_stat_3_label") @db.VarChar(50)
+  
+  // Dashboard Floating Cards
+  dashboardNotifTitle   String?  @default("Neue Buchung") @map("dashboard_notif_title") @db.VarChar(100)
+  dashboardNotifSubtitle String? @default("Maria S. • 14:30") @map("dashboard_notif_subtitle") @db.VarChar(100)
+  dashboardBadgeTitle   String?  @default("+3 Stylisten") @map("dashboard_badge_title") @db.VarChar(100)
+  dashboardBadgeSubtitle String? @default("Diese Woche") @map("dashboard_badge_subtitle") @db.VarChar(100)
+
   // Animation Settings
   animationEnabled      Boolean  @default(true) @map("animation_enabled")
   particlesEnabled      Boolean  @default(true) @map("particles_enabled")
@@ -2770,6 +2781,109 @@ model GlobalSeoConfig {
   updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz
   
   @@map("global_seo_config")
+}
+
+// ============================================
+// Global UI Config (Footer, Navigation, Static Texts)
+// ============================================
+
+model GlobalUIConfig {
+  id                      String   @id @default("default")
+
+  // ==========================================
+  // NAVIGATION
+  // ==========================================
+  navProductLabel         String   @default("Produkt") @map("nav_product_label") @db.VarChar(50)
+  navCompanyLabel         String   @default("Unternehmen") @map("nav_company_label") @db.VarChar(50)
+  navFaqLabel             String   @default("FAQ") @map("nav_faq_label") @db.VarChar(50)
+  navPricingLabel         String   @default("Preise") @map("nav_pricing_label") @db.VarChar(50)
+  navLoginLabel           String   @default("Login") @map("nav_login_label") @db.VarChar(50)
+  navRegisterLabel        String   @default("Registrieren") @map("nav_register_label") @db.VarChar(50)
+
+  // ==========================================
+  // FOOTER
+  // ==========================================
+  // Branding
+  footerDescription       String   @default("Revolutionieren Sie die Art und Weise, wie Salon-Spaces verwaltet werden. Wir machen Coworking im Beauty-Bereich einfach, effizient und profitabel.") @map("footer_description") @db.Text
+  
+  // Section Headers
+  footerProductTitle      String   @default("PRODUKT") @map("footer_product_title") @db.VarChar(50)
+  footerCompanyTitle      String   @default("UNTERNEHMEN") @map("footer_company_title") @db.VarChar(50)
+  footerResourcesTitle    String   @default("RESSOURCEN") @map("footer_resources_title") @db.VarChar(50)
+  
+  // Product Links
+  footerFeaturesLabel     String   @default("Features") @map("footer_features_label") @db.VarChar(50)
+  footerPricingLabel      String   @default("Preise") @map("footer_pricing_label") @db.VarChar(50)
+  footerRoadmapLabel      String   @default("Roadmap") @map("footer_roadmap_label") @db.VarChar(50)
+  footerUpdatesLabel      String   @default("Updates") @map("footer_updates_label") @db.VarChar(50)
+  footerBetaLabel         String   @default("Beta-Programm") @map("footer_beta_label") @db.VarChar(50)
+  
+  // Company Links
+  footerAboutLabel        String   @default("Über uns") @map("footer_about_label") @db.VarChar(50)
+  footerPartnerLabel      String   @default("Partner") @map("footer_partner_label") @db.VarChar(50)
+  footerCareerLabel       String   @default("Karriere") @map("footer_career_label") @db.VarChar(50)
+  footerBlogLabel         String   @default("Blog") @map("footer_blog_label") @db.VarChar(50)
+  footerPressLabel        String   @default("Presse") @map("footer_press_label") @db.VarChar(50)
+  
+  // Resources Links
+  footerDocsLabel         String   @default("Dokumentation") @map("footer_docs_label") @db.VarChar(50)
+  footerSupportLabel      String   @default("Support") @map("footer_support_label") @db.VarChar(50)
+  footerApiLabel          String   @default("API") @map("footer_api_label") @db.VarChar(50)
+  footerFaqLabel          String   @default("FAQ") @map("footer_faq_label") @db.VarChar(50)
+  footerStatusLabel       String   @default("Status") @map("footer_status_label") @db.VarChar(50)
+  
+  // Legal Links
+  footerPrivacyLabel      String   @default("Datenschutz") @map("footer_privacy_label") @db.VarChar(50)
+  footerImprintLabel      String   @default("Impressum") @map("footer_imprint_label") @db.VarChar(50)
+  footerTermsLabel        String   @default("AGB") @map("footer_terms_label") @db.VarChar(50)
+  
+  // Copyright
+  footerCopyright         String   @default("© 2025 NICNOA&CO.online. Alle Rechte vorbehalten.") @map("footer_copyright") @db.VarChar(200)
+
+  // ==========================================
+  // TESTIMONIALS SECTION
+  // ==========================================
+  testimonialsBadgeText   String   @default("Testimonials") @map("testimonials_badge_text") @db.VarChar(50)
+  testimonialsTitle       String   @default("Was unsere Nutzer sagen") @map("testimonials_title") @db.VarChar(200)
+  testimonialsDescription String   @default("Erfahren Sie, wie NICNOA&CO.online das Leben von Stylisten und Salonbesitzern verändert") @map("testimonials_description") @db.Text
+  testimonialsStylistTab  String   @default("Stuhlmietern") @map("testimonials_stylist_tab") @db.VarChar(50)
+  testimonialsSalonTab    String   @default("Salonbesitzer") @map("testimonials_salon_tab") @db.VarChar(50)
+
+  // ==========================================
+  // HOMEPAGE FAQ SECTION
+  // ==========================================
+  homeFaqButtonText       String   @default("Noch mehr Fragen & Antworten") @map("home_faq_button_text") @db.VarChar(100)
+
+  // ==========================================
+  // EMPTY STATES
+  // ==========================================
+  emptyFaqText            String   @default("Keine FAQs verfügbar.") @map("empty_faq_text") @db.VarChar(200)
+  emptyDataText           String   @default("Keine Daten vorhanden.") @map("empty_data_text") @db.VarChar(200)
+  emptySearchText         String   @default("Keine Ergebnisse gefunden.") @map("empty_search_text") @db.VarChar(200)
+
+  // ==========================================
+  // COOKIE CONSENT
+  // ==========================================
+  cookieTitle             String   @default("Cookie-Einstellungen") @map("cookie_title") @db.VarChar(100)
+  cookieDescription       String   @default("Wir verwenden Cookies, um Ihnen die bestmögliche Erfahrung zu bieten.") @map("cookie_description") @db.Text
+  cookieAcceptAll         String   @default("Alle akzeptieren") @map("cookie_accept_all") @db.VarChar(50)
+  cookieRejectAll         String   @default("Alle ablehnen") @map("cookie_reject_all") @db.VarChar(50)
+  cookieCustomize         String   @default("Anpassen") @map("cookie_customize") @db.VarChar(50)
+  cookieSaveSettings      String   @default("Einstellungen speichern") @map("cookie_save_settings") @db.VarChar(50)
+
+  // ==========================================
+  // GENERAL UI TEXTS
+  // ==========================================
+  loadingText             String   @default("Wird geladen...") @map("loading_text") @db.VarChar(100)
+  errorTitle              String   @default("Ein Fehler ist aufgetreten") @map("error_title") @db.VarChar(100)
+  errorDescription        String   @default("Bitte versuchen Sie es später erneut.") @map("error_description") @db.VarChar(200)
+  backToHomeText          String   @default("Zurück zur Startseite") @map("back_to_home_text") @db.VarChar(100)
+
+  // Timestamps
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("global_ui_config")
 }
 
 // ============================================
