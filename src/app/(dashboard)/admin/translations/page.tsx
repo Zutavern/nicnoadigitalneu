@@ -19,6 +19,8 @@ import {
   Play,
   Pause,
   Zap,
+  Search,
+  PlusCircle,
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -120,7 +122,15 @@ export default function TranslationsAdminPage() {
   // Dialogs
   const [clearFailedDialog, setClearFailedDialog] = useState(false)
   const [retryAllDialog, setRetryAllDialog] = useState(false)
+  const [scanResultDialog, setScanResultDialog] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isScanning, setIsScanning] = useState(false)
+  const [scanResult, setScanResult] = useState<{
+    newContent: number
+    changedContent: number
+    totalChanges: number
+    changesByType: Record<string, number>
+  } | null>(null)
 
   const fetchData = useCallback(async () => {
     try {
@@ -247,6 +257,53 @@ export default function TranslationsAdminPage() {
     }
   }
 
+  // Scan for changes in content
+  const handleScanForChanges = async (preview: boolean = true) => {
+    setIsScanning(true)
+    try {
+      if (preview) {
+        // Nur scannen, zeigt Dialog mit Ergebnis
+        const res = await fetch('/api/admin/translations/scan-changes')
+        const data = await res.json()
+        
+        if (data.success) {
+          setScanResult({
+            newContent: data.summary.newContent,
+            changedContent: data.summary.changedContent,
+            totalChanges: data.summary.totalChanges,
+            changesByType: data.changesByType || {},
+          })
+          setScanResultDialog(true)
+        } else {
+          toast.error('Fehler beim Scannen')
+        }
+      } else {
+        // Jobs erstellen für alle Änderungen
+        const res = await fetch('/api/admin/translations/scan-changes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            createJobsForNew: true, 
+            createJobsForChanged: true 
+          }),
+        })
+        const data = await res.json()
+        
+        if (data.success) {
+          toast.success(data.message || `${data.actions.jobsCreated} Jobs erstellt`)
+          setScanResultDialog(false)
+          await fetchData()
+        } else {
+          toast.error('Fehler beim Erstellen der Jobs')
+        }
+      }
+    } catch (error) {
+      toast.error('Fehler beim Scannen')
+    } finally {
+      setIsScanning(false)
+    }
+  }
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PENDING':
@@ -288,6 +345,21 @@ export default function TranslationsAdminPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Scan for Changes Button */}
+          <Button
+            variant="outline"
+            onClick={() => handleScanForChanges(true)}
+            disabled={isScanning}
+            className="border-primary/30 hover:bg-primary/10"
+          >
+            {isScanning ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Search className="h-4 w-4 mr-2" />
+            )}
+            Änderungen scannen
+          </Button>
+          
           {stats && stats.pendingJobs > 0 && (
             <Button
               onClick={handleProcessQueue}
@@ -755,6 +827,92 @@ export default function TranslationsAdminPage() {
             <AlertDialogAction onClick={handleRetryAll}>
               Alle neu starten
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Scan Result Dialog */}
+      <AlertDialog open={scanResultDialog} onOpenChange={setScanResultDialog}>
+        <AlertDialogContent className="max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Search className="h-5 w-5 text-primary" />
+              Scan-Ergebnis
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                {scanResult && (
+                  <>
+                    {scanResult.totalChanges === 0 ? (
+                      <div className="flex items-center gap-3 p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+                        <CheckCircle2 className="h-6 w-6 text-green-500" />
+                        <div>
+                          <p className="font-medium text-green-500">Alles aktuell!</p>
+                          <p className="text-sm text-muted-foreground">
+                            Keine neuen oder geänderten Inhalte gefunden.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                            <div className="flex items-center gap-2 text-blue-500">
+                              <PlusCircle className="h-4 w-4" />
+                              <span className="font-medium">Neu</span>
+                            </div>
+                            <p className="text-2xl font-bold mt-1">{scanResult.newContent}</p>
+                            <p className="text-xs text-muted-foreground">Noch nie übersetzt</p>
+                          </div>
+                          <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                            <div className="flex items-center gap-2 text-amber-500">
+                              <AlertTriangle className="h-4 w-4" />
+                              <span className="font-medium">Geändert</span>
+                            </div>
+                            <p className="text-2xl font-bold mt-1">{scanResult.changedContent}</p>
+                            <p className="text-xs text-muted-foreground">Übersetzung veraltet</p>
+                          </div>
+                        </div>
+
+                        {Object.keys(scanResult.changesByType).length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Betroffene Inhaltstypen:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {Object.entries(scanResult.changesByType).map(([type, count]) => (
+                                <Badge key={type} variant="secondary">
+                                  {type.replace(/_/g, ' ')}: {count}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <p className="text-sm text-muted-foreground">
+                          Möchtest du für alle {scanResult.totalChanges} Änderungen 
+                          Übersetzungs-Jobs erstellen?
+                        </p>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Schließen</AlertDialogCancel>
+            {scanResult && scanResult.totalChanges > 0 && (
+              <AlertDialogAction 
+                onClick={() => handleScanForChanges(false)}
+                disabled={isScanning}
+              >
+                {isScanning ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                )}
+                Jobs erstellen ({scanResult.totalChanges})
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

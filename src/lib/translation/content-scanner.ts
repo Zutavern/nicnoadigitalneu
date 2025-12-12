@@ -277,7 +277,8 @@ const TRANSLATABLE_FIELDS: Record<string, { fields: string[]; priority: number }
   },
   
   blog_author: {
-    fields: ['name', 'bio', 'role'],
+    // HINWEIS: 'name' wird NICHT übersetzt (Autorennamen bleiben original)
+    fields: ['bio', 'role'],
     priority: 45,
   },
   
