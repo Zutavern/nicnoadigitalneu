@@ -128,6 +128,7 @@ const menuItems: MenuSection[] = [
         children: [
           { label: 'Dienstleistungen', href: '/admin/services', icon: Sparkles },
           { label: 'Onboarding-Prüfung', href: '/admin/onboarding-review', icon: FileCheck },
+          { label: 'Texte & Info-Bubbles', href: '/admin/onboarding-cms', icon: PenSquare },
         ],
       },
     ],
