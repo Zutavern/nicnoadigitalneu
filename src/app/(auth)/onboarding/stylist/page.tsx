@@ -322,8 +322,8 @@ export default function StylistOnboardingPage() {
       case 1:
         return businessData.companyName && businessData.businessStreet && businessData.businessCity && businessData.businessZipCode
       case 2:
-        // Alle müssen beantwortet UND alle müssen "yes" sein
-        return allComplianceAnswered && allComplianceChecked
+        // Alle müssen beantwortet sein (egal ob ja/nein/in Arbeit)
+        return allComplianceAnswered
       case 3:
         return allDocumentsHandled
       case 4:
