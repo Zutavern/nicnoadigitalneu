@@ -265,29 +265,39 @@ model StylistOnboarding {
   businessCity          String?  @map("business_city")
   businessZipCode       String?  @map("business_zip_code")
   
-  // Schritt 2: Compliance Checks
+  // Schritt 2: Compliance Checks (erweitert mit Antwort-Optionen: yes/no/pending)
   ownPhone              Boolean  @default(false) @map("own_phone")
+  ownPhoneAnswer        String?  @map("own_phone_answer") // "yes", "no", "pending"
   ownAppointmentBook    Boolean  @default(false) @map("own_appointment_book")
+  ownAppointmentBookAnswer String? @map("own_appointment_book_answer")
   ownCashRegister       Boolean  @default(false) @map("own_cash_register")
+  ownCashRegisterAnswer String?  @map("own_cash_register_answer")
   ownPriceList          Boolean  @default(false) @map("own_price_list")
+  ownPriceListAnswer    String?  @map("own_price_list_answer")
   ownBranding           Boolean  @default(false) @map("own_branding")
+  ownBrandingAnswer     String?  @map("own_branding_answer")
   complianceConfirmedAt DateTime? @map("compliance_confirmed_at") @db.Timestamptz
   
   // Schritt 3: Dokumente
-  masterCertificateUrl       String?        @map("master_certificate_url")
-  masterCertificateStatus    DocumentStatus @default(PENDING) @map("master_certificate_status")
+  masterCertificateUrl          String?        @map("master_certificate_url")
+  masterCertificateStatus       DocumentStatus @default(PENDING) @map("master_certificate_status")
+  masterCertificateNotAvailable Boolean        @default(false) @map("master_certificate_not_available")
   
-  businessRegistrationUrl    String?        @map("business_registration_url")
-  businessRegistrationStatus DocumentStatus @default(PENDING) @map("business_registration_status")
+  businessRegistrationUrl          String?        @map("business_registration_url")
+  businessRegistrationStatus       DocumentStatus @default(PENDING) @map("business_registration_status")
+  businessRegistrationNotAvailable Boolean        @default(false) @map("business_registration_not_available")
   
-  liabilityInsuranceUrl      String?        @map("liability_insurance_url")
-  liabilityInsuranceStatus   DocumentStatus @default(PENDING) @map("liability_insurance_status")
+  liabilityInsuranceUrl          String?        @map("liability_insurance_url")
+  liabilityInsuranceStatus       DocumentStatus @default(PENDING) @map("liability_insurance_status")
+  liabilityInsuranceNotAvailable Boolean        @default(false) @map("liability_insurance_not_available")
   
-  statusDeterminationUrl     String?        @map("status_determination_url")
-  statusDeterminationStatus  DocumentStatus @default(PENDING) @map("status_determination_status")
+  statusDeterminationUrl          String?        @map("status_determination_url")
+  statusDeterminationStatus       DocumentStatus @default(PENDING) @map("status_determination_status")
+  statusDeterminationNotAvailable Boolean        @default(false) @map("status_determination_not_available")
   
-  craftsChamberUrl           String?        @map("crafts_chamber_url")
-  craftsChamberStatus        DocumentStatus @default(PENDING) @map("crafts_chamber_status")
+  craftsChamberUrl          String?        @map("crafts_chamber_url")
+  craftsChamberStatus       DocumentStatus @default(PENDING) @map("crafts_chamber_status")
+  craftsChamberNotAvailable Boolean        @default(false) @map("crafts_chamber_not_available")
   
   // Schritt 4: Finale Bestätigung
   selfEmploymentDeclaration  Boolean  @default(false) @map("self_employment_declaration")
@@ -306,6 +316,42 @@ model StylistOnboarding {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("stylist_onboardings")
+}
+
+// ============================================
+// Onboarding CMS Configuration
+// ============================================
+
+model OnboardingConfig {
+  id                    String   @id @default("singleton") // Singleton pattern
+  
+  // Compliance Info-Bubble Texte
+  ownPhoneInfo          String?  @map("own_phone_info") @db.Text
+  ownAppointmentBookInfo String? @map("own_appointment_book_info") @db.Text
+  ownCashRegisterInfo   String?  @map("own_cash_register_info") @db.Text
+  ownPriceListInfo      String?  @map("own_price_list_info") @db.Text
+  ownBrandingInfo       String?  @map("own_branding_info") @db.Text
+  
+  // Dokument Info-Bubble Texte
+  masterCertificateInfo      String?  @map("master_certificate_info") @db.Text
+  businessRegistrationInfo   String?  @map("business_registration_info") @db.Text
+  liabilityInsuranceInfo     String?  @map("liability_insurance_info") @db.Text
+  statusDeterminationInfo    String?  @map("status_determination_info") @db.Text
+  craftsChamberInfo          String?  @map("crafts_chamber_info") @db.Text
+  
+  // Allgemeine Texte
+  step1Title            String?  @map("step1_title")
+  step1Description      String?  @map("step1_description") @db.Text
+  step2Title            String?  @map("step2_title")
+  step2Description      String?  @map("step2_description") @db.Text
+  step3Title            String?  @map("step3_title")
+  step3Description      String?  @map("step3_description") @db.Text
+  step4Title            String?  @map("step4_title")
+  step4Description      String?  @map("step4_description") @db.Text
+  
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("onboarding_config")
 }
 
 // ============================================

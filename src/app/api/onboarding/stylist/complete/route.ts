@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { businessData, compliance, documentUrls, declaration } = body
+    const { businessData, compliance, documentUrls, documentNotAvailable, declaration } = body
 
     // Validierung der erforderlichen Daten
     if (!businessData?.companyName || !businessData?.businessStreet || !businessData?.businessCity || !businessData?.businessZipCode) {
@@ -25,13 +25,13 @@ export async function POST(request: Request) {
       )
     }
 
-    // Prüfe ob alle Compliance-Punkte bestätigt wurden
+    // Prüfe ob alle Compliance-Punkte mit "yes" beantwortet wurden
     const requiredComplianceKeys = ['ownPhone', 'ownAppointmentBook', 'ownCashRegister', 'ownPriceList', 'ownBranding']
-    const allComplianceChecked = requiredComplianceKeys.every(key => compliance?.[key] === true)
+    const allComplianceChecked = requiredComplianceKeys.every(key => compliance?.[key] === 'yes')
     
     if (!allComplianceChecked) {
       return NextResponse.json(
-        { error: 'Alle Compliance-Punkte müssen bestätigt sein' },
+        { error: 'Alle Compliance-Punkte müssen mit "Ja" beantwortet sein' },
         { status: 400 }
       )
     }
@@ -55,25 +55,39 @@ export async function POST(request: Request) {
         businessCity: businessData.businessCity,
         businessZipCode: businessData.businessZipCode,
         
-        // Compliance
-        ownPhone: compliance.ownPhone,
-        ownAppointmentBook: compliance.ownAppointmentBook,
-        ownCashRegister: compliance.ownCashRegister,
-        ownPriceList: compliance.ownPriceList,
-        ownBranding: compliance.ownBranding,
+        // Compliance - Boolean für Kompatibilität + Antwort-String
+        ownPhone: compliance.ownPhone === 'yes',
+        ownPhoneAnswer: compliance.ownPhone,
+        ownAppointmentBook: compliance.ownAppointmentBook === 'yes',
+        ownAppointmentBookAnswer: compliance.ownAppointmentBook,
+        ownCashRegister: compliance.ownCashRegister === 'yes',
+        ownCashRegisterAnswer: compliance.ownCashRegister,
+        ownPriceList: compliance.ownPriceList === 'yes',
+        ownPriceListAnswer: compliance.ownPriceList,
+        ownBranding: compliance.ownBranding === 'yes',
+        ownBrandingAnswer: compliance.ownBranding,
         complianceConfirmedAt: new Date(),
         
-        // Dokumente
+        // Dokumente mit "nicht verfügbar" Flags
         masterCertificateUrl: documentUrls?.masterCertificate || null,
         masterCertificateStatus: documentUrls?.masterCertificate ? 'UPLOADED' : 'PENDING',
+        masterCertificateNotAvailable: documentNotAvailable?.masterCertificate || false,
+        
         businessRegistrationUrl: documentUrls?.businessRegistration || null,
         businessRegistrationStatus: documentUrls?.businessRegistration ? 'UPLOADED' : 'PENDING',
+        businessRegistrationNotAvailable: documentNotAvailable?.businessRegistration || false,
+        
         liabilityInsuranceUrl: documentUrls?.liabilityInsurance || null,
         liabilityInsuranceStatus: documentUrls?.liabilityInsurance ? 'UPLOADED' : 'PENDING',
+        liabilityInsuranceNotAvailable: documentNotAvailable?.liabilityInsurance || false,
+        
         statusDeterminationUrl: documentUrls?.statusDetermination || null,
         statusDeterminationStatus: documentUrls?.statusDetermination ? 'UPLOADED' : 'PENDING',
+        statusDeterminationNotAvailable: documentNotAvailable?.statusDetermination || false,
+        
         craftsChamberUrl: documentUrls?.craftsChamber || null,
         craftsChamberStatus: documentUrls?.craftsChamber ? 'UPLOADED' : 'PENDING',
+        craftsChamberNotAvailable: documentNotAvailable?.craftsChamber || false,
         
         // Erklärung
         selfEmploymentDeclaration: declaration,
@@ -91,22 +105,41 @@ export async function POST(request: Request) {
         businessStreet: businessData.businessStreet,
         businessCity: businessData.businessCity,
         businessZipCode: businessData.businessZipCode,
-        ownPhone: compliance.ownPhone,
-        ownAppointmentBook: compliance.ownAppointmentBook,
-        ownCashRegister: compliance.ownCashRegister,
-        ownPriceList: compliance.ownPriceList,
-        ownBranding: compliance.ownBranding,
+        
+        // Compliance
+        ownPhone: compliance.ownPhone === 'yes',
+        ownPhoneAnswer: compliance.ownPhone,
+        ownAppointmentBook: compliance.ownAppointmentBook === 'yes',
+        ownAppointmentBookAnswer: compliance.ownAppointmentBook,
+        ownCashRegister: compliance.ownCashRegister === 'yes',
+        ownCashRegisterAnswer: compliance.ownCashRegister,
+        ownPriceList: compliance.ownPriceList === 'yes',
+        ownPriceListAnswer: compliance.ownPriceList,
+        ownBranding: compliance.ownBranding === 'yes',
+        ownBrandingAnswer: compliance.ownBranding,
         complianceConfirmedAt: new Date(),
+        
+        // Dokumente
         masterCertificateUrl: documentUrls?.masterCertificate || null,
         masterCertificateStatus: documentUrls?.masterCertificate ? 'UPLOADED' : 'PENDING',
+        masterCertificateNotAvailable: documentNotAvailable?.masterCertificate || false,
+        
         businessRegistrationUrl: documentUrls?.businessRegistration || null,
         businessRegistrationStatus: documentUrls?.businessRegistration ? 'UPLOADED' : 'PENDING',
+        businessRegistrationNotAvailable: documentNotAvailable?.businessRegistration || false,
+        
         liabilityInsuranceUrl: documentUrls?.liabilityInsurance || null,
         liabilityInsuranceStatus: documentUrls?.liabilityInsurance ? 'UPLOADED' : 'PENDING',
+        liabilityInsuranceNotAvailable: documentNotAvailable?.liabilityInsurance || false,
+        
         statusDeterminationUrl: documentUrls?.statusDetermination || null,
         statusDeterminationStatus: documentUrls?.statusDetermination ? 'UPLOADED' : 'PENDING',
+        statusDeterminationNotAvailable: documentNotAvailable?.statusDetermination || false,
+        
         craftsChamberUrl: documentUrls?.craftsChamber || null,
         craftsChamberStatus: documentUrls?.craftsChamber ? 'UPLOADED' : 'PENDING',
+        craftsChamberNotAvailable: documentNotAvailable?.craftsChamber || false,
+        
         selfEmploymentDeclaration: declaration,
         declarationSignedAt: new Date(),
         currentStep: 4,

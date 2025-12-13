@@ -1,12 +1,19 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { 
   Loader2, 
   Sparkles,
@@ -28,9 +35,34 @@ import {
   FileText,
   Clock,
   Check,
-  Info
+  Info,
+  HelpCircle,
+  MapPin
 } from 'lucide-react'
 import { FileUploader } from '@/components/ui/file-uploader'
+
+type ComplianceAnswer = 'yes' | 'no' | 'pending' | null
+
+interface OnboardingConfig {
+  ownPhoneInfo: string
+  ownAppointmentBookInfo: string
+  ownCashRegisterInfo: string
+  ownPriceListInfo: string
+  ownBrandingInfo: string
+  masterCertificateInfo: string
+  businessRegistrationInfo: string
+  liabilityInsuranceInfo: string
+  statusDeterminationInfo: string
+  craftsChamberInfo: string
+  step1Title: string
+  step1Description: string
+  step2Title: string
+  step2Description: string
+  step3Title: string
+  step3Description: string
+  step4Title: string
+  step4Description: string
+}
 
 type DocumentKey = 
   | 'masterCertificate'
@@ -134,6 +166,14 @@ export default function StylistOnboardingPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [formError, setFormError] = useState('')
   const [complianceError, setComplianceError] = useState(false)
+  
+  // CMS Config für Info-Texte
+  const [config, setConfig] = useState<OnboardingConfig | null>(null)
+  
+  // PLZ Lookup State
+  const [plzLoading, setPlzLoading] = useState(false)
+  const [plzError, setPlzError] = useState('')
+  const plzDebounceRef = useRef<NodeJS.Timeout | null>(null)
 
   // Step 1: Geschäftsdaten
   const [businessData, setBusinessData] = useState({
@@ -145,17 +185,23 @@ export default function StylistOnboardingPage() {
     businessZipCode: '',
   })
 
-  // Step 2: Compliance
-  const [compliance, setCompliance] = useState<Record<string, boolean>>({
-    ownPhone: false,
-    ownAppointmentBook: false,
-    ownCashRegister: false,
-    ownPriceList: false,
-    ownBranding: false,
+  // Step 2: Compliance - erweitert mit yes/no/pending Antworten
+  const [compliance, setCompliance] = useState<Record<string, ComplianceAnswer>>({
+    ownPhone: null,
+    ownAppointmentBook: null,
+    ownCashRegister: null,
+    ownPriceList: null,
+    ownBranding: null,
   })
 
-  // Step 3: Documents
-  const [documents, setDocuments] = useState<Record<DocumentKey, { file: File | null; status: DocumentStatus; url?: string; uploading?: boolean }>>({
+  // Step 3: Documents - erweitert mit notAvailable Flag
+  const [documents, setDocuments] = useState<Record<DocumentKey, { 
+    file: File | null
+    status: DocumentStatus
+    url?: string
+    uploading?: boolean
+    notAvailable?: boolean 
+  }>>({
     masterCertificate: { file: null, status: 'pending' },
     businessRegistration: { file: null, status: 'pending' },
     liabilityInsurance: { file: null, status: 'pending' },
@@ -165,6 +211,73 @@ export default function StylistOnboardingPage() {
 
   // Step 4: Declaration
   const [declaration, setDeclaration] = useState(false)
+  
+  // Load CMS Config
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const res = await fetch('/api/onboarding/config')
+        if (res.ok) {
+          const data = await res.json()
+          setConfig(data)
+        }
+      } catch (error) {
+        console.error('Error loading onboarding config:', error)
+      }
+    }
+    loadConfig()
+  }, [])
+  
+  // PLZ Auto-Fill Function
+  const lookupPLZ = useCallback(async (plz: string) => {
+    if (plz.length !== 5 || !/^\d{5}$/.test(plz)) {
+      return
+    }
+    
+    setPlzLoading(true)
+    setPlzError('')
+    
+    try {
+      const res = await fetch(`/api/lookup/plz?plz=${plz}`)
+      const data = await res.json()
+      
+      if (data.found && data.city) {
+        setBusinessData(prev => ({
+          ...prev,
+          businessCity: data.city,
+        }))
+      } else if (data.error) {
+        setPlzError(data.error)
+      }
+    } catch (error) {
+      console.error('PLZ lookup error:', error)
+    } finally {
+      setPlzLoading(false)
+    }
+  }, [])
+  
+  // PLZ Change Handler with Debounce
+  const handlePlzChange = (value: string) => {
+    // Only allow digits
+    const cleanValue = value.replace(/\D/g, '').slice(0, 5)
+    setBusinessData(prev => ({ ...prev, businessZipCode: cleanValue }))
+    setPlzError('')
+    
+    // Clear previous timeout
+    if (plzDebounceRef.current) {
+      clearTimeout(plzDebounceRef.current)
+    }
+    
+    // Debounce PLZ lookup
+    if (cleanValue.length === 5) {
+      plzDebounceRef.current = setTimeout(() => {
+        lookupPLZ(cleanValue)
+      }, 300)
+    } else {
+      // Clear city if PLZ is incomplete
+      setBusinessData(prev => ({ ...prev, businessCity: '' }))
+    }
+  }
 
   // Auth check - nur unauthentifizierte Nutzer weiterleiten
   // Compliance-Onboarding ist für alle eingeloggten Stylisten zugänglich,
@@ -177,27 +290,46 @@ export default function StylistOnboardingPage() {
     // das zweite (Compliance) ist und unabhängig vom Basis-Onboarding ist
   }, [status, router])
 
-  const allComplianceChecked = Object.values(compliance).every(Boolean)
-  const allDocumentsUploaded = Object.values(documents).every(d => d.url !== undefined || d.status === 'uploaded')
+  // Compliance ist erfüllt wenn alle "yes" haben
+  const allComplianceChecked = Object.values(compliance).every(v => v === 'yes')
+  // Alle Compliance-Fragen müssen beantwortet sein (nicht null)
+  const allComplianceAnswered = Object.values(compliance).every(v => v !== null)
+  // Dokumente sind ok wenn entweder hochgeladen oder als "nicht verfügbar" markiert
+  const allDocumentsHandled = Object.values(documents).every(d => 
+    d.url !== undefined || d.status === 'uploaded' || d.notAvailable === true
+  )
 
   const canProceed = useCallback(() => {
     switch (currentStep) {
       case 1:
         return businessData.companyName && businessData.businessStreet && businessData.businessCity && businessData.businessZipCode
       case 2:
-        return allComplianceChecked
+        // Alle müssen beantwortet UND alle müssen "yes" sein
+        return allComplianceAnswered && allComplianceChecked
       case 3:
-        return allDocumentsUploaded
+        return allDocumentsHandled
       case 4:
         return declaration
       default:
         return false
     }
-  }, [currentStep, businessData, allComplianceChecked, allDocumentsUploaded, declaration])
+  }, [currentStep, businessData, allComplianceAnswered, allComplianceChecked, allDocumentsHandled, declaration])
 
-  const handleComplianceToggle = (key: string) => {
-    setCompliance(prev => ({ ...prev, [key]: !prev[key] }))
+  const handleComplianceAnswer = (key: string, answer: ComplianceAnswer) => {
+    setCompliance(prev => ({ ...prev, [key]: answer }))
     setComplianceError(false)
+  }
+  
+  const handleDocumentNotAvailable = (key: DocumentKey, notAvailable: boolean) => {
+    setDocuments(prev => ({
+      ...prev,
+      [key]: { 
+        ...prev[key], 
+        notAvailable,
+        // Wenn "nicht verfügbar" gewählt, lösche ggf. vorhandene Datei
+        ...(notAvailable ? { file: null, url: undefined, status: 'pending' as DocumentStatus } : {})
+      }
+    }))
   }
 
   // Wird aufgerufen wenn eine Datei ausgewählt wird (vor dem Upload)
@@ -248,12 +380,16 @@ export default function StylistOnboardingPage() {
     setFormError('')
 
     try {
-      // Dokumente sind bereits hochgeladen - sammle nur die URLs
+      // Dokumente sind bereits hochgeladen - sammle URLs und "nicht verfügbar" Flags
       const documentUrls: Record<string, string> = {}
+      const documentNotAvailable: Record<string, boolean> = {}
       
       for (const [key, doc] of Object.entries(documents)) {
         if (doc.url) {
           documentUrls[key] = doc.url
+        }
+        if (doc.notAvailable) {
+          documentNotAvailable[key] = true
         }
       }
 
@@ -263,8 +399,9 @@ export default function StylistOnboardingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           businessData,
-          compliance,
+          compliance, // Enthält jetzt "yes"/"no"/"pending" Antworten
           documentUrls,
+          documentNotAvailable,
           declaration,
         }),
       })
@@ -513,16 +650,35 @@ export default function StylistOnboardingPage() {
                     <div className="grid gap-6 md:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="businessZipCode" className="text-white">PLZ *</Label>
-                        <Input
-                          id="businessZipCode"
-                          placeholder="z.B. 10115"
-                          value={businessData.businessZipCode}
-                          onChange={(e) => setBusinessData({ ...businessData, businessZipCode: e.target.value })}
-                          className="h-12 bg-white/5 border-white/10 text-white placeholder:text-muted-foreground focus:border-emerald-500 focus:ring-emerald-500/20"
-                        />
+                        <div className="relative">
+                          <Input
+                            id="businessZipCode"
+                            placeholder="z.B. 10115"
+                            value={businessData.businessZipCode}
+                            onChange={(e) => handlePlzChange(e.target.value)}
+                            maxLength={5}
+                            className="h-12 bg-white/5 border-white/10 text-white placeholder:text-muted-foreground focus:border-emerald-500 focus:ring-emerald-500/20"
+                          />
+                          {plzLoading && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              <Loader2 className="h-4 w-4 animate-spin text-emerald-400" />
+                            </div>
+                          )}
+                        </div>
+                        {plzError && (
+                          <p className="text-xs text-red-400 mt-1">{plzError}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="businessCity" className="text-white">Stadt *</Label>
+                        <Label htmlFor="businessCity" className="text-white flex items-center gap-2">
+                          Stadt *
+                          {businessData.businessCity && businessData.businessZipCode.length === 5 && (
+                            <span className="flex items-center gap-1 text-xs text-emerald-400">
+                              <MapPin className="h-3 w-3" />
+                              automatisch ermittelt
+                            </span>
+                          )}
+                        </Label>
                         <Input
                           id="businessCity"
                           placeholder="z.B. Berlin"
@@ -551,8 +707,12 @@ export default function StylistOnboardingPage() {
                       <Shield className="h-7 w-7 text-amber-400" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-white">Selbstständigkeits-Check</h2>
-                      <p className="text-muted-foreground">Wichtig: Diese Kriterien müssen für die Stuhlmiete erfüllt sein</p>
+                      <h2 className="text-2xl font-bold text-white">
+                        {config?.step2Title || 'Selbstständigkeits-Check'}
+                      </h2>
+                      <p className="text-muted-foreground">
+                        {config?.step2Description || 'Diese Kriterien dokumentieren deine Selbstständigkeit'}
+                      </p>
                     </div>
                   </div>
 
@@ -568,51 +728,123 @@ export default function StylistOnboardingPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    {COMPLIANCE_ITEMS.map((item, index) => {
-                      const Icon = item.icon
-                      const isChecked = compliance[item.key]
-                      
-                      return (
-                        <motion.div
-                          key={item.key}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                        >
-                          <button
-                            onClick={() => handleComplianceToggle(item.key)}
+                  <TooltipProvider>
+                    <div className="space-y-4">
+                      {COMPLIANCE_ITEMS.map((item, index) => {
+                        const Icon = item.icon
+                        const answer = compliance[item.key]
+                        const infoKey = `${item.key}Info` as keyof OnboardingConfig
+                        const infoText = config?.[infoKey] || item.description
+                        
+                        return (
+                          <motion.div
+                            key={item.key}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
                             className={`
-                              w-full p-4 md:p-5 rounded-2xl border transition-all duration-300 text-left
-                              ${isChecked 
-                                ? 'bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/15' 
-                                : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'}
+                              p-4 md:p-5 rounded-2xl border transition-all duration-300
+                              ${answer === 'yes' 
+                                ? 'bg-emerald-500/10 border-emerald-500/30' 
+                                : answer === 'no'
+                                  ? 'bg-red-500/10 border-red-500/30'
+                                  : 'bg-white/5 border-white/10'}
                             `}
                           >
                             <div className="flex items-start gap-4">
-                              <div className={`
-                                w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300
-                                ${isChecked 
-                                  ? 'bg-emerald-500 text-white' 
-                                  : 'bg-white/10 border border-white/20'}
-                              `}>
-                                {isChecked && <Check className="h-4 w-4" />}
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-1">
-                                  <Icon className={`h-5 w-5 ${isChecked ? 'text-emerald-400' : 'text-muted-foreground'}`} />
-                                  <span className={`font-medium ${isChecked ? 'text-white' : 'text-white/80'}`}>
+                              <Icon className={`h-6 w-6 flex-shrink-0 mt-1 ${
+                                answer === 'yes' ? 'text-emerald-400' : 
+                                answer === 'no' ? 'text-red-400' : 'text-muted-foreground'
+                              }`} />
+                              
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className={`font-medium ${
+                                    answer === 'yes' ? 'text-white' : 
+                                    answer === 'no' ? 'text-red-200' : 'text-white/80'
+                                  }`}>
                                     {item.label}
                                   </span>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                                        <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-white" />
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-xs bg-[#1a1a2e] border-white/10 text-white">
+                                      <p className="text-sm">{infoText}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
                                 </div>
-                                <p className="text-sm text-muted-foreground ml-8">{item.description}</p>
+                                
+                                <p className="text-sm text-muted-foreground mb-4">{item.description}</p>
+                                
+                                {/* Ja / Nein / Noch nicht Buttons */}
+                                <div className="flex flex-wrap gap-2">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant={answer === 'yes' ? 'default' : 'outline'}
+                                    onClick={() => handleComplianceAnswer(item.key, 'yes')}
+                                    className={`${
+                                      answer === 'yes' 
+                                        ? 'bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-500' 
+                                        : 'border-white/20 hover:border-emerald-500/50 hover:bg-emerald-500/10'
+                                    }`}
+                                  >
+                                    <Check className="h-4 w-4 mr-1" />
+                                    Ja
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant={answer === 'no' ? 'default' : 'outline'}
+                                    onClick={() => handleComplianceAnswer(item.key, 'no')}
+                                    className={`${
+                                      answer === 'no' 
+                                        ? 'bg-red-500 hover:bg-red-600 text-white border-red-500' 
+                                        : 'border-white/20 hover:border-red-500/50 hover:bg-red-500/10'
+                                    }`}
+                                  >
+                                    <X className="h-4 w-4 mr-1" />
+                                    Nein
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant={answer === 'pending' ? 'default' : 'outline'}
+                                    onClick={() => handleComplianceAnswer(item.key, 'pending')}
+                                    className={`${
+                                      answer === 'pending' 
+                                        ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-500' 
+                                        : 'border-white/20 hover:border-amber-500/50 hover:bg-amber-500/10'
+                                    }`}
+                                  >
+                                    <Clock className="h-4 w-4 mr-1" />
+                                    In Arbeit
+                                  </Button>
+                                </div>
+                                
+                                {/* Warnung bei "Nein" */}
+                                {answer === 'no' && (
+                                  <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20"
+                                  >
+                                    <p className="text-xs text-red-300">
+                                      <AlertTriangle className="h-3 w-3 inline mr-1" />
+                                      Dieses Kriterium muss erfüllt sein, um als selbstständig zu gelten.
+                                    </p>
+                                  </motion.div>
+                                )}
                               </div>
                             </div>
-                          </button>
-                        </motion.div>
-                      )
-                    })}
-                  </div>
+                          </motion.div>
+                        )
+                      })}
+                    </div>
+                  </TooltipProvider>
 
                   <AnimatePresence>
                     {complianceError && (
@@ -625,7 +857,7 @@ export default function StylistOnboardingPage() {
                         <div className="flex gap-3">
                           <AlertTriangle className="h-5 w-5 text-red-400 flex-shrink-0" />
                           <div className="text-sm">
-                            <p className="font-medium text-red-400 mb-1">Alle Kriterien müssen erfüllt sein</p>
+                            <p className="font-medium text-red-400 mb-1">Alle Kriterien müssen mit &quot;Ja&quot; beantwortet sein</p>
                             <p className="text-red-400/70">
                               Die Stuhlmiete setzt voraus, dass du alle oben genannten Kriterien erfüllst. 
                               Bitte bestätige jeden Punkt oder kontaktiere uns für weitere Informationen.
@@ -653,102 +885,165 @@ export default function StylistOnboardingPage() {
                       <FileCheck className="h-7 w-7 text-blue-400" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-white">Dokumente hochladen</h2>
-                      <p className="text-muted-foreground">Lade alle erforderlichen Nachweise hoch</p>
+                      <h2 className="text-2xl font-bold text-white">
+                        {config?.step3Title || 'Dokumente hochladen'}
+                      </h2>
+                      <p className="text-muted-foreground">
+                        {config?.step3Description || 'Lade alle erforderlichen Nachweise hoch oder markiere, welche dir noch fehlen'}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    {DOCUMENT_SLOTS.map((slot, index) => {
-                      const doc = documents[slot.key]
-                      const hasFile = doc.url !== undefined || doc.status === 'uploaded'
-                      
-                      return (
-                        <motion.div
-                          key={slot.key}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          className={`
-                            p-5 rounded-2xl border transition-all duration-300
-                            ${hasFile 
-                              ? 'bg-emerald-500/10 border-emerald-500/30' 
-                              : 'bg-white/5 border-white/10'}
-                          `}
-                        >
-                          <div className="flex items-start gap-4">
-                            <div className={`
-                              w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0
+                  <TooltipProvider>
+                    <div className="space-y-4">
+                      {DOCUMENT_SLOTS.map((slot, index) => {
+                        const doc = documents[slot.key]
+                        const hasFile = doc.url !== undefined || doc.status === 'uploaded'
+                        const isNotAvailable = doc.notAvailable === true
+                        const infoKey = `${slot.key}Info` as keyof OnboardingConfig
+                        const infoText = config?.[infoKey] || slot.description
+                        
+                        return (
+                          <motion.div
+                            key={slot.key}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className={`
+                              p-5 rounded-2xl border transition-all duration-300
                               ${hasFile 
-                                ? 'bg-emerald-500/20 text-emerald-400' 
-                                : 'bg-white/10 text-muted-foreground'}
-                            `}>
-                              {hasFile ? <CheckCircle2 className="h-6 w-6" /> : <FileText className="h-6 w-6" />}
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-semibold text-white">{slot.label}</h3>
-                                {slot.required && (
-                                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400">Pflicht</span>
-                                )}
+                                ? 'bg-emerald-500/10 border-emerald-500/30' 
+                                : isNotAvailable
+                                  ? 'bg-amber-500/10 border-amber-500/30'
+                                  : 'bg-white/5 border-white/10'}
+                            `}
+                          >
+                            <div className="flex items-start gap-4">
+                              <div className={`
+                                w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0
+                                ${hasFile 
+                                  ? 'bg-emerald-500/20 text-emerald-400' 
+                                  : isNotAvailable
+                                    ? 'bg-amber-500/20 text-amber-400'
+                                    : 'bg-white/10 text-muted-foreground'}
+                              `}>
+                                {hasFile ? <CheckCircle2 className="h-6 w-6" /> : 
+                                 isNotAvailable ? <Clock className="h-6 w-6" /> : 
+                                 <FileText className="h-6 w-6" />}
                               </div>
-                              <p className="text-sm text-muted-foreground mb-3">{slot.description}</p>
                               
-                              {slot.helpLink && (
-                                <a
-                                  href={slot.helpLink}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300 mb-3"
-                                >
-                                  <ExternalLink className="h-3.5 w-3.5" />
-                                  {slot.helpText || 'Weitere Informationen'}
-                                </a>
-                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className="font-semibold text-white">{slot.label}</h3>
+                                  {slot.required && (
+                                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400">Pflicht</span>
+                                  )}
+                                  {/* Info Tooltip */}
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                                        <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-white" />
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-xs bg-[#1a1a2e] border-white/10 text-white">
+                                      <p className="text-sm">{infoText}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-3">{slot.description}</p>
+                                
+                                {slot.helpLink && (
+                                  <a
+                                    href={slot.helpLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300 mb-3"
+                                  >
+                                    <ExternalLink className="h-3.5 w-3.5" />
+                                    {slot.helpText || 'Weitere Informationen'}
+                                  </a>
+                                )}
 
-                              <FileUploader
-                                value={doc.file || null}
-                                onFileSelect={(file) => handleFileSelect(slot.key, file)}
-                                onUpload={(response) => handleUploadComplete(slot.key, response as { url: string; fileName: string })}
-                                onRemove={() => handleRemoveFile(slot.key)}
-                                uploadEndpoint="/api/onboarding/documents/upload"
-                                uploadData={{ documentType: slot.key }}
-                                accept={{
-                                  'application/pdf': ['.pdf'],
-                                  'image/jpeg': ['.jpg', '.jpeg'],
-                                  'image/png': ['.png'],
-                                  'application/msword': ['.doc'],
-                                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-                                }}
-                                placeholder="Dokument hochladen"
-                                description="PDF, JPG, PNG, Word (max. 10MB)"
-                                autoUpload={true}
-                              />
+                                {/* File Uploader - nur anzeigen wenn nicht "nicht verfügbar" */}
+                                {!isNotAvailable && (
+                                  <FileUploader
+                                    value={doc.file || null}
+                                    onFileSelect={(file) => handleFileSelect(slot.key, file)}
+                                    onUpload={(response) => handleUploadComplete(slot.key, response as { url: string; fileName: string })}
+                                    onRemove={() => handleRemoveFile(slot.key)}
+                                    uploadEndpoint="/api/onboarding/documents/upload"
+                                    uploadData={{ documentType: slot.key }}
+                                    accept={{
+                                      'application/pdf': ['.pdf'],
+                                      'image/jpeg': ['.jpg', '.jpeg'],
+                                      'image/png': ['.png'],
+                                      'application/msword': ['.doc'],
+                                      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+                                    }}
+                                    placeholder="Dokument hochladen"
+                                    description="PDF, JPG, PNG, Word (max. 10MB)"
+                                    autoUpload={true}
+                                  />
+                                )}
+                                
+                                {/* "Noch nicht vorhanden" Info wenn markiert */}
+                                {isNotAvailable && (
+                                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                                    <p className="text-sm text-amber-300 flex items-center gap-2">
+                                      <Clock className="h-4 w-4" />
+                                      Du hast markiert, dass dieses Dokument dir noch nicht vorliegt. 
+                                      Du kannst es später nachreichen.
+                                    </p>
+                                  </div>
+                                )}
+                                
+                                {/* Checkbox "Dokument liegt mir noch nicht vor" */}
+                                <div className="flex items-center space-x-3 mt-4 pt-4 border-t border-white/10">
+                                  <Checkbox
+                                    id={`notAvailable-${slot.key}`}
+                                    checked={isNotAvailable}
+                                    onCheckedChange={(checked) => handleDocumentNotAvailable(slot.key, checked as boolean)}
+                                    className="border-white/30 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                                  />
+                                  <label
+                                    htmlFor={`notAvailable-${slot.key}`}
+                                    className="text-sm text-muted-foreground cursor-pointer hover:text-white transition-colors"
+                                  >
+                                    Dokument liegt mir noch nicht vor
+                                  </label>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </motion.div>
-                      )
-                    })}
-                  </div>
+                          </motion.div>
+                        )
+                      })}
+                    </div>
+                  </TooltipProvider>
 
                   {/* Upload Progress Summary */}
                   <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm text-muted-foreground">Upload-Fortschritt</span>
+                      <span className="text-sm text-muted-foreground">Fortschritt</span>
                       <span className="text-sm font-medium text-white">
-                        {Object.values(documents).filter(d => d.url || d.status === 'uploaded').length} / {DOCUMENT_SLOTS.length}
+                        {Object.values(documents).filter(d => d.url || d.status === 'uploaded' || d.notAvailable).length} / {DOCUMENT_SLOTS.length}
                       </span>
                     </div>
                     <div className="h-2 rounded-full bg-white/10 overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ 
-                          width: `${(Object.values(documents).filter(d => d.url || d.status === 'uploaded').length / DOCUMENT_SLOTS.length) * 100}%` 
+                          width: `${(Object.values(documents).filter(d => d.url || d.status === 'uploaded' || d.notAvailable).length / DOCUMENT_SLOTS.length) * 100}%` 
                         }}
                         className="h-full bg-gradient-to-r from-emerald-500 to-teal-500"
                       />
                     </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {Object.values(documents).filter(d => d.notAvailable).length > 0 && (
+                        <span className="text-amber-400">
+                          {Object.values(documents).filter(d => d.notAvailable).length} Dokument(e) zum Nachreichen markiert
+                        </span>
+                      )}
+                    </p>
                   </div>
                 </motion.div>
               )}
@@ -804,19 +1099,26 @@ export default function StylistOnboardingPage() {
                     <div className="p-5 rounded-2xl bg-white/5 border border-white/10 md:col-span-2">
                       <div className="flex items-center gap-3 mb-4">
                         <FileCheck className="h-5 w-5 text-blue-400" />
-                        <h3 className="font-semibold text-white">Hochgeladene Dokumente</h3>
+                        <h3 className="font-semibold text-white">Dokumente</h3>
                       </div>
                       <div className="grid gap-2 md:grid-cols-2">
                         {DOCUMENT_SLOTS.map(slot => {
-                          const hasFile = documents[slot.key].url || documents[slot.key].status === 'uploaded'
+                          const doc = documents[slot.key]
+                          const hasFile = doc.url || doc.status === 'uploaded'
+                          const isNotAvailable = doc.notAvailable === true
                           return (
                             <div key={slot.key} className="flex items-center gap-2 text-sm">
                               {hasFile ? (
                                 <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                              ) : isNotAvailable ? (
+                                <Clock className="h-4 w-4 text-amber-400" />
                               ) : (
                                 <Clock className="h-4 w-4 text-muted-foreground" />
                               )}
-                              <span className={hasFile ? 'text-white' : 'text-muted-foreground'}>{slot.label}</span>
+                              <span className={hasFile ? 'text-white' : isNotAvailable ? 'text-amber-300' : 'text-muted-foreground'}>
+                                {slot.label}
+                                {isNotAvailable && ' (wird nachgereicht)'}
+                              </span>
                             </div>
                           )
                         })}
