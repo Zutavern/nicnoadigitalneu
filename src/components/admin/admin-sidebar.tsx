@@ -45,6 +45,8 @@ import {
   DollarSign,
   ClipboardCheck,
   Wallet,
+  X,
+  Database,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -54,6 +56,20 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+} from '@/components/ui/sheet'
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
+import { useSidebar } from '@/hooks/use-sidebar'
+import { Button } from '@/components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 // Type definitions for menu items
 interface MenuItem {
@@ -199,6 +215,7 @@ const menuItems: MenuSection[] = [
         icon: Settings,
         children: [
           { label: 'Systemeinstellungen', href: '/admin/settings', icon: Settings },
+          { label: 'Backups', href: '/admin/backup', icon: Database },
           { label: 'Sicherheit', href: '/admin/security', icon: Shield },
           { label: 'SEO', href: '/admin/seo', icon: Search },
           { label: 'Fehlermeldungen', href: '/admin/error-messages', icon: AlertTriangle },
@@ -209,16 +226,11 @@ const menuItems: MenuSection[] = [
   },
 ]
 
-export function AdminSidebar() {
-  const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
-  const [mounted, setMounted] = useState(false)
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({})
+// ==================== SIDEBAR CONTENT ====================
 
-  // Prevent hydration mismatch by waiting for mount
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+function SidebarContent({ collapsed }: { collapsed: boolean }) {
+  const pathname = usePathname()
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({})
 
   // Auto-open sections based on current path
   useEffect(() => {
@@ -226,7 +238,6 @@ export function AdminSidebar() {
     
     const newOpenSections: Record<string, boolean> = {}
     
-    // Check each menu section to see if current path is within it
     menuItems.forEach((section) => {
       section.items.forEach((item) => {
         if (item.children) {
@@ -243,7 +254,6 @@ export function AdminSidebar() {
             newOpenSections[item.label.toLowerCase()] = true
           }
           
-          // Check third level
           item.children.forEach((child) => {
             if (child.children) {
               const shouldOpenChild = child.children.some((grandchild) =>
@@ -260,22 +270,6 @@ export function AdminSidebar() {
     
     setOpenSections((prev) => ({ ...prev, ...newOpenSections }))
   }, [pathname])
-
-  // Don't render until mounted to prevent hydration mismatch
-  if (!mounted) {
-    return (
-      <aside className="fixed left-0 top-0 z-40 h-screen w-[280px] border-r bg-card/95 backdrop-blur-sm flex flex-col">
-        {/* Placeholder during SSR */}
-        <div className="flex h-16 items-center justify-between border-b px-4">
-          <div className="flex items-center">
-            <span className="text-lg font-bold">
-              NICNOA<span className="text-primary">&CO</span><span className="text-primary">.online</span>
-            </span>
-          </div>
-        </div>
-      </aside>
-    )
-  }
 
   const toggleSection = (label: string) => {
     setOpenSections((prev) => ({
@@ -306,7 +300,7 @@ export function AdminSidebar() {
   ): React.ReactNode => {
     const key = `${sectionIndex}-${itemIndex}-${depth}-${item.label}`
     
-    // Item with children (collapsible)
+    // Item with children (collapsible) - only show if not collapsed
     if (item.children && !collapsed) {
       const isOpen = openSections[item.label.toLowerCase()] || false
       
@@ -336,6 +330,36 @@ export function AdminSidebar() {
       )
     }
 
+    // Collapsed mode with tooltip
+    if (collapsed && item.href) {
+      const isActive = pathname === item.href
+      
+      return (
+        <li key={key}>
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex items-center justify-center rounded-lg p-3 text-sm transition-all",
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="font-medium">
+                {item.label}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </li>
+      )
+    }
+
     // Regular item (link)
     const isActive = item.href && pathname === item.href
     
@@ -351,7 +375,7 @@ export function AdminSidebar() {
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
-          <item.icon className={cn("flex-shrink-0", depth === 0 ? "h-5 w-5" : "h-4 w-4", collapsed && "mx-auto")} />
+          <item.icon className={cn("flex-shrink-0", depth === 0 ? "h-5 w-5" : "h-4 w-4")} />
           {!collapsed && <span>{item.label}</span>}
         </Link>
       </li>
@@ -359,38 +383,7 @@ export function AdminSidebar() {
   }
 
   return (
-    <aside
-      className={cn(
-        "fixed left-0 top-0 z-40 h-screen border-r bg-card/95 backdrop-blur-sm flex flex-col transition-all duration-300 ease-in-out",
-        collapsed ? "w-20" : "w-[280px]"
-      )}
-    >
-      {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b px-4">
-        <Link href="/admin" className="flex items-center gap-2">
-          {!collapsed && (
-            <div className="flex items-center">
-              <span className="text-lg font-bold">
-                NICNOA<span className="text-primary">&CO</span><span className="text-primary">.online</span>
-              </span>
-            </div>
-          )}
-          {collapsed && (
-            <span className="text-xl font-bold text-primary">N</span>
-          )}
-        </Link>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="rounded-lg p-2 hover:bg-muted transition-colors"
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-        </button>
-      </div>
-
+    <>
       {/* Admin Badge */}
       {!collapsed && (
         <div className="mx-4 mt-4">
@@ -421,30 +414,142 @@ export function AdminSidebar() {
 
       {/* Footer */}
       <div className="border-t p-3">
-        <Link
-          href="/admin/help"
-          className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all",
-            collapsed && "justify-center"
-          )}
-        >
-          <HelpCircle className="h-5 w-5" />
-          {!collapsed && <span>Hilfe & Support</span>}
-        </Link>
-        <button
-          onClick={() => {
-            const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
-            signOut({ callbackUrl: `${baseUrl}/` })
-          }}
-          className={cn(
-            "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-all",
-            collapsed && "justify-center"
-          )}
-        >
-          <LogOut className="h-5 w-5" />
-          {!collapsed && <span>Abmelden</span>}
-        </button>
+        {collapsed ? (
+          <>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    href="/admin/help"
+                    className="flex items-center justify-center rounded-lg p-3 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+                  >
+                    <HelpCircle className="h-5 w-5" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">Hilfe & Support</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => {
+                      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+                      signOut({ callbackUrl: `${baseUrl}/` })
+                    }}
+                    className="flex w-full items-center justify-center rounded-lg p-3 text-sm text-destructive hover:bg-destructive/10 transition-all"
+                  >
+                    <LogOut className="h-5 w-5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">Abmelden</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </>
+        ) : (
+          <>
+            <Link
+              href="/admin/help"
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+            >
+              <HelpCircle className="h-5 w-5" />
+              <span>Hilfe & Support</span>
+            </Link>
+            <button
+              onClick={() => {
+                const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+                signOut({ callbackUrl: `${baseUrl}/` })
+              }}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-all"
+            >
+              <LogOut className="h-5 w-5" />
+              <span>Abmelden</span>
+            </button>
+          </>
+        )}
       </div>
+    </>
+  )
+}
+
+// ==================== MAIN COMPONENT ====================
+
+export function AdminSidebar() {
+  const { isOpen, isCollapsed, isMobile, toggle, close } = useSidebar()
+
+  return (
+    <>
+      {/* Mobile: Sheet/Drawer - Only rendered on client when isMobile */}
+      <Sheet open={isMobile && isOpen} onOpenChange={(open) => !open && close()}>
+        <SheetContent 
+          side="left" 
+          className="w-[280px] p-0 flex flex-col"
+        >
+          <VisuallyHidden>
+            <SheetTitle>Admin Navigation</SheetTitle>
+          </VisuallyHidden>
+          {/* Header */}
+          <div className="flex h-16 items-center justify-between border-b px-4">
+            <Link href="/admin" className="flex items-center gap-2" onClick={close}>
+              <span className="text-lg font-bold">
+                NICNOA<span className="text-primary">&CO</span><span className="text-primary">.online</span>
+              </span>
+            </Link>
+          </div>
+          
+          <SidebarContent collapsed={false} />
+        </SheetContent>
+      </Sheet>
+
+      {/* Tablet/Desktop: Fixed Sidebar - Always rendered, CSS handles visibility */}
+      <aside
+        className={cn(
+          "fixed left-0 top-0 z-40 h-screen border-r bg-card/95 backdrop-blur-sm flex-col transition-all duration-300 ease-in-out hidden sm:flex",
+          isCollapsed ? "w-20" : "w-[280px]"
+        )}
+      >
+      {/* Header */}
+      <div className="flex h-16 items-center justify-between border-b px-4">
+        <Link href="/admin" className="flex items-center gap-2">
+          {!isCollapsed && (
+            <div className="flex items-center">
+              <span className="text-lg font-bold">
+                NICNOA<span className="text-primary">&CO</span><span className="text-primary">.online</span>
+              </span>
+            </div>
+          )}
+          {isCollapsed && (
+            <span className="text-xl font-bold text-primary mx-auto">N</span>
+          )}
+        </Link>
+        {!isCollapsed && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggle}
+            className="h-8 w-8 rounded-lg"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+
+      {/* Expand button when collapsed */}
+      {isCollapsed && (
+        <div className="flex justify-center py-2 border-b">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggle}
+            className="h-8 w-8 rounded-lg"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      <SidebarContent collapsed={isCollapsed} />
     </aside>
+    </>
   )
 }

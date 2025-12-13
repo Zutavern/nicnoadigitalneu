@@ -76,12 +76,6 @@ interface PlatformSettings {
   faviconUrl: string | null
   primaryColor: string | null
   trialDays: number
-  smtpHost: string | null
-  smtpPort: number | null
-  smtpUser: string | null
-  smtpPassword: string | null
-  smtpFrom: string | null
-  smtpSecure: boolean
   googleAnalyticsId: string | null
   useDemoMode: boolean
   demoModeMessage: string | null
@@ -106,11 +100,6 @@ export default function SettingsPage() {
   const [currency, setCurrency] = useState('EUR')
   const [primaryColor, setPrimaryColor] = useState('#6366f1')
   const [trialDays, setTrialDays] = useState('14')
-  const [smtpHost, setSmtpHost] = useState('')
-  const [smtpPort, setSmtpPort] = useState('')
-  const [smtpUser, setSmtpUser] = useState('')
-  const [smtpPassword, setSmtpPassword] = useState('')
-  const [smtpFrom, setSmtpFrom] = useState('')
   const [googleAnalyticsId, setGoogleAnalyticsId] = useState('')
   const [useDemoMode, setUseDemoMode] = useState(true)
   const [demoModeMessage, setDemoModeMessage] = useState('Demo-Modus aktiv - Es werden Beispieldaten angezeigt')
@@ -203,11 +192,6 @@ export default function SettingsPage() {
       setCurrency(data.currency || 'EUR')
       setPrimaryColor(data.primaryColor || '#6366f1')
       setTrialDays(String(data.trialDays || 14))
-      setSmtpHost(data.smtpHost || '')
-      setSmtpPort(data.smtpPort ? String(data.smtpPort) : '')
-      setSmtpUser(data.smtpUser || '')
-      setSmtpPassword(data.smtpPassword || '')
-      setSmtpFrom(data.smtpFrom || '')
       setGoogleAnalyticsId(data.googleAnalyticsId || '')
       setUseDemoMode(data.useDemoMode ?? true)
       setDemoModeMessage(data.demoModeMessage || 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt')
@@ -679,11 +663,6 @@ export default function SettingsPage() {
           currency,
           primaryColor,
           trialDays: parseInt(trialDays),
-          smtpHost: smtpHost || null,
-          smtpPort: smtpPort ? parseInt(smtpPort) : null,
-          smtpUser: smtpUser || null,
-          smtpPassword: smtpPassword !== '••••••••' ? smtpPassword : undefined,
-          smtpFrom: smtpFrom || null,
           googleAnalyticsId: googleAnalyticsId || null,
           useDemoMode,
           demoModeMessage: demoModeMessage || null,
@@ -815,11 +794,10 @@ export default function SettingsPage() {
       </motion.div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-12">
+        <TabsList className="grid w-full grid-cols-11">
           <TabsTrigger value="general">Allgemein</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="billing">Abrechnung</TabsTrigger>
-          <TabsTrigger value="email">E-Mail</TabsTrigger>
           <TabsTrigger value="translations">Übersetzungen</TabsTrigger>
           <TabsTrigger value="openrouter" className="gap-1">
             <Bot className="h-3.5 w-3.5" />
@@ -1058,78 +1036,6 @@ export default function SettingsPage() {
           </motion.div>
         </TabsContent>
 
-        {/* Email Settings */}
-        <TabsContent value="email" className="space-y-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle>E-Mail-Einstellungen</CardTitle>
-                <CardDescription>SMTP-Konfiguration für System-E-Mails</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="smtpHost">SMTP Host</Label>
-                    <Input 
-                      id="smtpHost"
-                      value={smtpHost}
-                      onChange={(e) => setSmtpHost(e.target.value)}
-                      placeholder="smtp.example.com" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="smtpPort">SMTP Port</Label>
-                    <Input 
-                      id="smtpPort"
-                      type="number"
-                      value={smtpPort}
-                      onChange={(e) => setSmtpPort(e.target.value)}
-                      placeholder="587" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="smtpUser">SMTP Benutzername</Label>
-                    <Input 
-                      id="smtpUser"
-                      value={smtpUser}
-                      onChange={(e) => setSmtpUser(e.target.value)}
-                      placeholder="noreply@nicnoa.de" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="smtpPassword">SMTP Passwort</Label>
-                    <Input 
-                      id="smtpPassword"
-                      type="password" 
-                      value={smtpPassword}
-                      onChange={(e) => setSmtpPassword(e.target.value)}
-                      placeholder="••••••••" 
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="smtpFrom">Absender-Adresse</Label>
-                  <Input 
-                    id="smtpFrom"
-                    type="email"
-                    value={smtpFrom}
-                    onChange={(e) => setSmtpFrom(e.target.value)}
-                    placeholder="noreply@nicnoa.de"
-                  />
-                </div>
-
-                <Button variant="outline">
-                  <Mail className="mr-2 h-4 w-4" />
-                  Test-E-Mail senden
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </TabsContent>
 
         {/* Translation Settings */}
         <TabsContent value="translations" className="space-y-6">

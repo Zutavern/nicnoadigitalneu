@@ -184,25 +184,25 @@ function StatCard({
       transition={{ delay: index * 0.1 }}
     >
       <Card className="overflow-hidden">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">{title}</p>
-              <h3 className="text-3xl font-bold mt-2">{value}</h3>
-              <div className="flex items-center gap-1 mt-2">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">{title}</p>
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold mt-1 sm:mt-2 truncate">{value}</h3>
+              <div className="flex items-center gap-1 mt-1 sm:mt-2 flex-wrap">
                 {trend === 'up' ? (
-                  <ArrowUpRight className="h-4 w-4 text-green-500" />
+                  <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 shrink-0" />
                 ) : (
-                  <ArrowDownRight className="h-4 w-4 text-red-500" />
+                  <ArrowDownRight className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 shrink-0" />
                 )}
-                <span className={trend === 'up' ? 'text-green-500' : 'text-red-500'}>
+                <span className={`text-xs sm:text-sm ${trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
                   {change}
                 </span>
-                <span className="text-xs text-muted-foreground">vs. letzter Monat</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">vs. letzter Monat</span>
               </div>
             </div>
-            <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg`}>
-              <Icon className="h-7 w-7 text-white" />
+            <div className={`h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 rounded-xl sm:rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg shrink-0`}>
+              <Icon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-white" />
             </div>
           </div>
         </CardContent>
@@ -214,13 +214,13 @@ function StatCard({
 function QuickStatCard({ icon: Icon, value, label, color }: { icon: React.ElementType; value: string | number; label: string; color: string }) {
   return (
     <Card>
-      <CardContent className="p-4 flex items-center gap-4">
-        <div className={`h-10 w-10 rounded-lg ${color} flex items-center justify-center`}>
-          <Icon className="h-5 w-5" />
+      <CardContent className="p-3 sm:p-4 flex items-center gap-2 sm:gap-4">
+        <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-lg ${color} flex items-center justify-center shrink-0`}>
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
         </div>
-        <div>
-          <p className="text-2xl font-bold">{value}</p>
-          <p className="text-xs text-muted-foreground">{label}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-lg sm:text-2xl font-bold truncate">{value}</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{label}</p>
         </div>
       </CardContent>
     </Card>
@@ -257,44 +257,44 @@ function RecentUsersTable({ users }: { users: AdminStats['recentUsers'] }) {
   }
 
   return (
-    <Card className="col-span-2">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="lg:col-span-2">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-4 sm:p-6">
         <div>
-          <CardTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-primary" />
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <UserPlus className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             Neue Registrierungen
           </CardTitle>
-          <CardDescription>Die neuesten Benutzer auf der Plattform</CardDescription>
+          <CardDescription className="text-xs sm:text-sm">Die neuesten Benutzer auf der Plattform</CardDescription>
         </div>
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline" size="sm" asChild className="w-full sm:w-auto">
           <Link href="/admin/users">Alle anzeigen</Link>
         </Button>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+        <div className="space-y-3 sm:space-y-4">
           {users.map((user, index) => (
             <motion.div
               key={user.id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-2 sm:p-3 rounded-lg hover:bg-muted/50 transition-colors"
             >
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                   <AvatarImage src={user.image || undefined} />
-                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40">
+                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-xs sm:text-sm">
                     {user.name?.split(' ').map(n => n[0]).join('') || user.email[0].toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <p className="font-medium">{user.name || 'Unbekannt'}</p>
-                  <p className="text-sm text-muted-foreground">{user.email}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm sm:text-base truncate">{user.name || 'Unbekannt'}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">{user.email}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-4 ml-10 sm:ml-0">
                 {getRoleBadge(user.role)}
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
                   {formatDistanceToNow(new Date(user.createdAt), { addSuffix: true, locale: de })}
                 </span>
               </div>
@@ -309,38 +309,38 @@ function RecentUsersTable({ users }: { users: AdminStats['recentUsers'] }) {
 function TopStylistsCard({ stylists }: { stylists: AdminStats['topStylists'] }) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Scissors className="h-5 w-5 text-primary" />
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <Scissors className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           Top Stylisten
         </CardTitle>
-        <CardDescription>Nach Buchungsanzahl</CardDescription>
+        <CardDescription className="text-xs sm:text-sm">Nach Buchungsanzahl</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+        <div className="space-y-3 sm:space-y-4">
           {stylists.map((stylist, index) => (
             <motion.div
               key={stylist.stylistId}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="flex items-center gap-3"
+              className="flex items-center gap-2 sm:gap-3"
             >
-              <div className="flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white font-bold text-sm">
+              <div className="flex items-center justify-center h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white font-bold text-xs sm:text-sm shrink-0">
                 {index + 1}
               </div>
-              <Avatar className="h-10 w-10">
+              <Avatar className="h-8 w-8 sm:h-10 sm:w-10 shrink-0">
                 <AvatarImage src={stylist.image || undefined} />
-                <AvatarFallback className="bg-muted">
+                <AvatarFallback className="bg-muted text-xs sm:text-sm">
                   {stylist.name?.split(' ').map(n => n[0]).join('') || '?'}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1">
-                <p className="font-medium text-sm">{stylist.name}</p>
-                <p className="text-xs text-muted-foreground">{stylist.bookingCount} Buchungen</p>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-xs sm:text-sm truncate">{stylist.name}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{stylist.bookingCount} Buchungen</p>
               </div>
-              <div className="text-right">
-                <p className="font-semibold text-green-500">€{stylist.totalRevenue.toLocaleString('de-DE')}</p>
+              <div className="text-right shrink-0">
+                <p className="font-semibold text-xs sm:text-sm text-green-500">€{stylist.totalRevenue.toLocaleString('de-DE')}</p>
               </div>
             </motion.div>
           ))}
@@ -364,38 +364,38 @@ function RecentBookingsCard({ bookings }: { bookings: AdminStats['recentBookings
   }
 
   return (
-    <Card className="col-span-2">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="lg:col-span-2">
+      <CardHeader className="p-4 sm:p-6">
         <div>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-primary" />
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <CalendarDays className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             Letzte Buchungen
           </CardTitle>
-          <CardDescription>Die neuesten Termine auf der Plattform</CardDescription>
+          <CardDescription className="text-xs sm:text-sm">Die neuesten Termine auf der Plattform</CardDescription>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
+      <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+        <div className="space-y-2 sm:space-y-3">
           {bookings.map((booking, index) => (
             <motion.div
               key={booking.id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-2 sm:p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
             >
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary/10 to-primary/30 flex items-center justify-center">
-                  <Scissors className="h-5 w-5 text-primary" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-gradient-to-br from-primary/10 to-primary/30 flex items-center justify-center shrink-0">
+                  <Scissors className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 </div>
-                <div>
-                  <p className="font-medium text-sm">{booking.serviceName || booking.title}</p>
-                  <p className="text-xs text-muted-foreground">{booking.customerName}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-xs sm:text-sm truncate">{booking.serviceName || booking.title}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{booking.customerName}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-4 ml-10 sm:ml-0">
                 {getStatusBadge(booking.status)}
-                <span className="font-semibold text-sm">€{booking.price.toFixed(2)}</span>
+                <span className="font-semibold text-xs sm:text-sm">€{booking.price.toFixed(2)}</span>
               </div>
             </motion.div>
           ))}
@@ -417,28 +417,28 @@ function OnboardingStatusCard({ onboardings }: { onboardings: Record<string, num
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileCheck className="h-5 w-5 text-primary" />
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <FileCheck className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           Onboarding Status
         </CardTitle>
-        <CardDescription>{total} Stylisten gesamt</CardDescription>
+        <CardDescription className="text-xs sm:text-sm">{total} Stylisten gesamt</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+        <div className="space-y-3 sm:space-y-4">
           {statusConfig.map(({ key, label, color, icon: Icon }) => {
             const count = onboardings[key] || 0
             const percentage = total > 0 ? (count / total) * 100 : 0
             return (
-              <div key={key} className="space-y-2">
+              <div key={key} className="space-y-1 sm:space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Icon className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{label}</span>
+                    <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+                    <span className="text-xs sm:text-sm">{label}</span>
                   </div>
-                  <span className="font-semibold">{count}</span>
+                  <span className="font-semibold text-sm">{count}</span>
                 </div>
-                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div className="h-1.5 sm:h-2 rounded-full bg-muted overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${percentage}%` }}
@@ -666,17 +666,18 @@ export default function AdminDashboard() {
   const noWidgetsEnabled = widgets.every(w => !w.enabled)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Willkommen zurück! Hier ist die Übersicht Ihrer Plattform.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Willkommen zurück! Hier ist die Übersicht Ihrer Plattform.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button>
+          <Button size="sm" className="sm:size-default">
             <TrendingUp className="mr-2 h-4 w-4" />
-            Report generieren
+            <span className="hidden sm:inline">Report generieren</span>
+            <span className="sm:hidden">Report</span>
           </Button>
           <WidgetSettingsPanel 
             widgets={widgets} 
@@ -712,7 +713,7 @@ export default function AdminDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+            className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4"
           >
             {statCards.map((stat, index) => (
               <StatCard key={stat.title} {...stat} index={index} />
@@ -727,7 +728,7 @@ export default function AdminDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="grid gap-4 md:grid-cols-4"
+            className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4"
           >
             {quickStats.map((stat, index) => (
               <QuickStatCard key={index} {...stat} />
@@ -742,7 +743,7 @@ export default function AdminDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="grid gap-4 lg:grid-cols-3"
+            className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-3"
           >
             {isEnabled('recentBookings') && (
               <RecentBookingsCard bookings={stats.recentBookings} />
@@ -760,7 +761,7 @@ export default function AdminDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="grid gap-4 lg:grid-cols-3"
+            className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-3"
           >
             {isEnabled('recentUsers') && (
               <RecentUsersTable users={stats.recentUsers} />

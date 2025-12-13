@@ -236,22 +236,22 @@ export default function SalonDashboardPage() {
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                  <Armchair className="h-5 w-5 text-blue-500" />
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <Armchair className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
                 </div>
-                <span className="text-xs text-muted-foreground">{stats.overview.availableChairs} verfügbar</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">{stats.overview.availableChairs} verfügbar</span>
               </div>
-              <div className="text-2xl font-bold">{stats.overview.totalChairs}</div>
-              <div className="text-sm text-muted-foreground">Stühle gesamt</div>
+              <div className="text-xl sm:text-2xl font-bold">{stats.overview.totalChairs}</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Stühle gesamt</div>
             </CardContent>
           </Card>
         </motion.div>
@@ -262,15 +262,15 @@ export default function SalonDashboardPage() {
           transition={{ delay: 0.2 }}
         >
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                  <Users className="h-5 w-5 text-green-500" />
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
                 </div>
-                <span className="text-xs text-muted-foreground">{occupancyRate}% Auslastung</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">{occupancyRate}% Auslastung</span>
               </div>
-              <div className="text-2xl font-bold">{stats.overview.rentedChairs}</div>
-              <div className="text-sm text-muted-foreground">Vermietete Stühle</div>
+              <div className="text-xl sm:text-2xl font-bold">{stats.overview.rentedChairs}</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Vermietete Stühle</div>
             </CardContent>
           </Card>
         </motion.div>
@@ -281,15 +281,15 @@ export default function SalonDashboardPage() {
           transition={{ delay: 0.3 }}
         >
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                  <Euro className="h-5 w-5 text-purple-500" />
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                  <Euro className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500" />
                 </div>
-                <TrendingUp className="h-4 w-4 text-green-500" />
+                <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
               </div>
-              <div className="text-2xl font-bold">€{stats.overview.monthlyRentalIncome.toLocaleString('de-DE')}</div>
-              <div className="text-sm text-muted-foreground">Mieteinnahmen/Monat</div>
+              <div className="text-xl sm:text-2xl font-bold truncate">€{stats.overview.monthlyRentalIncome.toLocaleString('de-DE')}</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Mieteinnahmen/Monat</div>
             </CardContent>
           </Card>
         </motion.div>
@@ -300,15 +300,15 @@ export default function SalonDashboardPage() {
           transition={{ delay: 0.4 }}
         >
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-10 w-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-                  <Star className="h-5 w-5 text-yellow-500" />
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+                  <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
                 </div>
-                <span className="text-xs text-muted-foreground">{stats.overview.totalReviews} Bewertungen</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">{stats.overview.totalReviews} Bewertungen</span>
               </div>
-              <div className="text-2xl font-bold">{stats.overview.averageRating.toFixed(1)}</div>
-              <div className="text-sm text-muted-foreground">Durchschnittsbewertung</div>
+              <div className="text-xl sm:text-2xl font-bold">{stats.overview.averageRating.toFixed(1)}</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Durchschnittsbewertung</div>
             </CardContent>
           </Card>
         </motion.div>
@@ -346,8 +346,8 @@ export default function SalonDashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
       >
-        <h2 className="text-xl font-semibold mb-4">Schnellaktionen</h2>
-        <div className="grid gap-4 md:grid-cols-3">
+        <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Schnellaktionen</h2>
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
           {quickActions.map((action) => (
             <Link key={action.label} href={action.href}>
               <Card className="hover:bg-muted/50 transition-colors cursor-pointer group">
@@ -369,7 +369,7 @@ export default function SalonDashboardPage() {
       </motion.div>
 
       {/* Main Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Chair Overview */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

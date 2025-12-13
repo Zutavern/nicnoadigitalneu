@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { motion } from 'framer-motion'
 import {
   LayoutDashboard,
   Calendar,
@@ -20,10 +19,25 @@ import {
   MapPin,
   User,
   HandshakeIcon,
+  Gift,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { signOut } from 'next-auth/react'
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+} from '@/components/ui/sheet'
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
+import { useSidebar } from '@/hooks/use-sidebar'
+import { Button } from '@/components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 const menuItems = [
   {
@@ -60,6 +74,7 @@ const menuItems = [
       { label: 'Mein Profil', href: '/stylist/profile', icon: User },
       { label: 'Bewertungen', href: '/stylist/reviews', icon: Star },
       { label: 'Nachrichten', href: '/stylist/messages', icon: MessageSquare },
+      { label: 'Empfehlungen', href: '/stylist/referral', icon: Gift },
     ],
   },
   {
@@ -70,63 +85,61 @@ const menuItems = [
   },
 ]
 
-export function StylistSidebar() {
+// ==================== SIDEBAR CONTENT ====================
+
+function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
-  const [mounted, setMounted] = useState(false)
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const renderMenuItem = (item: { label: string; href: string; icon: React.ComponentType<{ className?: string }> }) => {
+    const isActive = pathname === item.href
+    
+    if (collapsed) {
+      return (
+        <li key={item.href}>
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex items-center justify-center rounded-lg p-3 text-sm transition-all",
+                    isActive
+                      ? "bg-pink-500 text-white shadow-lg shadow-pink-500/25"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="font-medium">
+                {item.label}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </li>
+      )
+    }
 
-  if (!mounted) {
     return (
-      <aside className={cn(
-        "fixed left-0 top-0 z-40 h-screen border-r bg-card/95 backdrop-blur-sm flex flex-col",
-        "w-[280px]"
-      )} />
+      <li key={item.href}>
+        <Link
+          href={item.href}
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all",
+            isActive
+              ? "bg-pink-500 text-white shadow-lg shadow-pink-500/25"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          <item.icon className="h-5 w-5" />
+          <span>{item.label}</span>
+        </Link>
+      </li>
     )
   }
 
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: collapsed ? 80 : 280 }}
-      className={cn(
-        "fixed left-0 top-0 z-40 h-screen border-r bg-card/95 backdrop-blur-sm flex flex-col"
-      )}
-    >
-      {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b px-4">
-        <Link href="/stylist" className="flex items-center gap-2">
-          {!collapsed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center"
-            >
-              <span className="text-lg font-bold">
-                NICNOA<span className="text-primary">&CO</span><span className="text-primary">.online</span>
-              </span>
-            </motion.div>
-          )}
-          {collapsed && (
-            <span className="text-xl font-bold text-primary">N</span>
-          )}
-        </Link>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="rounded-lg p-2 hover:bg-muted transition-colors"
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-        </button>
-      </div>
-
+    <>
       {/* Stylist Badge */}
       {!collapsed && (
         <div className="mx-4 mt-4">
@@ -147,25 +160,7 @@ export function StylistSidebar() {
               </h3>
             )}
             <ul className="space-y-1">
-              {section.items.map((item) => {
-                const isActive = pathname === item.href
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all",
-                        isActive
-                          ? "bg-pink-500 text-white shadow-lg shadow-pink-500/25"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      )}
-                    >
-                      <item.icon className={cn("h-5 w-5", collapsed && "mx-auto")} />
-                      {!collapsed && <span>{item.label}</span>}
-                    </Link>
-                  </li>
-                )
-              })}
+              {section.items.map((item) => renderMenuItem(item))}
             </ul>
           </div>
         ))}
@@ -173,41 +168,162 @@ export function StylistSidebar() {
 
       {/* Footer */}
       <div className="border-t p-3">
-        <Link
-          href="/stylist/settings"
-          className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all",
-            collapsed && "justify-center"
-          )}
-        >
-          <Settings className="h-5 w-5" />
-          {!collapsed && <span>Einstellungen</span>}
-        </Link>
-        <Link
-          href="/stylist/help"
-          className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all",
-            collapsed && "justify-center"
-          )}
-        >
-          <HelpCircle className="h-5 w-5" />
-          {!collapsed && <span>Hilfe</span>}
-        </Link>
-        <button
-          onClick={() => {
-            const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
-            signOut({ callbackUrl: `${baseUrl}/` })
-          }}
-          className={cn(
-            "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-all",
-            collapsed && "justify-center"
-          )}
-        >
-          <LogOut className="h-5 w-5" />
-          {!collapsed && <span>Abmelden</span>}
-        </button>
+        {collapsed ? (
+          <>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    href="/stylist/settings"
+                    className="flex items-center justify-center rounded-lg p-3 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+                  >
+                    <Settings className="h-5 w-5" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">Einstellungen</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    href="/stylist/help"
+                    className="flex items-center justify-center rounded-lg p-3 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+                  >
+                    <HelpCircle className="h-5 w-5" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">Hilfe</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => {
+                      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+                      signOut({ callbackUrl: `${baseUrl}/` })
+                    }}
+                    className="flex w-full items-center justify-center rounded-lg p-3 text-sm text-destructive hover:bg-destructive/10 transition-all"
+                  >
+                    <LogOut className="h-5 w-5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">Abmelden</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </>
+        ) : (
+          <>
+            <Link
+              href="/stylist/settings"
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+            >
+              <Settings className="h-5 w-5" />
+              <span>Einstellungen</span>
+            </Link>
+            <Link
+              href="/stylist/help"
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+            >
+              <HelpCircle className="h-5 w-5" />
+              <span>Hilfe</span>
+            </Link>
+            <button
+              onClick={() => {
+                const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+                signOut({ callbackUrl: `${baseUrl}/` })
+              }}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-all"
+            >
+              <LogOut className="h-5 w-5" />
+              <span>Abmelden</span>
+            </button>
+          </>
+        )}
       </div>
-    </motion.aside>
+    </>
   )
 }
 
+// ==================== MAIN COMPONENT ====================
+
+export function StylistSidebar() {
+  const { isOpen, isCollapsed, isMobile, toggle, close } = useSidebar()
+
+  return (
+    <>
+      {/* Mobile: Sheet/Drawer - Only rendered on client when isMobile */}
+      <Sheet open={isMobile && isOpen} onOpenChange={(open) => !open && close()}>
+        <SheetContent 
+          side="left" 
+          className="w-[280px] p-0 flex flex-col"
+        >
+          <VisuallyHidden>
+            <SheetTitle>Stylist Navigation</SheetTitle>
+          </VisuallyHidden>
+          {/* Header */}
+          <div className="flex h-16 items-center justify-between border-b px-4">
+            <Link href="/stylist" className="flex items-center gap-2" onClick={close}>
+              <span className="text-lg font-bold">
+                NICNOA<span className="text-primary">&CO</span><span className="text-primary">.online</span>
+              </span>
+            </Link>
+          </div>
+          
+          <SidebarContent collapsed={false} />
+        </SheetContent>
+      </Sheet>
+
+      {/* Tablet/Desktop: Fixed Sidebar - Always rendered, CSS handles visibility */}
+      <aside
+        className={cn(
+          "fixed left-0 top-0 z-40 h-screen border-r bg-card/95 backdrop-blur-sm flex-col transition-all duration-300 ease-in-out hidden sm:flex",
+          isCollapsed ? "w-20" : "w-[280px]"
+        )}
+      >
+      {/* Header */}
+      <div className="flex h-16 items-center justify-between border-b px-4">
+        <Link href="/stylist" className="flex items-center gap-2">
+          {!isCollapsed && (
+            <div className="flex items-center">
+              <span className="text-lg font-bold">
+                NICNOA<span className="text-primary">&CO</span><span className="text-primary">.online</span>
+              </span>
+            </div>
+          )}
+          {isCollapsed && (
+            <span className="text-xl font-bold text-primary mx-auto">N</span>
+          )}
+        </Link>
+        {!isCollapsed && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggle}
+            className="h-8 w-8 rounded-lg"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+
+      {/* Expand button when collapsed */}
+      {isCollapsed && (
+        <div className="flex justify-center py-2 border-b">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggle}
+            className="h-8 w-8 rounded-lg"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      <SidebarContent collapsed={isCollapsed} />
+    </aside>
+    </>
+  )
+}

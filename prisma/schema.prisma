@@ -3037,3 +3037,160 @@ enum JobStatus {
   FAILED
   CANCELLED
 }
+
+// ============================================
+// Database Backup System
+// ============================================
+
+model BackupConfig {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Backup Schedule
+  isEnabled           Boolean   @default(false) @map("is_enabled")
+  frequency           BackupFrequency @default(DAILY)
+  
+  // Schedule Details
+  scheduledTime       String    @default("03:00") @map("scheduled_time") @db.VarChar(5) // HH:MM format
+  scheduledDays       Int[]     @default([]) @map("scheduled_days") // 0=Sunday, 1=Monday, etc.
+  
+  // Retention Policy
+  retentionDays       Int       @default(30) @map("retention_days")
+  maxBackups          Int       @default(10) @map("max_backups")
+  
+  // Storage Settings
+  storageProvider     String    @default("local") @map("storage_provider") @db.VarChar(50) // "local", "s3", "cloudflare"
+  storagePath         String?   @map("storage_path") @db.VarChar(500)
+  
+  // Compression
+  compressionEnabled  Boolean   @default(true) @map("compression_enabled")
+  compressionLevel    Int       @default(6) @map("compression_level") // 1-9
+  
+  // Encryption
+  encryptionEnabled   Boolean   @default(false) @map("encryption_enabled")
+  
+  // Notification Settings
+  notifyOnSuccess     Boolean   @default(false) @map("notify_on_success")
+  notifyOnFailure     Boolean   @default(true) @map("notify_on_failure")
+  notificationEmail   String?   @map("notification_email") @db.VarChar(255)
+  
+  // Timestamps
+  lastBackupAt        DateTime? @map("last_backup_at") @db.Timestamptz
+  nextBackupAt        DateTime? @map("next_backup_at") @db.Timestamptz
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Relations
+  backups             Backup[]
+  
+  @@map("backup_configs")
+}
+
+model Backup {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Reference to Config
+  configId            String    @map("config_id") @db.Uuid
+  config              BackupConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  
+  // Backup Info
+  filename            String    @db.VarChar(255)
+  filePath            String    @map("file_path") @db.VarChar(500)
+  fileSize            BigInt    @map("file_size") // Size in bytes
+  checksum            String?   @db.VarChar(64) // SHA256 checksum
+  
+  // Status
+  status              BackupStatus @default(IN_PROGRESS)
+  errorMessage        String?   @map("error_message") @db.Text
+  
+  // Backup Type
+  type                BackupType @default(SCHEDULED)
+  
+  // Contents
+  includeTables       String[]  @default([]) @map("include_tables") // Which tables are included
+  tableCount          Int       @default(0) @map("table_count")
+  rowCount            BigInt    @default(0) @map("row_count")
+  
+  // Compression & Encryption
+  isCompressed        Boolean   @default(true) @map("is_compressed")
+  isEncrypted         Boolean   @default(false) @map("is_encrypted")
+  
+  // Timing
+  startedAt           DateTime  @default(now()) @map("started_at") @db.Timestamptz
+  completedAt         DateTime? @map("completed_at") @db.Timestamptz
+  duration            Int?      // Duration in seconds
+  
+  // Download tracking
+  downloadCount       Int       @default(0) @map("download_count")
+  lastDownloadAt      DateTime? @map("last_download_at") @db.Timestamptz
+  
+  // Scheduled deletion
+  expiresAt           DateTime? @map("expires_at") @db.Timestamptz
+  
+  // Timestamps
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  
+  // Relations
+  restoreAttempts     BackupRestoreAttempt[]
+  
+  @@index([configId, status])
+  @@index([createdAt])
+  @@index([expiresAt])
+  @@map("backups")
+}
+
+model BackupRestoreAttempt {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Reference to Backup
+  backupId            String    @map("backup_id") @db.Uuid
+  backup              Backup    @relation(fields: [backupId], references: [id], onDelete: Cascade)
+  
+  // Restore Info
+  status              BackupRestoreStatus @default(IN_PROGRESS)
+  errorMessage        String?   @map("error_message") @db.Text
+  
+  // Who initiated
+  initiatedBy         String?   @map("initiated_by") @db.Uuid
+  
+  // Timing
+  startedAt           DateTime  @default(now()) @map("started_at") @db.Timestamptz
+  completedAt         DateTime? @map("completed_at") @db.Timestamptz
+  duration            Int?      // Duration in seconds
+  
+  // What was restored
+  tablesRestored      String[]  @default([]) @map("tables_restored")
+  rowsRestored        BigInt    @default(0) @map("rows_restored")
+  
+  @@index([backupId])
+  @@map("backup_restore_attempts")
+}
+
+// Backup Enums
+enum BackupFrequency {
+  HOURLY
+  DAILY
+  WEEKLY
+  MONTHLY
+  CUSTOM
+}
+
+enum BackupStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+  EXPIRED
+}
+
+enum BackupType {
+  MANUAL
+  SCHEDULED
+  PRE_UPDATE
+}
+
+enum BackupRestoreStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+}
