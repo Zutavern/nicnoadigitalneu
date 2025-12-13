@@ -32,13 +32,12 @@ export function PasswordProtection() {
   const [isEnabled, setIsEnabled] = useState<boolean | null>(null) // null = noch nicht geladen
   const [isChecking, setIsChecking] = useState(!hasSessionPassword) // Wenn Session-Passwort vorhanden, kein Check nötig
   const inputRef = useRef<HTMLInputElement>(null)
+  const apiCheckStarted = useRef(false) // Verhindert doppelte API-Calls
 
-  // HTML-Klasse steuern und Blocking-Style entfernen
+  // HTML-Klasse setzen wenn entsperrt (nur hinzufügen, nie entfernen)
   useEffect(() => {
     if (isUnlocked) {
       unlockPage()
-    } else {
-      document.documentElement.classList.remove('password-unlocked')
     }
   }, [isUnlocked])
 
@@ -51,6 +50,10 @@ export function PasswordProtection() {
       unlockPage()
       return
     }
+
+    // Verhindere doppelte API-Calls (React StrictMode, etc.)
+    if (apiCheckStarted.current) return
+    apiCheckStarted.current = true
     
     const checkPasswordProtection = async () => {
       try {
