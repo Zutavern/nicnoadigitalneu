@@ -89,6 +89,7 @@ interface ComplianceItem {
   icon: React.ElementType
   description: string
   infoText: string // Ausführlicher Info-Text für Tooltip
+  helpTip: string // Kurzer Tipp wenn "Nein" oder "In Arbeit" ausgewählt
 }
 
 const COMPLIANCE_ITEMS: ComplianceItem[] = [
@@ -97,35 +98,40 @@ const COMPLIANCE_ITEMS: ComplianceItem[] = [
     label: 'Ich nutze mein eigenes Telefon.', 
     icon: Phone,
     description: 'Für die eigenständige Kundenkommunikation',
-    infoText: 'Ein eigenes Telefon zeigt, dass du eigenständig mit Kunden kommunizierst und nicht vom Salonbetreiber abhängig bist. Dies ist ein wichtiges Kriterium zur Vermeidung von Scheinselbstständigkeit.'
+    infoText: 'Ein eigenes Telefon zeigt, dass du eigenständig mit Kunden kommunizierst und nicht vom Salonbetreiber abhängig bist. Dies ist ein wichtiges Kriterium zur Vermeidung von Scheinselbstständigkeit.',
+    helpTip: 'Kein Problem! Ein günstiger Handytarif ab 10€/Monat reicht aus. Eine separate Nummer hilft dir, Privat und Geschäft zu trennen.'
   },
   { 
     key: 'ownAppointmentBook', 
     label: 'Ich führe ein eigenes Terminbuch und koordiniere Termine selbst.', 
     icon: BookOpen,
     description: 'Selbstständige Terminplanung ohne Weisungsbindung',
-    infoText: 'Die eigenständige Terminplanung ohne Weisungsbindung des Salonbetreibers ist essentiell. Du bestimmst selbst, wann du arbeitest und welche Termine du annimmst – ein Kernmerkmal der Selbstständigkeit.'
+    infoText: 'Die eigenständige Terminplanung ohne Weisungsbindung des Salonbetreibers ist essentiell. Du bestimmst selbst, wann du arbeitest und welche Termine du annimmst – ein Kernmerkmal der Selbstständigkeit.',
+    helpTip: 'Das ist kein Problem! Als NICNOA Online Kunde hast du Zugang zu unserer integrierten Terminverwaltung – oder du verbindest dich mit anderen Tools wie Treatwell, Shore & Co.'
   },
   { 
     key: 'ownCashRegister', 
     label: 'Ich nutze meine eigene Kasse und mein eigenes EC-Terminal.', 
     icon: CreditCard,
     description: 'Eigenständige Abrechnung mit Kunden',
-    infoText: 'Eine eigene Kasse und ein eigenes EC-Terminal zeigen, dass du deine Einnahmen selbst verwaltest und direkt mit deinen Kunden abrechnest – nicht über den Salon. Das ist ein klares Zeichen unternehmerischer Eigenständigkeit.'
+    infoText: 'Eine eigene Kasse und ein eigenes EC-Terminal zeigen, dass du deine Einnahmen selbst verwaltest und direkt mit deinen Kunden abrechnest – nicht über den Salon. Das ist ein klares Zeichen unternehmerischer Eigenständigkeit.',
+    helpTip: 'Wir empfehlen Zettle (ehemals iZettle) – günstig, einfach und voll kompatibel mit NICNOA Online. Deine Umsätze siehst du direkt im Dashboard. Wir helfen dir bei der Einrichtung!'
   },
   { 
     key: 'ownPriceList', 
     label: 'Ich habe meine eigene Preisliste und bestimme meine Preise selbst.', 
     icon: Tag,
     description: 'Freie Preisgestaltung ohne Vorgaben',
-    infoText: 'Die freie Preisgestaltung ist ein Kernmerkmal der Selbstständigkeit. Du bestimmst deine Preise selbst, ohne Vorgaben des Salonbetreibers. Das unterscheidet dich von einem Angestellten.'
+    infoText: 'Die freie Preisgestaltung ist ein Kernmerkmal der Selbstständigkeit. Du bestimmst deine Preise selbst, ohne Vorgaben des Salonbetreibers. Das unterscheidet dich von einem Angestellten.',
+    helpTip: 'Kein Problem! Mit unserem Preislisten-Generator erstellst du in Minuten eine professionelle Preisliste – brandkonform und jederzeit anpassbar.'
   },
   { 
     key: 'ownBranding', 
     label: 'Ich trete unter meinem eigenen Namen/Logo auf.', 
     icon: User,
     description: 'Eigene Markenidentität',
-    infoText: 'Ein eigener Markenauftritt (Name, Logo, Visitenkarten) zeigt deine unternehmerische Eigenständigkeit und hilft beim Aufbau deines eigenen Kundenstamms. Das ist wichtig für deine Identität als selbstständige/r Friseur/in.'
+    infoText: 'Ein eigener Markenauftritt (Name, Logo, Visitenkarten) zeigt deine unternehmerische Eigenständigkeit und hilft beim Aufbau deines eigenen Kundenstamms. Das ist wichtig für deine Identität als selbstständige/r Friseur/in.',
+    helpTip: 'Auch hier helfen wir! Nutze unsere Brand-Tools zum Erstellen eines Logos – oder lass dir über unser Designer-Netzwerk günstig eines gestalten.'
   },
 ]
 
@@ -839,17 +845,27 @@ export default function StylistOnboardingPage() {
                                   </Button>
                                 </div>
                                 
-                                {/* Warnung bei "Nein" */}
-                                {answer === 'no' && (
+                                {/* Hilfreicher Tipp bei "Nein" oder "In Arbeit" */}
+                                {(answer === 'no' || answer === 'pending') && (
                                   <motion.div
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
-                                    className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20"
+                                    className={`mt-3 p-3 rounded-lg ${
+                                      answer === 'no' 
+                                        ? 'bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20' 
+                                        : 'bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/20'
+                                    }`}
                                   >
-                                    <p className="text-xs text-red-300">
-                                      <AlertTriangle className="h-3 w-3 inline mr-1" />
-                                      Dieses Kriterium muss erfüllt sein, um als selbstständig zu gelten.
-                                    </p>
+                                    <div className="flex items-start gap-2">
+                                      <Sparkles className={`h-4 w-4 flex-shrink-0 mt-0.5 ${
+                                        answer === 'no' ? 'text-blue-400' : 'text-amber-400'
+                                      }`} />
+                                      <p className={`text-xs ${
+                                        answer === 'no' ? 'text-blue-200' : 'text-amber-200'
+                                      }`}>
+                                        {item.helpTip}
+                                      </p>
+                                    </div>
                                   </motion.div>
                                 )}
                               </div>
