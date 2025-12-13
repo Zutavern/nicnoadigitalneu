@@ -632,3 +632,4 @@ DailyIframe.setLogLevel('debug')
 
 **Dokumentation gepflegt von:** NICNOA Development Team  
 **Letzte Aktualisierung:** 12. Dezember 2025
+

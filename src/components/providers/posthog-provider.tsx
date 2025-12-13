@@ -101,3 +101,4 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 
 // Export posthog instance for direct usage
 export { posthog }
+

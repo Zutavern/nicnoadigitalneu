@@ -1196,3 +1196,4 @@ function formatUtmData(
     percentage: total > 0 ? Math.round((r.visits / total) * 100) : 0,
   }))
 }
+

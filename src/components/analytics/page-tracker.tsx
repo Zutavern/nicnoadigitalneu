@@ -76,3 +76,4 @@ export function FAQTracker() {
 export function UpdatesTracker() {
   return <PageTracker eventName="updates_viewed" />
 }
+

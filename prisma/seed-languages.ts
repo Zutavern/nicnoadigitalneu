@@ -70,3 +70,4 @@ seedLanguages()
     await prisma.$disconnect()
   })
 
+

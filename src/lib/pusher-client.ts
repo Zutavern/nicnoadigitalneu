@@ -136,3 +136,4 @@ export interface PresenceMembers {
   members: Record<string, PresenceMember['info']>
   me: PresenceMember
 }
+

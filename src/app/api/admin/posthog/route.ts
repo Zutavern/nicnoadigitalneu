@@ -74,3 +74,4 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 }
+

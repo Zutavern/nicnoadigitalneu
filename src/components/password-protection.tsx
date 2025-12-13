@@ -4,7 +4,28 @@ import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Eye, EyeOff, Lock, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, Lock, CheckCircle2, AlertCircle, FileText, ArrowLeft, ChevronDown, Loader2 } from 'lucide-react'
+
+// Types für Legal Page
+interface LegalSection {
+  id: string
+  title: string
+  content: string
+  sortOrder: number
+  isActive: boolean
+  isCollapsible: boolean
+}
+
+interface LegalPageConfig {
+  pageType: string
+  heroBadgeText: string | null
+  heroTitle: string
+  heroDescription: string | null
+  contactEmail: string | null
+  contactPhone: string | null
+  lastUpdated: string | null
+  sections: LegalSection[]
+}
 
 // Helper: Entsperren und Blocking-Style entfernen
 function unlockPage() {
@@ -33,6 +54,12 @@ export function PasswordProtection() {
   const [isChecking, setIsChecking] = useState(!hasSessionPassword) // Wenn Session-Passwort vorhanden, kein Check nötig
   const inputRef = useRef<HTMLInputElement>(null)
   const apiCheckStarted = useRef(false) // Verhindert doppelte API-Calls
+  
+  // Impressum State
+  const [showImpressum, setShowImpressum] = useState(false)
+  const [impressumData, setImpressumData] = useState<LegalPageConfig | null>(null)
+  const [impressumLoading, setImpressumLoading] = useState(false)
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
 
   // HTML-Klasse setzen wenn entsperrt (nur hinzufügen, nie entfernen)
   useEffect(() => {
@@ -108,6 +135,47 @@ export function PasswordProtection() {
       }, 500)
     }
   }, [countdown])
+
+  // Impressum laden
+  const loadImpressum = async () => {
+    if (impressumData) {
+      setShowImpressum(true)
+      return
+    }
+    
+    setImpressumLoading(true)
+    try {
+      const res = await fetch('/api/legal-page-config/impressum')
+      if (res.ok) {
+        const data = await res.json()
+        setImpressumData(data)
+      }
+    } catch (err) {
+      console.error('Error loading impressum:', err)
+    } finally {
+      setImpressumLoading(false)
+      setShowImpressum(true)
+    }
+  }
+
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(sectionId)) {
+        newSet.delete(sectionId)
+      } else {
+        newSet.add(sectionId)
+      }
+      return newSet
+    })
+  }
+
+  // Konvertiere Markdown-ähnlichen Text in HTML-Elemente
+  const formatContent = (text: string) => {
+    let formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>')
+    formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-primary hover:underline" target="_blank" rel="noopener noreferrer">$1</a>')
+    return formatted
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     setCapsLockOn(e.getModifierState?.('CapsLock') ?? false)
@@ -438,15 +506,148 @@ export function PasswordProtection() {
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.7)_100%)]" />
           </motion.div>
 
-          {/* Login Box */}
+          {/* Content Container */}
           <div className="fixed inset-0 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ scale: 0.9, y: 40, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.9, y: -100, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.2 }}
-              className="relative w-full max-w-md"
-            >
+            <AnimatePresence mode="wait">
+            {showImpressum ? (
+              /* ===== IMPRESSUM PANEL ===== */
+              <motion.div
+                key="impressum-panel"
+                initial={{ scale: 0.9, y: 40, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.9, y: 40, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                className="relative w-full max-w-2xl max-h-[85vh] flex flex-col"
+              >
+                {/* Glow-Effekt */}
+                <motion.div 
+                  className="absolute -inset-2 bg-gradient-to-r from-[hsl(151,50%,40%)] via-[hsl(151,40%,30%)] to-[hsl(151,50%,40%)] rounded-3xl blur-2xl"
+                  animate={{ opacity: [0.2, 0.4, 0.2] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                />
+                
+                {/* Impressum Box */}
+                <div className="relative rounded-2xl border border-[hsl(151,40%,50%)]/20 bg-[#0a0a0b]/95 backdrop-blur-xl shadow-2xl shadow-[hsl(151,40%,20%)]/30 flex flex-col max-h-[85vh]">
+                  {/* Header */}
+                  <div className="p-6 pb-4 border-b border-border/50 shrink-0">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-gradient-to-br from-primary to-primary/80 p-2.5 rounded-xl">
+                          <FileText className="w-5 h-5 text-primary-foreground" />
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-bold text-foreground">Impressum</h2>
+                          <p className="text-sm text-muted-foreground">Angaben gemäß § 5 TMG</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowImpressum(false)}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <ArrowLeft className="w-4 h-4 mr-1.5" />
+                        Zurück
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Scrollable Content */}
+                  <div className="overflow-y-auto flex-1 p-6 space-y-4">
+                    {impressumData?.sections?.filter(s => s.isActive).length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <FileText className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                        <p>Impressum wird geladen...</p>
+                      </div>
+                    ) : (
+                      impressumData?.sections?.filter(s => s.isActive).map((section) => (
+                        <div key={section.id} className="border border-border/50 rounded-lg overflow-hidden bg-background/30">
+                          {section.isCollapsible ? (
+                            <>
+                              <button
+                                onClick={() => toggleSection(section.id)}
+                                className="flex w-full items-center justify-between p-4 text-left hover:bg-muted/30 transition-colors"
+                              >
+                                <h3 className="text-base font-semibold text-foreground">{section.title}</h3>
+                                <ChevronDown
+                                  className={`h-4 w-4 text-muted-foreground transform transition-transform ${expandedSections.has(section.id) ? 'rotate-180' : ''}`}
+                                />
+                              </button>
+                              <motion.div
+                                initial={false}
+                                animate={{ height: expandedSections.has(section.id) ? 'auto' : 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="overflow-hidden"
+                              >
+                                <div 
+                                  className="px-4 pb-4 text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed"
+                                  dangerouslySetInnerHTML={{ __html: formatContent(section.content) }}
+                                />
+                              </motion.div>
+                            </>
+                          ) : (
+                            <div className="p-4">
+                              <h3 className="text-base font-semibold text-foreground mb-3">{section.title}</h3>
+                              <div 
+                                className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: formatContent(section.content) }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                    
+                    {/* Kontakt */}
+                    {impressumData && (impressumData.contactEmail || impressumData.contactPhone) && (
+                      <div className="border border-primary/20 rounded-lg p-4 bg-primary/5">
+                        <h3 className="text-base font-semibold text-foreground mb-2">Kontakt</h3>
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          {impressumData.contactEmail && (
+                            <p>E-Mail: <a href={`mailto:${impressumData.contactEmail}`} className="text-primary hover:underline">{impressumData.contactEmail}</a></p>
+                          )}
+                          {impressumData.contactPhone && (
+                            <p>Telefon: <a href={`tel:${impressumData.contactPhone.replace(/\s/g, '')}`} className="text-primary hover:underline">{impressumData.contactPhone}</a></p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Stand */}
+                    {impressumData?.lastUpdated && (
+                      <p className="text-center text-xs text-muted-foreground pt-2">
+                        Stand: {new Date(impressumData.lastUpdated).toLocaleDateString('de-DE', {
+                          day: '2-digit',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                      </p>
+                    )}
+                  </div>
+                  
+                  {/* Footer */}
+                  <div className="p-4 pt-3 border-t border-border/50 shrink-0">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setShowImpressum(false)}
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Zurück zur Anmeldung
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            ) : (
+              /* ===== LOGIN BOX ===== */
+              <motion.div
+                key="login-box"
+                initial={{ scale: 0.9, y: 40, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.9, y: -100, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.2 }}
+                className="relative w-full max-w-md"
+              >
               {/* Mehrschichtiger Glow-Effekt */}
               <motion.div 
                 className="absolute -inset-4 rounded-3xl opacity-50"
@@ -652,7 +853,7 @@ export function PasswordProtection() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
-                    className="mt-6 text-center"
+                    className="mt-6 text-center space-y-3"
                   >
                     <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
                       <div className="w-8 h-px bg-border" />
@@ -660,10 +861,27 @@ export function PasswordProtection() {
                       <span>Session-basierte Authentifizierung</span>
                       <div className="w-8 h-px bg-border" />
                     </div>
+                    
+                    {/* Impressum Link */}
+                    <button
+                      type="button"
+                      onClick={loadImpressum}
+                      disabled={impressumLoading}
+                      className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      {impressumLoading ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <FileText className="w-3 h-3" />
+                      )}
+                      <span>Impressum</span>
+                    </button>
                   </motion.div>
                 )}
               </div>
             </motion.div>
+            )}
+            </AnimatePresence>
           </div>
         </motion.div>
       ) : (

@@ -149,3 +149,4 @@ async function validateChannelAccess(
   // Unknown channel type - deny access
   return false
 }
+

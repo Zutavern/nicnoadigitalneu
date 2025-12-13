@@ -47,3 +47,4 @@ export {
 // import { getServerLocale, applyTranslations } from '@/lib/translation/apply-translations'
 export type { Locale } from './i18n-config'
 
+
