@@ -40,6 +40,7 @@ declare module "next-auth/jwt" {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  trustHost: true, // Required for custom domains on Vercel
   session: {
     strategy: "jwt",
   },
@@ -66,7 +67,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        console.log('[DEBUG-AUTH] Credentials authorize called:', { email: credentials?.email, hasPassword: !!credentials?.password })
+        
         if (!credentials?.email || !credentials?.password) {
+          console.log('[DEBUG-AUTH] Missing credentials')
           return null
         }
 
@@ -77,12 +81,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             where: { email },
           })
 
+          console.log('[DEBUG-AUTH] User lookup:', { email, found: !!user, hasPassword: !!user?.password })
+
           if (!user || !user.password) {
             // Log fehlgeschlagenen Login (User nicht gefunden)
             await handleLoginEvent({
               userId: '',
               userEmail: email,
             }, false).catch(console.error)
+            console.log('[DEBUG-AUTH] User not found or no password')
             return null
           }
 
@@ -91,6 +98,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             user.password
           )
 
+          console.log('[DEBUG-AUTH] Password check:', { email, isValid: isPasswordValid })
+
           if (!isPasswordValid) {
             // Log fehlgeschlagenen Login (falsches Passwort)
             await handleLoginEvent({
@@ -98,6 +107,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               userEmail: email,
               userName: user.name,
             }, false).catch(console.error)
+            console.log('[DEBUG-AUTH] Password invalid')
             return null
           }
 
@@ -108,6 +118,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             userName: user.name,
           }, true).catch(console.error)
 
+          console.log('[DEBUG-AUTH] Success, returning user:', { id: user.id, email: user.email, role: user.role })
+
           return {
             id: user.id,
             email: user.email,
@@ -117,7 +129,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             onboardingCompleted: user.onboardingCompleted,
           }
         } catch (error) {
-          console.error("Auth error:", error)
+          console.error("[DEBUG-AUTH] Exception:", error)
           return null
         }
       },
