@@ -51,6 +51,32 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de" suppressHydrationWarning>
+      <head>
+        {/* Inline Script: Block content immediately until password check */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  // Skip if password already entered in this session
+                  if (sessionStorage.getItem('passwordEntered') === 'true') {
+                    document.documentElement.classList.add('password-unlocked');
+                    return;
+                  }
+                  // Otherwise, hide content immediately via style injection
+                  var style = document.createElement('style');
+                  style.id = 'password-protection-block';
+                  style.textContent = 'body > *:not([data-password-protection]) { visibility: hidden !important; opacity: 0 !important; } body { background: #020203 !important; }';
+                  document.head.appendChild(style);
+                } catch(e) {
+                  // SessionStorage might not be available (e.g., private mode)
+                  document.documentElement.classList.add('password-unlocked');
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning

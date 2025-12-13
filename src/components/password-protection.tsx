@@ -6,6 +6,13 @@ import { Input } from '@/components/ui/input'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Lock, CheckCircle2, AlertCircle } from 'lucide-react'
 
+// Helper: Entsperren und Blocking-Style entfernen
+function unlockPage() {
+  document.documentElement.classList.add('password-unlocked')
+  const blockingStyle = document.getElementById('password-protection-block')
+  if (blockingStyle) blockingStyle.remove()
+}
+
 export function PasswordProtection() {
   // Session-Status zuerst prüfen (synchron) um Flackern zu vermeiden
   const [hasSessionPassword] = useState(() => {
@@ -26,10 +33,10 @@ export function PasswordProtection() {
   const [isChecking, setIsChecking] = useState(!hasSessionPassword) // Wenn Session-Passwort vorhanden, kein Check nötig
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // HTML-Klasse steuern für CSS-basiertes Verstecken
+  // HTML-Klasse steuern und Blocking-Style entfernen
   useEffect(() => {
     if (isUnlocked) {
-      document.documentElement.classList.add('password-unlocked')
+      unlockPage()
     } else {
       document.documentElement.classList.remove('password-unlocked')
     }
@@ -41,7 +48,7 @@ export function PasswordProtection() {
       setIsEnabled(false)
       setIsChecking(false)
       // Sofort entsperren
-      document.documentElement.classList.add('password-unlocked')
+      unlockPage()
       return
     }
     
@@ -54,20 +61,20 @@ export function PasswordProtection() {
           setIsEnabled(enabled)
           if (!enabled) {
             setIsUnlocked(true)
-            document.documentElement.classList.add('password-unlocked')
+            unlockPage()
           }
         } else {
           // Bei Fehler: Schutz nicht anzeigen
           setIsEnabled(false)
           setIsUnlocked(true)
-          document.documentElement.classList.add('password-unlocked')
+          unlockPage()
         }
       } catch (error) {
         console.error('Error checking password protection status:', error)
         // Bei Fehler: Schutz nicht anzeigen (bessere UX)
         setIsEnabled(false)
         setIsUnlocked(true)
-        document.documentElement.classList.add('password-unlocked')
+        unlockPage()
       } finally {
         setIsChecking(false)
       }
@@ -93,7 +100,7 @@ export function PasswordProtection() {
         setIsAnimatingOut(true)
         setTimeout(() => {
           setIsUnlocked(true)
-          document.documentElement.classList.add('password-unlocked')
+          unlockPage()
         }, 800)
       }, 500)
     }
