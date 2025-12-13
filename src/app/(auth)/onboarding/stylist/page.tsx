@@ -77,6 +77,7 @@ interface DocumentSlot {
   key: DocumentKey
   label: string
   description: string
+  infoText: string // Ausführlicher Info-Text für Tooltip
   helpLink?: string
   helpText?: string
   required: boolean
@@ -87,6 +88,7 @@ interface ComplianceItem {
   label: string
   icon: React.ElementType
   description: string
+  infoText: string // Ausführlicher Info-Text für Tooltip
 }
 
 const COMPLIANCE_ITEMS: ComplianceItem[] = [
@@ -94,31 +96,36 @@ const COMPLIANCE_ITEMS: ComplianceItem[] = [
     key: 'ownPhone', 
     label: 'Ich nutze mein eigenes Telefon.', 
     icon: Phone,
-    description: 'Für die eigenständige Kundenkommunikation'
+    description: 'Für die eigenständige Kundenkommunikation',
+    infoText: 'Ein eigenes Telefon zeigt, dass du eigenständig mit Kunden kommunizierst und nicht vom Salonbetreiber abhängig bist. Dies ist ein wichtiges Kriterium zur Vermeidung von Scheinselbstständigkeit.'
   },
   { 
     key: 'ownAppointmentBook', 
     label: 'Ich führe ein eigenes Terminbuch und koordiniere Termine selbst.', 
     icon: BookOpen,
-    description: 'Selbstständige Terminplanung ohne Weisungsbindung'
+    description: 'Selbstständige Terminplanung ohne Weisungsbindung',
+    infoText: 'Die eigenständige Terminplanung ohne Weisungsbindung des Salonbetreibers ist essentiell. Du bestimmst selbst, wann du arbeitest und welche Termine du annimmst – ein Kernmerkmal der Selbstständigkeit.'
   },
   { 
     key: 'ownCashRegister', 
     label: 'Ich nutze meine eigene Kasse und mein eigenes EC-Terminal.', 
     icon: CreditCard,
-    description: 'Eigenständige Abrechnung mit Kunden'
+    description: 'Eigenständige Abrechnung mit Kunden',
+    infoText: 'Eine eigene Kasse und ein eigenes EC-Terminal zeigen, dass du deine Einnahmen selbst verwaltest und direkt mit deinen Kunden abrechnest – nicht über den Salon. Das ist ein klares Zeichen unternehmerischer Eigenständigkeit.'
   },
   { 
     key: 'ownPriceList', 
     label: 'Ich habe meine eigene Preisliste und bestimme meine Preise selbst.', 
     icon: Tag,
-    description: 'Freie Preisgestaltung ohne Vorgaben'
+    description: 'Freie Preisgestaltung ohne Vorgaben',
+    infoText: 'Die freie Preisgestaltung ist ein Kernmerkmal der Selbstständigkeit. Du bestimmst deine Preise selbst, ohne Vorgaben des Salonbetreibers. Das unterscheidet dich von einem Angestellten.'
   },
   { 
     key: 'ownBranding', 
     label: 'Ich trete unter meinem eigenen Namen/Logo auf.', 
     icon: User,
-    description: 'Eigene Markenidentität'
+    description: 'Eigene Markenidentität',
+    infoText: 'Ein eigener Markenauftritt (Name, Logo, Visitenkarten) zeigt deine unternehmerische Eigenständigkeit und hilft beim Aufbau deines eigenen Kundenstamms. Das ist wichtig für deine Identität als selbstständige/r Friseur/in.'
   },
 ]
 
@@ -127,24 +134,28 @@ const DOCUMENT_SLOTS: DocumentSlot[] = [
     key: 'masterCertificate',
     label: 'Meisterbrief / Ausnahmebewilligung',
     description: 'Bitte lade deinen Meisterbrief hoch (Pflicht für Handwerksrolleneintrag).',
+    infoText: 'Der Meisterbrief (oder eine Ausnahmebewilligung) ist für den Eintrag in die Handwerksrolle erforderlich. Ohne diesen Nachweis ist eine selbstständige Tätigkeit im Friseurhandwerk nicht zulässig. Falls du keinen Meisterbrief hast, kannst du bei der Handwerkskammer eine Ausnahmebewilligung beantragen.',
     required: true,
   },
   {
     key: 'businessRegistration',
     label: 'Gewerbeanmeldung',
     description: 'Deinen Nachweis vom Gewerbeamt.',
+    infoText: 'Die Gewerbeanmeldung ist der offizielle Nachweis deiner selbstständigen Tätigkeit. Du erhältst sie vom zuständigen Gewerbeamt deiner Stadt/Gemeinde. Sie ist Pflicht für jede gewerbliche Tätigkeit in Deutschland.',
     required: true,
   },
   {
     key: 'liabilityInsurance',
     label: 'Betriebshaftpflichtversicherung',
     description: 'Kopie deiner Police (Deckungsnachweis).',
+    infoText: 'Eine Betriebshaftpflichtversicherung schützt dich vor Schadensersatzansprüchen, die aus deiner beruflichen Tätigkeit entstehen können – z.B. wenn bei einer Behandlung etwas schief geht. Sie ist für Salonbetreiber oft Voraussetzung für die Zusammenarbeit.',
     required: true,
   },
   {
     key: 'statusDetermination',
     label: 'Statusfeststellung (V027)',
     description: 'Bestätigung der Rentenversicherung oder Antragskopie.',
+    infoText: 'Das Statusfeststellungsverfahren (Formular V027) bei der Deutschen Rentenversicherung klärt verbindlich, ob du als selbstständig oder abhängig beschäftigt giltst. Dies schützt dich und den Salonbetreiber vor späteren Nachforderungen der Sozialversicherung.',
     helpLink: 'https://www.deutsche-rentenversicherung.de/DRV/DE/Online-Dienste/online-dienste_node.html',
     helpText: 'Noch kein Antrag gestellt? Hier geht\'s zum Online-Antrag der Deutschen Rentenversicherung.',
     required: true,
@@ -153,6 +164,7 @@ const DOCUMENT_SLOTS: DocumentSlot[] = [
     key: 'craftsChamber',
     label: 'Eintragung Handwerkskammer',
     description: 'Bestätigung der Eintragung in die Handwerksrolle.',
+    infoText: 'Die Eintragung in die Handwerksrolle bei der zuständigen Handwerkskammer ist für das Friseurhandwerk Pflicht. Sie bestätigt deine Berechtigung zur selbstständigen Ausübung des Handwerks und ist Voraussetzung für die Gewerbeanmeldung.',
     required: true,
   },
 ]
@@ -728,13 +740,14 @@ export default function StylistOnboardingPage() {
                     </div>
                   </div>
 
-                  <TooltipProvider>
+                  <TooltipProvider delayDuration={0}>
                     <div className="space-y-4">
                       {COMPLIANCE_ITEMS.map((item, index) => {
                         const Icon = item.icon
                         const answer = compliance[item.key]
                         const infoKey = `${item.key}Info` as keyof OnboardingConfig
-                        const infoText = config?.[infoKey] || item.description
+                        // Priorität: CMS-Config > item.infoText (Standard)
+                        const infoText = config?.[infoKey] || item.infoText
                         
                         return (
                           <motion.div
@@ -894,14 +907,15 @@ export default function StylistOnboardingPage() {
                     </div>
                   </div>
 
-                  <TooltipProvider>
+                  <TooltipProvider delayDuration={0}>
                     <div className="space-y-4">
                       {DOCUMENT_SLOTS.map((slot, index) => {
                         const doc = documents[slot.key]
                         const hasFile = doc.url !== undefined || doc.status === 'uploaded'
                         const isNotAvailable = doc.notAvailable === true
                         const infoKey = `${slot.key}Info` as keyof OnboardingConfig
-                        const infoText = config?.[infoKey] || slot.description
+                        // Priorität: CMS-Config > slot.infoText (Standard)
+                        const infoText = config?.[infoKey] || slot.infoText
                         
                         return (
                           <motion.div
