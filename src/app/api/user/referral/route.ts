@@ -44,7 +44,7 @@ export async function GET() {
     const demoMode = await isDemoModeActive()
     if (demoMode) {
       // Personalisiere Demo-Daten mit User-Info
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.nicnoa.de'
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.nicnoa.online'
       const mockData = getMockReferralData()
       return NextResponse.json({
         ...mockData,
@@ -114,7 +114,7 @@ export async function GET() {
     }
 
     // Referral-Link
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://app.nicnoa.de'
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://www.nicnoa.online'
     const referralLink = `${baseUrl}/register?ref=${referralProfile.referralCode}`
 
     return NextResponse.json({
@@ -227,7 +227,7 @@ export async function POST(request: Request) {
     // TODO: E-Mail senden (nicht implementiert)
     // await sendReferralEmail(email, code, session.user.name)
 
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://app.nicnoa.de'
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://www.nicnoa.online'
     const inviteLink = `${baseUrl}/register?ref=${code}`
 
     return NextResponse.json({

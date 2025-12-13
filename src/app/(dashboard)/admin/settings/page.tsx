@@ -117,7 +117,7 @@ export default function SettingsPage() {
   const [openRouterApiKey, setOpenRouterApiKey] = useState('')
   const [openRouterEnabled, setOpenRouterEnabled] = useState(false)
   const [openRouterDefaultModel, setOpenRouterDefaultModel] = useState('openai/gpt-4o-mini')
-  const [openRouterSiteUrl, setOpenRouterSiteUrl] = useState('https://nicnoa.de')
+  const [openRouterSiteUrl, setOpenRouterSiteUrl] = useState('https://www.nicnoa.online')
   const [openRouterSiteName, setOpenRouterSiteName] = useState('NICNOA Platform')
   const [showOpenRouterKey, setShowOpenRouterKey] = useState(false)
   const [isTestingOpenRouter, setIsTestingOpenRouter] = useState(false)
@@ -220,7 +220,7 @@ export default function SettingsPage() {
         setOpenRouterApiKey(config.hasApiKey ? '••••••••••••••••' : '')
         setOpenRouterEnabled(config.openRouterEnabled)
         setOpenRouterDefaultModel(config.openRouterDefaultModel || 'openai/gpt-4o-mini')
-        setOpenRouterSiteUrl(config.openRouterSiteUrl || 'https://nicnoa.de')
+        setOpenRouterSiteUrl(config.openRouterSiteUrl || 'https://www.nicnoa.online')
         setOpenRouterSiteName(config.openRouterSiteName || 'NICNOA Platform')
       }
       
@@ -938,9 +938,9 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {[
-                  { label: 'App URL', value: typeof window !== 'undefined' ? window.location.origin : 'https://app.nicnoa.de' },
-                  { label: 'API Endpoint', value: typeof window !== 'undefined' ? `${window.location.origin}/api` : 'https://app.nicnoa.de/api' },
-                  { label: 'Webhook URL', value: typeof window !== 'undefined' ? `${window.location.origin}/api/stripe/webhook` : 'https://app.nicnoa.de/api/stripe/webhook' },
+                  { label: 'App URL', value: typeof window !== 'undefined' ? window.location.origin : 'https://www.nicnoa.online' },
+                  { label: 'API Endpoint', value: typeof window !== 'undefined' ? `${window.location.origin}/api` : 'https://www.nicnoa.online/api' },
+                  { label: 'Webhook URL', value: typeof window !== 'undefined' ? `${window.location.origin}/api/stripe/webhook` : 'https://www.nicnoa.online/api/stripe/webhook' },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                     <div>
@@ -1439,7 +1439,7 @@ export default function SettingsPage() {
                       id="openRouterSiteUrl"
                       value={openRouterSiteUrl}
                       onChange={(e) => setOpenRouterSiteUrl(e.target.value)}
-                      placeholder="https://nicnoa.de"
+                      placeholder="https://www.nicnoa.online"
                     />
                     <p className="text-xs text-muted-foreground">
                       Wird als HTTP-Referer an OpenRouter gesendet

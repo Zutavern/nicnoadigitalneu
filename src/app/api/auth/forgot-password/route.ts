@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     })
 
     // Generate reset URL
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://nicnoa.de'
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://www.nicnoa.online'
     const resetUrl = `${baseUrl}/passwort-zuruecksetzen?token=${resetToken}`
 
     // Send email
@@ -93,6 +93,7 @@ export async function POST(request: Request) {
     )
   }
 }
+
 
 
 

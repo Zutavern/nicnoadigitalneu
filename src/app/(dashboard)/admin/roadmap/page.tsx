@@ -607,7 +607,7 @@ export default function RoadmapCMS() {
                     metaDescription={config.metaDescription}
                     fallbackTitle="Roadmap | NICNOA"
                     fallbackDescription="Entdecken Sie die Zukunft des Salon-Managements..."
-                    url="nicnoa.de › roadmap"
+                    url="nicnoa.online › roadmap"
                     onTitleChange={(value) => updateConfig('metaTitle', value)}
                     onDescriptionChange={(value) => updateConfig('metaDescription', value)}
                   />

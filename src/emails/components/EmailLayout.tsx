@@ -31,7 +31,7 @@ export function EmailLayout({
   showSocialLinks = true,
   children,
 }: EmailLayoutProps) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nicnoa.de'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.nicnoa.online'
   const defaultLogo = `${baseUrl}/logo-email.png`
 
   return (

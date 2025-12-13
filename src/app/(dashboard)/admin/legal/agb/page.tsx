@@ -440,7 +440,7 @@ export default function AGBAdminPage() {
                   <p className="text-[#1a0dab] text-sm hover:underline cursor-pointer truncate">
                     {pageConfig.metaTitle || 'AGB | NICNOA'}
                   </p>
-                  <p className="text-[#006621] text-xs">nicnoa.de › agb</p>
+                  <p className="text-[#006621] text-xs">nicnoa.online › agb</p>
                   <p className="text-xs text-[#545454] line-clamp-2">
                     {pageConfig.metaDescription || pageConfig.heroDescription || 'Allgemeine Geschäftsbedingungen der NICNOA GmbH'}
                   </p>

@@ -88,3 +88,4 @@ echo "   → Für jede Variable: Edit → Build aktivieren → Save"
 
 
 
+

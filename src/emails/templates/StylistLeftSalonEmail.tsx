@@ -76,7 +76,7 @@ export function StylistLeftSalonEmail({
       </Text>
 
       <div style={buttonContainer}>
-        <EmailButton href="https://nicnoa.de/stylist" primaryColor="#3B82F6">
+        <EmailButton href="https://www.nicnoa.online/stylist" primaryColor="#3B82F6">
           {content.buttonText || 'Zum Dashboard'}
         </EmailButton>
       </div>
@@ -188,6 +188,7 @@ const footerNote: React.CSSProperties = {
 }
 
 export default StylistLeftSalonEmail
+
 
 
 

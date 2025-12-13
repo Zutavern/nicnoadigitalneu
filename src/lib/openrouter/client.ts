@@ -43,7 +43,7 @@ export async function getOpenRouterConfig(): Promise<OpenRouterConfig | null> {
     
     cachedConfig = {
       apiKey: settings.openRouterApiKey,
-      siteUrl: settings.openRouterSiteUrl || 'https://nicnoa.de',
+      siteUrl: settings.openRouterSiteUrl || 'https://www.nicnoa.online',
       siteName: settings.openRouterSiteName || 'NICNOA Platform',
       defaultModel: settings.openRouterDefaultModel || 'openai/gpt-4o-mini',
     }
@@ -127,7 +127,7 @@ export async function chatCompletion(
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${config.apiKey}`,
-        'HTTP-Referer': sanitizeHeader(config.siteUrl || 'https://nicnoa.de'),
+        'HTTP-Referer': sanitizeHeader(config.siteUrl || 'https://www.nicnoa.online'),
         'X-Title': sanitizeHeader(config.siteName || 'NICNOA Platform'),
         'Content-Type': 'application/json',
       },
@@ -236,5 +236,6 @@ export async function translateViaOpenRouter(
   
   return result.content
 }
+
 
 

@@ -154,7 +154,7 @@ export default function PressAdminPage() {
     pressKitDownloadUrl: '',
     contactTitle: 'Presse-Kontakt',
     contactDescription: '',
-    contactEmail: 'presse@nicnoa.de',
+    contactEmail: 'presse@nicnoa.online',
     contactPhone: '',
     contactPerson: '',
     metaTitle: '',
@@ -722,7 +722,7 @@ export default function PressAdminPage() {
                         metaDescription={pageConfig.metaDescription}
                         fallbackTitle="Presse | NICNOA"
                         fallbackDescription="Pressemitteilungen und Neuigkeiten von NICNOA"
-                        url="nicnoa.de › presse"
+                        url="nicnoa.online › presse"
                         onTitleChange={(value) => updateConfig('metaTitle', value)}
                         onDescriptionChange={(value) => updateConfig('metaDescription', value)}
                       />

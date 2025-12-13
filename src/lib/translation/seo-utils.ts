@@ -35,7 +35,7 @@ export interface HreflangTag {
 
 export async function generateHreflangTags(
   pagePath: string,
-  baseUrl = 'https://nicnoa.de'
+  baseUrl = 'https://www.nicnoa.online'
 ): Promise<HreflangTag[]> {
   const languages = await getActiveLanguages()
   
@@ -71,7 +71,7 @@ export async function generateHreflangTags(
 // hreflang-Tags als HTML-String
 export async function generateHreflangHtml(
   pagePath: string,
-  baseUrl = 'https://nicnoa.de'
+  baseUrl = 'https://www.nicnoa.online'
 ): Promise<string> {
   const tags = await generateHreflangTags(pagePath, baseUrl)
   
@@ -83,7 +83,7 @@ export async function generateHreflangHtml(
 // hreflang-Tags als Next.js Metadata format
 export async function generateHreflangMetadata(
   pagePath: string,
-  baseUrl = 'https://nicnoa.de'
+  baseUrl = 'https://www.nicnoa.online'
 ): Promise<Record<string, string>> {
   const tags = await generateHreflangTags(pagePath, baseUrl)
   
@@ -101,7 +101,7 @@ export async function generateHreflangMetadata(
 export function generateCanonicalUrl(
   pagePath: string,
   locale: Locale = DEFAULT_LOCALE,
-  baseUrl = 'https://nicnoa.de'
+  baseUrl = 'https://www.nicnoa.online'
 ): string {
   if (locale === DEFAULT_LOCALE) {
     return `${baseUrl}${pagePath}`
@@ -184,5 +184,6 @@ export async function getInactiveLocales(): Promise<string[]> {
     return []
   }
 }
+
 
 

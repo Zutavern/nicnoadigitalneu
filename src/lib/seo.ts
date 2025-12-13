@@ -39,7 +39,7 @@ const defaultGlobalConfig: GlobalSeoConfig = {
   organizationLogo: null,
   organizationAddress: null,
   organizationPhone: null,
-  organizationEmail: 'info@nicnoa.de',
+  organizationEmail: 'info@nicnoa.online',
 }
 
 /**
@@ -104,7 +104,7 @@ export async function generateRootMetadata(): Promise<Metadata> {
       template: `%s${globalSeo.titleSuffix || ''}`,
     },
     description: globalSeo.defaultMetaDescription,
-    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://nicnoa.de'),
+    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://www.nicnoa.online'),
     openGraph: {
       type: 'website',
       siteName: globalSeo.siteName,
@@ -145,7 +145,7 @@ export async function generateOrganizationJsonLd(): Promise<object | null> {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: globalSeo.organizationName,
-    url: process.env.NEXT_PUBLIC_APP_URL || 'https://nicnoa.de',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://www.nicnoa.online',
     logo: globalSeo.organizationLogo || undefined,
     contactPoint: globalSeo.organizationEmail || globalSeo.organizationPhone
       ? {
@@ -183,5 +183,6 @@ export function createPageMetadata(options: {
       : undefined,
   }
 }
+
 
 

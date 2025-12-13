@@ -440,7 +440,7 @@ export default function ImpressumAdminPage() {
                   <p className="text-[#1a0dab] text-sm hover:underline cursor-pointer truncate">
                     {pageConfig.metaTitle || 'Impressum | NICNOA'}
                   </p>
-                  <p className="text-[#006621] text-xs">nicnoa.de › impressum</p>
+                  <p className="text-[#006621] text-xs">nicnoa.online › impressum</p>
                   <p className="text-xs text-[#545454] line-clamp-2">
                     {pageConfig.metaDescription || pageConfig.heroDescription || 'Impressum und Pflichtangaben gemäß TMG'}
                   </p>

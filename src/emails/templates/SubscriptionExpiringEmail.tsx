@@ -23,7 +23,7 @@ export function SubscriptionExpiringEmail({
   userName,
   expirationDate,
   daysLeft = 7,
-  renewUrl = 'https://nicnoa.de/dashboard/settings/billing',
+  renewUrl = 'https://www.nicnoa.online/dashboard/settings/billing',
   content,
   logoUrl,
   primaryColor = '#10b981',
@@ -161,6 +161,7 @@ const footerNote: React.CSSProperties = {
 }
 
 export default SubscriptionExpiringEmail
+
 
 
 

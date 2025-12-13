@@ -128,7 +128,7 @@ export async function POST() {
         pressKitDownloadUrl: '',
         contactTitle: 'Presse-Kontakt',
         contactDescription: 'Für Medienanfragen und Interviews stehen wir Ihnen gerne zur Verfügung.',
-        contactEmail: 'presse@nicnoa.de',
+        contactEmail: 'presse@nicnoa.online',
         contactPhone: '+49 89 1234567',
         contactPerson: 'Lisa Müller, PR Manager',
         metaTitle: 'Presse & Medien | NICNOA',
@@ -170,6 +170,7 @@ export async function GET() {
     )
   }
 }
+
 
 
 

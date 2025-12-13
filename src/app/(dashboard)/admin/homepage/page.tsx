@@ -912,7 +912,7 @@ export default function HomePageCMS() {
                     metaDescription={config.metaDescription}
                     fallbackTitle="NICNOA&CO.online - Die All-in-One Salon-Lösung"
                     fallbackDescription="Die All-in-One SaaS-Lösung für moderne Salon-Coworking-Spaces..."
-                    url="nicnoa.de"
+                    url="nicnoa.online"
                     onTitleChange={(value) => updateConfig('metaTitle', value)}
                     onDescriptionChange={(value) => updateConfig('metaDescription', value)}
                     ogImageUrl={config.ogImageUrl}

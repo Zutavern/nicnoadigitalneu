@@ -683,7 +683,7 @@ export default function FAQsPage() {
                     metaDescription={pageConfig.metaDescription}
                     fallbackTitle="FAQ - Häufige Fragen | NICNOA"
                     fallbackDescription="Antworten auf häufig gestellte Fragen zu NICNOA. Hilfe für Salonbesitzer und Stuhlmieter."
-                    url="nicnoa.de › faq"
+                    url="nicnoa.online › faq"
                     onTitleChange={(value) => updateConfig('metaTitle', value || null)}
                     onDescriptionChange={(value) => updateConfig('metaDescription', value || null)}
                   />

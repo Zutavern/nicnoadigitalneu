@@ -38,7 +38,7 @@ export async function GET() {
           pressKitDownloadUrl: '',
           contactTitle: 'Presse-Kontakt',
           contactDescription: 'Für Medienanfragen und Interviews stehen wir Ihnen gerne zur Verfügung.',
-          contactEmail: 'presse@nicnoa.de',
+          contactEmail: 'presse@nicnoa.online',
           contactPhone: '',
           contactPerson: '',
           metaTitle: 'Presse & Medien | NICNOA',

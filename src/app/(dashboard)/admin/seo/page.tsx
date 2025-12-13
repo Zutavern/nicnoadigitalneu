@@ -58,7 +58,7 @@ const defaultConfig: GlobalSeoConfig = {
   organizationLogo: null,
   organizationAddress: null,
   organizationPhone: null,
-  organizationEmail: 'info@nicnoa.de',
+  organizationEmail: 'info@nicnoa.online',
 }
 
 export default function GlobalSeoPage() {
@@ -285,7 +285,7 @@ export default function GlobalSeoPage() {
                     <Input
                       value={config.defaultOgImage || ''}
                       onChange={(e) => updateConfig('defaultOgImage', e.target.value)}
-                      placeholder="https://nicnoa.de/og-image.jpg"
+                      placeholder="https://www.nicnoa.online/og-image.jpg"
                     />
                     <p className="text-xs text-muted-foreground">
                       Wird angezeigt, wenn Seiten kein eigenes Bild haben. Empfohlen: 1200x630px
@@ -382,7 +382,7 @@ export default function GlobalSeoPage() {
                     <Input
                       value={config.organizationLogo || ''}
                       onChange={(e) => updateConfig('organizationLogo', e.target.value)}
-                      placeholder="https://nicnoa.de/logo.png"
+                      placeholder="https://www.nicnoa.online/logo.png"
                     />
                     <p className="text-xs text-muted-foreground">
                       Für Knowledge Panel in Google. Empfohlen: Quadratisch, mind. 112x112px
@@ -415,7 +415,7 @@ export default function GlobalSeoPage() {
                       <Input
                         value={config.organizationEmail || ''}
                         onChange={(e) => updateConfig('organizationEmail', e.target.value)}
-                        placeholder="info@nicnoa.de"
+                        placeholder="info@nicnoa.online"
                       />
                     </div>
                   </div>
@@ -445,7 +445,7 @@ export default function GlobalSeoPage() {
                     <div className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center">
                       <Globe className="h-2.5 w-2.5 text-gray-500" />
                     </div>
-                    <p className="text-[#202124]">nicnoa.de</p>
+                    <p className="text-[#202124]">nicnoa.online</p>
                   </div>
                   <p className="text-sm text-[#4d5156] line-clamp-2 leading-relaxed">
                     {config.defaultMetaDescription || 'Seitenbeschreibung...'}
@@ -523,5 +523,6 @@ export default function GlobalSeoPage() {
     </div>
   )
 }
+
 
 

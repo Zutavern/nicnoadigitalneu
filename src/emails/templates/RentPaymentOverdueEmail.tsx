@@ -33,7 +33,7 @@ export function RentPaymentOverdueEmail({
   daysOverdue,
   lateFee,
   totalAmount,
-  paymentUrl = 'https://nicnoa.de/stylist/invoices',
+  paymentUrl = 'https://www.nicnoa.online/stylist/invoices',
   content,
   logoUrl,
   primaryColor = '#dc2626',
@@ -308,6 +308,7 @@ const footerNote: React.CSSProperties = {
 }
 
 export default RentPaymentOverdueEmail
+
 
 
 

@@ -137,3 +137,4 @@ export interface PresenceMembers {
   me: PresenceMember
 }
 
+

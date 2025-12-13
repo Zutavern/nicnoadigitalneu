@@ -28,7 +28,7 @@ export async function GET() {
         openRouterApiKey: null,
         openRouterEnabled: false,
         openRouterDefaultModel: 'openai/gpt-4o-mini',
-        openRouterSiteUrl: 'https://nicnoa.de',
+        openRouterSiteUrl: 'https://www.nicnoa.online',
         openRouterSiteName: 'NICNOA Platform',
       })
     }
@@ -176,5 +176,6 @@ export async function POST(request: NextRequest) {
     })
   }
 }
+
 
 

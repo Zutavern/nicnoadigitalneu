@@ -1330,7 +1330,7 @@ export default function ProductCMSPage() {
                         metaDescription={config.metaDescription}
                         fallbackTitle="NICNOA Produkt - Features & Funktionen"
                         fallbackDescription="Alle Features und Funktionen der NICNOA Plattform..."
-                        url="nicnoa.de › produkt"
+                        url="nicnoa.online › produkt"
                         onTitleChange={(value) => updateConfig('metaTitle', value)}
                         onDescriptionChange={(value) => updateConfig('metaDescription', value)}
                         ogImageUrl={config.ogImage}

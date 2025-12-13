@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     })
 
     // Generate login URL
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://nicnoa.de'
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://www.nicnoa.online'
     const loginUrl = `${baseUrl}/api/auth/magic-link/verify?token=${token}`
 
     // Send email
@@ -106,4 +106,6 @@ export async function POST(request: Request) {
     )
   }
 }
+
+
 

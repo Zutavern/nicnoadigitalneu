@@ -30,8 +30,8 @@ export function PasswordChangedEmail({
   device,
   ipAddress,
   location,
-  securityUrl = 'https://nicnoa.de/dashboard/settings/security',
-  supportEmail = 'support@nicnoa.de',
+  securityUrl = 'https://www.nicnoa.online/dashboard/settings/security',
+  supportEmail = 'support@nicnoa.online',
   content,
   logoUrl,
   primaryColor = '#10b981',
@@ -306,6 +306,7 @@ const footerNote: React.CSSProperties = {
 }
 
 export default PasswordChangedEmail
+
 
 
 

@@ -37,7 +37,7 @@ export function HighChurnAlertEmail({
   totalUsers,
   topReasons,
   affectedPlans,
-  dashboardUrl = 'https://nicnoa.de/admin/analytics',
+  dashboardUrl = 'https://www.nicnoa.online/admin/analytics',
   content,
   logoUrl,
   primaryColor = '#dc2626',
@@ -419,6 +419,7 @@ const footerNote: React.CSSProperties = {
 }
 
 export default HighChurnAlertEmail
+
 
 
 

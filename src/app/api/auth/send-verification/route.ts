@@ -39,7 +39,7 @@ export async function POST() {
     })
 
     // Generate verification URL
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://nicnoa.de'
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://www.nicnoa.online'
     const verifyUrl = `${baseUrl}/verify-email?token=${verificationToken}`
 
     // Send email
@@ -65,6 +65,7 @@ export async function POST() {
     )
   }
 }
+
 
 
 

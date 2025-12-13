@@ -262,7 +262,7 @@ export async function handleLoginEvent(info: LoginInfo, success: boolean) {
               timeStyle: 'short',
             }),
             reason: notifyReason,
-            securityUrl: `${process.env.NEXTAUTH_URL || 'https://nicnoa.de'}/dashboard/settings/security`,
+            securityUrl: `${process.env.NEXTAUTH_URL || 'https://www.nicnoa.online'}/dashboard/settings/security`,
           },
           userId: info.userId,
         })
@@ -314,7 +314,7 @@ export async function handleLoginEvent(info: LoginInfo, success: boolean) {
                     dateStyle: 'full',
                     timeStyle: 'short',
                   }),
-                  actionUrl: `${process.env.NEXTAUTH_URL || 'https://nicnoa.de'}/dashboard/settings/security`,
+                  actionUrl: `${process.env.NEXTAUTH_URL || 'https://www.nicnoa.online'}/dashboard/settings/security`,
                 },
                 userId: targetUser.id,
               })
@@ -390,7 +390,7 @@ export async function notifyPasswordChanged(userId: string, userEmail: string, u
           dateStyle: 'full',
           timeStyle: 'short',
         }),
-        securityUrl: `${process.env.NEXTAUTH_URL || 'https://nicnoa.de'}/dashboard/settings/security`,
+        securityUrl: `${process.env.NEXTAUTH_URL || 'https://www.nicnoa.online'}/dashboard/settings/security`,
       },
       userId,
     })

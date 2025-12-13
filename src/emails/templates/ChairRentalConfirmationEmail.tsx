@@ -41,7 +41,7 @@ export function ChairRentalConfirmationEmail({
   monthlyRent,
   contractDuration = 'Unbefristet',
   firstPaymentDue,
-  rentalManagementUrl = 'https://nicnoa.de/salon/chairs',
+  rentalManagementUrl = 'https://www.nicnoa.online/salon/chairs',
   content,
   logoUrl,
   primaryColor = '#10b981',
@@ -352,6 +352,7 @@ const footerNote: React.CSSProperties = {
 }
 
 export default ChairRentalConfirmationEmail
+
 
 
 

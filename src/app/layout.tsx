@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     template: "%s | NICNOA&CO.online",
   },
   description: "Die All-in-One SaaS-Lösung für moderne Salon-Coworking-Spaces.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://nicnoa.de"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://www.nicnoa.online"),
   openGraph: {
     type: "website",
     siteName: "NICNOA&CO.online",

@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://nicnoa.de'
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.nicnoa.online'
 
 // Statische Seiten
 const STATIC_PAGES = [
@@ -121,5 +121,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return sitemapEntries
 }
+
 
 

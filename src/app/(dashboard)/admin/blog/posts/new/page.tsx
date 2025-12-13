@@ -347,7 +347,7 @@ export default function NewBlogPostPage() {
                 metaDescription={metaDescription}
                 fallbackTitle={title || 'Titel des Artikels'}
                 fallbackDescription={excerpt || 'Beschreibung des Artikels erscheint hier...'}
-                url={`nicnoa.de/blog/${slug || 'url-slug'}`}
+                url={`nicnoa.online/blog/${slug || 'url-slug'}`}
                 onTitleChange={setMetaTitle}
                 onDescriptionChange={setMetaDescription}
                 content={content}

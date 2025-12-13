@@ -376,7 +376,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   })
 
   // Send payment failed email to user
-  const retryUrl = `${process.env.NEXTAUTH_URL || 'https://nicnoa.de'}/settings/billing`
+  const retryUrl = `${process.env.NEXTAUTH_URL || 'https://www.nicnoa.online'}/settings/billing`
   await emails.sendPaymentFailed(
     user.email,
     user.name || 'Nutzer',

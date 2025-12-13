@@ -198,7 +198,7 @@ export async function POST(request: Request) {
 
     // E-Mail senden wenn gewünscht
     if (validatedData.sendEmail) {
-      const baseUrl = process.env.NEXTAUTH_URL || 'https://nicnoa.de'
+      const baseUrl = process.env.NEXTAUTH_URL || 'https://www.nicnoa.online'
       const invitationUrl = `${baseUrl}/join/${shortCode}`
 
       try {
@@ -247,7 +247,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ...invitation,
       userStatus,
-      invitationUrl: `${process.env.NEXTAUTH_URL || 'https://nicnoa.de'}/join/${shortCode}`,
+      invitationUrl: `${process.env.NEXTAUTH_URL || 'https://www.nicnoa.online'}/join/${shortCode}`,
     }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -260,6 +260,7 @@ export async function POST(request: Request) {
     )
   }
 }
+
 
 
 

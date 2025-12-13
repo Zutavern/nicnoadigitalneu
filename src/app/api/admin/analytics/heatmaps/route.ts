@@ -39,7 +39,7 @@ export async function GET(request: Request) {
     }
 
     // Get the app URL for toolbar
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.nicnoa.online'
 
     switch (type) {
       case 'config': {

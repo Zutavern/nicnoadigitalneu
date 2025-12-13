@@ -1013,7 +1013,7 @@ export default function PartnersPage() {
                     metaDescription={pageConfig.metaDescription}
                     fallbackTitle="Partner & Vorteile | NICNOA"
                     fallbackDescription="Entdecken Sie unsere exklusiven Partner-Angebote für NICNOA-Mitglieder. Spezielle Konditionen für Salon-Professionals."
-                    url="nicnoa.de › partner"
+                    url="nicnoa.online › partner"
                     onTitleChange={(value) => updatePageConfig('metaTitle', value || null)}
                     onDescriptionChange={(value) => updatePageConfig('metaDescription', value || null)}
                   />

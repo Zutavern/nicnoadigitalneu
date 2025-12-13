@@ -935,7 +935,7 @@ export default function CareerPage() {
                     metaDescription={pageConfig.metaDescription}
                     fallbackTitle="Karriere bei NICNOA | Jobs & Stellenangebote"
                     fallbackDescription="Werde Teil des NICNOA Teams. Entdecke spannende Karrieremöglichkeiten in einem innovativen Startup."
-                    url="nicnoa.de › karriere"
+                    url="nicnoa.online › karriere"
                     onTitleChange={(value) => updatePageConfig('metaTitle', value || null)}
                     onDescriptionChange={(value) => updatePageConfig('metaDescription', value || null)}
                   />

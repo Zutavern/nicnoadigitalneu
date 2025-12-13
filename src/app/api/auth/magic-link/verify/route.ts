@@ -130,7 +130,7 @@ export async function GET(request: Request) {
     })
 
     // Create response with redirect
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://nicnoa.de'
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://www.nicnoa.online'
     const redirectTo = user.onboardingCompleted 
       ? (user.role === 'ADMIN' ? '/admin' : user.role === 'SALON_OWNER' ? '/salon' : '/stylist')
       : '/onboarding'
@@ -160,4 +160,6 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL('/login?error=server', request.url))
   }
 }
+
+
 

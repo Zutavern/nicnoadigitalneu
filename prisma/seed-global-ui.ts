@@ -106,3 +106,4 @@ seedGlobalUIConfig()
     await prisma.$disconnect()
   })
 
+

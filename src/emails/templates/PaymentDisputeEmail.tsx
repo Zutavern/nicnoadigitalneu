@@ -45,7 +45,7 @@ export function PaymentDisputeEmail({
   responseDeadline,
   daysRemaining,
   stripeDisputeUrl = 'https://dashboard.stripe.com/disputes',
-  dashboardUrl = 'https://nicnoa.de/admin/revenue',
+  dashboardUrl = 'https://www.nicnoa.online/admin/revenue',
   content,
   logoUrl,
   primaryColor = '#dc2626',
@@ -473,6 +473,7 @@ const footerNote: React.CSSProperties = {
 }
 
 export default PaymentDisputeEmail
+
 
 
 

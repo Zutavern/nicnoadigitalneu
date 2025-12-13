@@ -41,7 +41,7 @@ export function NewUserRegisteredEmail({
   referredBy,
   todayRegistrations,
   thisWeekRegistrations,
-  dashboardUrl = 'https://nicnoa.de/admin/users',
+  dashboardUrl = 'https://www.nicnoa.online/admin/users',
   content,
   logoUrl,
   primaryColor = '#10b981',
@@ -328,6 +328,7 @@ const footerNote: React.CSSProperties = {
 }
 
 export default NewUserRegisteredEmail
+
 
 
 

@@ -17,7 +17,7 @@ const defaultConfig = {
   organizationLogo: null,
   organizationAddress: null,
   organizationPhone: null,
-  organizationEmail: 'info@nicnoa.de',
+  organizationEmail: 'info@nicnoa.online',
 }
 
 // GET - Globale SEO-Konfiguration laden
@@ -123,5 +123,6 @@ export async function PUT(request: Request) {
     )
   }
 }
+
 
 

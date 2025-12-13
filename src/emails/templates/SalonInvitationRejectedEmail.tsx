@@ -78,7 +78,7 @@ export function SalonInvitationRejectedEmail({
       </Text>
 
       <div style={buttonContainer}>
-        <EmailButton href="https://nicnoa.de/salon/stylists" primaryColor="#3B82F6">
+        <EmailButton href="https://www.nicnoa.online/salon/stylists" primaryColor="#3B82F6">
           {content.buttonText || 'Neue Einladung erstellen'}
         </EmailButton>
       </div>
@@ -193,6 +193,7 @@ const footerNote: React.CSSProperties = {
 }
 
 export default SalonInvitationRejectedEmail
+
 
 
 

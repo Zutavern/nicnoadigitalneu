@@ -48,3 +48,4 @@ echo "🚀 Nächstes Deployment wird automatisch Build-Variablen verwenden"
 
 
 
+

@@ -822,7 +822,7 @@ export default function AboutUsAdminPage() {
                     metaDescription={config.metaDescription}
                     fallbackTitle="Über uns | NICNOA"
                     fallbackDescription="Lernen Sie das Team hinter NICNOA kennen. Unsere Vision, Mission und warum wir die beste Lösung für Salon-Spaces entwickeln."
-                    url="nicnoa.de › uber-uns"
+                    url="nicnoa.online › uber-uns"
                     onTitleChange={(value) => updateConfig('metaTitle', value || null)}
                     onDescriptionChange={(value) => updateConfig('metaDescription', value || null)}
                   />

@@ -53,7 +53,7 @@ export async function POST(
     const isExpired = new Date(invitation.expiresAt) < new Date()
     
     // E-Mail erneut senden
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://nicnoa.de'
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://www.nicnoa.online'
     const invitationUrl = `${baseUrl}/join/${invitation.shortCode}`
 
     try {
@@ -115,6 +115,7 @@ export async function POST(
     )
   }
 }
+
 
 
 

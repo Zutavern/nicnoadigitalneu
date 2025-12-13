@@ -477,7 +477,7 @@ export function getMockReferralData() {
       pendingRewardsValue: 29.99,
     },
     referralCode: 'DEMO-ABC123',
-    referralLink: 'https://app.nicnoa.de/register?ref=DEMO-ABC123',
+    referralLink: 'https://www.nicnoa.online/register?ref=DEMO-ABC123',
     referrals: [
       {
         id: 'ref-1',
@@ -2417,7 +2417,7 @@ export function getMockEmailBrandingSettings() {
     logoUrl: null,
     primaryColor: '#ec4899',
     companyName: 'NICNOA',
-    supportEmail: 'support@nicnoa.de',
+    supportEmail: 'support@nicnoa.online',
     footerText: '© 2024 NICNOA. Alle Rechte vorbehalten.',
   }
 }
@@ -2429,8 +2429,8 @@ export function getMockAdminSettings() {
   return {
     platform: {
       name: 'NICNOA',
-      url: 'https://nicnoa.de',
-      supportEmail: 'support@nicnoa.de',
+      url: 'https://www.nicnoa.online',
+      supportEmail: 'support@nicnoa.online',
       defaultLanguage: 'de',
       timezone: 'Europe/Berlin',
       maintenanceMode: false,
