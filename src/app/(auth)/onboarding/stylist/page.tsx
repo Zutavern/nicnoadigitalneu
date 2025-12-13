@@ -175,7 +175,7 @@ const DOCUMENT_SLOTS: DocumentSlot[] = [
   },
 ]
 
-const TOTAL_STEPS = 4
+const TOTAL_STEPS = 3 // Nur 3 Schritte im Formular, danach Analyse oder Abschluss
 
 export default function StylistOnboardingPage() {
   const { data: session, status, update } = useSession()
@@ -325,13 +325,12 @@ export default function StylistOnboardingPage() {
         // Alle müssen beantwortet sein (egal ob ja/nein/in Arbeit)
         return allComplianceAnswered
       case 3:
+        // Alle Dokumente müssen entweder hochgeladen ODER als "später" markiert sein
         return allDocumentsHandled
-      case 4:
-        return declaration
       default:
         return false
     }
-  }, [currentStep, businessData, allComplianceAnswered, allComplianceChecked, allDocumentsHandled, declaration])
+  }, [currentStep, businessData, allComplianceAnswered, allDocumentsHandled])
 
   const handleComplianceAnswer = (key: string, answer: ComplianceAnswer) => {
     setCompliance(prev => ({ ...prev, [key]: answer }))
@@ -382,23 +381,40 @@ export default function StylistOnboardingPage() {
       return
     }
 
-    if (currentStep < TOTAL_STEPS) {
+    // Nach Schritt 3: Entscheiden ob zur Analyse oder direkt zum Abschluss
+    if (currentStep === TOTAL_STEPS) {
+      // Prüfe ob alles perfekt ist (alle Compliance "yes" + alle Dokumente hochgeladen)
+      const allComplianceYes = Object.values(compliance).every(v => v === 'yes')
+      const allDocsUploaded = Object.values(documents).every(d => d.url || d.status === 'uploaded')
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/b3eb92b9-7cac-421a-9f34-d4f240376a6e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.tsx:handleNext:step3complete',message:'Step 3 complete, checking if perfect',data:{allComplianceYes,allDocsUploaded,willGoToAnalyse:!(allComplianceYes && allDocsUploaded)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
+      
+      if (allComplianceYes && allDocsUploaded) {
+        // Alles perfekt → direkt zum Abschluss (Schritt 4)
+        setCurrentStep(4)
+      } else {
+        // Etwas fehlt → Daten speichern und zur Analyse-Seite
+        await saveAndGoToAnalyse()
+      }
+    } else {
       setCurrentStep(prev => prev + 1)
     }
   }
-
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(prev => prev - 1)
+  
+  // Speichert die aktuellen Daten und schließt das Onboarding (zurück zum Dashboard)
+  const handleCloseAndSave = async () => {
+    // Nur speichern wenn mindestens Geschäftsdaten vorhanden sind
+    if (!businessData.companyName || !businessData.businessStreet || !businessData.businessCity || !businessData.businessZipCode) {
+      // Keine Daten zum Speichern - einfach schließen
+      router.push('/stylist')
+      return
     }
-  }
-
-  const handleSubmit = async () => {
+    
     setIsLoading(true)
-    setFormError('')
-
+    
     try {
-      // Dokumente sind bereits hochgeladen - sammle URLs und "nicht verfügbar" Flags
       const documentUrls: Record<string, string> = {}
       const documentNotAvailable: Record<string, boolean> = {}
       
@@ -411,16 +427,121 @@ export default function StylistOnboardingPage() {
         }
       }
 
-      // Save all onboarding data
+      // Speichere den aktuellen Stand
+      await fetch('/api/onboarding/stylist/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessData,
+          compliance,
+          documentUrls,
+          documentNotAvailable,
+          declaration: false,
+        }),
+      })
+      
+      // Zum Dashboard navigieren
+      router.push('/stylist')
+    } catch (error) {
+      console.error('Error saving onboarding:', error)
+      // Trotzdem schließen
+      router.push('/stylist')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+  
+  // Speichert die Daten und leitet zur Analyse-Seite weiter
+  const saveAndGoToAnalyse = async () => {
+    setIsLoading(true)
+    setFormError('')
+    
+    try {
+      const documentUrls: Record<string, string> = {}
+      const documentNotAvailable: Record<string, boolean> = {}
+      
+      for (const [key, doc] of Object.entries(documents)) {
+        if (doc.url) {
+          documentUrls[key] = doc.url
+        }
+        if (doc.notAvailable) {
+          documentNotAvailable[key] = true
+        }
+      }
+
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/b3eb92b9-7cac-421a-9f34-d4f240376a6e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.tsx:saveAndGoToAnalyse',message:'Saving data and redirecting to analyse',data:{documentUrls,documentNotAvailable},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
+      // #endregion
+
+      // Speichere die Daten (ohne finale Erklärung)
       const response = await fetch('/api/onboarding/stylist/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           businessData,
-          compliance, // Enthält jetzt "yes"/"no"/"pending" Antworten
+          compliance,
           documentUrls,
           documentNotAvailable,
-          declaration,
+          declaration: false, // Keine Erklärung bei vorläufigem Abschluss
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Ein Fehler ist aufgetreten')
+      }
+
+      // Weiterleitung zur Analyse-Seite
+      router.push('/onboarding/stylist/analyse')
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1)
+    }
+  }
+
+  // Finaler Abschluss (nur wenn alles perfekt ist - alle "Ja" + alle Dokumente)
+  const handleSubmit = async () => {
+    if (!declaration) {
+      setFormError('Bitte akzeptiere die rechtliche Erklärung')
+      return
+    }
+    
+    setIsLoading(true)
+    setFormError('')
+
+    try {
+      const documentUrls: Record<string, string> = {}
+      const documentNotAvailable: Record<string, boolean> = {}
+      
+      for (const [key, doc] of Object.entries(documents)) {
+        if (doc.url) {
+          documentUrls[key] = doc.url
+        }
+        if (doc.notAvailable) {
+          documentNotAvailable[key] = true
+        }
+      }
+
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/b3eb92b9-7cac-421a-9f34-d4f240376a6e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.tsx:handleSubmit',message:'Final submit with declaration',data:{declaration},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
+
+      const response = await fetch('/api/onboarding/stylist/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessData,
+          compliance,
+          documentUrls,
+          documentNotAvailable,
+          declaration: true, // Mit Erklärung = vollständiger Abschluss
         }),
       })
 
@@ -432,8 +553,8 @@ export default function StylistOnboardingPage() {
       // Update session
       await update({ onboardingCompleted: true })
       
-      // Weiterleitung zur Analyse-Seite
-      router.push('/onboarding/stylist/analyse')
+      // Direkt zum Dashboard
+      router.push('/stylist')
       router.refresh()
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten')
@@ -464,7 +585,6 @@ export default function StylistOnboardingPage() {
     { number: 1, title: 'Geschäftsdaten', icon: Building2 },
     { number: 2, title: 'Compliance', icon: Shield },
     { number: 3, title: 'Dokumente', icon: FileCheck },
-    { number: 4, title: 'Abschluss', icon: Signature },
   ]
 
   return (
@@ -487,6 +607,24 @@ export default function StylistOnboardingPage() {
       </div>
 
       <div className="container max-w-4xl py-8 md:py-12 relative z-10">
+        {/* Close Button - oben rechts */}
+        <div className="absolute top-4 right-4 md:top-8 md:right-8 z-20">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleCloseAndSave}
+            disabled={isLoading}
+            className="h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10"
+            title="Speichern und schließen"
+          >
+            {isLoading ? (
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            ) : (
+              <X className="h-5 w-5 text-muted-foreground" />
+            )}
+          </Button>
+        </div>
+        
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}
@@ -1157,6 +1295,24 @@ export default function StylistOnboardingPage() {
                     </div>
                   </div>
 
+                  {/* Erfolgs-Hinweis */}
+                  <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+                    <div className="flex items-start gap-4">
+                      <div className="h-12 w-12 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                        <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-white mb-2">
+                          Alles vollständig! 🎉
+                        </h3>
+                        <p className="text-muted-foreground">
+                          Du hast alle Fragen mit "Ja" beantwortet und alle Dokumente hochgeladen.
+                          Bestätige jetzt die rechtliche Erklärung, um dein Onboarding abzuschließen.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Declaration */}
                   <div className="p-6 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
                     <button
@@ -1210,19 +1366,29 @@ export default function StylistOnboardingPage() {
                 Zurück
               </Button>
 
-              {currentStep < TOTAL_STEPS ? (
+              {currentStep <= TOTAL_STEPS ? (
                 <Button
                   onClick={handleNext}
-                  disabled={!canProceed()}
+                  disabled={!canProceed() || isLoading}
                   className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white border-0 px-6"
                 >
-                  Weiter
-                  <ChevronRight className="ml-2 h-4 w-4" />
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Wird geladen...
+                    </>
+                  ) : (
+                    <>
+                      Weiter
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
                 </Button>
               ) : (
+                // Schritt 4: Finaler Abschluss (nur bei perfektem Onboarding)
                 <Button
                   onClick={handleSubmit}
-                  disabled={!canProceed() || isLoading}
+                  disabled={!declaration || isLoading}
                   className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 px-8"
                 >
                   {isLoading ? (
@@ -1250,7 +1416,9 @@ export default function StylistOnboardingPage() {
           className="mt-8 text-center"
         >
           <p className="text-sm text-muted-foreground">
-            Schritt {currentStep} von {TOTAL_STEPS} • Dein Fortschritt wird automatisch gespeichert
+            {currentStep <= TOTAL_STEPS 
+              ? `Schritt ${currentStep} von ${TOTAL_STEPS} • Dein Fortschritt wird automatisch gespeichert`
+              : 'Fast geschafft! Bestätige die rechtliche Erklärung.'}
           </p>
         </motion.div>
       </div>

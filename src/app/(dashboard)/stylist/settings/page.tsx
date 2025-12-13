@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { TwoFactorSettings } from '@/components/settings/two-factor-settings'
+import { ConnectedAccounts } from '@/components/profile/connected-accounts'
 import { toast } from 'sonner'
 
 // Security Tab Component
@@ -210,11 +211,20 @@ function SecurityTab({ session }: { session: any }) {
         </Card>
       </motion.div>
 
-      {/* Two Factor Authentication */}
+      {/* Connected Accounts (OAuth) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
+      >
+        <ConnectedAccounts accentColor="pink" />
+      </motion.div>
+
+      {/* Two Factor Authentication */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
       >
         <TwoFactorSettings />
       </motion.div>
@@ -223,7 +233,7 @@ function SecurityTab({ session }: { session: any }) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
+        transition={{ delay: 0.4 }}
       >
         <Card className="border-red-500/30">
           <CardHeader>

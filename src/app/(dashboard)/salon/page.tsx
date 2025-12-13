@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -21,12 +21,27 @@ import {
   XCircle,
   AlertCircle,
   Armchair,
-  TrendingUp
+  TrendingUp,
+  Zap
 } from 'lucide-react'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Progress } from '@/components/ui/progress'
+import { useWidgetConfig, WidgetSettingsPanel, type WidgetConfig } from '@/components/dashboard/widget-settings'
+
+// ============== WIDGET CONFIG ==============
+
+const DEFAULT_SALON_WIDGETS: WidgetConfig[] = [
+  { id: 'statCards', name: 'Hauptstatistiken', description: 'Stühle, Mietverhältnisse, Einnahmen, Bewertung', enabled: true, icon: TrendingUp },
+  { id: 'pendingRequests', name: 'Offene Anfragen', description: 'Mietanfragen von Stylisten', enabled: true, icon: AlertCircle },
+  { id: 'quickActions', name: 'Schnellaktionen', description: 'Wichtige Aktionen schnell erreichen', enabled: true, icon: Zap },
+  { id: 'chairOverview', name: 'Stühle & Auslastung', description: 'Übersicht deiner Arbeitsplätze', enabled: true, icon: Armchair },
+  { id: 'activeRentals', name: 'Aktive Mietverhältnisse', description: 'Deine aktuellen Mieter', enabled: true, icon: Users },
+  { id: 'recentReviews', name: 'Neueste Bewertungen', description: 'Feedback zu deinem Salon', enabled: true, icon: Star },
+]
+
+const WIDGET_STORAGE_KEY = 'salon-dashboard-widgets'
 
 interface SalonStats {
   salon: {
@@ -155,6 +170,10 @@ export default function SalonDashboardPage() {
   const [stats, setStats] = useState<SalonStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // Widget configuration
+  const defaultWidgets = useMemo(() => DEFAULT_SALON_WIDGETS, [])
+  const { widgets, toggleWidget, resetWidgets, isEnabled, isLoaded } = useWidgetConfig(WIDGET_STORAGE_KEY, defaultWidgets)
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -226,17 +245,28 @@ export default function SalonDashboardPage() {
               </p>
             </div>
           </div>
-          <Button asChild>
-            <Link href="/salon/settings">
-              <Settings className="mr-2 h-4 w-4" />
-              Einstellungen
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Widget Settings */}
+            {isLoaded && (
+              <WidgetSettingsPanel
+                widgets={widgets}
+                onToggle={toggleWidget}
+                onReset={resetWidgets}
+              />
+            )}
+            <Button asChild>
+              <Link href="/salon/settings">
+                <Settings className="mr-2 h-4 w-4" />
+                Einstellungen
+              </Link>
+            </Button>
+          </div>
         </div>
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+      {isEnabled('statCards') && (
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -312,10 +342,11 @@ export default function SalonDashboardPage() {
             </CardContent>
           </Card>
         </motion.div>
-      </div>
+        </div>
+      )}
 
       {/* Pending Requests Alert */}
-      {stats.overview.pendingRequests > 0 && (
+      {isEnabled('pendingRequests') && stats.overview.pendingRequests > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -341,63 +372,67 @@ export default function SalonDashboardPage() {
       )}
 
       {/* Quick Actions */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-      >
-        <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Schnellaktionen</h2>
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
-          {quickActions.map((action) => (
-            <Link key={action.label} href={action.href}>
-              <Card className="hover:bg-muted/50 transition-colors cursor-pointer group">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                        <action.icon className="h-5 w-5 text-blue-500" />
-                      </div>
-                      <span className="font-medium">{action.label}</span>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Main Content Grid */}
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-        {/* Chair Overview */}
+      {isEnabled('quickActions') && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.5 }}
         >
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Stühle & Auslastung</CardTitle>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/salon/chairs">Alle anzeigen</Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Gesamtauslastung</span>
-                    <span className="font-semibold">{occupancyRate}%</span>
-                  </div>
-                  <Progress value={occupancyRate} className="h-2" />
-                </div>
-
-                <div className="space-y-3 mt-6">
-                  {stats.chairs.slice(0, 4).map((chair) => (
-                    <div key={chair.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Schnellaktionen</h2>
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
+            {quickActions.map((action) => (
+              <Link key={action.label} href={action.href}>
+                <Card className="hover:bg-muted/50 transition-colors cursor-pointer group">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`h-3 w-3 rounded-full ${chair.isRented ? 'bg-green-500' : chair.isAvailable ? 'bg-blue-500' : 'bg-gray-400'}`} />
+                        <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                          <action.icon className="h-5 w-5 text-blue-500" />
+                        </div>
+                        <span className="font-medium">{action.label}</span>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Main Content Grid */}
+      {(isEnabled('chairOverview') || isEnabled('activeRentals')) && (
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+          {/* Chair Overview */}
+          {isEnabled('chairOverview') && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Stühle & Auslastung</CardTitle>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/salon/chairs">Alle anzeigen</Link>
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span>Gesamtauslastung</span>
+                        <span className="font-semibold">{occupancyRate}%</span>
+                      </div>
+                      <Progress value={occupancyRate} className="h-2" />
+                    </div>
+
+                    <div className="space-y-3 mt-6">
+                      {stats.chairs.slice(0, 4).map((chair) => (
+                        <div key={chair.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                          <div className="flex items-center gap-3">
+                            <div className={`h-3 w-3 rounded-full ${chair.isRented ? 'bg-green-500' : chair.isAvailable ? 'bg-blue-500' : 'bg-gray-400'}`} />
                         <div>
                           <p className="font-medium text-sm">{chair.name}</p>
                           <p className="text-xs text-muted-foreground">€{chair.monthlyRate}/Monat</p>
@@ -408,62 +443,66 @@ export default function SalonDashboardPage() {
                       </Badge>
                     </div>
                   ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Active Rentals */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-        >
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Aktive Mietverhältnisse</CardTitle>
-              <Badge variant="secondary">{stats.rentals.length} aktiv</Badge>
-            </CardHeader>
-            <CardContent>
-              {stats.rentals.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Users className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                  <p>Noch keine aktiven Mietverhältnisse</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {stats.rentals.map((rental) => (
-                    <div key={rental.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={rental.stylist?.image} />
-                          <AvatarFallback className="bg-gradient-to-br from-pink-400 to-purple-500 text-white">
-                            {rental.stylist?.name?.split(' ').map(n => n[0]).join('') || '?'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-sm">{rental.stylist?.name || 'Unbekannt'}</p>
-                          <p className="text-xs text-muted-foreground">{rental.chairName}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-sm text-green-500">€{rental.monthlyRent}/Mo</p>
-                        <p className="text-xs text-muted-foreground">
-                          Seit {new Date(rental.startDate).toLocaleDateString('de-DE')}
-                        </p>
-                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Active Rentals */}
+          {isEnabled('activeRentals') && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+            >
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Aktive Mietverhältnisse</CardTitle>
+                  <Badge variant="secondary">{stats.rentals.length} aktiv</Badge>
+                </CardHeader>
+                <CardContent>
+                  {stats.rentals.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Users className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                      <p>Noch keine aktiven Mietverhältnisse</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {stats.rentals.map((rental) => (
+                        <div key={rental.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={rental.stylist?.image} />
+                              <AvatarFallback className="bg-gradient-to-br from-pink-400 to-purple-500 text-white">
+                                {rental.stylist?.name?.split(' ').map(n => n[0]).join('') || '?'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-sm">{rental.stylist?.name || 'Unbekannt'}</p>
+                              <p className="text-xs text-muted-foreground">{rental.chairName}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold text-sm text-green-500">€{rental.monthlyRent}/Mo</p>
+                            <p className="text-xs text-muted-foreground">
+                              Seit {new Date(rental.startDate).toLocaleDateString('de-DE')}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </div>
+      )}
 
       {/* Recent Reviews */}
-      {stats.recentReviews.length > 0 && (
+      {isEnabled('recentReviews') && stats.recentReviews.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

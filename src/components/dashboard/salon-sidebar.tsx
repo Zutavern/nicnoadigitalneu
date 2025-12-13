@@ -21,6 +21,7 @@ import {
   Armchair,
   Gift,
   HandshakeIcon,
+  User,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -71,6 +72,13 @@ const menuItems = [
       { label: 'Nachrichten', href: '/salon/messages', icon: MessageSquare },
       { label: 'Bewertungen', href: '/salon/reviews', icon: Star },
       { label: 'Empfehlungen', href: '/salon/referral', icon: Gift },
+    ],
+  },
+  {
+    title: 'Profil',
+    items: [
+      { label: 'Mein Profil', href: '/salon/profile', icon: User },
+      { label: 'Salonprofil', href: '/salon/salon-profile', icon: Building2 },
     ],
   },
   {

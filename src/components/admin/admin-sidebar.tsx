@@ -38,6 +38,7 @@ import {
   MapIcon,
   Rocket,
   RefreshCw,
+  Zap,
   Scale,
   Languages,
   Search,
@@ -216,6 +217,7 @@ const menuItems: MenuSection[] = [
         icon: Settings,
         children: [
           { label: 'Systemeinstellungen', href: '/admin/settings', icon: Settings },
+          { label: 'Integrationen', href: '/admin/settings/integrations', icon: Zap },
           { label: 'Backups', href: '/admin/backup', icon: Database },
           { label: 'Sicherheit', href: '/admin/security', icon: Shield },
           { label: 'SEO', href: '/admin/seo', icon: Search },

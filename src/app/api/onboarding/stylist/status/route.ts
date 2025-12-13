@@ -23,6 +23,13 @@ export async function GET() {
         documentsUploaded: 0,
         documentsTotal: 5,
         documentsMissing: 5,
+        documentsMarkedLater: 0,
+        complianceTotal: 5,
+        complianceYes: 0,
+        complianceNo: 0,
+        compliancePending: 0,
+        complianceUnanswered: 5,
+        complianceNeedsAttention: 0,
         compliance: {
           ownPhone: null,
           ownAppointmentBook: null,
@@ -37,30 +44,44 @@ export async function GET() {
           statusDetermination: { uploaded: false, notAvailable: false },
           craftsChamber: { uploaded: false, notAvailable: false },
         },
+        businessData: {
+          companyName: '',
+          taxId: '',
+          vatId: '',
+          businessStreet: '',
+          businessZipCode: '',
+          businessCity: '',
+        },
       })
     }
 
     // Berechne Dokument-Statistiken
+    // Wichtig: Explizit prüfen ob URL vorhanden ist (nicht nur truthy check)
     const documentsData = {
       masterCertificate: {
-        uploaded: !!onboarding.masterCertificateUrl || onboarding.masterCertificateStatus === 'UPLOADED',
-        notAvailable: onboarding.masterCertificateNotAvailable || false,
+        uploaded: Boolean(onboarding.masterCertificateUrl && onboarding.masterCertificateUrl.length > 0),
+        notAvailable: Boolean(onboarding.masterCertificateNotAvailable),
+        url: onboarding.masterCertificateUrl || undefined,
       },
       businessRegistration: {
-        uploaded: !!onboarding.businessRegistrationUrl || onboarding.businessRegistrationStatus === 'UPLOADED',
-        notAvailable: onboarding.businessRegistrationNotAvailable || false,
+        uploaded: Boolean(onboarding.businessRegistrationUrl && onboarding.businessRegistrationUrl.length > 0),
+        notAvailable: Boolean(onboarding.businessRegistrationNotAvailable),
+        url: onboarding.businessRegistrationUrl || undefined,
       },
       liabilityInsurance: {
-        uploaded: !!onboarding.liabilityInsuranceUrl || onboarding.liabilityInsuranceStatus === 'UPLOADED',
-        notAvailable: onboarding.liabilityInsuranceNotAvailable || false,
+        uploaded: Boolean(onboarding.liabilityInsuranceUrl && onboarding.liabilityInsuranceUrl.length > 0),
+        notAvailable: Boolean(onboarding.liabilityInsuranceNotAvailable),
+        url: onboarding.liabilityInsuranceUrl || undefined,
       },
       statusDetermination: {
-        uploaded: !!onboarding.statusDeterminationUrl || onboarding.statusDeterminationStatus === 'UPLOADED',
-        notAvailable: onboarding.statusDeterminationNotAvailable || false,
+        uploaded: Boolean(onboarding.statusDeterminationUrl && onboarding.statusDeterminationUrl.length > 0),
+        notAvailable: Boolean(onboarding.statusDeterminationNotAvailable),
+        url: onboarding.statusDeterminationUrl || undefined,
       },
       craftsChamber: {
-        uploaded: !!onboarding.craftsChamberUrl || onboarding.craftsChamberStatus === 'UPLOADED',
-        notAvailable: onboarding.craftsChamberNotAvailable || false,
+        uploaded: Boolean(onboarding.craftsChamberUrl && onboarding.craftsChamberUrl.length > 0),
+        notAvailable: Boolean(onboarding.craftsChamberNotAvailable),
+        url: onboarding.craftsChamberUrl || undefined,
       },
     }
 
@@ -68,15 +89,49 @@ export async function GET() {
     const documentsTotal = 5
     let documentsUploaded = 0
     let documentsMissing = 0
+    let documentsMarkedLater = 0 // Als "wird nachgereicht" markiert
     
     Object.values(documentsData).forEach(doc => {
       if (doc.uploaded) {
         documentsUploaded++
-      } else if (!doc.notAvailable) {
-        // Nur als fehlend zählen wenn nicht als "nicht verfügbar" markiert
+      } else if (doc.notAvailable) {
+        // Als "wird nachgereicht" markiert - zählt nicht als fehlend
+        documentsMarkedLater++
+      } else {
+        // Weder hochgeladen noch als "später" markiert = fehlt
         documentsMissing++
       }
     })
+
+    // Compliance-Statistiken berechnen
+    const complianceAnswers = {
+      ownPhone: onboarding.ownPhoneAnswer || (onboarding.ownPhone ? 'yes' : null),
+      ownAppointmentBook: onboarding.ownAppointmentBookAnswer || (onboarding.ownAppointmentBook ? 'yes' : null),
+      ownCashRegister: onboarding.ownCashRegisterAnswer || (onboarding.ownCashRegister ? 'yes' : null),
+      ownPriceList: onboarding.ownPriceListAnswer || (onboarding.ownPriceList ? 'yes' : null),
+      ownBranding: onboarding.ownBrandingAnswer || (onboarding.ownBranding ? 'yes' : null),
+    }
+    
+    const complianceTotal = 5
+    let complianceYes = 0
+    let complianceNo = 0
+    let compliancePending = 0
+    let complianceUnanswered = 0
+    
+    Object.values(complianceAnswers).forEach(answer => {
+      if (answer === 'yes') {
+        complianceYes++
+      } else if (answer === 'no') {
+        complianceNo++
+      } else if (answer === 'pending') {
+        compliancePending++
+      } else {
+        complianceUnanswered++
+      }
+    })
+    
+    // "Noch zu klären" = Nein + In Arbeit (nicht "Ja")
+    const complianceNeedsAttention = complianceNo + compliancePending
 
     // Formatiere die Antwort
     const response = {
@@ -86,20 +141,23 @@ export async function GET() {
       documentsUploaded,
       documentsTotal,
       documentsMissing,
+      documentsMarkedLater,
+      complianceTotal,
+      complianceYes,
+      complianceNo,
+      compliancePending,
+      complianceUnanswered,
+      complianceNeedsAttention,
       adminNotes: onboarding.adminNotes,
-      compliance: {
-        ownPhone: onboarding.ownPhoneAnswer || (onboarding.ownPhone ? 'yes' : null),
-        ownAppointmentBook: onboarding.ownAppointmentBookAnswer || (onboarding.ownAppointmentBook ? 'yes' : null),
-        ownCashRegister: onboarding.ownCashRegisterAnswer || (onboarding.ownCashRegister ? 'yes' : null),
-        ownPriceList: onboarding.ownPriceListAnswer || (onboarding.ownPriceList ? 'yes' : null),
-        ownBranding: onboarding.ownBrandingAnswer || (onboarding.ownBranding ? 'yes' : null),
-      },
+      compliance: complianceAnswers,
       documents: documentsData,
       businessData: {
         companyName: onboarding.companyName,
-        street: onboarding.businessStreet,
-        postalCode: onboarding.businessZipCode,
-        city: onboarding.businessCity,
+        taxId: onboarding.taxId,
+        vatId: onboarding.vatId,
+        businessStreet: onboarding.businessStreet,
+        businessZipCode: onboarding.businessZipCode,
+        businessCity: onboarding.businessCity,
       },
       step: onboarding.currentStep,
     }

@@ -28,6 +28,9 @@ import {
   ChevronRight,
   ClipboardCheck,
   MessageCircle,
+  Check,
+  Signature,
+  X,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -209,11 +212,14 @@ const DOCUMENT_TIPS = {
 }
 
 export default function OnboardingAnalysePage() {
-  const { data: session, status } = useSession()
+  const { data: session, status, update } = useSession()
   const router = useRouter()
   const [analysisPhase, setAnalysisPhase] = useState<'loading' | 'analyzing' | 'complete'>('loading')
   const [analysisProgress, setAnalysisProgress] = useState(0)
   const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null)
+  const [declaration, setDeclaration] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   // Lade Onboarding-Daten
   useEffect(() => {
@@ -256,6 +262,46 @@ export default function OnboardingAnalysePage() {
       }
       setAnalysisProgress(progress)
     }, 200)
+  }
+
+  // Finales Onboarding abschließen
+  const handleCompleteOnboarding = async (provisional: boolean = false) => {
+    setIsSubmitting(true)
+    setSubmitError('')
+
+    try {
+      // Wenn nicht vorläufig und Erklärung nicht akzeptiert
+      if (!provisional && !declaration) {
+        setSubmitError('Bitte akzeptiere die rechtliche Erklärung')
+        setIsSubmitting(false)
+        return
+      }
+
+      const response = await fetch('/api/onboarding/stylist/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          declaration: provisional ? false : declaration,
+          provisional,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Ein Fehler ist aufgetreten')
+      }
+
+      // Update session
+      await update({ onboardingCompleted: true })
+      
+      // Weiterleitung zum Dashboard
+      router.push('/stylist')
+      router.refresh()
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   // Berechne Statistiken
@@ -345,9 +391,27 @@ export default function OnboardingAnalysePage() {
     )
   }
 
+  // Schließen und zum Dashboard gehen
+  const handleClose = () => {
+    router.push('/stylist')
+  }
+
   // Render Ergebnis
   return (
-    <div className="min-h-screen bg-[#0a0a0f] py-8 px-4">
+    <div className="min-h-screen bg-[#0a0a0f] py-8 px-4 relative">
+      {/* Close Button */}
+      <div className="absolute top-4 right-4 md:top-8 md:right-8 z-20">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleClose}
+          className="h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10"
+          title="Zum Dashboard"
+        >
+          <X className="h-5 w-5 text-muted-foreground" />
+        </Button>
+      </div>
+      
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <motion.div
@@ -530,7 +594,7 @@ export default function OnboardingAnalysePage() {
                             className="border-white/20 hover:bg-white/10"
                             asChild
                           >
-                            {tip.needsHelp.cta.external ? (
+                            {'external' in tip.needsHelp.cta && tip.needsHelp.cta.external ? (
                               <a href={tip.needsHelp.cta.href} target="_blank" rel="noopener noreferrer">
                                 {tip.needsHelp.cta.label}
                                 <ExternalLink className="h-3 w-3 ml-2" />
@@ -668,122 +732,149 @@ export default function OnboardingAnalysePage() {
           </motion.div>
         )}
 
-        {/* Hinweis wenn Dokumente fehlen */}
-        {(onboardingData?.status === 'PENDING_DOCUMENTS' || documentStats.pending > 0) && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
-            className="p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20"
-          >
-            <div className="flex items-start gap-4">
-              <div className="h-12 w-12 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                <AlertTriangle className="h-6 w-6 text-amber-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  Dein Onboarding ist noch nicht vollständig
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Wir können dein Onboarding noch nicht komplett abschließen, da noch {documentStats.pending} {documentStats.pending === 1 ? 'Dokument fehlt' : 'Dokumente fehlen'}.
-                  Sobald du alle Dokumente hochgeladen hast, werden wir deinen Antrag prüfen und uns bei dir melden.
-                </p>
-                <div className="flex items-center gap-2 text-sm text-amber-400">
-                  <Clock className="h-4 w-4" />
-                  <span>Status: Prüfung ausstehend – Dokumente werden nachgereicht</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
 
-        {/* Hinweis wenn alles komplett ist */}
-        {onboardingData?.status === 'PENDING_REVIEW' && documentStats.pending === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
-            className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20"
-          >
-            <div className="flex items-start gap-4">
-              <div className="h-12 w-12 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                <ClipboardCheck className="h-6 w-6 text-emerald-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  Dein Antrag wird geprüft
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Super! Du hast alle erforderlichen Dokumente hochgeladen. Wir prüfen jetzt deinen Antrag 
-                  und melden uns in Kürze bei dir. Dies dauert in der Regel 1-2 Werktage.
-                </p>
-                <div className="flex items-center gap-2 text-sm text-emerald-400">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>Status: Vollständig – In Prüfung durch unser Team</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* CTA */}
+        {/* Rechtliche Erklärung & CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center pt-8"
+          className="space-y-6 pt-8"
         >
-          {/* Wenn Dokumente fehlen: "Vorläufig abschließen" als primärer Button */}
-          {(onboardingData?.status === 'PENDING_DOCUMENTS' || documentStats.pending > 0) ? (
-            <>
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                asChild
-              >
-                <Link href="/stylist">
-                  <ClipboardCheck className="h-5 w-5 mr-2" />
-                  Onboarding vorläufig abschließen
-                </Link>
-              </Button>
-              
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
-                asChild
-              >
-                <Link href="/onboarding/stylist">
-                  <TrendingUp className="h-5 w-5 mr-2" />
-                  Dokumente jetzt nachreichen
-                </Link>
-              </Button>
-            </>
+          {/* Error Message */}
+          {submitError && (
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
+              <p className="text-red-400">{submitError}</p>
+            </div>
+          )}
+
+          {/* Wenn Dokumente fehlen: Info + Vorläufig abschließen */}
+          {documentStats.pending > 0 ? (
+            <div className="space-y-6">
+              <div className="p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+                <div className="flex items-start gap-4">
+                  <div className="h-12 w-12 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                    <AlertTriangle className="h-6 w-6 text-amber-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      Dein Onboarding ist noch nicht vollständig
+                    </h3>
+                    <p className="text-muted-foreground">
+                      Wir können dein Onboarding noch nicht komplett abschließen, da noch {documentStats.pending} {documentStats.pending === 1 ? 'Dokument fehlt' : 'Dokumente fehlen'}.
+                      Du kannst das Onboarding vorläufig abschließen und die fehlenden Dokumente später nachreichen. 
+                      Wir melden uns bei dir, sobald alles geprüft ist.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                  onClick={() => handleCompleteOnboarding(true)}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Wird abgeschlossen...
+                    </>
+                  ) : (
+                    <>
+                      <ClipboardCheck className="h-5 w-5 mr-2" />
+                      Onboarding vorläufig abschließen
+                    </>
+                  )}
+                </Button>
+                
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+                  asChild
+                >
+                  <Link href="/onboarding/stylist">
+                    <TrendingUp className="h-5 w-5 mr-2" />
+                    Dokumente jetzt hochladen
+                  </Link>
+                </Button>
+              </div>
+            </div>
           ) : (
-            <>
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
-                asChild
-              >
-                <Link href="/stylist">
-                  <Rocket className="h-5 w-5 mr-2" />
-                  Zum Dashboard
-                </Link>
-              </Button>
-              
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-white/20 hover:bg-white/10"
-                asChild
-              >
-                <Link href="/onboarding/stylist">
-                  <TrendingUp className="h-5 w-5 mr-2" />
-                  Daten bearbeiten
-                </Link>
-              </Button>
-            </>
+            /* Wenn alles komplett: Rechtliche Erklärung + Abschließen */
+            <div className="space-y-6">
+              {/* Rechtliche Erklärung */}
+              <div className="p-6 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+                <button
+                  onClick={() => setDeclaration(!declaration)}
+                  className="flex items-start gap-4 w-full text-left"
+                >
+                  <div className={`
+                    w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300 mt-0.5
+                    ${declaration 
+                      ? 'bg-purple-500 text-white' 
+                      : 'bg-white/10 border border-white/20'}
+                  `}>
+                    {declaration && <Check className="h-4 w-4" />}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white mb-2">Rechtliche Erklärung</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Hiermit erkläre ich, dass ich nicht weisungsgebunden arbeite und ausschließlich auf eigene Rechnung handele. 
+                      Ich bestätige, dass alle angegebenen Informationen wahrheitsgemäß sind und die hochgeladenen Dokumente aktuell und gültig sind.
+                    </p>
+                  </div>
+                </button>
+              </div>
+
+              {/* Info Box */}
+              <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20">
+                <div className="flex gap-3">
+                  <ClipboardCheck className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium text-blue-400 mb-1">Was passiert als nächstes?</p>
+                    <p className="text-blue-400/70">
+                      Nach dem Abschluss werden deine Dokumente von unserem Team geprüft. 
+                      Du erhältst eine Benachrichtigung, sobald alles bestätigt ist – in der Regel innerhalb von 24-48 Stunden.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                  onClick={() => handleCompleteOnboarding(false)}
+                  disabled={!declaration || isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Wird abgeschlossen...
+                    </>
+                  ) : (
+                    <>
+                      <Signature className="h-5 w-5 mr-2" />
+                      Onboarding abschließen
+                    </>
+                  )}
+                </Button>
+                
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white/20 hover:bg-white/10"
+                  asChild
+                >
+                  <Link href="/onboarding/stylist">
+                    <TrendingUp className="h-5 w-5 mr-2" />
+                    Daten bearbeiten
+                  </Link>
+                </Button>
+              </div>
+            </div>
           )}
         </motion.div>
       </div>

@@ -5,12 +5,9 @@ import { UserProfileForm } from '@/components/profile/user-profile-form'
 export default function SalonProfilePage() {
   return (
     <UserProfileForm 
-      accentColor="primary"
+      accentColor="blue"
       showSocialMedia={false}
+      backUrl="/salon"
     />
   )
 }
-
-
-
-

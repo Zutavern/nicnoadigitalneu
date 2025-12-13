@@ -2,8 +2,12 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notifyAllAdmins } from '@/lib/notifications'
-import { OnboardingStatus } from '@prisma/client'
 
+/**
+ * Speichert und finalisiert das Onboarding
+ * - Kann mit vollen Daten aufgerufen werden (erstes Submit vom Formular)
+ * - Oder nur mit declaration/provisional (finales Submit von Analyse-Seite)
+ */
 export async function POST(request: Request) {
   try {
     const session = await auth()
@@ -16,8 +20,85 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { businessData, compliance, documentUrls, documentNotAvailable, declaration } = body
+    const { businessData, compliance, documentUrls, documentNotAvailable, declaration, provisional } = body
 
+    // Lade existierende Onboarding-Daten
+    const existingOnboarding = await prisma.stylistOnboarding.findUnique({
+      where: { userId: session.user.id },
+    })
+
+    // Wenn nur declaration/provisional gesendet wird UND bereits Daten existieren
+    // → Update nur den Status (von Analyse-Seite aufgerufen)
+    const isDeclarationOnlyUpdate = !businessData && !compliance && !documentUrls && existingOnboarding
+    
+    if (isDeclarationOnlyUpdate) {
+      // Prüfe ob alle Dokumente hochgeladen sind
+      const hasAllDocuments = 
+        existingOnboarding.masterCertificateUrl &&
+        existingOnboarding.businessRegistrationUrl &&
+        existingOnboarding.liabilityInsuranceUrl &&
+        existingOnboarding.statusDeterminationUrl &&
+        existingOnboarding.craftsChamberUrl
+
+      // Bestimme Status
+      let onboardingStatus: 'IN_PROGRESS' | 'PENDING_DOCUMENTS' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED'
+      if (provisional || !hasAllDocuments) {
+        onboardingStatus = 'PENDING_DOCUMENTS'
+      } else if (declaration) {
+        onboardingStatus = 'PENDING_REVIEW'
+      } else {
+        onboardingStatus = 'PENDING_DOCUMENTS'
+      }
+
+      // Update nur Status und Declaration
+      await prisma.stylistOnboarding.update({
+        where: { userId: session.user.id },
+        data: {
+          selfEmploymentDeclaration: declaration || false,
+          declarationSignedAt: declaration ? new Date() : null,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          onboardingStatus: onboardingStatus as any,
+        },
+      })
+
+      // Markiere User-Onboarding als abgeschlossen
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { onboardingCompleted: true },
+      })
+
+      // Admin benachrichtigen
+      if (onboardingStatus === 'PENDING_REVIEW') {
+        try {
+          await notifyAllAdmins({
+            type: 'ONBOARDING_SUBMITTED',
+            title: 'Neuer Onboarding-Antrag',
+            message: `${session.user.name || session.user.email} hat das Compliance-Onboarding abgeschlossen und wartet auf Prüfung.`,
+            link: '/admin/onboarding-review',
+            metadata: {
+              userId: session.user.id,
+              userName: session.user.name,
+              userEmail: session.user.email,
+              companyName: existingOnboarding.companyName,
+              status: onboardingStatus,
+            },
+          })
+        } catch (e) {
+          console.error('Notification error:', e)
+        }
+      }
+
+      return NextResponse.json({ 
+        success: true,
+        message: onboardingStatus === 'PENDING_DOCUMENTS' 
+          ? 'Onboarding vorläufig abgeschlossen'
+          : 'Onboarding erfolgreich abgeschlossen',
+        status: onboardingStatus,
+      })
+    }
+
+    // Vollständiges Submit mit allen Daten (vom Onboarding-Formular)
+    
     // Validierung der erforderlichen Daten
     if (!businessData?.companyName || !businessData?.businessStreet || !businessData?.businessCity || !businessData?.businessZipCode) {
       return NextResponse.json(
@@ -39,21 +120,22 @@ export async function POST(request: Request) {
       )
     }
 
-    if (!declaration) {
-      return NextResponse.json(
-        { error: 'Rechtliche Erklärung muss akzeptiert werden' },
-        { status: 400 }
-      )
-    }
-
     // Prüfe ob alle Dokumente vorhanden sind (hochgeladen ODER als "nicht verfügbar" markiert)
     const requiredDocuments = ['masterCertificate', 'businessRegistration', 'liabilityInsurance', 'statusDetermination', 'craftsChamber']
     const allDocumentsHandled = requiredDocuments.every(key => 
       documentUrls?.[key] || documentNotAvailable?.[key]
     )
-    
-    // Bestimme den Status: PENDING_DOCUMENTS wenn Dokumente fehlen, sonst PENDING_REVIEW
-    const onboardingStatus: OnboardingStatus = allDocumentsHandled ? 'PENDING_REVIEW' : 'PENDING_DOCUMENTS'
+    const hasAllDocuments = requiredDocuments.every(key => documentUrls?.[key])
+
+    // Bestimme den Status
+    // - PENDING_REVIEW wenn declaration akzeptiert UND alle Dokumente hochgeladen
+    // - PENDING_DOCUMENTS wenn Dokumente fehlen oder declaration nicht akzeptiert
+    let onboardingStatus: 'IN_PROGRESS' | 'PENDING_DOCUMENTS' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED'
+    if (declaration && hasAllDocuments) {
+      onboardingStatus = 'PENDING_REVIEW'
+    } else {
+      onboardingStatus = 'PENDING_DOCUMENTS'
+    }
 
     // Erstelle oder aktualisiere den Onboarding-Datensatz
     await prisma.stylistOnboarding.upsert({
@@ -101,13 +183,14 @@ export async function POST(request: Request) {
         craftsChamberStatus: documentUrls?.craftsChamber ? 'UPLOADED' : 'PENDING',
         craftsChamberNotAvailable: documentNotAvailable?.craftsChamber || false,
         
-        // Erklärung
-        selfEmploymentDeclaration: declaration,
-        declarationSignedAt: new Date(),
+        // Erklärung (nur wenn akzeptiert)
+        selfEmploymentDeclaration: declaration || false,
+        declarationSignedAt: declaration ? new Date() : null,
         
         // Status
         currentStep: 4,
-        onboardingStatus: onboardingStatus,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onboardingStatus: onboardingStatus as any,
       },
       create: {
         userId: session.user.id,
@@ -152,10 +235,11 @@ export async function POST(request: Request) {
         craftsChamberStatus: documentUrls?.craftsChamber ? 'UPLOADED' : 'PENDING',
         craftsChamberNotAvailable: documentNotAvailable?.craftsChamber || false,
         
-        selfEmploymentDeclaration: declaration,
-        declarationSignedAt: new Date(),
+        selfEmploymentDeclaration: declaration || false,
+        declarationSignedAt: declaration ? new Date() : null,
         currentStep: 4,
-        onboardingStatus: onboardingStatus,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onboardingStatus: onboardingStatus as any,
       },
     })
 
@@ -195,7 +279,7 @@ export async function POST(request: Request) {
         ? 'Onboarding vorläufig abgeschlossen. Du kannst fehlende Dokumente jederzeit nachreichen.'
         : 'Onboarding erfolgreich abgeschlossen',
       status: onboardingStatus,
-      documentsComplete: allDocumentsHandled,
+      documentsComplete: hasAllDocuments,
     })
   } catch (error) {
     console.error('Onboarding completion error:', error)

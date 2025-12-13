@@ -7,7 +7,6 @@ import {
   Globe,
   Mail,
   CreditCard,
-  Bell,
   Save,
   RefreshCw,
   Upload,
@@ -272,13 +271,12 @@ export default function SettingsPage() {
       </motion.div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="general">Allgemein</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="billing">Abrechnung</TabsTrigger>
           <TabsTrigger value="email">E-Mail</TabsTrigger>
           <TabsTrigger value="security">Sicherheit</TabsTrigger>
-          <TabsTrigger value="integrations">Integrationen</TabsTrigger>
         </TabsList>
 
         {/* General Settings */}
@@ -626,47 +624,6 @@ export default function SettingsPage() {
           </motion.div>
         </TabsContent>
 
-        {/* Integrations Settings */}
-        <TabsContent value="integrations" className="space-y-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="grid gap-6 md:grid-cols-2">
-              {[
-                { name: 'Stripe', description: 'Zahlungsabwicklung', connected: !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, icon: CreditCard },
-                { name: 'Google Calendar', description: 'Kalender-Synchronisation', connected: false, icon: Globe },
-                { name: 'Slack', description: 'Team-Benachrichtigungen', connected: false, icon: Bell },
-                { name: 'Zapier', description: 'Workflow-Automatisierung', connected: false, icon: Zap },
-              ].map((integration) => (
-                <Card key={integration.name}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center">
-                          <integration.icon className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium">{integration.name}</h3>
-                          <p className="text-sm text-muted-foreground">{integration.description}</p>
-                        </div>
-                      </div>
-                      {integration.connected ? (
-                        <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
-                          Verbunden
-                        </Badge>
-                      ) : (
-                        <Button variant="outline" size="sm">
-                          Verbinden
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </motion.div>
-        </TabsContent>
       </Tabs>
     </div>
   )
