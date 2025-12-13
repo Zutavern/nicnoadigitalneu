@@ -159,23 +159,19 @@ function LoginForm() {
       }
 
       // No 2FA required - proceed with normal login
-      const result = await signIn('credentials', {
+      // Track analytics before redirect
+      AuthEvents.loginCompleted('email', false)
+      if (loginData.userId) {
+        identifyUser(loginData.userId, { email: formData.email })
+      }
+      
+      // Use redirect: true to ensure browser properly stores the session cookie
+      await signIn('credentials', {
         email: formData.email,
         password: formData.password,
-        redirect: false,
+        callbackUrl,
+        redirect: true,
       })
-
-      if (result?.error) {
-        AuthEvents.loginFailed('credentials_error')
-        setFormError('Ungültige Anmeldedaten')
-      } else {
-        AuthEvents.loginCompleted('email', false)
-        if (loginData.userId) {
-          identifyUser(loginData.userId, { email: formData.email })
-        }
-        router.push(callbackUrl)
-        router.refresh()
-      }
     } catch {
       AuthEvents.loginFailed('unknown_error')
       setFormError('Ein Fehler ist aufgetreten')
@@ -255,26 +251,14 @@ function LoginForm() {
         return
       }
 
-      console.log('[QuickLogin] Calling signIn credentials...')
-      
-      // No 2FA - proceed with normal login
-      const result = await signIn('credentials', {
+      // No 2FA - proceed with normal login using redirect: true
+      // This ensures the browser properly stores the session cookie
+      await signIn('credentials', {
         email: user.email,
         password: user.password,
-        redirect: false,
+        callbackUrl: user.redirect,
+        redirect: true,
       })
-
-      console.log('[QuickLogin] signIn result:', JSON.stringify(result, null, 2))
-
-      if (result?.error) {
-        const errMsg = `signIn Error: ${result.error} | URL: ${result.url} | Status: ${result.status}`
-        console.error('[QuickLogin] signIn failed:', errMsg)
-        setFormError(errMsg)
-      } else {
-        console.log('[QuickLogin] Success! Redirecting to:', user.redirect)
-        router.push(user.redirect)
-        router.refresh()
-      }
     } catch (err) {
       const errMsg = `Exception: ${err instanceof Error ? err.message : String(err)}`
       console.error('[QuickLogin] Exception:', errMsg)
