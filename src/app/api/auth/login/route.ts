@@ -10,14 +10,6 @@ export async function POST(request: Request) {
     const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown'
     const userAgent = request.headers.get('user-agent') || 'unknown'
 
-    // DEBUG: Log env vars (hypotheses F, A)
-    console.log('[DEBUG-LOGIN] ENV check:', {
-      NEXTAUTH_URL: process.env.NEXTAUTH_URL?.substring(0, 50),
-      AUTH_URL: process.env.AUTH_URL?.substring(0, 50),
-      AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST,
-      hasAuthSecret: !!process.env.AUTH_SECRET,
-    })
-
     // Rate limiting check
     const rateLimit = await checkRateLimit({
       ...rateLimits.login,
@@ -25,7 +17,6 @@ export async function POST(request: Request) {
     })
 
     if (!rateLimit.allowed) {
-      console.log('[DEBUG-LOGIN] Rate limited:', ipAddress)
       return NextResponse.json(rateLimitErrorResponse(rateLimit), { status: 429 })
     }
 
@@ -33,8 +24,6 @@ export async function POST(request: Request) {
     await logRateLimitedAction(ipAddress, rateLimits.login.action)
 
     const { email, password } = await request.json()
-
-    console.log('[DEBUG-LOGIN] Login attempt:', { email, hasPassword: !!password })
 
     if (!email || !password) {
       return NextResponse.json(
@@ -48,8 +37,6 @@ export async function POST(request: Request) {
       where: { email: email.toLowerCase() },
     })
 
-    console.log('[DEBUG-LOGIN] User lookup:', { email, found: !!user, hasDbPassword: !!user?.password })
-
     if (!user || !user.password) {
       // Log failed attempt
       await handleLoginEvent({
@@ -57,7 +44,6 @@ export async function POST(request: Request) {
         userEmail: email,
       }, false).catch(console.error)
 
-      console.log('[DEBUG-LOGIN] User not found or no password')
       return NextResponse.json(
         { error: 'Ungültige Anmeldedaten' },
         { status: 401 }
@@ -74,7 +60,6 @@ export async function POST(request: Request) {
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password)
-    console.log('[DEBUG-LOGIN] Password check:', { email, isValid: isPasswordValid })
 
     if (!isPasswordValid) {
       await handleLoginEvent({
@@ -83,14 +68,11 @@ export async function POST(request: Request) {
         userName: user.name,
       }, false).catch(console.error)
 
-      console.log('[DEBUG-LOGIN] Password invalid')
       return NextResponse.json(
         { error: 'Ungültige Anmeldedaten' },
         { status: 401 }
       )
     }
-
-    console.log('[DEBUG-LOGIN] Password valid, checking 2FA:', { twoFactorEnabled: user.twoFactorEnabled })
 
     // Check if 2FA is enabled
     if (user.twoFactorEnabled && user.twoFactorSecret) {
@@ -135,21 +117,16 @@ export async function POST(request: Request) {
     }
 
     // No 2FA - return success signal for client-side signIn
-    console.log('[DEBUG-LOGIN] Success - returning canLogin:true for', email)
     return NextResponse.json({
       requires2FA: false,
       canLogin: true,
       message: 'Anmeldung erfolgreich',
-      userId: user.id, // Add for debugging
     })
   } catch (error) {
-    console.error('[DEBUG-LOGIN] Exception:', error)
+    console.error('Login error:', error)
     return NextResponse.json(
       { error: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }
 }
-
-
-

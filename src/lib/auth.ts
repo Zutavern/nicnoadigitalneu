@@ -69,10 +69,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        console.log('[DEBUG-AUTH] Credentials authorize called:', { email: credentials?.email, hasPassword: !!credentials?.password })
-        
         if (!credentials?.email || !credentials?.password) {
-          console.log('[DEBUG-AUTH] Missing credentials')
           return null
         }
 
@@ -83,15 +80,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             where: { email },
           })
 
-          console.log('[DEBUG-AUTH] User lookup:', { email, found: !!user, hasPassword: !!user?.password })
-
           if (!user || !user.password) {
-            // Log fehlgeschlagenen Login (User nicht gefunden)
             await handleLoginEvent({
               userId: '',
               userEmail: email,
             }, false).catch(console.error)
-            console.log('[DEBUG-AUTH] User not found or no password')
             return null
           }
 
@@ -100,27 +93,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             user.password
           )
 
-          console.log('[DEBUG-AUTH] Password check:', { email, isValid: isPasswordValid })
-
           if (!isPasswordValid) {
-            // Log fehlgeschlagenen Login (falsches Passwort)
             await handleLoginEvent({
               userId: user.id,
               userEmail: email,
               userName: user.name,
             }, false).catch(console.error)
-            console.log('[DEBUG-AUTH] Password invalid')
             return null
           }
 
-          // Log erfolgreichen Login
           await handleLoginEvent({
             userId: user.id,
             userEmail: email,
             userName: user.name,
           }, true).catch(console.error)
-
-          console.log('[DEBUG-AUTH] Success, returning user:', { id: user.id, email: user.email, role: user.role })
 
           return {
             id: user.id,
@@ -131,7 +117,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             onboardingCompleted: user.onboardingCompleted,
           }
         } catch (error) {
-          console.error("[DEBUG-AUTH] Exception:", error)
+          console.error("Auth error:", error)
           return null
         }
       },
@@ -139,9 +125,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user, trigger, session }) {
-      console.log('[DEBUG-JWT] jwt callback:', { hasUser: !!user, trigger, tokenId: token?.id })
       if (user) {
-        console.log('[DEBUG-JWT] Setting token from user:', { id: user.id, role: user.role })
         token.id = user.id as string
         token.role = user.role
         token.onboardingCompleted = user.onboardingCompleted
@@ -204,14 +188,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   events: {
     async signIn({ user, account }) {
-      console.log('[DEBUG-AUTH-EVENT] signIn event triggered:', { userId: user?.id, provider: account?.provider })
       // Erstelle ActiveSession bei erfolgreichem Login
       if (user?.id && account?.provider) {
         try {
           const sessionToken = `${user.id}-${Date.now()}-${Math.random().toString(36).substring(7)}`
-          console.log('[DEBUG-AUTH-EVENT] Creating active session for:', user.id)
           await createActiveSession(user.id, sessionToken)
-          console.log('[DEBUG-AUTH-EVENT] Active session created successfully')
           
           // Log für OAuth-Logins (Credentials werden in authorize geloggt)
           if (account.provider !== 'credentials') {
@@ -222,7 +203,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             }, true)
           }
         } catch (error) {
-          console.error('[DEBUG-AUTH-EVENT] Error creating active session:', error)
+          console.error('Error creating active session:', error)
         }
       }
     },
@@ -258,7 +239,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
     },
   },
-  debug: true, // Temporarily enabled for debugging production issues
+  debug: process.env.NODE_ENV === 'development',
 })
 
 // For backward compatibility
