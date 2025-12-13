@@ -99,28 +99,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        {/* SSR-kompatibles Blocking-Overlay - wird sofort gerendert */}
-        <div 
-          id="ssr-password-block"
-          data-password-protection
-          className="fixed inset-0 z-[9998] bg-[#020203] transition-opacity duration-300"
-          style={{ opacity: 1 }}
-          suppressHydrationWarning
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                var block = document.getElementById('ssr-password-block');
-                if (block && sessionStorage.getItem('passwordEntered') === 'true') {
-                  block.style.opacity = '0';
-                  block.style.pointerEvents = 'none';
-                  setTimeout(function() { block.remove(); }, 300);
-                }
-              })();
-            `,
-          }}
-        />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
