@@ -222,6 +222,8 @@ function LoginForm() {
     try {
       const user = DEV_USERS[role]
       
+      console.log('[QuickLogin] Starting for:', user.email)
+      
       // First check if 2FA is required via new login API
       const loginResponse = await fetch('/api/auth/login', {
         method: 'POST',
@@ -233,9 +235,12 @@ function LoginForm() {
       })
 
       const loginData = await loginResponse.json()
+      console.log('[QuickLogin] /api/auth/login response:', { status: loginResponse.status, ok: loginResponse.ok, data: loginData })
 
       if (!loginResponse.ok) {
-        setFormError(loginData.error || 'Quick-Login fehlgeschlagen. Bitte Seed ausführen.')
+        const errMsg = `API Error: ${loginData.error || 'Unknown'} (Status: ${loginResponse.status})`
+        console.error('[QuickLogin] Login API failed:', errMsg)
+        setFormError(errMsg)
         return
       }
 
@@ -250,6 +255,8 @@ function LoginForm() {
         return
       }
 
+      console.log('[QuickLogin] Calling signIn credentials...')
+      
       // No 2FA - proceed with normal login
       const result = await signIn('credentials', {
         email: user.email,
@@ -257,14 +264,21 @@ function LoginForm() {
         redirect: false,
       })
 
+      console.log('[QuickLogin] signIn result:', JSON.stringify(result, null, 2))
+
       if (result?.error) {
-        setFormError('Quick-Login fehlgeschlagen. Bitte Seed ausführen.')
+        const errMsg = `signIn Error: ${result.error} | URL: ${result.url} | Status: ${result.status}`
+        console.error('[QuickLogin] signIn failed:', errMsg)
+        setFormError(errMsg)
       } else {
+        console.log('[QuickLogin] Success! Redirecting to:', user.redirect)
         router.push(user.redirect)
         router.refresh()
       }
-    } catch {
-      setFormError('Ein Fehler ist aufgetreten')
+    } catch (err) {
+      const errMsg = `Exception: ${err instanceof Error ? err.message : String(err)}`
+      console.error('[QuickLogin] Exception:', errMsg)
+      setFormError(errMsg)
     } finally {
       setQuickLoginLoading(null)
     }
