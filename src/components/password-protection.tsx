@@ -27,11 +27,18 @@ interface LegalPageConfig {
   sections: LegalSection[]
 }
 
-// Helper: Entsperren und Blocking-Style entfernen
+// Helper: Entsperren und Blocking-Elemente entfernen
 function unlockPage() {
   document.documentElement.classList.add('password-unlocked')
+  // Entferne alle blocking Elemente
   const blockingStyle = document.getElementById('password-protection-block')
   if (blockingStyle) blockingStyle.remove()
+  const ssrBlock = document.getElementById('ssr-password-block')
+  if (ssrBlock) {
+    ssrBlock.style.opacity = '0'
+    ssrBlock.style.pointerEvents = 'none'
+    setTimeout(() => ssrBlock.remove(), 300)
+  }
 }
 
 export function PasswordProtection() {
@@ -201,6 +208,19 @@ export function PasswordProtection() {
       }, 500)
     }
   }
+
+  // SSR-Block entfernen sobald diese Komponente übernimmt
+  useEffect(() => {
+    const ssrBlock = document.getElementById('ssr-password-block')
+    if (ssrBlock && !isUnlocked) {
+      // Kurz warten bis diese Komponente sichtbar ist, dann SSR-Block entfernen
+      setTimeout(() => {
+        ssrBlock.style.opacity = '0'
+        ssrBlock.style.pointerEvents = 'none'
+        setTimeout(() => ssrBlock.remove(), 300)
+      }, 50)
+    }
+  }, [isUnlocked])
 
   // Während des Checks: Schwarzen Bildschirm anzeigen, damit nichts durchscheint
   if (isChecking || isEnabled === null) {

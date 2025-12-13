@@ -52,16 +52,28 @@ export default function RootLayout({
   return (
     <html lang="de" suppressHydrationWarning>
       <head>
-        {/* CSS-based blocking: Hide content until JavaScript unlocks */}
+        {/* CSS-based blocking: Hide ALL content until password-unlocked class is added */}
         <style
           dangerouslySetInnerHTML={{
             __html: `
+              /* Initial state: Everything hidden except password protection overlay */
+              html:not(.password-unlocked) body {
+                background: #020203 !important;
+              }
               html:not(.password-unlocked) body > *:not([data-password-protection]) {
                 visibility: hidden !important;
                 opacity: 0 !important;
+                pointer-events: none !important;
               }
-              html:not(.password-unlocked) body {
-                background: #020203 !important;
+              /* Ensure password protection is always visible */
+              [data-password-protection] {
+                visibility: visible !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+              }
+              /* Smooth transition when unlocking */
+              html.password-unlocked body > * {
+                transition: opacity 0.3s ease-out, visibility 0.3s ease-out;
               }
             `,
           }}
@@ -87,6 +99,28 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        {/* SSR-kompatibles Blocking-Overlay - wird sofort gerendert */}
+        <div 
+          id="ssr-password-block"
+          data-password-protection
+          className="fixed inset-0 z-[9998] bg-[#020203] transition-opacity duration-300"
+          style={{ opacity: 1 }}
+          suppressHydrationWarning
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                var block = document.getElementById('ssr-password-block');
+                if (block && sessionStorage.getItem('passwordEntered') === 'true') {
+                  block.style.opacity = '0';
+                  block.style.pointerEvents = 'none';
+                  setTimeout(function() { block.remove(); }, 300);
+                }
+              })();
+            `,
+          }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
