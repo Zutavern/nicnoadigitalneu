@@ -2,13 +2,55 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-// Available OAuth providers
-const AVAILABLE_PROVIDERS = [
-  { id: 'google', name: 'Google', icon: 'google' },
-  { id: 'linkedin', name: 'LinkedIn', icon: 'linkedin' },
-  { id: 'apple', name: 'Apple', icon: 'apple' },
-  { id: 'facebook', name: 'Facebook', icon: 'facebook' },
+// Provider configuration - only show providers that are configured in environment
+interface ProviderConfig {
+  id: string
+  name: string
+  icon: string
+  clientIdEnv: string
+  clientSecretEnv: string
+}
+
+const ALL_PROVIDERS: ProviderConfig[] = [
+  { 
+    id: 'google', 
+    name: 'Google', 
+    icon: 'google',
+    clientIdEnv: 'GOOGLE_CLIENT_ID',
+    clientSecretEnv: 'GOOGLE_CLIENT_SECRET',
+  },
+  { 
+    id: 'linkedin', 
+    name: 'LinkedIn', 
+    icon: 'linkedin',
+    clientIdEnv: 'LINKEDIN_CLIENT_ID',
+    clientSecretEnv: 'LINKEDIN_CLIENT_SECRET',
+  },
+  { 
+    id: 'apple', 
+    name: 'Apple', 
+    icon: 'apple',
+    clientIdEnv: 'APPLE_CLIENT_ID',
+    clientSecretEnv: 'APPLE_CLIENT_SECRET',
+  },
+  { 
+    id: 'facebook', 
+    name: 'Facebook', 
+    icon: 'facebook',
+    clientIdEnv: 'FACEBOOK_CLIENT_ID',
+    clientSecretEnv: 'FACEBOOK_CLIENT_SECRET',
+  },
 ]
+
+// Get only configured providers (where both clientId and clientSecret are set)
+function getConfiguredProviders() {
+  return ALL_PROVIDERS.filter(provider => {
+    const clientId = process.env[provider.clientIdEnv]
+    const clientSecret = process.env[provider.clientSecretEnv]
+    // Only include if both are set and not empty
+    return clientId && clientId.length > 0 && clientSecret && clientSecret.length > 0
+  }).map(({ id, name, icon }) => ({ id, name, icon }))
+}
 
 // GET /api/user/connected-accounts - Verbundene Konten abrufen
 export async function GET() {
@@ -28,10 +70,13 @@ export async function GET() {
       },
     })
 
+    // Get only configured providers
+    const configuredProviders = getConfiguredProviders()
+    
     // Map to provider info
     const connectedProviders = accounts.map(acc => acc.provider)
 
-    const result = AVAILABLE_PROVIDERS.map(provider => ({
+    const result = configuredProviders.map(provider => ({
       ...provider,
       connected: connectedProviders.includes(provider.id),
       accountId: accounts.find(acc => acc.provider === provider.id)?.providerAccountId || null,

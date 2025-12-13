@@ -67,35 +67,31 @@ function FacebookIcon({ className }: { className?: string }) {
   )
 }
 
+// Provider UI configuration (icons and colors)
 const PROVIDER_CONFIG: Record<string, { 
   name: string
   icon: React.FC<{ className?: string }>
   color: string
-  available: boolean
 }> = {
   google: { 
     name: 'Google', 
     icon: GoogleIcon, 
     color: 'bg-white border hover:bg-gray-50',
-    available: true 
   },
   linkedin: { 
     name: 'LinkedIn', 
     icon: LinkedInIcon, 
     color: 'bg-[#0A66C2]/10 border-[#0A66C2]/20 hover:bg-[#0A66C2]/20',
-    available: true 
   },
   apple: { 
     name: 'Apple', 
     icon: AppleIcon, 
     color: 'bg-black/5 border-black/10 hover:bg-black/10 dark:bg-white/10 dark:border-white/20',
-    available: false // Not configured yet
   },
   facebook: { 
     name: 'Facebook', 
     icon: FacebookIcon, 
     color: 'bg-[#1877F2]/10 border-[#1877F2]/20 hover:bg-[#1877F2]/20',
-    available: false // Not configured yet
   },
 }
 
@@ -139,13 +135,8 @@ export function ConnectedAccounts({ accentColor = 'primary' }: ConnectedAccounts
   }, [])
 
   const handleConnect = async (provider: string) => {
-    const config = PROVIDER_CONFIG[provider]
-    if (!config?.available) {
-      toast.info(`${config?.name || provider} ist derzeit nicht verfügbar`)
-      return
-    }
-
     // Use next-auth signIn with redirect back to profile
+    // Note: Only configured providers are shown, so we can connect directly
     await signIn(provider, { 
       callbackUrl: window.location.href,
       redirect: true,
@@ -235,15 +226,9 @@ export function ConnectedAccounts({ accentColor = 'primary' }: ConnectedAccounts
                   </div>
                   <div>
                     <p className="font-medium">{config.name}</p>
-                    {account.connected ? (
-                      <p className="text-xs text-muted-foreground">
-                        Verbunden
-                      </p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">
-                        {config.available ? 'Nicht verbunden' : 'Demnächst verfügbar'}
-                      </p>
-                    )}
+                    <p className="text-xs text-muted-foreground">
+                      {account.connected ? 'Verbunden' : 'Nicht verbunden'}
+                    </p>
                   </div>
                 </div>
                 
@@ -272,7 +257,6 @@ export function ConnectedAccounts({ accentColor = 'primary' }: ConnectedAccounts
                     variant="outline"
                     size="sm"
                     onClick={() => handleConnect(account.id)}
-                    disabled={!config.available}
                   >
                     <Plus className="mr-1 h-4 w-4" />
                     Verbinden
