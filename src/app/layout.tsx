@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -52,31 +53,38 @@ export default function RootLayout({
   return (
     <html lang="de" suppressHydrationWarning>
       <head>
-        {/* Inline Script: Block content immediately until password check */}
-        <script
+        {/* CSS-based blocking: Hide content until JavaScript unlocks */}
+        <style
           dangerouslySetInnerHTML={{
             __html: `
-              (function() {
-                try {
-                  // Skip if password already entered in this session
-                  if (sessionStorage.getItem('passwordEntered') === 'true') {
-                    document.documentElement.classList.add('password-unlocked');
-                    return;
-                  }
-                  // Otherwise, hide content immediately via style injection
-                  var style = document.createElement('style');
-                  style.id = 'password-protection-block';
-                  style.textContent = 'body > *:not([data-password-protection]) { visibility: hidden !important; opacity: 0 !important; } body { background: #020203 !important; }';
-                  document.head.appendChild(style);
-                } catch(e) {
-                  // SessionStorage might not be available (e.g., private mode)
-                  document.documentElement.classList.add('password-unlocked');
-                }
-              })();
+              html:not(.password-unlocked) body > *:not([data-password-protection]) {
+                visibility: hidden !important;
+                opacity: 0 !important;
+              }
+              html:not(.password-unlocked) body {
+                background: #020203 !important;
+              }
             `,
           }}
         />
       </head>
+      <Script
+        id="password-protection-init"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              try {
+                if (sessionStorage.getItem('passwordEntered') === 'true') {
+                  document.documentElement.classList.add('password-unlocked');
+                }
+              } catch(e) {
+                document.documentElement.classList.add('password-unlocked');
+              }
+            })();
+          `,
+        }}
+      />
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
