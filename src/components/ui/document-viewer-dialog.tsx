@@ -54,8 +54,38 @@ export function DocumentViewerDialog({
     } else if (url) {
       setObjectUrl(url)
       setIsLoading(true)
+      setDocxContent(null)
+      
+      // DOCX von URL laden und konvertieren
+      if (url.endsWith('.docx') || url.includes('.docx')) {
+        fetchAndConvertDocx(url)
+      }
     }
   }, [file, url])
+
+  // Fetch DOCX from URL and convert to HTML
+  const fetchAndConvertDocx = async (docxUrl: string) => {
+    try {
+      setIsLoading(true)
+      
+      // Fetch the DOCX file
+      const response = await fetch(docxUrl)
+      if (!response.ok) throw new Error('Failed to fetch DOCX')
+      
+      const arrayBuffer = await response.arrayBuffer()
+      
+      // Dynamically import mammoth
+      const mammoth = await import('mammoth')
+      const result = await mammoth.convertToHtml({ arrayBuffer })
+      
+      setDocxContent(result.value)
+      setIsLoading(false)
+    } catch (error) {
+      console.error('DOCX fetch/conversion error:', error)
+      setDocxContent(null)
+      setIsLoading(false)
+    }
+  }
 
   // Reset state when dialog closes
   useEffect(() => {
