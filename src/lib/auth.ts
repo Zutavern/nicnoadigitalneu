@@ -37,10 +37,6 @@ declare module "next-auth/jwt" {
   }
 }
 
-// Determine if we're in production
-const isProduction = process.env.NODE_ENV === 'production'
-const cookieDomain = isProduction ? '.nicnoa.online' : undefined
-
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
@@ -49,37 +45,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  cookies: {
-    sessionToken: {
-      name: isProduction ? '__Secure-authjs.session-token' : 'authjs.session-token',
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: isProduction,
-        domain: cookieDomain,
-      },
-    },
-    callbackUrl: {
-      name: isProduction ? '__Secure-authjs.callback-url' : 'authjs.callback-url',
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: isProduction,
-        domain: cookieDomain,
-      },
-    },
-    csrfToken: {
-      name: isProduction ? '__Host-authjs.csrf-token' : 'authjs.csrf-token',
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: isProduction,
-      },
-    },
-  },
+  // Use default cookie config - NextAuth handles this automatically
   pages: {
     signIn: "/login",
     newUser: "/onboarding",
@@ -173,7 +139,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user, trigger, session }) {
+      console.log('[DEBUG-JWT] jwt callback:', { hasUser: !!user, trigger, tokenId: token?.id })
       if (user) {
+        console.log('[DEBUG-JWT] Setting token from user:', { id: user.id, role: user.role })
         token.id = user.id as string
         token.role = user.role
         token.onboardingCompleted = user.onboardingCompleted
@@ -236,11 +204,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   events: {
     async signIn({ user, account }) {
+      console.log('[DEBUG-AUTH-EVENT] signIn event triggered:', { userId: user?.id, provider: account?.provider })
       // Erstelle ActiveSession bei erfolgreichem Login
       if (user?.id && account?.provider) {
         try {
           const sessionToken = `${user.id}-${Date.now()}-${Math.random().toString(36).substring(7)}`
+          console.log('[DEBUG-AUTH-EVENT] Creating active session for:', user.id)
           await createActiveSession(user.id, sessionToken)
+          console.log('[DEBUG-AUTH-EVENT] Active session created successfully')
           
           // Log für OAuth-Logins (Credentials werden in authorize geloggt)
           if (account.provider !== 'credentials') {
@@ -251,7 +222,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             }, true)
           }
         } catch (error) {
-          console.error('Error creating active session:', error)
+          console.error('[DEBUG-AUTH-EVENT] Error creating active session:', error)
         }
       }
     },
@@ -287,7 +258,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
     },
   },
-  debug: process.env.NODE_ENV === "development",
+  debug: true, // Temporarily enabled for debugging production issues
 })
 
 // For backward compatibility
