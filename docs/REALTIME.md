@@ -634,3 +634,4 @@ DailyIframe.setLogLevel('debug')
 **Letzte Aktualisierung:** 12. Dezember 2025
 
 
+

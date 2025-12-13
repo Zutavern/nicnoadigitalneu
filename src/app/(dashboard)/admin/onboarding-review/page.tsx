@@ -59,23 +59,23 @@ interface OnboardingApplication {
   businessStreet: string | null
   businessCity: string | null
   businessZipCode: string | null
-  onboardingStatus: 'IN_PROGRESS' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED'
+  onboardingStatus: 'IN_PROGRESS' | 'PENDING_DOCUMENTS' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED'
   currentStep: number
   createdAt: string
   updatedAt: string
   documents: {
-    masterCertificate: { url: string | null; status: string }
-    businessRegistration: { url: string | null; status: string }
-    liabilityInsurance: { url: string | null; status: string }
-    statusDetermination: { url: string | null; status: string }
-    craftsChamber: { url: string | null; status: string }
+    masterCertificate: { url: string | null; status: string; notAvailable?: boolean }
+    businessRegistration: { url: string | null; status: string; notAvailable?: boolean }
+    liabilityInsurance: { url: string | null; status: string; notAvailable?: boolean }
+    statusDetermination: { url: string | null; status: string; notAvailable?: boolean }
+    craftsChamber: { url: string | null; status: string; notAvailable?: boolean }
   }
   compliance: {
-    ownPhone: boolean
-    ownAppointmentBook: boolean
-    ownCashRegister: boolean
-    ownPriceList: boolean
-    ownBranding: boolean
+    ownPhone: boolean | string
+    ownAppointmentBook: boolean | string
+    ownCashRegister: boolean | string
+    ownPriceList: boolean | string
+    ownBranding: boolean | string
   }
   selfEmploymentDeclaration: boolean
   adminNotes: string | null
@@ -145,6 +145,8 @@ export default function OnboardingReviewPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'PENDING_DOCUMENTS':
+        return <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20">Dokumente fehlen</Badge>
       case 'PENDING_REVIEW':
         return <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20">Prüfung ausstehend</Badge>
       case 'APPROVED':
@@ -156,6 +158,11 @@ export default function OnboardingReviewPage() {
       default:
         return <Badge variant="secondary">{status}</Badge>
     }
+  }
+
+  // Prüfe ob Dokumente fehlen
+  const hasAllDocuments = (app: OnboardingApplication) => {
+    return Object.values(app.documents).every(doc => doc.url || doc.notAvailable)
   }
 
   const getDocumentStatusIcon = (status: string) => {
@@ -337,6 +344,7 @@ export default function OnboardingReviewPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Status</SelectItem>
+                <SelectItem value="PENDING_DOCUMENTS">Dokumente fehlen</SelectItem>
                 <SelectItem value="PENDING_REVIEW">Prüfung ausstehend</SelectItem>
                 <SelectItem value="APPROVED">Genehmigt</SelectItem>
                 <SelectItem value="REJECTED">Abgelehnt</SelectItem>
@@ -388,6 +396,23 @@ export default function OnboardingReviewPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      {/* Nachricht senden Button - immer anzeigen bei ausstehenden Anträgen */}
+                      {(app.onboardingStatus === 'PENDING_DOCUMENTS' || app.onboardingStatus === 'PENDING_REVIEW') && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-blue-500 border-blue-500/20 hover:bg-blue-500/10"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            window.location.href = `/admin/messages?recipient=${app.userId}`
+                          }}
+                        >
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          Nachricht
+                        </Button>
+                      )}
+                      
+                      {/* Genehmigen/Ablehnen nur bei PENDING_REVIEW (alle Dokumente vorhanden) */}
                       {app.onboardingStatus === 'PENDING_REVIEW' && (
                         <>
                           <Button
@@ -418,6 +443,33 @@ export default function OnboardingReviewPage() {
                           </Button>
                         </>
                       )}
+                      
+                      {/* Bei PENDING_DOCUMENTS: Ausgegraut anzeigen */}
+                      {app.onboardingStatus === 'PENDING_DOCUMENTS' && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-muted-foreground border-muted/20 opacity-50 cursor-not-allowed"
+                            disabled
+                            title="Dokumente fehlen noch"
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            Genehmigen
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-muted-foreground border-muted/20 opacity-50 cursor-not-allowed"
+                            disabled
+                            title="Dokumente fehlen noch"
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Ablehnen
+                          </Button>
+                        </>
+                      )}
+                      
                       {expandedId === app.id ? (
                         <ChevronUp className="h-5 w-5 text-muted-foreground" />
                       ) : (
@@ -467,18 +519,24 @@ export default function OnboardingReviewPage() {
                               <h4 className="font-semibold">Compliance-Check</h4>
                             </div>
                             <div className="space-y-2">
-                              {Object.entries(app.compliance).map(([key, value]) => (
-                                <div key={key} className="flex items-center gap-2 text-sm">
-                                  {value ? (
-                                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                                  ) : (
-                                    <XCircle className="h-4 w-4 text-red-500" />
-                                  )}
-                                  <span className={value ? '' : 'text-muted-foreground'}>
-                                    {complianceLabels[key]}
-                                  </span>
-                                </div>
-                              ))}
+                              {Object.entries(app.compliance).map(([key, value]) => {
+                                const isYes = value === true || value === 'yes'
+                                const isPending = value === 'pending'
+                                const isNo = value === false || value === 'no'
+                                
+                                return (
+                                  <div key={key} className="flex items-center gap-2 text-sm">
+                                    {isYes && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                                    {isPending && <Clock className="h-4 w-4 text-amber-500" />}
+                                    {isNo && <XCircle className="h-4 w-4 text-red-500" />}
+                                    <span className={isYes ? '' : 'text-muted-foreground'}>
+                                      {complianceLabels[key]}
+                                    </span>
+                                    {isPending && <Badge className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/20 ml-1">In Arbeit</Badge>}
+                                    {isNo && <Badge className="text-xs bg-red-500/10 text-red-500 border-red-500/20 ml-1">Nein</Badge>}
+                                  </div>
+                                )
+                              })}
                             </div>
                             <div className="pt-4 border-t">
                               <div className="flex items-center gap-2 text-sm">
@@ -502,8 +560,24 @@ export default function OnboardingReviewPage() {
                               {Object.entries(app.documents).map(([key, doc]) => (
                                 <div key={key} className="flex items-center justify-between text-sm">
                                   <div className="flex items-center gap-2">
-                                    {getDocumentStatusIcon(doc.status)}
+                                    {doc.url ? (
+                                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                    ) : doc.notAvailable ? (
+                                      <Clock className="h-4 w-4 text-amber-500" />
+                                    ) : (
+                                      <AlertCircle className="h-4 w-4 text-red-500" />
+                                    )}
                                     <span className="truncate max-w-[150px]">{documentLabels[key]}</span>
+                                    {doc.notAvailable && !doc.url && (
+                                      <Badge className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/20">
+                                        Wird nachgereicht
+                                      </Badge>
+                                    )}
+                                    {!doc.url && !doc.notAvailable && (
+                                      <Badge className="text-xs bg-red-500/10 text-red-500 border-red-500/20">
+                                        Fehlt
+                                      </Badge>
+                                    )}
                                   </div>
                                   {doc.url && (
                                     <Button variant="ghost" size="sm" asChild>

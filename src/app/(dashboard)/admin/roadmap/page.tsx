@@ -70,7 +70,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
 import { SortableList, arrayMove } from '@/components/ui/sortable-list'
-import { SEOSection } from '@/components/admin/seo-preview'
 
 // Icon-Mapping für Auswahl
 const iconOptions = [
@@ -601,16 +600,37 @@ export default function RoadmapCMS() {
                     SEO & Meta-Tags
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <SEOSection
-                    metaTitle={config.metaTitle}
-                    metaDescription={config.metaDescription}
-                    fallbackTitle="Roadmap | NICNOA"
-                    fallbackDescription="Entdecken Sie die Zukunft des Salon-Managements..."
-                    url="nicnoa.online › roadmap"
-                    onTitleChange={(value) => updateConfig('metaTitle', value)}
-                    onDescriptionChange={(value) => updateConfig('metaDescription', value)}
-                  />
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Meta-Titel</Label>
+                      <span className="text-xs text-muted-foreground">
+                        {(config.metaTitle || '').length}/70
+                      </span>
+                    </div>
+                    <Input
+                      value={config.metaTitle || ''}
+                      onChange={(e) => updateConfig('metaTitle', e.target.value)}
+                      placeholder="Roadmap | nicnoa"
+                      maxLength={70}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Meta-Beschreibung</Label>
+                      <span className="text-xs text-muted-foreground">
+                        {(config.metaDescription || '').length}/160
+                      </span>
+                    </div>
+                    <Textarea
+                      value={config.metaDescription || ''}
+                      onChange={(e) => updateConfig('metaDescription', e.target.value)}
+                      placeholder="Entdecken Sie die Zukunft des Salon-Managements..."
+                      maxLength={160}
+                      rows={3}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

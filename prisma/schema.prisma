@@ -154,7 +154,8 @@ enum DocumentStatus {
 
 enum OnboardingStatus {
   IN_PROGRESS
-  PENDING_REVIEW
+  PENDING_DOCUMENTS  // Formular ausgefüllt, aber Dokumente fehlen noch
+  PENDING_REVIEW     // Alles komplett, wartet auf Admin-Prüfung
   APPROVED
   REJECTED
 }

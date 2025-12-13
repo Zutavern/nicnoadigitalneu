@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notifyAllAdmins } from '@/lib/notifications'
+import { OnboardingStatus } from '@prisma/client'
 
 export async function POST(request: Request) {
   try {
@@ -25,13 +26,15 @@ export async function POST(request: Request) {
       )
     }
 
-    // Prüfe ob alle Compliance-Punkte mit "yes" beantwortet wurden
+    // Compliance-Punkte müssen beantwortet sein (egal ob ja/nein/in Arbeit)
     const requiredComplianceKeys = ['ownPhone', 'ownAppointmentBook', 'ownCashRegister', 'ownPriceList', 'ownBranding']
-    const allComplianceChecked = requiredComplianceKeys.every(key => compliance?.[key] === 'yes')
+    const allComplianceAnswered = requiredComplianceKeys.every(key => 
+      compliance?.[key] === 'yes' || compliance?.[key] === 'no' || compliance?.[key] === 'pending'
+    )
     
-    if (!allComplianceChecked) {
+    if (!allComplianceAnswered) {
       return NextResponse.json(
-        { error: 'Alle Compliance-Punkte müssen mit "Ja" beantwortet sein' },
+        { error: 'Alle Compliance-Fragen müssen beantwortet sein' },
         { status: 400 }
       )
     }
@@ -42,6 +45,15 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
+
+    // Prüfe ob alle Dokumente vorhanden sind (hochgeladen ODER als "nicht verfügbar" markiert)
+    const requiredDocuments = ['masterCertificate', 'businessRegistration', 'liabilityInsurance', 'statusDetermination', 'craftsChamber']
+    const allDocumentsHandled = requiredDocuments.every(key => 
+      documentUrls?.[key] || documentNotAvailable?.[key]
+    )
+    
+    // Bestimme den Status: PENDING_DOCUMENTS wenn Dokumente fehlen, sonst PENDING_REVIEW
+    const onboardingStatus: OnboardingStatus = allDocumentsHandled ? 'PENDING_REVIEW' : 'PENDING_DOCUMENTS'
 
     // Erstelle oder aktualisiere den Onboarding-Datensatz
     await prisma.stylistOnboarding.upsert({
@@ -95,7 +107,7 @@ export async function POST(request: Request) {
         
         // Status
         currentStep: 4,
-        onboardingStatus: 'PENDING_REVIEW',
+        onboardingStatus: onboardingStatus,
       },
       create: {
         userId: session.user.id,
@@ -143,11 +155,11 @@ export async function POST(request: Request) {
         selfEmploymentDeclaration: declaration,
         declarationSignedAt: new Date(),
         currentStep: 4,
-        onboardingStatus: 'PENDING_REVIEW',
+        onboardingStatus: onboardingStatus,
       },
     })
 
-    // Markiere User-Onboarding als abgeschlossen
+    // Markiere User-Onboarding als abgeschlossen (vorläufig, auch wenn Dokumente fehlen)
     await prisma.user.update({
       where: { id: session.user.id },
       data: { onboardingCompleted: true },
@@ -155,16 +167,21 @@ export async function POST(request: Request) {
 
     // Benachrichtige alle Admins über den neuen Onboarding-Antrag
     try {
+      const notificationMessage = onboardingStatus === 'PENDING_DOCUMENTS'
+        ? `${session.user.name || session.user.email} hat das Onboarding vorläufig abgeschlossen. Dokumente fehlen noch.`
+        : `${session.user.name || session.user.email} hat das Compliance-Onboarding abgeschlossen und wartet auf Prüfung.`
+      
       await notifyAllAdmins({
         type: 'ONBOARDING_SUBMITTED',
-        title: 'Neuer Onboarding-Antrag',
-        message: `${session.user.name || session.user.email} hat das Compliance-Onboarding abgeschlossen und wartet auf Prüfung.`,
+        title: onboardingStatus === 'PENDING_DOCUMENTS' ? 'Onboarding vorläufig abgeschlossen' : 'Neuer Onboarding-Antrag',
+        message: notificationMessage,
         link: '/admin/onboarding-review',
         metadata: {
           userId: session.user.id,
           userName: session.user.name,
           userEmail: session.user.email,
           companyName: businessData.companyName,
+          status: onboardingStatus,
         },
       })
     } catch (notificationError) {
@@ -174,7 +191,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ 
       success: true,
-      message: 'Onboarding erfolgreich abgeschlossen'
+      message: onboardingStatus === 'PENDING_DOCUMENTS' 
+        ? 'Onboarding vorläufig abgeschlossen. Du kannst fehlende Dokumente jederzeit nachreichen.'
+        : 'Onboarding erfolgreich abgeschlossen',
+      status: onboardingStatus,
+      documentsComplete: allDocumentsHandled,
     })
   } catch (error) {
     console.error('Onboarding completion error:', error)

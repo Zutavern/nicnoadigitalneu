@@ -405,17 +405,17 @@ export default function UpdatesAdminPage() {
               </div>
 
               {/* Google Preview */}
-              <div className="mt-6 p-4 bg-white rounded-lg border shadow-sm">
+              <div className="mt-6 p-4 bg-muted/30 rounded-lg border">
                 <div className="flex items-center gap-2 mb-3">
-                  <Search className="h-4 w-4 text-gray-500" />
-                  <p className="text-sm font-medium text-gray-700">Google-Vorschau</p>
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <p className="text-sm font-medium">Google-Vorschau</p>
                 </div>
                 <div className="space-y-1 font-sans">
                   <p className="text-[#1a0dab] text-lg hover:underline cursor-pointer truncate">
                     {config.metaTitle || config.heroTitle || 'Updates | NICNOA'}
                   </p>
                   <p className="text-[#006621] text-sm">
-                    nicnoa.online › updates
+                    nicnoa.de › updates
                   </p>
                   <p className="text-sm text-[#545454] line-clamp-2">
                     {config.metaDescription || config.heroDescription || 'Entdecken Sie die neuesten Updates und Verbesserungen der NICNOA Plattform.'}

@@ -77,7 +77,6 @@ import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Image from 'next/image'
 import { ImageUploader } from '@/components/ui/image-uploader'
-import { SEOSection } from '@/components/admin/seo-preview'
 
 // Icon Mapping - alle verfügbaren Icons
 const iconMap: Record<string, React.ElementType> = {
@@ -1324,24 +1323,54 @@ export default function ProductCMSPage() {
                         SEO & Meta-Tags
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <SEOSection
-                        metaTitle={config.metaTitle}
-                        metaDescription={config.metaDescription}
-                        fallbackTitle="NICNOA Produkt - Features & Funktionen"
-                        fallbackDescription="Alle Features und Funktionen der NICNOA Plattform..."
-                        url="nicnoa.online › produkt"
-                        onTitleChange={(value) => updateConfig('metaTitle', value)}
-                        onDescriptionChange={(value) => updateConfig('metaDescription', value)}
-                        ogImageUrl={config.ogImage}
-                        onOgImageUpload={(url) => {
-                          updateConfig('ogImage', url)
-                          toast.success('OG-Bild hochgeladen!')
-                        }}
-                        onOgImageRemove={() => removeImage('og')}
-                        ogImageUploadEndpoint="/api/admin/product-config/upload"
-                        ogImageUploadData={{ type: 'og' }}
-                      />
+                    <CardContent className="space-y-6">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label>Meta-Titel</Label>
+                          <span className="text-xs text-muted-foreground">{(config.metaTitle || '').length}/70</span>
+                        </div>
+                        <Input
+                          value={config.metaTitle || ''}
+                          onChange={(e) => updateConfig('metaTitle', e.target.value)}
+                          placeholder="NICNOA Produkt - Features & Funktionen"
+                          maxLength={70}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label>Meta-Beschreibung</Label>
+                          <span className="text-xs text-muted-foreground">{(config.metaDescription || '').length}/160</span>
+                        </div>
+                        <Textarea
+                          value={config.metaDescription || ''}
+                          onChange={(e) => updateConfig('metaDescription', e.target.value)}
+                          placeholder="Alle Features und Funktionen der NICNOA Plattform..."
+                          maxLength={160}
+                          rows={3}
+                        />
+                      </div>
+
+                      <Separator />
+
+                      <div className="space-y-2">
+                        <Label>Open Graph Bild (für Social Media)</Label>
+                        <p className="text-xs text-muted-foreground mb-2">Empfohlen: 1200x630px</p>
+                        <ImageUploader
+                          value={config.ogImage}
+                          onUpload={(url) => {
+                            updateConfig('ogImage', url)
+                            toast.success('OG-Bild hochgeladen!')
+                          }}
+                          onRemove={() => removeImage('og')}
+                          uploadEndpoint="/api/admin/product-config/upload"
+                          uploadData={{ type: 'og' }}
+                          aspectRatio={1200/630}
+                          placeholder="OG-Bild hochladen"
+                          description="JPEG, PNG, WebP • Empfohlen: 1200x630px"
+                          previewHeight="aspect-[1200/630] max-w-md"
+                        />
+                      </div>
                     </CardContent>
                   </Card>
                 </TabsContent>

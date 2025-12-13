@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
-// GET: Fetch heatmap and click analytics data from PostHog
+// GET: Fetch heatmap data and configuration
 export async function GET(request: Request) {
   try {
     const session = await auth()
@@ -17,8 +17,8 @@ export async function GET(request: Request) {
     const page = searchParams.get('page') || '/'
     const dateFrom = searchParams.get('dateFrom') || '-7d'
 
-    // Get PostHog config
     const settings = await prisma.platformSettings.findFirst()
+    
     if (!settings?.posthogPersonalApiKey || !settings?.posthogEnabled) {
       return NextResponse.json({
         error: 'PostHog ist nicht konfiguriert oder deaktiviert',
@@ -38,75 +38,218 @@ export async function GET(request: Request) {
       }, { status: 400 })
     }
 
-    // Get the app URL for toolbar
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.nicnoa.online'
+    const days = parseInt(dateFrom.replace('-', '').replace('d', '')) || 7
 
     switch (type) {
       case 'config': {
-        // Return PostHog toolbar and heatmap URLs
-        const toolbarUrl = `${appUrl}?__posthog_toolbar=true`
+        // Return PostHog configuration for toolbar/heatmap embedding
+        const toolbarUrl = `${host.replace('.i.', '.')}/project/${projectId}/toolbar`
         const heatmapUrl = `${host.replace('.i.', '.')}/project/${projectId}/heatmaps`
-        const launchToolbarUrl = `${host.replace('.i.', '.')}/project/${projectId}/toolbar`
         
         return NextResponse.json({
           configured: true,
           data: {
-            toolbarUrl,
-            heatmapUrl,
-            launchToolbarUrl,
+            host: host.replace('.i.', '.'),
             projectId,
             clientApiKey,
+            toolbarUrl,
+            heatmapUrl,
+            // PostHog Toolbar launch URL (opens heatmap overlay on your site)
+            launchToolbarUrl: `${host.replace('.i.', '.')}/project/${projectId}/toolbar?launch`,
           },
         })
       }
 
       case 'click-data': {
-        // Fetch click events for a specific page
-        const clickData = await fetchClickData(host, projectId, apiKey, page, dateFrom)
-        
-        return NextResponse.json({
-          configured: true,
-          data: clickData,
-        })
-      }
+        // Fetch autocapture click events for a specific page
+        try {
+          const response = await fetch(`${host}/api/projects/${projectId}/insights/trend/`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              events: [{
+                id: '$autocapture',
+                math: 'total',
+                properties: [
+                  { key: '$current_url', value: page, operator: 'icontains' },
+                ],
+              }],
+              date_from: `-${days}d`,
+              breakdown: '$el_text',
+              breakdown_type: 'event',
+            }),
+          })
 
-      case 'rage-clicks': {
-        // Fetch rage click events
-        const rageClicks = await fetchRageClicks(host, projectId, apiKey, dateFrom)
-        
-        return NextResponse.json({
-          configured: true,
-          data: rageClicks,
-        })
-      }
+          if (response.ok) {
+            const data = await response.json()
+            const results = (data.result || []) as Array<{ 
+              breakdown_value?: string
+              aggregated_value?: number 
+            }>
+            
+            const clicks = results
+              .filter(r => r.breakdown_value)
+              .map(r => ({
+                element: r.breakdown_value || 'Unknown',
+                clicks: r.aggregated_value || 0,
+              }))
+              .sort((a, b) => b.clicks - a.clicks)
+              .slice(0, 20)
 
-      case 'dead-clicks': {
-        // Fetch dead click events (clicks that don't do anything)
-        const deadClicks = await fetchDeadClicks(host, projectId, apiKey, dateFrom)
-        
+            return NextResponse.json({
+              configured: true,
+              data: clicks,
+            })
+          }
+        } catch (error) {
+          console.error('Click data fetch error:', error)
+        }
+
         return NextResponse.json({
           configured: true,
-          data: deadClicks,
+          data: [],
         })
       }
 
       case 'scroll-depth': {
         // Fetch scroll depth data
-        const scrollDepth = await fetchScrollDepth(host, projectId, apiKey, page, dateFrom)
-        
+        try {
+          const response = await fetch(`${host}/api/projects/${projectId}/insights/trend/`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              events: [{
+                id: '$pageview',
+                math: 'total',
+              }],
+              date_from: `-${days}d`,
+              breakdown: '$viewport_height',
+              breakdown_type: 'event',
+            }),
+          })
+
+          if (response.ok) {
+            const data = await response.json()
+            // Process scroll depth data
+            return NextResponse.json({
+              configured: true,
+              data: data.result || [],
+            })
+          }
+        } catch (error) {
+          console.error('Scroll depth fetch error:', error)
+        }
+
         return NextResponse.json({
           configured: true,
-          data: scrollDepth,
+          data: [],
+        })
+      }
+
+      case 'rage-clicks': {
+        // Fetch rage click events (rapid repeated clicks)
+        try {
+          const response = await fetch(`${host}/api/projects/${projectId}/insights/trend/`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              events: [{
+                id: '$rageclick',
+                math: 'total',
+              }],
+              date_from: `-${days}d`,
+              breakdown: '$current_url',
+              breakdown_type: 'event',
+            }),
+          })
+
+          if (response.ok) {
+            const data = await response.json()
+            const results = (data.result || []) as Array<{ 
+              breakdown_value?: string
+              aggregated_value?: number 
+            }>
+            
+            const rageClicks = results
+              .filter(r => r.breakdown_value)
+              .map(r => ({
+                url: r.breakdown_value || 'Unknown',
+                count: r.aggregated_value || 0,
+              }))
+              .sort((a, b) => b.count - a.count)
+              .slice(0, 10)
+
+            return NextResponse.json({
+              configured: true,
+              data: rageClicks,
+            })
+          }
+        } catch (error) {
+          console.error('Rage clicks fetch error:', error)
+        }
+
+        return NextResponse.json({
+          configured: true,
+          data: [],
         })
       }
 
       case 'top-interactions': {
-        // Fetch top interaction types
-        const interactions = await fetchTopInteractions(host, projectId, apiKey, dateFrom)
-        
+        // Fetch most clicked elements across all pages
+        try {
+          const response = await fetch(`${host}/api/projects/${projectId}/insights/trend/`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              events: [{
+                id: '$autocapture',
+                math: 'total',
+              }],
+              date_from: `-${days}d`,
+              breakdown: '$event_type',
+              breakdown_type: 'event',
+            }),
+          })
+
+          if (response.ok) {
+            const data = await response.json()
+            const results = (data.result || []) as Array<{ 
+              breakdown_value?: string
+              aggregated_value?: number 
+            }>
+            
+            const interactions = results
+              .filter(r => r.breakdown_value)
+              .map(r => ({
+                type: r.breakdown_value || 'Unknown',
+                count: r.aggregated_value || 0,
+              }))
+              .sort((a, b) => b.count - a.count)
+
+            return NextResponse.json({
+              configured: true,
+              data: interactions,
+            })
+          }
+        } catch (error) {
+          console.error('Top interactions fetch error:', error)
+        }
+
         return NextResponse.json({
           configured: true,
-          data: interactions,
+          data: [],
         })
       }
 
@@ -119,244 +262,5 @@ export async function GET(request: Request) {
       error: 'Fehler beim Abrufen der Heatmap-Daten',
       details: error instanceof Error ? error.message : 'Unknown error',
     }, { status: 500 })
-  }
-}
-
-// Helper functions
-
-async function fetchClickData(
-  host: string,
-  projectId: string,
-  apiKey: string,
-  page: string,
-  dateFrom: string
-): Promise<Array<{ element: string; clicks: number }>> {
-  try {
-    // Query for $autocapture events with $el_text breakdown
-    const response = await fetch(`${host}/api/projects/${projectId}/insights/trend/`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        events: [{ id: '$autocapture', math: 'total' }],
-        date_from: dateFrom,
-        breakdown: '$el_text',
-        breakdown_type: 'event',
-        properties: page !== '/' ? [
-          { key: '$current_url', value: page, operator: 'icontains' }
-        ] : [],
-      }),
-    })
-
-    if (!response.ok) {
-      console.error('PostHog click data error:', await response.text())
-      return []
-    }
-
-    const data = await response.json()
-    
-    return (data.result || [])
-      .filter((item: { breakdown_value?: string }) => item.breakdown_value)
-      .map((item: { breakdown_value?: string; aggregated_value?: number }) => ({
-        element: item.breakdown_value || '',
-        clicks: item.aggregated_value || 0,
-      }))
-      .filter((item: { element: string }) => item.element.length > 0 && item.element.length < 100)
-      .sort((a: { clicks: number }, b: { clicks: number }) => b.clicks - a.clicks)
-      .slice(0, 20)
-  } catch (error) {
-    console.error('Fetch click data error:', error)
-    return []
-  }
-}
-
-async function fetchRageClicks(
-  host: string,
-  projectId: string,
-  apiKey: string,
-  dateFrom: string
-): Promise<Array<{ url: string; count: number }>> {
-  try {
-    // Query for $rageclick events
-    const response = await fetch(`${host}/api/projects/${projectId}/insights/trend/`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        events: [{ id: '$rageclick', math: 'total' }],
-        date_from: dateFrom,
-        breakdown: '$current_url',
-        breakdown_type: 'event',
-      }),
-    })
-
-    if (!response.ok) {
-      return []
-    }
-
-    const data = await response.json()
-    
-    return (data.result || [])
-      .filter((item: { breakdown_value?: string; aggregated_value?: number }) => 
-        item.breakdown_value && item.aggregated_value && item.aggregated_value > 0
-      )
-      .map((item: { breakdown_value?: string; aggregated_value?: number }) => ({
-        url: item.breakdown_value || '',
-        count: item.aggregated_value || 0,
-      }))
-      .sort((a: { count: number }, b: { count: number }) => b.count - a.count)
-      .slice(0, 10)
-  } catch (error) {
-    console.error('Fetch rage clicks error:', error)
-    return []
-  }
-}
-
-async function fetchDeadClicks(
-  host: string,
-  projectId: string,
-  apiKey: string,
-  dateFrom: string
-): Promise<Array<{ element: string; count: number }>> {
-  try {
-    // Query for $dead_click events (if available in PostHog)
-    const response = await fetch(`${host}/api/projects/${projectId}/insights/trend/`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        events: [{ id: '$dead_click', math: 'total' }],
-        date_from: dateFrom,
-        breakdown: '$el_text',
-        breakdown_type: 'event',
-      }),
-    })
-
-    if (!response.ok) {
-      return []
-    }
-
-    const data = await response.json()
-    
-    return (data.result || [])
-      .filter((item: { breakdown_value?: string }) => item.breakdown_value)
-      .map((item: { breakdown_value?: string; aggregated_value?: number }) => ({
-        element: item.breakdown_value || '',
-        count: item.aggregated_value || 0,
-      }))
-      .sort((a: { count: number }, b: { count: number }) => b.count - a.count)
-      .slice(0, 10)
-  } catch (error) {
-    console.error('Fetch dead clicks error:', error)
-    return []
-  }
-}
-
-async function fetchScrollDepth(
-  host: string,
-  projectId: string,
-  apiKey: string,
-  page: string,
-  dateFrom: string
-): Promise<{ avg: number; distribution: Array<{ depth: string; percentage: number }> }> {
-  try {
-    // Query for scroll depth events
-    const response = await fetch(`${host}/api/projects/${projectId}/insights/trend/`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        events: [{ id: '$pageview', math: 'avg', math_property: '$scroll_depth' }],
-        date_from: dateFrom,
-        properties: page !== '/' ? [
-          { key: '$current_url', value: page, operator: 'icontains' }
-        ] : [],
-      }),
-    })
-
-    if (!response.ok) {
-      return { avg: 0, distribution: [] }
-    }
-
-    const data = await response.json()
-    const result = data.result?.[0]
-    
-    return {
-      avg: result?.aggregated_value || 0,
-      distribution: [
-        { depth: '25%', percentage: 85 },
-        { depth: '50%', percentage: 60 },
-        { depth: '75%', percentage: 35 },
-        { depth: '100%', percentage: 15 },
-      ],
-    }
-  } catch (error) {
-    console.error('Fetch scroll depth error:', error)
-    return { avg: 0, distribution: [] }
-  }
-}
-
-async function fetchTopInteractions(
-  host: string,
-  projectId: string,
-  apiKey: string,
-  dateFrom: string
-): Promise<Array<{ type: string; count: number }>> {
-  try {
-    // Fetch different interaction types
-    const interactionEvents = [
-      { id: '$autocapture', name: 'Klicks' },
-      { id: '$pageview', name: 'Seitenaufrufe' },
-      { id: '$pageleave', name: 'Seiten verlassen' },
-      { id: 'form_submitted', name: 'Formulare' },
-      { id: '$rageclick', name: 'Rage Clicks' },
-    ]
-
-    const results = await Promise.all(
-      interactionEvents.map(async (event) => {
-        try {
-          const response = await fetch(`${host}/api/projects/${projectId}/insights/trend/`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${apiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              events: [{ id: event.id, math: 'total' }],
-              date_from: dateFrom,
-            }),
-          })
-
-          if (!response.ok) return { type: event.name, count: 0 }
-
-          const data = await response.json()
-          const result = data.result?.[0]
-          let count = 0
-          
-          if (result?.aggregated_value !== undefined) {
-            count = result.aggregated_value
-          } else if (Array.isArray(result?.data)) {
-            count = result.data.reduce((sum: number, val: number) => sum + (val || 0), 0)
-          }
-
-          return { type: event.name, count }
-        } catch {
-          return { type: event.name, count: 0 }
-        }
-      })
-    )
-
-    return results.filter(r => r.count > 0).sort((a, b) => b.count - a.count)
-  } catch (error) {
-    console.error('Fetch top interactions error:', error)
-    return []
   }
 }

@@ -24,8 +24,6 @@ import {
   Gift,
   ArrowRight,
   CheckCircle2,
-  Search,
-  Globe,
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -53,7 +51,6 @@ import {
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ImageUploader } from '@/components/ui/image-uploader'
-import { SEOSection } from '@/components/admin/seo-preview'
 
 interface Partner {
   id: string
@@ -90,9 +87,6 @@ interface PartnerPageConfig {
   ctaButton1Link: string
   ctaButton2Text: string
   ctaButton2Link: string
-  // SEO
-  metaTitle: string | null
-  metaDescription: string | null
 }
 
 const emptyPartner: Partial<Partner> = {
@@ -128,7 +122,7 @@ export default function PartnersPage() {
   const [showInactive, setShowInactive] = useState(false)
   
   // Page Config States
-  const [mainTab, setMainTab] = useState<'partners' | 'config' | 'seo'>('partners')
+  const [mainTab, setMainTab] = useState<'partners' | 'config'>('partners')
   const [pageConfig, setPageConfig] = useState<PartnerPageConfig>({
     heroBadgeText: '',
     heroTitle: '',
@@ -145,8 +139,6 @@ export default function PartnersPage() {
     ctaButton1Link: '/registrieren',
     ctaButton2Text: 'Preise ansehen',
     ctaButton2Link: '/preise',
-    metaTitle: null,
-    metaDescription: null,
   })
   const [isLoadingConfig, setIsLoadingConfig] = useState(true)
   const [isSavingConfig, setIsSavingConfig] = useState(false)
@@ -372,19 +364,15 @@ export default function PartnersPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Side: Settings */}
         <div className={`${showPreview ? 'w-1/2' : 'w-full'} overflow-y-auto p-6`}>
-          <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'partners' | 'config' | 'seo')}>
-            <TabsList className="grid w-full grid-cols-3">
+          <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'partners' | 'config')}>
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="partners">
                 <HandshakeIcon className="mr-2 h-4 w-4" />
                 Partner verwalten
               </TabsTrigger>
               <TabsTrigger value="config">
                 <FileText className="mr-2 h-4 w-4" />
-                Konfiguration
-              </TabsTrigger>
-              <TabsTrigger value="seo">
-                <Search className="mr-2 h-4 w-4" />
-                SEO
+                Seiten-Konfiguration
               </TabsTrigger>
             </TabsList>
 
@@ -993,32 +981,6 @@ export default function PartnersPage() {
                   </Card>
                 </div>
               )}
-            </TabsContent>
-
-            {/* SEO Tab */}
-            <TabsContent value="seo" className="space-y-6 mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="h-5 w-5 text-primary" />
-                    SEO & Meta-Tags
-                  </CardTitle>
-                  <CardDescription>
-                    Optimiere die Sichtbarkeit der Partner-Seite in Suchmaschinen
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <SEOSection
-                    metaTitle={pageConfig.metaTitle}
-                    metaDescription={pageConfig.metaDescription}
-                    fallbackTitle="Partner & Vorteile | NICNOA"
-                    fallbackDescription="Entdecken Sie unsere exklusiven Partner-Angebote für NICNOA-Mitglieder. Spezielle Konditionen für Salon-Professionals."
-                    url="nicnoa.online › partner"
-                    onTitleChange={(value) => updatePageConfig('metaTitle', value || null)}
-                    onDescriptionChange={(value) => updatePageConfig('metaDescription', value || null)}
-                  />
-                </CardContent>
-              </Card>
             </TabsContent>
           </Tabs>
         </div>

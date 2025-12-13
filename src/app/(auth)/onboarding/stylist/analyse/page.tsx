@@ -10,6 +10,7 @@ import {
   Sparkles,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Phone,
   BookOpen,
   CreditCard,
@@ -25,6 +26,8 @@ import {
   Rocket,
   HelpCircle,
   ChevronRight,
+  ClipboardCheck,
+  MessageCircle,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -43,6 +46,7 @@ interface OnboardingData {
     statusDetermination: { uploaded: boolean; notAvailable: boolean }
     craftsChamber: { uploaded: boolean; notAvailable: boolean }
   }
+  status?: 'IN_PROGRESS' | 'PENDING_DOCUMENTS' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED'
 }
 
 // Tipps für jeden Compliance-Punkt
@@ -664,6 +668,64 @@ export default function OnboardingAnalysePage() {
           </motion.div>
         )}
 
+        {/* Hinweis wenn Dokumente fehlen */}
+        {(onboardingData?.status === 'PENDING_DOCUMENTS' || documentStats.pending > 0) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20"
+          >
+            <div className="flex items-start gap-4">
+              <div className="h-12 w-12 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="h-6 w-6 text-amber-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  Dein Onboarding ist noch nicht vollständig
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  Wir können dein Onboarding noch nicht komplett abschließen, da noch {documentStats.pending} {documentStats.pending === 1 ? 'Dokument fehlt' : 'Dokumente fehlen'}.
+                  Sobald du alle Dokumente hochgeladen hast, werden wir deinen Antrag prüfen und uns bei dir melden.
+                </p>
+                <div className="flex items-center gap-2 text-sm text-amber-400">
+                  <Clock className="h-4 w-4" />
+                  <span>Status: Prüfung ausstehend – Dokumente werden nachgereicht</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Hinweis wenn alles komplett ist */}
+        {onboardingData?.status === 'PENDING_REVIEW' && documentStats.pending === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20"
+          >
+            <div className="flex items-start gap-4">
+              <div className="h-12 w-12 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                <ClipboardCheck className="h-6 w-6 text-emerald-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  Dein Antrag wird geprüft
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  Super! Du hast alle erforderlichen Dokumente hochgeladen. Wir prüfen jetzt deinen Antrag 
+                  und melden uns in Kürze bei dir. Dies dauert in der Regel 1-2 Werktage.
+                </p>
+                <div className="flex items-center gap-2 text-sm text-emerald-400">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Status: Vollständig – In Prüfung durch unser Team</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -671,28 +733,58 @@ export default function OnboardingAnalysePage() {
           transition={{ delay: 0.5 }}
           className="flex flex-col sm:flex-row gap-4 justify-center pt-8"
         >
-          <Button
-            size="lg"
-            className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
-            asChild
-          >
-            <Link href="/stylist">
-              <Rocket className="h-5 w-5 mr-2" />
-              Zum Dashboard
-            </Link>
-          </Button>
-          
-          <Button
-            size="lg"
-            variant="outline"
-            className="border-white/20 hover:bg-white/10"
-            asChild
-          >
-            <Link href="/onboarding/stylist">
-              <TrendingUp className="h-5 w-5 mr-2" />
-              Daten ergänzen
-            </Link>
-          </Button>
+          {/* Wenn Dokumente fehlen: "Vorläufig abschließen" als primärer Button */}
+          {(onboardingData?.status === 'PENDING_DOCUMENTS' || documentStats.pending > 0) ? (
+            <>
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                asChild
+              >
+                <Link href="/stylist">
+                  <ClipboardCheck className="h-5 w-5 mr-2" />
+                  Onboarding vorläufig abschließen
+                </Link>
+              </Button>
+              
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+                asChild
+              >
+                <Link href="/onboarding/stylist">
+                  <TrendingUp className="h-5 w-5 mr-2" />
+                  Dokumente jetzt nachreichen
+                </Link>
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+                asChild
+              >
+                <Link href="/stylist">
+                  <Rocket className="h-5 w-5 mr-2" />
+                  Zum Dashboard
+                </Link>
+              </Button>
+              
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white/20 hover:bg-white/10"
+                asChild
+              >
+                <Link href="/onboarding/stylist">
+                  <TrendingUp className="h-5 w-5 mr-2" />
+                  Daten bearbeiten
+                </Link>
+              </Button>
+            </>
+          )}
         </motion.div>
       </div>
     </div>

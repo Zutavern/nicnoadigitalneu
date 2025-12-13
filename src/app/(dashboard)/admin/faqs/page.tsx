@@ -25,8 +25,6 @@ import {
   Settings,
   List,
   AlertCircle,
-  Search,
-  Globe,
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -55,7 +53,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { toast } from 'sonner'
 import { SortableList } from '@/components/ui/sortable-list'
-import { SEOSection } from '@/components/admin/seo-preview'
 
 interface FAQ {
   id: string
@@ -82,9 +79,6 @@ interface FAQPageConfig {
   contactText: string
   contactLinkText: string
   contactLinkUrl: string
-  // SEO
-  metaTitle: string | null
-  metaDescription: string | null
 }
 
 const emptyFAQ: Partial<FAQ> = {
@@ -108,8 +102,6 @@ const defaultConfig: FAQPageConfig = {
   contactText: 'Können Sie nicht finden, wonach Sie suchen? Kontaktieren Sie unser',
   contactLinkText: 'Support-Team',
   contactLinkUrl: '/support',
-  metaTitle: null,
-  metaDescription: null,
 }
 
 const categories = [
@@ -136,7 +128,7 @@ export default function FAQsPage() {
   const [isSaving, setIsSaving] = useState(false)
   
   // UI States
-  const [activeTab, setActiveTab] = useState<'faqs' | 'config' | 'seo'>('faqs')
+  const [activeTab, setActiveTab] = useState<'faqs' | 'config'>('faqs')
   const [roleTab, setRoleTab] = useState<'STYLIST' | 'SALON_OWNER'>('STYLIST')
   const [showPreview, setShowPreview] = useState(true)
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop')
@@ -400,19 +392,15 @@ export default function FAQsPage() {
       <div className={`grid gap-6 ${showPreview ? 'lg:grid-cols-2' : 'grid-cols-1'}`}>
         {/* Editor */}
         <div className="space-y-6">
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'faqs' | 'config' | 'seo')}>
-            <TabsList className="grid w-full grid-cols-3">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'faqs' | 'config')}>
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="faqs" className="flex items-center gap-2">
                 <List className="h-4 w-4" />
-                FAQs
+                FAQs verwalten
               </TabsTrigger>
               <TabsTrigger value="config" className="flex items-center gap-2">
                 <Settings className="h-4 w-4" />
-                Konfiguration
-              </TabsTrigger>
-              <TabsTrigger value="seo" className="flex items-center gap-2">
-                <Search className="h-4 w-4" />
-                SEO
+                Seiten-Konfiguration
               </TabsTrigger>
             </TabsList>
 
@@ -661,32 +649,6 @@ export default function FAQsPage() {
                       />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* SEO Tab */}
-            <TabsContent value="seo" className="space-y-6 mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="h-5 w-5 text-primary" />
-                    SEO & Meta-Tags
-                  </CardTitle>
-                  <CardDescription>
-                    Optimiere die Sichtbarkeit der FAQ-Seite in Suchmaschinen
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <SEOSection
-                    metaTitle={pageConfig.metaTitle}
-                    metaDescription={pageConfig.metaDescription}
-                    fallbackTitle="FAQ - Häufige Fragen | NICNOA"
-                    fallbackDescription="Antworten auf häufig gestellte Fragen zu NICNOA. Hilfe für Salonbesitzer und Stuhlmieter."
-                    url="nicnoa.online › faq"
-                    onTitleChange={(value) => updateConfig('metaTitle', value || null)}
-                    onDescriptionChange={(value) => updateConfig('metaDescription', value || null)}
-                  />
                 </CardContent>
               </Card>
             </TabsContent>

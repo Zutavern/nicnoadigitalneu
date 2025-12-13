@@ -36,10 +36,11 @@ import { de } from 'date-fns/locale'
 
 interface OnboardingStatus {
   exists: boolean
-  status: 'IN_PROGRESS' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED' | null
+  status: 'IN_PROGRESS' | 'PENDING_DOCUMENTS' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED' | null
   currentStep: number
   documentsUploaded: number
   documentsTotal: number
+  documentsMissing: number
   adminNotes?: string
 }
 
@@ -240,6 +241,58 @@ export default function StylistDashboardPage() {
                       <Clock className="h-4 w-4" />
                       ca. 10 Minuten
                     </span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )
+    }
+
+    // Pending Documents - Onboarding ausgefüllt, aber Dokumente fehlen
+    if (complianceStatus.status === 'PENDING_DOCUMENTS') {
+      const missingCount = complianceStatus.documentsMissing || (complianceStatus.documentsTotal - complianceStatus.documentsUploaded)
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6"
+        >
+          <Card className="border-amber-500/50 bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-amber-500/10">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="h-12 w-12 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                  <FileText className="h-6 w-6 text-amber-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-amber-500" />
+                    Onboarding vervollständigen
+                  </h3>
+                  <p className="text-muted-foreground mt-1 mb-4">
+                    Dein Onboarding ist vorläufig abgeschlossen, aber es {missingCount === 1 ? 'fehlt noch 1 Dokument' : `fehlen noch ${missingCount} Dokumente`}.
+                    Sobald alle Dokumente hochgeladen sind, wird dein Antrag geprüft.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <Link href="/onboarding/stylist">
+                      <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Dokumente jetzt hochladen
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                  <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <div className="flex items-center gap-2 text-sm">
+                      <FileCheck className="h-4 w-4 text-amber-500" />
+                      <span className="font-medium">
+                        {complianceStatus.documentsUploaded} von {complianceStatus.documentsTotal} Dokumenten hochgeladen
+                      </span>
+                      <span className="text-amber-400 ml-2">
+                        ({missingCount} {missingCount === 1 ? 'fehlt' : 'fehlen'})
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

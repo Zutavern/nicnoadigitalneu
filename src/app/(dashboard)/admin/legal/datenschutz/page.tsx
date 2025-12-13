@@ -33,7 +33,6 @@ import { toast } from 'sonner'
 import { SortableList } from '@/components/ui/sortable-list'
 import { LegalAdminPreview } from '@/components/legal/legal-admin-preview'
 import { LegalTiptapEditor } from '@/components/editor/legal-tiptap-editor'
-import { SEOAudit } from '@/components/admin/seo-audit'
 
 const PAGE_TYPE = 'DATENSCHUTZ'
 
@@ -440,20 +439,11 @@ export default function DatenschutzAdminPage() {
                   <p className="text-[#1a0dab] text-sm hover:underline cursor-pointer truncate">
                     {pageConfig.metaTitle || 'Datenschutz | NICNOA'}
                   </p>
-                  <p className="text-[#006621] text-xs">nicnoa.online › datenschutz</p>
+                  <p className="text-[#006621] text-xs">nicnoa.de › datenschutz</p>
                   <p className="text-xs text-[#545454] line-clamp-2">
                     {pageConfig.metaDescription || pageConfig.heroDescription || 'Datenschutzerklärung gemäß DSGVO'}
                   </p>
                 </div>
-              </div>
-
-              {/* SEO Audit */}
-              <div className="pt-4 border-t">
-                <SEOAudit
-                  metaTitle={pageConfig.metaTitle}
-                  metaDescription={pageConfig.metaDescription}
-                  content={sections.map(s => s.content).join(' ')}
-                />
               </div>
             </CardContent>
           </Card>
