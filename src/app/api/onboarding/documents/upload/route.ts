@@ -25,10 +25,16 @@ export async function POST(request: Request) {
     }
 
     // Validierung der Dateitypen
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png']
+    const allowedTypes = [
+      'application/pdf', 
+      'image/jpeg', 
+      'image/png',
+      'application/msword', // .doc
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document' // .docx
+    ]
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Nur PDF, JPG und PNG Dateien erlaubt' },
+        { error: 'Nur PDF, JPG, PNG und Word-Dateien erlaubt' },
         { status: 400 }
       )
     }

@@ -155,7 +155,7 @@ export default function StylistOnboardingPage() {
   })
 
   // Step 3: Documents
-  const [documents, setDocuments] = useState<Record<DocumentKey, { file: File | null; status: DocumentStatus; url?: string }>>({
+  const [documents, setDocuments] = useState<Record<DocumentKey, { file: File | null; status: DocumentStatus; url?: string; uploading?: boolean }>>({
     masterCertificate: { file: null, status: 'pending' },
     businessRegistration: { file: null, status: 'pending' },
     liabilityInsurance: { file: null, status: 'pending' },
@@ -178,7 +178,7 @@ export default function StylistOnboardingPage() {
   }, [status, router])
 
   const allComplianceChecked = Object.values(compliance).every(Boolean)
-  const allDocumentsUploaded = Object.values(documents).every(d => d.file !== null || d.status === 'uploaded')
+  const allDocumentsUploaded = Object.values(documents).every(d => d.url !== undefined || d.status === 'uploaded')
 
   const canProceed = useCallback(() => {
     switch (currentStep) {
@@ -200,17 +200,26 @@ export default function StylistOnboardingPage() {
     setComplianceError(false)
   }
 
-  const handleFileUpload = async (key: DocumentKey, file: File) => {
+  // Wird aufgerufen wenn eine Datei ausgewählt wird (vor dem Upload)
+  const handleFileSelect = (key: DocumentKey, file: File) => {
     setDocuments(prev => ({
       ...prev,
-      [key]: { ...prev[key], file, status: 'uploaded' as DocumentStatus }
+      [key]: { file, status: 'pending' as DocumentStatus, uploading: true }
+    }))
+  }
+
+  // Wird aufgerufen nach erfolgreichem Upload
+  const handleUploadComplete = (key: DocumentKey, response: { url: string; fileName: string }) => {
+    setDocuments(prev => ({
+      ...prev,
+      [key]: { ...prev[key], status: 'uploaded' as DocumentStatus, url: response.url, uploading: false }
     }))
   }
 
   const handleRemoveFile = (key: DocumentKey) => {
     setDocuments(prev => ({
       ...prev,
-      [key]: { file: null, status: 'pending' as DocumentStatus }
+      [key]: { file: null, status: 'pending' as DocumentStatus, url: undefined, uploading: false }
     }))
   }
 
@@ -239,26 +248,12 @@ export default function StylistOnboardingPage() {
     setFormError('')
 
     try {
-      // Upload documents
+      // Dokumente sind bereits hochgeladen - sammle nur die URLs
       const documentUrls: Record<string, string> = {}
       
       for (const [key, doc] of Object.entries(documents)) {
-        if (doc.file) {
-          const formData = new FormData()
-          formData.append('file', doc.file)
-          formData.append('documentType', key)
-          
-          const uploadRes = await fetch('/api/onboarding/documents/upload', {
-            method: 'POST',
-            body: formData,
-          })
-          
-          if (!uploadRes.ok) {
-            throw new Error(`Fehler beim Hochladen von ${key}`)
-          }
-          
-          const { url } = await uploadRes.json()
-          documentUrls[key] = url
+        if (doc.url) {
+          documentUrls[key] = doc.url
         }
       }
 
@@ -666,7 +661,7 @@ export default function StylistOnboardingPage() {
                   <div className="space-y-4">
                     {DOCUMENT_SLOTS.map((slot, index) => {
                       const doc = documents[slot.key]
-                      const hasFile = doc.file !== null || doc.status === 'uploaded'
+                      const hasFile = doc.url !== undefined || doc.status === 'uploaded'
                       
                       return (
                         <motion.div
@@ -714,17 +709,21 @@ export default function StylistOnboardingPage() {
 
                               <FileUploader
                                 value={doc.file || null}
-                                onFileSelect={(file) => handleFileUpload(slot.key, file)}
+                                onFileSelect={(file) => handleFileSelect(slot.key, file)}
+                                onUpload={(response) => handleUploadComplete(slot.key, response as { url: string; fileName: string })}
                                 onRemove={() => handleRemoveFile(slot.key)}
+                                uploadEndpoint="/api/onboarding/documents/upload"
+                                uploadData={{ documentType: slot.key }}
                                 accept={{
                                   'application/pdf': ['.pdf'],
                                   'image/jpeg': ['.jpg', '.jpeg'],
                                   'image/png': ['.png'],
+                                  'application/msword': ['.doc'],
                                   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
                                 }}
                                 placeholder="Dokument hochladen"
-                                description="PDF, JPG, PNG, DOCX (max. 10MB)"
-                                autoUpload={false}
+                                description="PDF, JPG, PNG, Word (max. 10MB)"
+                                autoUpload={true}
                               />
                             </div>
                           </div>
@@ -738,14 +737,14 @@ export default function StylistOnboardingPage() {
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm text-muted-foreground">Upload-Fortschritt</span>
                       <span className="text-sm font-medium text-white">
-                        {Object.values(documents).filter(d => d.file || d.status === 'uploaded').length} / {DOCUMENT_SLOTS.length}
+                        {Object.values(documents).filter(d => d.url || d.status === 'uploaded').length} / {DOCUMENT_SLOTS.length}
                       </span>
                     </div>
                     <div className="h-2 rounded-full bg-white/10 overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ 
-                          width: `${(Object.values(documents).filter(d => d.file || d.status === 'uploaded').length / DOCUMENT_SLOTS.length) * 100}%` 
+                          width: `${(Object.values(documents).filter(d => d.url || d.status === 'uploaded').length / DOCUMENT_SLOTS.length) * 100}%` 
                         }}
                         className="h-full bg-gradient-to-r from-emerald-500 to-teal-500"
                       />
@@ -809,7 +808,7 @@ export default function StylistOnboardingPage() {
                       </div>
                       <div className="grid gap-2 md:grid-cols-2">
                         {DOCUMENT_SLOTS.map(slot => {
-                          const hasFile = documents[slot.key].file || documents[slot.key].status === 'uploaded'
+                          const hasFile = documents[slot.key].url || documents[slot.key].status === 'uploaded'
                           return (
                             <div key={slot.key} className="flex items-center gap-2 text-sm">
                               {hasFile ? (
