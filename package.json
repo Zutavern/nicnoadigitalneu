@@ -25,6 +25,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^4.1.1",
+    "mammoth": "^1.8.0",
     "@kriegcc/react-cookie-consent": "0.1.1-test",
     "@prisma/adapter-pg": "^7.1.0",
     "@prisma/client": "^7.1.0",

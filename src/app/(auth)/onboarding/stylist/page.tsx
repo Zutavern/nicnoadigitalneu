@@ -720,10 +720,11 @@ export default function StylistOnboardingPage() {
                                   'application/pdf': ['.pdf'],
                                   'image/jpeg': ['.jpg', '.jpeg'],
                                   'image/png': ['.png'],
+                                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
                                 }}
                                 placeholder="Dokument hochladen"
-                                description="PDF, JPG, PNG (max. 10MB)"
-                                className="bg-white/5 border-white/10"
+                                description="PDF, JPG, PNG, DOCX (max. 10MB)"
+                                autoUpload={false}
                               />
                             </div>
                           </div>
