@@ -138,24 +138,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async redirect({ url, baseUrl }) {
-      // Force production URL on Vercel to avoid preview URL issues
-      const productionUrl = process.env.NEXTAUTH_URL || process.env.AUTH_URL || baseUrl
-      console.log('[DEBUG-REDIRECT]', { url, baseUrl, productionUrl })
-      
-      // If url is relative, prepend production URL
-      if (url.startsWith('/')) {
-        return `${productionUrl}${url}`
-      }
-      
-      // If url is on same origin or a Vercel preview, redirect to production
-      if (url.includes('vercel.app') || new URL(url).origin !== productionUrl) {
-        const urlPath = new URL(url).pathname + new URL(url).search
-        return `${productionUrl}${urlPath}`
-      }
-      
-      return url
-    },
     async jwt({ token, user, trigger, session }) {
       console.log('[DEBUG-JWT] jwt callback:', { hasUser: !!user, trigger, tokenId: token?.id })
       if (user) {
