@@ -37,12 +37,48 @@ declare module "next-auth/jwt" {
   }
 }
 
+// Determine if we're in production
+const isProduction = process.env.NODE_ENV === 'production'
+const cookieDomain = isProduction ? '.nicnoa.online' : undefined
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   trustHost: true, // Required for custom domains on Vercel
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  cookies: {
+    sessionToken: {
+      name: isProduction ? '__Secure-authjs.session-token' : 'authjs.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: isProduction,
+        domain: cookieDomain,
+      },
+    },
+    callbackUrl: {
+      name: isProduction ? '__Secure-authjs.callback-url' : 'authjs.callback-url',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: isProduction,
+        domain: cookieDomain,
+      },
+    },
+    csrfToken: {
+      name: isProduction ? '__Host-authjs.csrf-token' : 'authjs.csrf-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: isProduction,
+      },
+    },
   },
   pages: {
     signIn: "/login",
