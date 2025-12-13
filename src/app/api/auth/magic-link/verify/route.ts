@@ -141,10 +141,10 @@ export async function GET(request: Request) {
     const cookieStore = await cookies()
     const isProduction = process.env.NODE_ENV === 'production'
     
-    // NextAuth uses different cookie names based on environment
+    // Auth.js (NextAuth v5) uses different cookie names based on environment
     const cookieName = isProduction 
-      ? '__Secure-next-auth.session-token' 
-      : 'next-auth.session-token'
+      ? '__Secure-authjs.session-token' 
+      : 'authjs.session-token'
 
     response.cookies.set(cookieName, jwtToken, {
       httpOnly: true,

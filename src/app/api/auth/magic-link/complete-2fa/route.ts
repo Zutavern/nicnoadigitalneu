@@ -89,9 +89,10 @@ export async function POST(request: Request) {
 
     // Set session cookie
     const isProduction = process.env.NODE_ENV === 'production'
+    // Auth.js (NextAuth v5) uses different cookie names based on environment
     const cookieName = isProduction 
-      ? '__Secure-next-auth.session-token' 
-      : 'next-auth.session-token'
+      ? '__Secure-authjs.session-token' 
+      : 'authjs.session-token'
 
     const response = NextResponse.json({ success: true })
 
@@ -112,5 +113,6 @@ export async function POST(request: Request) {
     )
   }
 }
+
 
 
