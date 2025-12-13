@@ -426,7 +426,8 @@ export default function StylistOnboardingPage() {
       // Update session
       await update({ onboardingCompleted: true })
       
-      router.push('/stylist?onboarding=complete')
+      // Weiterleitung zur Analyse-Seite
+      router.push('/onboarding/stylist/analyse')
       router.refresh()
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten')
