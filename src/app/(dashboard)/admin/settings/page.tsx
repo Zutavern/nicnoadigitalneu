@@ -794,45 +794,45 @@ export default function SettingsPage() {
       </motion.div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        {/* Scrollable Tab Navigation for Mobile */}
-        <div className="-mx-4 md:mx-0">
-          <TabsList className="inline-flex h-auto w-max min-w-full md:w-full md:grid md:grid-cols-11 gap-1 p-1 overflow-x-auto scrollbar-hide">
-            <TabsTrigger value="general" className="whitespace-nowrap px-3 py-2 text-sm">
+        {/* Scrollable Tab Navigation for Mobile - Touch swipe left/right */}
+        <div className="-mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto scrollbar-hide touch-pan-x">
+          <TabsList className="inline-flex h-auto w-max md:w-full md:grid md:grid-cols-11 gap-1 p-1">
+            <TabsTrigger value="general" className="flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm">
               Allgemein
             </TabsTrigger>
-            <TabsTrigger value="branding" className="whitespace-nowrap px-3 py-2 text-sm">
+            <TabsTrigger value="branding" className="flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm">
               Branding
             </TabsTrigger>
-            <TabsTrigger value="billing" className="whitespace-nowrap px-3 py-2 text-sm">
+            <TabsTrigger value="billing" className="flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm">
               Abrechnung
             </TabsTrigger>
-            <TabsTrigger value="translations" className="whitespace-nowrap px-3 py-2 text-sm">
+            <TabsTrigger value="translations" className="flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm">
               Übersetzungen
             </TabsTrigger>
-            <TabsTrigger value="openrouter" className="whitespace-nowrap px-3 py-2 text-sm gap-1">
+            <TabsTrigger value="openrouter" className="flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm gap-1">
               <Bot className="h-3.5 w-3.5" />
               OpenRouter
             </TabsTrigger>
-            <TabsTrigger value="posthog" className="whitespace-nowrap px-3 py-2 text-sm gap-1">
+            <TabsTrigger value="posthog" className="flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm gap-1">
               <BarChart3 className="h-3.5 w-3.5" />
               PostHog
             </TabsTrigger>
-            <TabsTrigger value="pusher" className="whitespace-nowrap px-3 py-2 text-sm gap-1">
+            <TabsTrigger value="pusher" className="flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm gap-1">
               <MessageCircle className="h-3.5 w-3.5" />
               Pusher
             </TabsTrigger>
-            <TabsTrigger value="daily" className="whitespace-nowrap px-3 py-2 text-sm gap-1">
+            <TabsTrigger value="daily" className="flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm gap-1">
               <Video className="h-3.5 w-3.5" />
               Video
             </TabsTrigger>
-            <TabsTrigger value="tone" className="whitespace-nowrap px-3 py-2 text-sm gap-1">
+            <TabsTrigger value="tone" className="flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm gap-1">
               <MessageSquareQuote className="h-3.5 w-3.5" />
               Tone
             </TabsTrigger>
-            <TabsTrigger value="security" className="whitespace-nowrap px-3 py-2 text-sm">
+            <TabsTrigger value="security" className="flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm">
               Sicherheit
             </TabsTrigger>
-            <TabsTrigger value="integrations" className="whitespace-nowrap px-3 py-2 text-sm">
+            <TabsTrigger value="integrations" className="flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm">
               Integrationen
             </TabsTrigger>
           </TabsList>
