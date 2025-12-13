@@ -26,11 +26,22 @@ export function PasswordProtection() {
   const [isChecking, setIsChecking] = useState(!hasSessionPassword) // Wenn Session-Passwort vorhanden, kein Check nötig
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // HTML-Klasse steuern für CSS-basiertes Verstecken
+  useEffect(() => {
+    if (isUnlocked) {
+      document.documentElement.classList.add('password-unlocked')
+    } else {
+      document.documentElement.classList.remove('password-unlocked')
+    }
+  }, [isUnlocked])
+
   useEffect(() => {
     // Wenn bereits entsperrt, keinen API-Call machen
     if (hasSessionPassword) {
       setIsEnabled(false)
       setIsChecking(false)
+      // Sofort entsperren
+      document.documentElement.classList.add('password-unlocked')
       return
     }
     
@@ -43,17 +54,20 @@ export function PasswordProtection() {
           setIsEnabled(enabled)
           if (!enabled) {
             setIsUnlocked(true)
+            document.documentElement.classList.add('password-unlocked')
           }
         } else {
           // Bei Fehler: Schutz nicht anzeigen
           setIsEnabled(false)
           setIsUnlocked(true)
+          document.documentElement.classList.add('password-unlocked')
         }
       } catch (error) {
         console.error('Error checking password protection status:', error)
         // Bei Fehler: Schutz nicht anzeigen (bessere UX)
         setIsEnabled(false)
         setIsUnlocked(true)
+        document.documentElement.classList.add('password-unlocked')
       } finally {
         setIsChecking(false)
       }
@@ -77,7 +91,10 @@ export function PasswordProtection() {
       setTimeout(() => {
         sessionStorage.setItem('passwordEntered', 'true')
         setIsAnimatingOut(true)
-        setTimeout(() => setIsUnlocked(true), 800)
+        setTimeout(() => {
+          setIsUnlocked(true)
+          document.documentElement.classList.add('password-unlocked')
+        }, 800)
       }, 500)
     }
   }, [countdown])
@@ -110,7 +127,7 @@ export function PasswordProtection() {
   // Während des Checks: Schwarzen Bildschirm anzeigen, damit nichts durchscheint
   if (isChecking || isEnabled === null) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-[#020203]" />
+      <div data-password-protection className="fixed inset-0 z-[9999] bg-[#020203]" />
     )
   }
   
@@ -118,6 +135,7 @@ export function PasswordProtection() {
   if (isUnlocked) return null
 
   return (
+    <div data-password-protection>
     <AnimatePresence mode="wait">
       {!isAnimatingOut ? (
         <motion.div
@@ -715,5 +733,6 @@ export function PasswordProtection() {
         </motion.div>
       )}
     </AnimatePresence>
+    </div>
   )
 }

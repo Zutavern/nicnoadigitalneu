@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* === PASSWORD PROTECTION: Content verstecken bis entsperrt === */
+/* Body ist initial schwarz - verhindert jegliches Flackern */
+html:not(.password-unlocked) body {
+  background: #020203 !important;
+}
+
+/* Main Content verstecken bis Passwort eingegeben */
+html:not(.password-unlocked) body > *:not([data-password-protection]) {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Password Protection selbst immer sichtbar */
+[data-password-protection] {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Transition für sanftes Einblenden nach Entsperrung */
+html.password-unlocked body > * {
+  transition: opacity 0.3s ease-out, visibility 0.3s ease-out;
+}
+
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-5px); }
