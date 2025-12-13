@@ -647,9 +647,9 @@ export default function StylistOnboardingPage() {
                       />
                     </div>
 
-                    <div className="grid gap-6 md:grid-cols-2">
+                    <div className="grid gap-6 md:grid-cols-2 items-start">
                       <div className="space-y-2">
-                        <Label htmlFor="businessZipCode" className="text-white">PLZ *</Label>
+                        <Label htmlFor="businessZipCode" className="text-white h-5 flex items-center">PLZ *</Label>
                         <div className="relative">
                           <Input
                             id="businessZipCode"
@@ -670,7 +670,7 @@ export default function StylistOnboardingPage() {
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="businessCity" className="text-white flex items-center gap-2">
+                        <Label htmlFor="businessCity" className="text-white h-5 flex items-center gap-2">
                           Stadt *
                           {businessData.businessCity && businessData.businessZipCode.length === 5 && (
                             <span className="flex items-center gap-1 text-xs text-emerald-400">
