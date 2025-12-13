@@ -218,59 +218,113 @@ export function DocumentViewerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0 gap-0 bg-background">
+      <DialogContent className="max-w-4xl w-[95vw] h-[90vh] sm:h-[85vh] flex flex-col p-0 gap-0 bg-background [&>button]:hidden">
         {/* Header */}
-        <DialogHeader className="px-4 py-3 border-b flex-row items-center justify-between space-y-0">
-          <DialogTitle className="text-base font-medium truncate flex-1 mr-4">
-            {title || file?.name || 'Dokument'}
-          </DialogTitle>
-          
-          {/* Controls */}
-          <div className="flex items-center gap-1">
-            {(fileType === 'pdf' || fileType === 'image') && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={handleZoomOut}
-                  disabled={zoom <= 50}
-                >
-                  <ZoomOut className="h-4 w-4" />
-                </Button>
-                <span className="text-xs text-muted-foreground w-12 text-center">
-                  {zoom}%
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={handleZoomIn}
-                  disabled={zoom >= 200}
-                >
-                  <ZoomIn className="h-4 w-4" />
-                </Button>
-                <div className="w-px h-5 bg-border mx-1" />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={handleRotate}
-                >
-                  <RotateCw className="h-4 w-4" />
-                </Button>
-                <div className="w-px h-5 bg-border mx-1" />
-              </>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={handleDownload}
-            >
-              <Download className="h-4 w-4" />
-            </Button>
+        <DialogHeader className="px-3 sm:px-4 py-3 border-b space-y-0">
+          <div className="flex items-center justify-between gap-2">
+            {/* Title */}
+            <DialogTitle className="text-sm sm:text-base font-medium truncate flex-1 min-w-0">
+              {title || file?.name || 'Dokument'}
+            </DialogTitle>
+            
+            {/* Controls */}
+            <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
+              {/* Zoom & Rotate - Hidden on mobile for PDF/Image */}
+              {(fileType === 'pdf' || fileType === 'image') && (
+                <div className="hidden sm:flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={handleZoomOut}
+                    disabled={zoom <= 50}
+                  >
+                    <ZoomOut className="h-4 w-4" />
+                  </Button>
+                  <span className="text-xs text-muted-foreground w-10 text-center">
+                    {zoom}%
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={handleZoomIn}
+                    disabled={zoom >= 200}
+                  >
+                    <ZoomIn className="h-4 w-4" />
+                  </Button>
+                  <div className="w-px h-5 bg-border mx-1" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={handleRotate}
+                  >
+                    <RotateCw className="h-4 w-4" />
+                  </Button>
+                  <div className="w-px h-5 bg-border mx-1" />
+                </div>
+              )}
+              
+              {/* Download Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleDownload}
+                title="Herunterladen"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+              
+              {/* Close Button - Custom positioned */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 ml-1 hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => onOpenChange(false)}
+                title="Schließen"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
+          
+          {/* Mobile Zoom Controls - Show below title on mobile */}
+          {(fileType === 'pdf' || fileType === 'image') && (
+            <div className="flex sm:hidden items-center justify-center gap-2 pt-2 border-t mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2"
+                onClick={handleZoomOut}
+                disabled={zoom <= 50}
+              >
+                <ZoomOut className="h-3.5 w-3.5" />
+              </Button>
+              <span className="text-xs text-muted-foreground w-10 text-center">
+                {zoom}%
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2"
+                onClick={handleZoomIn}
+                disabled={zoom >= 200}
+              >
+                <ZoomIn className="h-3.5 w-3.5" />
+              </Button>
+              <div className="w-px h-4 bg-border mx-1" />
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2"
+                onClick={handleRotate}
+              >
+                <RotateCw className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
         </DialogHeader>
 
         {/* Content */}
