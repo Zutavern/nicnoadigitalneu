@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -67,24 +66,23 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <Script
-        id="password-protection-init"
-        strategy="beforeInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `
-            (function() {
-              try {
-                if (sessionStorage.getItem('passwordEntered') === 'true') {
+        {/* Password protection init script - must be in head for immediate execution */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  if (sessionStorage.getItem('passwordEntered') === 'true') {
+                    document.documentElement.classList.add('password-unlocked');
+                  }
+                } catch(e) {
                   document.documentElement.classList.add('password-unlocked');
                 }
-              } catch(e) {
-                document.documentElement.classList.add('password-unlocked');
-              }
-            })();
-          `,
-        }}
-      />
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
