@@ -7,7 +7,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Lock, CheckCircle2, AlertCircle } from 'lucide-react'
 
 export function PasswordProtection() {
-  const [isUnlocked, setIsUnlocked] = useState(false)
+  // Session-Status zuerst prüfen (synchron) um Flackern zu vermeiden
+  const [hasSessionPassword] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('passwordEntered') === 'true'
+    }
+    return false
+  })
+  
+  const [isUnlocked, setIsUnlocked] = useState(hasSessionPassword)
   const [isAnimatingOut, setIsAnimatingOut] = useState(false)
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -15,10 +23,17 @@ export function PasswordProtection() {
   const [countdown, setCountdown] = useState<number | null>(null)
   const [capsLockOn, setCapsLockOn] = useState(false)
   const [isEnabled, setIsEnabled] = useState<boolean | null>(null) // null = noch nicht geladen
-  const [isChecking, setIsChecking] = useState(true)
+  const [isChecking, setIsChecking] = useState(!hasSessionPassword) // Wenn Session-Passwort vorhanden, kein Check nötig
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    // Wenn bereits entsperrt, keinen API-Call machen
+    if (hasSessionPassword) {
+      setIsEnabled(false)
+      setIsChecking(false)
+      return
+    }
+    
     const checkPasswordProtection = async () => {
       try {
         const res = await fetch('/api/platform/password-protection-status')
@@ -44,17 +59,12 @@ export function PasswordProtection() {
       }
     }
     checkPasswordProtection()
-  }, [])
+  }, [hasSessionPassword])
 
   useEffect(() => {
-    if (isChecking || !isEnabled) return
-    const hasEnteredPassword = sessionStorage.getItem('passwordEntered')
-    if (hasEnteredPassword) {
-      setIsUnlocked(true)
-    } else {
-      setTimeout(() => inputRef.current?.focus(), 500)
-    }
-  }, [isChecking, isEnabled])
+    if (isChecking || !isEnabled || hasSessionPassword) return
+    setTimeout(() => inputRef.current?.focus(), 500)
+  }, [isChecking, isEnabled, hasSessionPassword])
 
   // Countdown-Logik
   useEffect(() => {
@@ -97,8 +107,15 @@ export function PasswordProtection() {
     }
   }
 
-  // Nicht rendern während noch gecheckt wird oder wenn deaktiviert/entsperrt
-  if (isChecking || isEnabled === null || isUnlocked) return null
+  // Während des Checks: Schwarzen Bildschirm anzeigen, damit nichts durchscheint
+  if (isChecking || isEnabled === null) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-[#020203]" />
+    )
+  }
+  
+  // Wenn entsperrt oder deaktiviert: nichts anzeigen
+  if (isUnlocked) return null
 
   return (
     <AnimatePresence mode="wait">
