@@ -91,3 +91,26 @@ export async function updateSessionActivity(sessionToken: string) {
     console.error('Error updating session activity:', error)
   }
 }
+
+/**
+ * Notify user that their password was changed
+ */
+export async function notifyPasswordChanged(userId: string, userEmail: string) {
+  try {
+    // Import sendEmail dynamically to avoid circular dependencies
+    const { sendEmail } = await import('@/lib/email')
+    
+    await sendEmail({
+      to: userEmail,
+      subject: 'Passwort geändert',
+      templateSlug: 'password-changed',
+      data: {
+        userName: 'Nutzer',
+        changeTime: new Date().toLocaleString('de-DE'),
+      },
+      userId,
+    })
+  } catch (error) {
+    console.error('Error sending password changed notification:', error)
+  }
+}

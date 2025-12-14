@@ -447,7 +447,9 @@ function adjustColor(hex: string, percent: number): string {
 export async function sendEmail(options: {
   to: string | string[]
   templateSlug: string
+  subject?: string // Optional custom subject (overrides template subject)
   data?: PreviewData
+  userId?: string // Optional user ID for logging
   replyTo?: string
   useTestSender?: boolean // Use Resend's test domain (onboarding@resend.dev)
 }): Promise<{ success: boolean; messageId?: string; error?: string }> {
@@ -492,7 +494,7 @@ export async function sendEmail(options: {
       body: JSON.stringify({
         from: fromAddress,
         to: Array.isArray(options.to) ? options.to : [options.to],
-        subject: rendered.subject,
+        subject: options.subject || rendered.subject,
         html: rendered.html,
         text: rendered.text,
         reply_to: options.replyTo,
@@ -538,3 +540,123 @@ export async function sendEmail(options: {
     return { success: false, error: 'Interner Fehler beim E-Mail-Versand' }
   }
 }
+
+// ============================================================================
+// COMPATIBILITY LAYER
+// Legacy API for backwards compatibility with existing code
+// ============================================================================
+
+/**
+ * Legacy emails object for backwards compatibility
+ * Provides the old API interface that wraps the new sendEmail function
+ */
+export const emails = {
+  /**
+   * Send email using template slug
+   */
+  sendEmail: async (options: {
+    to: string | string[]
+    templateSlug: string
+    data?: PreviewData
+    userId?: string
+    subject?: string
+    replyTo?: string
+    useTestSender?: boolean
+  }) => {
+    return sendEmail(options)
+  },
+
+  /**
+   * Send password changed notification email
+   */
+  sendPasswordChanged: async (email: string, userName: string) => {
+    return sendEmail({
+      to: email,
+      templateSlug: 'password-changed',
+      data: {
+        userName,
+        changeTime: new Date().toLocaleString('de-DE'),
+      },
+    })
+  },
+
+  /**
+   * Send booking reminder email
+   */
+  sendBookingReminder: async (
+    email: string,
+    customerName: string,
+    stylistName: string,
+    serviceName: string,
+    bookingDate: string,
+    bookingTime: string
+  ) => {
+    return sendEmail({
+      to: email,
+      templateSlug: 'booking-reminder',
+      data: {
+        userName: customerName,
+        stylistName,
+        serviceName,
+        bookingDate,
+        bookingTime,
+      },
+    })
+  },
+
+  /**
+   * Send subscription expiring notification email
+   */
+  sendSubscriptionExpiring: async (
+    email: string,
+    userName: string,
+    expirationDate: string,
+    userId?: string
+  ) => {
+    return sendEmail({
+      to: email,
+      templateSlug: 'subscription-expiring',
+      data: {
+        userName,
+        expirationDate,
+      },
+      userId,
+    })
+  },
+
+  /**
+   * Send welcome email
+   */
+  sendWelcome: async (email: string, userName: string) => {
+    return sendEmail({
+      to: email,
+      templateSlug: 'welcome',
+      data: { userName },
+    })
+  },
+
+  /**
+   * Send password reset email
+   */
+  sendPasswordReset: async (email: string, userName: string, resetLink: string) => {
+    return sendEmail({
+      to: email,
+      templateSlug: 'password-reset',
+      data: { userName, resetLink },
+    })
+  },
+
+  /**
+   * Send email verification email
+   */
+  sendEmailVerification: async (email: string, userName: string, verifyLink: string) => {
+    return sendEmail({
+      to: email,
+      templateSlug: 'email-verification',
+      data: { userName, verifyLink },
+    })
+  },
+}
+
+// Default export for backwards compatibility with `import emails from '@/lib/email'`
+export default emails
