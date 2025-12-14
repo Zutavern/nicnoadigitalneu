@@ -214,6 +214,18 @@ export async function GET(request: Request) {
           return NextResponse.json({ success: false, error: 'Kein API-Key konfiguriert' })
         }
 
+        // seven.io Fehlercodes (werden als Zahl im Body zurückgegeben, auch bei HTTP 200)
+        const SEVEN_IO_ERRORS: Record<number, string> = {
+          100: 'Fehlerhafte Anfrage',
+          101: 'API-Schlüssel fehlt',
+          102: 'Aktion fehlt',
+          103: 'Aktion existiert nicht',
+          900: 'Authentifizierung fehlgeschlagen - API-Key prüfen',
+          901: 'Signatur ungültig',
+          902: 'API-Key deaktiviert',
+          903: 'IP nicht erlaubt',
+        }
+
         try {
           // seven.io Balance-API zum Prüfen der Credentials
           const res = await fetch('https://gateway.seven.io/api/balance', {
@@ -222,30 +234,29 @@ export async function GET(request: Request) {
             },
           })
 
-          const responseText = await res.text()
+          const responseText = await res.text().then(t => t.trim())
+          const parsedValue = parseFloat(responseText)
           
-          // seven.io gibt bei Erfolg die Balance als Zahl zurück
-          const balance = parseFloat(responseText)
-          
-          if (!isNaN(balance)) {
+          // ZUERST auf Fehlercodes prüfen (ganzzahlige Werte 100-999)
+          if (!isNaN(parsedValue) && Number.isInteger(parsedValue) && parsedValue >= 100 && parsedValue <= 999) {
+            const errorMessage = SEVEN_IO_ERRORS[parsedValue] || `API Fehler (Code ${parsedValue})`
             return NextResponse.json({ 
-              success: true, 
-              message: `Verbunden! Guthaben: ${balance.toFixed(2)}€` 
+              success: false, 
+              error: errorMessage
             })
           }
           
-          // Bei Fehlercodes
-          const statusCode = parseInt(responseText.trim(), 10)
-          if (statusCode === 900) {
+          // Gültiger Balance-Wert (Dezimalzahl oder 0)
+          if (!isNaN(parsedValue) && parsedValue >= 0) {
             return NextResponse.json({ 
-              success: false, 
-              error: 'Authentifizierung fehlgeschlagen - API-Key prüfen' 
+              success: true, 
+              message: `Verbunden! Guthaben: ${parsedValue.toFixed(2)}€` 
             })
           }
 
           return NextResponse.json({ 
             success: false, 
-            error: `API Error: ${responseText.substring(0, 50)}` 
+            error: `Ungültige API-Antwort: ${responseText.substring(0, 50)}` 
           })
         } catch (err) {
           return NextResponse.json({ 
