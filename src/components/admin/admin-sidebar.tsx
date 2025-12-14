@@ -232,6 +232,7 @@ const menuItems: MenuSection[] = [
           { label: 'Fehlermeldungen', href: '/admin/error-messages', icon: AlertTriangle },
           { label: 'E-Mail Templates', href: '/admin/email-templates', icon: Mail },
           { label: 'E-Mail Analytics', href: '/admin/settings/email-analytics', icon: BarChart3 },
+          { label: 'SMS Analytics', href: '/admin/settings/sms-analytics', icon: MessageSquare },
         ],
       },
     ],
