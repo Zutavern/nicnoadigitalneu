@@ -4,6 +4,37 @@ import { prisma } from '@/lib/prisma'
 import { clearOpenRouterConfigCache } from '@/lib/openrouter/client'
 import { clearTranslationApiCache } from '@/lib/translation/translation-service'
 
+// Interface für Settings mit seven.io Feldern (TypeScript Cache workaround)
+interface IntegrationSettingsResult {
+  openRouterApiKey: string | null
+  openRouterEnabled: boolean
+  openRouterDefaultModel: string | null
+  openRouterSiteUrl: string | null
+  openRouterSiteName: string | null
+  deeplApiKey: string | null
+  translationProvider: string | null
+  pusherAppId: string | null
+  pusherKey: string | null
+  pusherSecret: string | null
+  pusherCluster: string | null
+  pusherEnabled: boolean
+  posthogApiKey: string | null
+  posthogHost: string | null
+  posthogPersonalApiKey: string | null
+  posthogProjectId: string | null
+  posthogEnabled: boolean
+  dailyApiKey: string | null
+  dailyEnabled: boolean
+  resendApiKey: string | null
+  resendEnabled: boolean
+  resendFromEmail: string | null
+  resendFromName: string | null
+  resendWebhookSecret: string | null
+  sevenIoApiKey: string | null
+  sevenIoEnabled: boolean
+  sevenIoSenderId: string | null
+}
+
 // GET /api/admin/settings/integrations
 export async function GET() {
   try {
@@ -17,85 +48,20 @@ export async function GET() {
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 })
     }
 
-    let settings = await prisma.platformSettings.findUnique({
+    // Alle Felder aus der Datenbank laden
+    const rawSettings = await prisma.platformSettings.findUnique({
       where: { id: 'default' },
-      select: {
-        // OpenRouter
-        openRouterApiKey: true,
-        openRouterEnabled: true,
-        openRouterDefaultModel: true,
-        openRouterSiteUrl: true,
-        openRouterSiteName: true,
-        
-        // DeepL
-        deeplApiKey: true,
-        translationProvider: true,
-        
-        // Pusher
-        pusherAppId: true,
-        pusherKey: true,
-        pusherSecret: true,
-        pusherCluster: true,
-        pusherEnabled: true,
-        
-        // PostHog
-        posthogApiKey: true,
-        posthogHost: true,
-        posthogPersonalApiKey: true,
-        posthogProjectId: true,
-        posthogEnabled: true,
-        
-        // Daily.co
-        dailyApiKey: true,
-        dailyEnabled: true,
-        
-        // Resend
-        resendApiKey: true,
-        resendEnabled: true,
-        resendFromEmail: true,
-        resendFromName: true,
-        resendWebhookSecret: true,
-        
-        // seven.io SMS
-        sevenIoApiKey: true,
-        sevenIoEnabled: true,
-        sevenIoSenderId: true,
-      },
     })
 
-    if (!settings) {
-      settings = await prisma.platformSettings.create({
+    let settings: IntegrationSettingsResult
+
+    if (!rawSettings) {
+      const created = await prisma.platformSettings.create({
         data: { id: 'default' },
-        select: {
-          openRouterApiKey: true,
-          openRouterEnabled: true,
-          openRouterDefaultModel: true,
-          openRouterSiteUrl: true,
-          openRouterSiteName: true,
-          deeplApiKey: true,
-          translationProvider: true,
-          pusherAppId: true,
-          pusherKey: true,
-          pusherSecret: true,
-          pusherCluster: true,
-          pusherEnabled: true,
-          posthogApiKey: true,
-          posthogHost: true,
-          posthogPersonalApiKey: true,
-          posthogProjectId: true,
-          posthogEnabled: true,
-          dailyApiKey: true,
-          dailyEnabled: true,
-          resendApiKey: true,
-          resendEnabled: true,
-          resendFromEmail: true,
-          resendFromName: true,
-          resendWebhookSecret: true,
-          sevenIoApiKey: true,
-          sevenIoEnabled: true,
-          sevenIoSenderId: true,
-        },
       })
+      settings = created as unknown as IntegrationSettingsResult
+    } else {
+      settings = rawSettings as unknown as IntegrationSettingsResult
     }
 
     // API Keys maskieren
@@ -143,9 +109,9 @@ export async function GET() {
       resendWebhookSecret: maskKey(settings.resendWebhookSecret),
       
       // seven.io SMS
-      sevenIoApiKey: maskKey((settings as Record<string, unknown>).sevenIoApiKey as string | null),
-      sevenIoEnabled: (settings as Record<string, unknown>).sevenIoEnabled as boolean,
-      sevenIoSenderId: (settings as Record<string, unknown>).sevenIoSenderId as string | null,
+      sevenIoApiKey: maskKey(settings.sevenIoApiKey),
+      sevenIoEnabled: settings.sevenIoEnabled ?? false,
+      sevenIoSenderId: settings.sevenIoSenderId,
       
       // Stripe (aus env)
       stripeConfigured: !!(process.env.STRIPE_SECRET_KEY && process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
