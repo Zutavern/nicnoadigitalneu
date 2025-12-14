@@ -315,7 +315,7 @@ export default function StylistHelpPage() {
               <div className="flex flex-wrap justify-center gap-4">
                 <Button variant="outline">
                   <Mail className="mr-2 h-4 w-4" />
-                  support@nicnoa.de
+                  support@nicnoa.online
                 </Button>
                 <Button variant="outline">
                   <Phone className="mr-2 h-4 w-4" />

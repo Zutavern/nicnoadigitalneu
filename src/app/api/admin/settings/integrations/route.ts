@@ -46,6 +46,13 @@ export async function GET() {
         // Daily.co
         dailyApiKey: true,
         dailyEnabled: true,
+        
+        // Resend
+        resendApiKey: true,
+        resendEnabled: true,
+        resendFromEmail: true,
+        resendFromName: true,
+        resendWebhookSecret: true,
       },
     })
 
@@ -70,6 +77,11 @@ export async function GET() {
           posthogPersonalApiKey: true,
           dailyApiKey: true,
           dailyEnabled: true,
+          resendApiKey: true,
+          resendEnabled: true,
+          resendFromEmail: true,
+          resendFromName: true,
+          resendWebhookSecret: true,
         },
       })
     }
@@ -108,6 +120,13 @@ export async function GET() {
       // Daily.co
       dailyApiKey: maskKey(settings.dailyApiKey),
       dailyEnabled: settings.dailyEnabled,
+      
+      // Resend
+      resendApiKey: maskKey(settings.resendApiKey),
+      resendEnabled: settings.resendEnabled,
+      resendFromEmail: settings.resendFromEmail,
+      resendFromName: settings.resendFromName,
+      resendWebhookSecret: maskKey(settings.resendWebhookSecret),
       
       // Stripe (aus env)
       stripeConfigured: !!(process.env.STRIPE_SECRET_KEY && process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
@@ -196,6 +215,23 @@ export async function PUT(request: Request) {
     }
     if (body.dailyEnabled !== undefined) {
       updateData.dailyEnabled = body.dailyEnabled
+    }
+
+    // Resend
+    if (body.resendApiKey !== undefined) {
+      updateData.resendApiKey = body.resendApiKey || null
+    }
+    if (body.resendEnabled !== undefined) {
+      updateData.resendEnabled = body.resendEnabled
+    }
+    if (body.resendFromEmail !== undefined) {
+      updateData.resendFromEmail = body.resendFromEmail || null
+    }
+    if (body.resendFromName !== undefined) {
+      updateData.resendFromName = body.resendFromName || null
+    }
+    if (body.resendWebhookSecret !== undefined) {
+      updateData.resendWebhookSecret = body.resendWebhookSecret || null
     }
 
     // Update oder Create

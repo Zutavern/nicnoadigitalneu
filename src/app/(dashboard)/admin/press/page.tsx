@@ -153,7 +153,7 @@ export default function PressAdminPage() {
     pressKitDownloadUrl: '',
     contactTitle: 'Presse-Kontakt',
     contactDescription: '',
-    contactEmail: 'presse@nicnoa.de',
+    contactEmail: 'presse@nicnoa.online',
     contactPhone: '',
     contactPerson: '',
     metaTitle: '',

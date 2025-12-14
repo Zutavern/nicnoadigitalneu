@@ -22,6 +22,7 @@ import {
   Gift,
   HandshakeIcon,
   User,
+  Palette,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -82,6 +83,12 @@ const menuItems = [
     ],
   },
   {
+    title: 'Marketing',
+    items: [
+      { label: 'Salon Branding', href: '/salon/marketing', icon: Palette },
+    ],
+  },
+  {
     title: 'Extras',
     items: [
       { label: 'Partner & Vorteile', href: '/dashboard/partners', icon: HandshakeIcon },
@@ -108,7 +115,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                   className={cn(
                     "flex items-center justify-center rounded-lg p-3 text-sm transition-all",
                     isActive
-                      ? "bg-blue-500 text-white shadow-lg shadow-blue-500/25"
+                      ? "bg-blue-500 text-white shadow-lg shadow-blue-500/40 dark:shadow-blue-500/25"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
@@ -131,7 +138,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           className={cn(
             "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all",
             isActive
-              ? "bg-blue-500 text-white shadow-lg shadow-blue-500/25"
+              ? "bg-blue-500 text-white shadow-lg shadow-blue-500/40 dark:shadow-blue-500/25"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
@@ -147,9 +154,9 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
       {/* Salon Badge */}
       {!collapsed && (
         <div className="mx-4 mt-4">
-          <div className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 px-3 py-2">
-            <Building2 className="h-4 w-4 text-blue-500" />
-            <span className="text-sm font-medium text-blue-500">Salon Dashboard</span>
+          <div className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500/20 to-cyan-500/20 dark:from-blue-500/10 dark:to-cyan-500/10 border border-blue-500/30 dark:border-blue-500/20 px-3 py-2">
+            <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-500" />
+            <span className="text-sm font-medium text-blue-600 dark:text-blue-500">Salon Dashboard</span>
           </div>
         </div>
       )}

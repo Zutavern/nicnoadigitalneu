@@ -838,7 +838,7 @@ async function main() {
     create: {
       id: 'default',
       companyName: 'NICNOA & CO.',
-      supportEmail: 'support@nicnoa.de',
+      supportEmail: 'support@nicnoa.online',
       supportPhone: '+49 30 12345678',
       defaultLanguage: 'de',
       timezone: 'Europe/Berlin',
@@ -848,7 +848,7 @@ async function main() {
       smtpHost: 'smtp.sendgrid.net',
       smtpPort: 587,
       smtpUser: 'apikey',
-      smtpFrom: 'noreply@nicnoa.de',
+      smtpFrom: 'noreply@nicnoa.online',
       smtpSecure: true,
       // Demo-Modus aktivieren für Entwicklung
       useDemoMode: true,

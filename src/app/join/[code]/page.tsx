@@ -412,8 +412,8 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
           className="text-center text-sm text-muted-foreground mt-6"
         >
           Bei Fragen kontaktieren Sie uns unter{' '}
-          <a href="mailto:support@nicnoa.de" className="text-primary hover:underline">
-            support@nicnoa.de
+          <a href="mailto:support@nicnoa.online" className="text-primary hover:underline">
+            support@nicnoa.online
           </a>
         </motion.p>
       </div>

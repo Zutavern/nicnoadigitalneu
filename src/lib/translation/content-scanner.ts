@@ -14,7 +14,7 @@ const TRANSLATABLE_FIELDS: Record<string, { fields: string[]; priority: number }
   // Seiten-Configs (höchste Priorität) - inkl. SEO-Metadaten
   // ============================================
   
-  home_page_config: {
+  homepage_config: {
     fields: [
       // Hero Section
       'heroBadgeText', 'heroTitleLine1', 'heroTitleLine2', 'heroTitleHighlight',
@@ -412,16 +412,16 @@ export async function getTranslatableContent(): Promise<TranslatableContent[]> {
   try {
     const config = await prisma.homePageConfig.findUnique({ where: { id: 'default' } })
     if (config) {
-      const fields = TRANSLATABLE_FIELDS.home_page_config
+      const fields = TRANSLATABLE_FIELDS.homepage_config
       allContent.push(...extractFields(
         config as unknown as Record<string, unknown>,
         fields.fields,
-        'home_page_config',
+        'homepage_config',
         'default',
         fields.priority
       ))
     }
-  } catch (e) { console.warn('Error scanning home_page_config:', e) }
+  } catch (e) { console.warn('Error scanning homepage_config:', e) }
 
   // 2. Product Page Config
   try {

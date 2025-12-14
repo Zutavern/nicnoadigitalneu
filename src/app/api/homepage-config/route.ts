@@ -88,10 +88,10 @@ export async function GET() {
 
     // Übersetzungen laden und anwenden wenn nicht Deutsch
     if (locale !== DEFAULT_LOCALE && config?.id) {
-      const translations = await prisma.translation.findMany({
-        where: {
-          contentType: 'homepage_config',
-          contentId: config.id,
+        const translations = await prisma.translation.findMany({
+          where: {
+            contentType: 'homepage_config',
+            contentId: config.id,
           languageId: locale,
           status: 'TRANSLATED',
           field: { in: TRANSLATABLE_FIELDS },

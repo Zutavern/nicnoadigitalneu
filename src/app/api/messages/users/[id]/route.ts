@@ -19,7 +19,7 @@ export async function GET(
         '00000000-0000-0000-0000-000000000001': {
           id: '00000000-0000-0000-0000-000000000001',
           name: 'Admin Test',
-          email: 'admin@nicnoa.de',
+          email: 'admin@nicnoa.online',
           role: 'ADMIN',
           image: null,
           createdAt: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
@@ -32,7 +32,7 @@ export async function GET(
         '00000000-0000-0000-0000-000000000002': {
           id: '00000000-0000-0000-0000-000000000002',
           name: 'Salon Betreiber',
-          email: 'salon@nicnoa.de',
+          email: 'salon@nicnoa.online',
           role: 'SALON_OWNER',
           image: null,
           createdAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString(),
@@ -46,7 +46,7 @@ export async function GET(
         '00000000-0000-0000-0000-000000000003': {
           id: '00000000-0000-0000-0000-000000000003',
           name: 'Stylist Test',
-          email: 'stylist@nicnoa.de',
+          email: 'stylist@nicnoa.online',
           role: 'STYLIST',
           image: null,
           createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),

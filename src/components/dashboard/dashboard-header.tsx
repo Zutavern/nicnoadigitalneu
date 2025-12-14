@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { Search, User, Settings, LogOut, ChevronDown, Menu, X, Moon, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -30,6 +30,12 @@ export function DashboardHeader({ baseUrl, accentColor = 'primary' }: DashboardH
   const { isMobile, isTablet, toggle } = useSidebar()
   const { theme, setTheme } = useTheme()
   const [searchExpanded, setSearchExpanded] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  // Avoid hydration mismatch for theme-dependent content
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const showHamburger = isMobile || isTablet
 
@@ -111,6 +117,19 @@ export function DashboardHeader({ baseUrl, accentColor = 'primary' }: DashboardH
         "gap-1 sm:gap-2 md:gap-4",
         isMobile && searchExpanded && "hidden"
       )}>
+        {/* Theme Toggle - Visible on tablet+ */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="h-10 w-10 rounded-full touch-target hidden sm:flex"
+          title={mounted ? (theme === 'dark' ? 'Helles Design aktivieren' : 'Dunkles Design aktivieren') : 'Theme wechseln'}
+        >
+          <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <span className="sr-only">Theme wechseln</span>
+        </Button>
+
         {/* Language Selector - Hidden on mobile */}
         <div className="hidden md:block">
           <LanguageSelector />
@@ -148,7 +167,7 @@ export function DashboardHeader({ baseUrl, accentColor = 'primary' }: DashboardH
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="md:hidden cursor-pointer"
             >
-              {theme === 'dark' ? (
+              {mounted && theme === 'dark' ? (
                 <>
                   <Sun className="mr-2 h-4 w-4" />
                   <span>Helles Design</span>

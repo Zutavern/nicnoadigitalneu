@@ -17,14 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+// Dialog imports removed - Test email now sends directly to user's account
 import {
   Mail,
   Save,
@@ -88,8 +81,6 @@ export default function EmailTemplatesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false)
-  const [testEmailDialogOpen, setTestEmailDialogOpen] = useState(false)
-  const [testEmail, setTestEmail] = useState('')
   const [isSendingTest, setIsSendingTest] = useState(false)
   const [filterCategory, setFilterCategory] = useState<string>('all')
 
@@ -210,9 +201,9 @@ export default function EmailTemplatesPage() {
     })
   }, [selectedTemplate, editedHeadline, editedBody, editedButtonText, editedFooter])
 
-  // Test-Email senden
+  // Test-Email senden (automatisch an eingeloggten User)
   const sendTestEmail = async () => {
-    if (!selectedTemplate || !testEmail) return
+    if (!selectedTemplate) return
     
     setIsSendingTest(true)
     try {
@@ -221,7 +212,7 @@ export default function EmailTemplatesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           templateSlug: selectedTemplate.slug,
-          testEmail,
+          // Keine testEmail - Backend verwendet Session-User-E-Mail
         }),
       })
       
@@ -231,13 +222,7 @@ export default function EmailTemplatesPage() {
         throw new Error(data.error)
       }
       
-      if (data.preview) {
-        toast.success('Test-Email generiert (Demo-Modus)')
-      } else {
-        toast.success('Test-Email gesendet!')
-      }
-      
-      setTestEmailDialogOpen(false)
+      toast.success(`Test-E-Mail an ${data.sentTo} gesendet!`)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Fehler beim Senden')
     } finally {
@@ -490,45 +475,19 @@ export default function EmailTemplatesPage() {
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Preview aktualisieren
                   </Button>
-                  <Dialog open={testEmailDialogOpen} onOpenChange={setTestEmailDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline">
-                        <Send className="h-4 w-4 mr-2" />
-                        Testen
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Test-E-Mail senden</DialogTitle>
-                        <DialogDescription>
-                          Sende eine Test-E-Mail an eine beliebige Adresse.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label>E-Mail Adresse</Label>
-                          <Input
-                            type="email"
-                            value={testEmail}
-                            onChange={(e) => setTestEmail(e.target.value)}
-                            placeholder="test@beispiel.de"
-                          />
-                        </div>
-                        <Button
-                          onClick={sendTestEmail}
-                          disabled={!testEmail || isSendingTest}
-                          className="w-full"
-                        >
-                          {isSendingTest ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <Send className="h-4 w-4 mr-2" />
-                          )}
-                          Test senden
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  <Button 
+                    variant="outline" 
+                    onClick={sendTestEmail}
+                    disabled={isSendingTest}
+                    title="Test-E-Mail an deine Account-Adresse senden"
+                  >
+                    {isSendingTest ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4 mr-2" />
+                    )}
+                    Test an mich
+                  </Button>
                   <Button onClick={saveChanges} disabled={isSaving}>
                     {isSaving ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />

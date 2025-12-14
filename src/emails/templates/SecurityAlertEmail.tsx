@@ -167,7 +167,7 @@ export function SecurityAlertEmail({
 
       <Text style={urgentNote}>
         ⚠️ Bei kritischen Vorfällen handeln Sie sofort. 
-        Kontaktieren Sie bei Bedarf: security@nicnoa.de
+        Kontaktieren Sie bei Bedarf: security@nicnoa.online
       </Text>
 
       {content.footer && (

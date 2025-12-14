@@ -23,6 +23,7 @@ import {
   ExternalLink,
   Copy,
   Sparkles,
+  Mail,
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -86,6 +87,13 @@ interface IntegrationSettings {
   dailyApiKey: string | null
   dailyEnabled: boolean
   
+  // Resend
+  resendApiKey: string | null
+  resendEnabled: boolean
+  resendFromEmail: string | null
+  resendFromName: string | null
+  resendWebhookSecret: string | null
+  
   // Stripe (read-only, aus env)
   stripeConfigured: boolean
 }
@@ -119,6 +127,12 @@ export default function IntegrationsPage() {
   
   const [dailyApiKey, setDailyApiKey] = useState('')
   const [dailyEnabled, setDailyEnabled] = useState(false)
+  
+  const [resendApiKey, setResendApiKey] = useState('')
+  const [resendEnabled, setResendEnabled] = useState(false)
+  const [resendFromEmail, setResendFromEmail] = useState('')
+  const [resendFromName, setResendFromName] = useState('NICNOA')
+  const [resendWebhookSecret, setResendWebhookSecret] = useState('')
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true)
@@ -138,6 +152,9 @@ export default function IntegrationsPage() {
       setPusherEnabled(data.pusherEnabled || false)
       setPosthogHost(data.posthogHost || 'https://eu.i.posthog.com')
       setDailyEnabled(data.dailyEnabled || false)
+      setResendEnabled(data.resendEnabled || false)
+      setResendFromEmail(data.resendFromEmail || '')
+      setResendFromName(data.resendFromName || 'NICNOA')
       
       // API Keys werden maskiert zurückgegeben, also nicht überschreiben
     } catch (error) {
@@ -165,6 +182,9 @@ export default function IntegrationsPage() {
         pusherEnabled,
         posthogHost: posthogHost || null,
         dailyEnabled,
+        resendEnabled,
+        resendFromEmail: resendFromEmail || null,
+        resendFromName: resendFromName || null,
       }
       
       // Nur nicht-leere API-Keys senden
@@ -191,6 +211,12 @@ export default function IntegrationsPage() {
       }
       if (dailyApiKey && !dailyApiKey.includes('•')) {
         payload.dailyApiKey = dailyApiKey
+      }
+      if (resendApiKey && !resendApiKey.includes('•')) {
+        payload.resendApiKey = resendApiKey
+      }
+      if (resendWebhookSecret && !resendWebhookSecret.includes('•')) {
+        payload.resendWebhookSecret = resendWebhookSecret
       }
 
       const res = await fetch('/api/admin/settings/integrations', {
@@ -275,7 +301,7 @@ export default function IntegrationsPage() {
         </div>
       </div>
 
-      <Accordion type="multiple" defaultValue={['ai', 'realtime']} className="space-y-4">
+      <Accordion type="multiple" className="space-y-4">
         {/* AI & Übersetzungen */}
         <AccordionItem value="ai" className="border rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50">
@@ -391,12 +417,12 @@ export default function IntegrationsPage() {
                         id="openRouterSiteUrl"
                         value={openRouterSiteUrl}
                         onChange={(e) => setOpenRouterSiteUrl(e.target.value)}
-                        placeholder="https://nicnoa.de"
+                        placeholder="https://nicnoa.online"
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-2">
+                  <div className="flex items-center justify-between pt-4 border-t">
                     <Button
                       variant="outline"
                       size="sm"
@@ -409,6 +435,10 @@ export default function IntegrationsPage() {
                         <Zap className="h-4 w-4 mr-2" />
                       )}
                       Verbindung testen
+                    </Button>
+                    <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                      {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                      Speichern
                     </Button>
                   </div>
                 </CardContent>
@@ -470,7 +500,7 @@ export default function IntegrationsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-2">
+                  <div className="flex items-center justify-between pt-4 border-t">
                     <Button
                       variant="outline"
                       size="sm"
@@ -483,6 +513,10 @@ export default function IntegrationsPage() {
                         <Zap className="h-4 w-4 mr-2" />
                       )}
                       Verbindung testen
+                    </Button>
+                    <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                      {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                      Speichern
                     </Button>
                   </div>
                 </CardContent>
@@ -604,7 +638,7 @@ export default function IntegrationsPage() {
                   </a>
                 </p>
 
-                <div className="flex items-center gap-2 pt-2">
+                <div className="flex items-center justify-between pt-4 border-t">
                   <Button
                     variant="outline"
                     size="sm"
@@ -617,6 +651,10 @@ export default function IntegrationsPage() {
                       <Zap className="h-4 w-4 mr-2" />
                     )}
                     Verbindung testen
+                  </Button>
+                  <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                    {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                    Speichern
                   </Button>
                 </div>
               </CardContent>
@@ -723,6 +761,13 @@ export default function IntegrationsPage() {
                     posthog.com <ExternalLink className="inline h-3 w-3" />
                   </a>
                 </p>
+
+                <div className="flex justify-end pt-4 border-t">
+                  <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                    {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                    Speichern
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </AccordionContent>
@@ -797,7 +842,7 @@ export default function IntegrationsPage() {
                   </a>
                 </p>
 
-                <div className="flex items-center gap-2 pt-2">
+                <div className="flex items-center justify-between pt-4 border-t">
                   <Button
                     variant="outline"
                     size="sm"
@@ -810,6 +855,155 @@ export default function IntegrationsPage() {
                       <Zap className="h-4 w-4 mr-2" />
                     )}
                     Verbindung testen
+                  </Button>
+                  <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                    {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                    Speichern
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* E-Mail (Resend) */}
+        <AccordionItem value="email" className="border rounded-lg overflow-hidden">
+          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center">
+                <Mail className="h-5 w-5 text-white" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold">E-Mail</h3>
+                <p className="text-sm text-muted-foreground">Resend</p>
+              </div>
+              {settings?.resendEnabled && (
+                <Badge className="ml-auto mr-4 bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  Aktiv
+                </Badge>
+              )}
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-6 pb-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Mail className="h-5 w-5 text-rose-500" />
+                    <div>
+                      <CardTitle className="text-base">Resend</CardTitle>
+                      <CardDescription>E-Mail-Versand für Transaktions- und Marketing-E-Mails</CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={resendEnabled}
+                      onCheckedChange={setResendEnabled}
+                    />
+                    <Label className="text-sm">Aktiviert</Label>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="resendApiKey">API Key</Label>
+                  <div className="relative">
+                    <Input
+                      id="resendApiKey"
+                      type={showSecrets['resend'] ? 'text' : 'password'}
+                      value={resendApiKey}
+                      onChange={(e) => setResendApiKey(e.target.value)}
+                      placeholder={settings?.resendApiKey || 're_••••••••••••••••'}
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                      onClick={() => toggleShowSecret('resend')}
+                    >
+                      {showSecrets['resend'] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="resendFromEmail">Absender E-Mail</Label>
+                    <Input
+                      id="resendFromEmail"
+                      type="email"
+                      value={resendFromEmail}
+                      onChange={(e) => setResendFromEmail(e.target.value)}
+                      placeholder="noreply@nicnoa.online"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="resendFromName">Absender Name</Label>
+                    <Input
+                      id="resendFromName"
+                      value={resendFromName}
+                      onChange={(e) => setResendFromName(e.target.value)}
+                      placeholder="NICNOA"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="resendWebhookSecret">Webhook Secret (optional)</Label>
+                  <div className="relative">
+                    <Input
+                      id="resendWebhookSecret"
+                      type={showSecrets['resendWebhook'] ? 'text' : 'password'}
+                      value={resendWebhookSecret}
+                      onChange={(e) => setResendWebhookSecret(e.target.value)}
+                      placeholder={settings?.resendWebhookSecret || 'whsec_••••••••••••••••'}
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                      onClick={() => toggleShowSecret('resendWebhook')}
+                    >
+                      {showSecrets['resendWebhook'] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Für Webhook-Events (z.B. Bounce-Tracking). Webhook URL: <code className="px-1 py-0.5 rounded bg-muted text-xs">/api/webhooks/resend</code>
+                  </p>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    resend.com/api-keys <ExternalLink className="inline h-3 w-3" />
+                  </a>
+                  {' · '}
+                  <Link href="/admin/email-templates" className="text-primary hover:underline">
+                    E-Mail-Templates verwalten
+                  </Link>
+                </p>
+
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => testConnection('resend')}
+                    disabled={testingConnection === 'resend' || !settings?.resendApiKey}
+                  >
+                    {testingConnection === 'resend' ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Zap className="h-4 w-4 mr-2" />
+                    )}
+                    Verbindung testen
+                  </Button>
+                  <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                    {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                    Speichern
                   </Button>
                 </div>
               </CardContent>

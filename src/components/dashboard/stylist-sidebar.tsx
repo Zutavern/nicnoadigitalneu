@@ -20,6 +20,7 @@ import {
   User,
   HandshakeIcon,
   Gift,
+  Palette,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -78,6 +79,12 @@ const menuItems = [
     ],
   },
   {
+    title: 'Marketing',
+    items: [
+      { label: 'Mein Branding', href: '/stylist/marketing', icon: Palette },
+    ],
+  },
+  {
     title: 'Extras',
     items: [
       { label: 'Partner & Vorteile', href: '/dashboard/partners', icon: HandshakeIcon },
@@ -104,7 +111,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                   className={cn(
                     "flex items-center justify-center rounded-lg p-3 text-sm transition-all",
                     isActive
-                      ? "bg-pink-500 text-white shadow-lg shadow-pink-500/25"
+                      ? "bg-pink-500 text-white shadow-lg shadow-pink-500/40 dark:shadow-pink-500/25"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
@@ -127,7 +134,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           className={cn(
             "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all",
             isActive
-              ? "bg-pink-500 text-white shadow-lg shadow-pink-500/25"
+              ? "bg-pink-500 text-white shadow-lg shadow-pink-500/40 dark:shadow-pink-500/25"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
@@ -143,9 +150,9 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
       {/* Stylist Badge */}
       {!collapsed && (
         <div className="mx-4 mt-4">
-          <div className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-pink-500/10 to-rose-500/10 border border-pink-500/20 px-3 py-2">
-            <Scissors className="h-4 w-4 text-pink-500" />
-            <span className="text-sm font-medium text-pink-500">Stylist Dashboard</span>
+          <div className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-pink-500/20 to-rose-500/20 dark:from-pink-500/10 dark:to-rose-500/10 border border-pink-500/30 dark:border-pink-500/20 px-3 py-2">
+            <Scissors className="h-4 w-4 text-pink-600 dark:text-pink-500" />
+            <span className="text-sm font-medium text-pink-600 dark:text-pink-500">Stylist Dashboard</span>
           </div>
         </div>
       )}

@@ -53,7 +53,7 @@ function getDefaultConfig(type: LegalPageType) {
       heroDescription: 'Angaben gemäß § 5 TMG',
       metaTitle: 'Impressum | NICNOA',
       metaDescription: 'Impressum und rechtliche Informationen von NICNOA',
-      contactEmail: 'info@nicnoa.de',
+      contactEmail: 'info@nicnoa.online',
       contactPhone: '+49 (0) 123 456789',
       sections: getDefaultSections('IMPRESSUM'),
     },
@@ -64,7 +64,7 @@ function getDefaultConfig(type: LegalPageType) {
       heroDescription: 'Der Schutz Ihrer persönlichen Daten ist uns ein besonderes Anliegen.',
       metaTitle: 'Datenschutz | NICNOA',
       metaDescription: 'Datenschutzerklärung für die Nutzung der NICNOA Plattform',
-      contactEmail: 'datenschutz@nicnoa.de',
+      contactEmail: 'datenschutz@nicnoa.online',
       contactPhone: '+49 (0) 123 456789',
       sections: getDefaultSections('DATENSCHUTZ'),
     },
@@ -97,7 +97,7 @@ Deutschland
 
 **Kontakt**
 Telefon: +49 (0) 123 456789
-E-Mail: info@nicnoa.de
+E-Mail: info@nicnoa.online
 
 **Vertreten durch**
 Geschäftsführer: Max Mustermann`,
@@ -131,7 +131,7 @@ DE 123 456 789`,
 Musterstraße 123
 12345 Berlin
 Deutschland
-E-Mail: info@nicnoa.de`,
+E-Mail: info@nicnoa.online`,
         sortOrder: 0,
         isActive: true,
         isCollapsible: true,

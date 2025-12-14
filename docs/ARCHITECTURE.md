@@ -2,8 +2,8 @@
 
 ## 📐 System-Architektur Dokumentation
 
-**Version:** 1.2  
-**Datum:** 12. Dezember 2025  
+**Version:** 1.3  
+**Datum:** 14. Dezember 2025  
 **Status:** Produktiv
 
 ---
@@ -354,6 +354,8 @@ src/app/api/
 │   │   ├── [id]/route.ts
 │   │   ├── preview/route.ts
 │   │   └── send-test/route.ts
+│   ├── email-analytics/         # E-Mail Analytics
+│   │   └── route.ts             # Analytics-Daten abrufen
 │   ├── onboarding/              # Onboarding-Prüfung
 │   │   ├── route.ts
 │   │   └── [id]/route.ts
@@ -421,6 +423,9 @@ src/app/api/
 │   ├── admin/route.ts           # Admin CRUD
 │   └── [id]/route.ts            # Feature-Details
 ├── product-page-config/route.ts # Produkt-Seiten-Config
+├── webhooks/                    # Externe Webhooks
+│   ├── stripe/route.ts          # Stripe Zahlungs-Events
+│   └── resend/route.ts          # Resend E-Mail-Events
 ├── cron/                        # Automatisierte Jobs
 │   ├── booking-reminders/route.ts
 │   ├── daily-summary/route.ts
@@ -544,6 +549,8 @@ src/
     │ - Users    │          │ - Bookings │          │ - Calendar │
     │ - Salons   │          │ - Stylists │          │ - Profile  │
     │ - Revenue  │          │ - Revenue  │          │ - Earnings │
+    │ - E-Mail   │          │            │          │            │
+    │   Analytics│          │            │          │            │
     └────────────┘          └────────────┘          └────────────┘
 ```
 
@@ -650,6 +657,76 @@ src/
 | **Booking** | confirmation, reminder, cancelled | Terminaktionen |
 | **Referral** | invitation, success | Empfehlungsprogramm |
 | **System** | new-message | Messaging |
+
+### 8.3 E-Mail Analytics
+
+Die Plattform bietet umfassende E-Mail-Analytics mit Echtzeit-Tracking via Resend Webhooks.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         E-MAIL ANALYTICS ARCHITEKTUR                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                              ┌───────────────────┐
+                              │      Resend       │
+                              │    E-Mail API     │
+                              └─────────┬─────────┘
+                                        │
+                    ┌───────────────────┼───────────────────┐
+                    │                   │                   │
+                    ▼                   ▼                   ▼
+           ┌───────────────┐   ┌───────────────┐   ┌───────────────┐
+           │ Email Sent    │   │  Webhooks     │   │  Domains API  │
+           │               │   │               │   │               │
+           │ - Send Email  │   │ - delivered   │   │ - List        │
+           │ - Get Status  │   │ - opened      │   │ - Verify      │
+           │               │   │ - clicked     │   │ - DNS Records │
+           └───────┬───────┘   │ - bounced     │   └───────┬───────┘
+                   │           └───────┬───────┘           │
+                   │                   │                   │
+                   └───────────────────┼───────────────────┘
+                                       │
+                                       ▼
+                              ┌───────────────────┐
+                              │    EmailLog DB    │
+                              │                   │
+                              │ - Status Tracking │
+                              │ - Open/Click Time │
+                              │ - Bounce Reason   │
+                              └─────────┬─────────┘
+                                        │
+                                        ▼
+                              ┌───────────────────┐
+                              │  Admin Dashboard  │
+                              │                   │
+                              │ - Delivery Rate   │
+                              │ - Open Rate       │
+                              │ - Click Rate      │
+                              │ - Bounce Rate     │
+                              │ - Domain Status   │
+                              │ - Charts          │
+                              └───────────────────┘
+```
+
+#### Analytics-Metriken
+
+| Metrik | Berechnung | Ziel |
+|--------|------------|------|
+| **Delivery Rate** | (Delivered / Sent) × 100 | >95% |
+| **Open Rate** | (Opened / Delivered) × 100 | >35% |
+| **Click Rate** | (Clicked / Opened) × 100 | >15% |
+| **Bounce Rate** | (Bounced / Sent) × 100 | <2% |
+
+#### Webhook-Events
+
+| Event | Beschreibung | Datenbank-Update |
+|-------|--------------|------------------|
+| `email.sent` | E-Mail wurde an Resend übergeben | status → SENT |
+| `email.delivered` | E-Mail wurde zugestellt | status → DELIVERED, deliveredAt |
+| `email.opened` | E-Mail wurde geöffnet | openedAt |
+| `email.clicked` | Link wurde geklickt | clickedAt |
+| `email.bounced` | E-Mail zurückgekommen | status → BOUNCED |
+| `email.complained` | Spam-Beschwerde | status → COMPLAINED |
 
 ---
 
@@ -1152,7 +1229,7 @@ Das Admin-Dashboard bietet:
 ---
 
 **Dokumentation gepflegt von:** NICNOA Development Team  
-**Letzte Aktualisierung:** 12. Dezember 2025
+**Letzte Aktualisierung:** 14. Dezember 2025
 
 
 

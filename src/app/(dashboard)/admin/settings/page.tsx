@@ -206,28 +206,28 @@ export default function SettingsPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <Card className={`border-2 ${useDemoMode ? 'border-amber-500/50 bg-amber-500/5' : 'border-green-500/50 bg-green-500/5'}`}>
+        <Card className={`border-2 ${useDemoMode ? 'border-slate-700/50 dark:border-amber-500/50 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 dark:from-amber-500/5 dark:via-amber-500/5 dark:to-amber-500/5' : 'border-green-500/50 bg-green-500/5'}`}>
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-start gap-4">
-                <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${useDemoMode ? 'bg-amber-500/10' : 'bg-green-500/10'}`}>
+                <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${useDemoMode ? 'bg-purple-500/20 dark:bg-amber-500/10' : 'bg-green-500/10'}`}>
                   {useDemoMode ? (
-                    <FlaskConical className="h-6 w-6 text-amber-500" />
+                    <FlaskConical className="h-6 w-6 text-purple-400 dark:text-amber-500" />
                   ) : (
                     <Zap className="h-6 w-6 text-green-500" />
                   )}
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <h3 className={`text-lg font-semibold flex items-center gap-2 ${useDemoMode ? 'text-white' : ''}`}>
                     {useDemoMode ? 'Demo-Modus aktiv' : 'Live-Modus aktiv'}
                     {useDemoMode && (
-                      <Badge variant="outline" className="text-amber-500 border-amber-500/30">
+                      <Badge variant="outline" className="text-purple-400 dark:text-amber-500 border-purple-500/30 dark:border-amber-500/30">
                         <AlertTriangle className="mr-1 h-3 w-3" />
                         Testdaten
                       </Badge>
                     )}
                   </h3>
-                  <p className="text-sm text-muted-foreground max-w-lg">
+                  <p className={`text-sm max-w-lg ${useDemoMode ? 'text-slate-300 dark:text-muted-foreground' : 'text-muted-foreground'}`}>
                     {useDemoMode ? (
                       'Es werden überall Demo-Daten angezeigt. Dashboard-Statistiken, Subscriptions und Revenue-Daten sind simuliert. Schalte auf Live-Modus um, sobald Stripe konfiguriert ist.'
                     ) : (
@@ -238,10 +238,10 @@ export default function SettingsPage() {
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex flex-col items-end gap-1">
-                  <span className="text-sm font-medium">
+                  <span className={`text-sm font-medium ${useDemoMode ? 'text-white' : ''}`}>
                     {useDemoMode ? 'Demo' : 'Live'}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className={`text-xs ${useDemoMode ? 'text-slate-400 dark:text-muted-foreground' : 'text-muted-foreground'}`}>
                     Daten-Modus
                   </span>
                 </div>
@@ -253,8 +253,8 @@ export default function SettingsPage() {
               </div>
             </div>
             {useDemoMode && (
-              <div className="mt-4 pt-4 border-t border-amber-500/20">
-                <Label htmlFor="demoMessage" className="text-sm text-muted-foreground">
+              <div className="mt-4 pt-4 border-t border-slate-600/50 dark:border-amber-500/20">
+                <Label htmlFor="demoMessage" className="text-sm text-slate-400 dark:text-muted-foreground">
                   Hinweistext für Benutzer
                 </Label>
                 <Input
@@ -262,7 +262,7 @@ export default function SettingsPage() {
                   value={demoModeMessage}
                   onChange={(e) => setDemoModeMessage(e.target.value)}
                   placeholder="Demo-Modus aktiv - Es werden Beispieldaten angezeigt"
-                  className="mt-1.5 bg-background/50"
+                  className="mt-1.5 bg-slate-700/50 dark:bg-background/50 border-slate-600/50 dark:border-input text-white dark:text-foreground"
                 />
               </div>
             )}
@@ -530,7 +530,7 @@ export default function SettingsPage() {
                       id="smtpUser"
                       value={smtpUser}
                       onChange={(e) => setSmtpUser(e.target.value)}
-                      placeholder="noreply@nicnoa.de" 
+                      placeholder="noreply@nicnoa.online" 
                     />
                   </div>
                   <div className="space-y-2">
@@ -552,7 +552,7 @@ export default function SettingsPage() {
                     type="email"
                     value={smtpFrom}
                     onChange={(e) => setSmtpFrom(e.target.value)}
-                    placeholder="noreply@nicnoa.de"
+                    placeholder="noreply@nicnoa.online"
                   />
                 </div>
 

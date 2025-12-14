@@ -134,20 +134,20 @@ export default function StylistEarningsPage() {
                 <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center">
                   <Euro className="h-6 w-6 text-white" />
                 </div>
-                {data.growth >= 0 ? (
+                {(data.growth ?? 0) >= 0 ? (
                   <Badge className="bg-green-500/20 text-green-500">
                     <ArrowUpRight className="h-3 w-3 mr-1" />
-                    +{data.growth.toFixed(1)}%
+                    +{(data.growth ?? 0).toFixed(1)}%
                   </Badge>
                 ) : (
                   <Badge className="bg-red-500/20 text-red-500">
                     <ArrowDownRight className="h-3 w-3 mr-1" />
-                    {data.growth.toFixed(1)}%
+                    {(data.growth ?? 0).toFixed(1)}%
                   </Badge>
                 )}
               </div>
               <div className="text-3xl font-bold">
-                €{data.totalEarnings.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                €{(data.totalEarnings ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
               </div>
               <div className="text-sm text-muted-foreground">
                 Gesamtverdienst
@@ -169,7 +169,7 @@ export default function StylistEarningsPage() {
                 </div>
               </div>
               <div className="text-3xl font-bold">
-                €{data.thisMonth.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                €{(data.thisMonth ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
               </div>
               <div className="text-sm text-muted-foreground">
                 Dieser Monat
@@ -191,7 +191,7 @@ export default function StylistEarningsPage() {
                 </div>
               </div>
               <div className="text-3xl font-bold">
-                €{data.lastMonth.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                €{(data.lastMonth ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
               </div>
               <div className="text-sm text-muted-foreground">
                 Letzter Monat
@@ -213,7 +213,7 @@ export default function StylistEarningsPage() {
                 </div>
               </div>
               <div className="text-3xl font-bold">
-                €{data.pendingPayments.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                €{(data.pendingPayments ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
               </div>
               <div className="text-sm text-muted-foreground">
                 Ausstehend
@@ -249,7 +249,7 @@ export default function StylistEarningsPage() {
                         <div className="flex items-center justify-between text-sm">
                           <span className="font-medium">{month.month}</span>
                           <span className="text-muted-foreground">
-                            {month.bookings} Buchungen · €{month.earnings.toLocaleString('de-DE')}
+                            {month.bookings ?? 0} Buchungen · €{(month.earnings ?? 0).toLocaleString('de-DE')}
                           </span>
                         </div>
                         <div className="h-3 bg-muted rounded-full overflow-hidden">
@@ -293,7 +293,7 @@ export default function StylistEarningsPage() {
                     >
                       <div>
                         <div className="font-medium">
-                          €{payment.amount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                          €{(payment.amount ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
                         </div>
                         <div className="text-sm text-muted-foreground">
                           {payment.type === 'BOOKING_COMMISSION' ? 'Buchung' : 'Sonstige'}

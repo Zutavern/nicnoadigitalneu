@@ -16,6 +16,44 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ---
 
+## [1.3.0] - 2025-12-14
+
+### Hinzugefügt
+
+#### E-Mail Analytics Dashboard
+- Vollständiges E-Mail-Analytics-Dashboard unter `/admin/settings/email-analytics`
+- Übersichts-Statistiken (Gesendet, Zugestellt, Geöffnet, Geklickt, Bounced)
+- Zustellrate, Öffnungsrate, Klickrate, Bounce-Rate Berechnungen
+- Tages-Chart für Versand-Verlauf der letzten 30 Tage
+- Template-Performance-Statistiken
+- Domain-Status-Anzeige mit DNS-Record-Verifizierung
+- Live-Liste der zuletzt gesendeten E-Mails
+- Resend Konfigurationsstatus-Prüfung
+- API-Endpunkt: `/api/admin/email-analytics` - Vollständige Analytics-Daten
+
+#### Resend Webhook Integration
+- Webhook-Handler für Resend-Events unter `/api/webhooks/resend`
+- Echtzeit-Status-Updates für E-Mails:
+  - `email.sent` - E-Mail wurde gesendet
+  - `email.delivered` - E-Mail wurde zugestellt
+  - `email.opened` - E-Mail wurde geöffnet
+  - `email.clicked` - Link wurde geklickt
+  - `email.bounced` - E-Mail ist zurückgekommen
+  - `email.complained` - Spam-Beschwerde
+- Webhook-Verifizierung mit Svix (optional)
+- Automatische Datenbank-Updates für EmailLog
+
+### Geändert
+- Admin-Sidebar um "E-Mail Analytics" Link erweitert
+- E-Mail-System Dokumentation (PRD) um Analytics-Sektion erweitert
+- API-Dokumentation um E-Mail Analytics und Webhook-Endpunkte erweitert
+- Architektur-Dokumentation um E-Mail Analytics Flow erweitert
+
+### Neue Abhängigkeiten
+- `svix` - Webhook-Verifizierung für Resend-Events
+
+---
+
 ## [1.2.0] - 2025-12-12
 
 ### Hinzugefügt
@@ -288,6 +326,7 @@ Die erste vollständige Version der NICNOA-Plattform.
 
 | Version | Datum | Beschreibung |
 |---------|-------|--------------|
+| 1.3.0 | 2025-12-14 | E-Mail Analytics Dashboard, Resend Webhooks |
 | 1.2.0 | 2025-12-12 | PostHog Analytics, Pusher Chat, Daily.co Video, Magic Links |
 | 1.1.0 | 2025-12-10 | Design-System, Produkt-Seite CMS, Cron-Jobs |
 | 1.0.0 | 2025-12-06 | Initial Release |
@@ -300,7 +339,8 @@ Die erste vollständige Version der NICNOA-Plattform.
 
 ---
 
-[Unreleased]: https://github.com/your-org/nicnoa/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/your-org/nicnoa/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/your-org/nicnoa/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/your-org/nicnoa/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/your-org/nicnoa/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/your-org/nicnoa/releases/tag/v1.0.0

@@ -240,23 +240,23 @@ export default function StylistDashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-6"
         >
-          <Card className="border-amber-500/50 bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-amber-500/5 overflow-hidden relative">
+          <Card className="border-slate-700/50 dark:border-amber-500/50 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 dark:from-amber-500/10 dark:via-orange-500/10 dark:to-amber-500/5 overflow-hidden relative">
             {/* Decorative background pattern */}
-            <div className="absolute inset-0 opacity-5">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500 rounded-full blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-orange-500 rounded-full blur-3xl" />
+            <div className="absolute inset-0 opacity-10 dark:opacity-5">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-pink-500 dark:bg-amber-500 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500 dark:bg-orange-500 rounded-full blur-3xl" />
             </div>
             
             <CardContent className="py-6 px-6 relative z-10">
               <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
                 {/* Icon & Badge */}
                 <div className="flex items-center gap-4">
-                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-amber-500/20">
+                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 dark:from-amber-500 dark:to-orange-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-pink-500/30 dark:shadow-amber-500/20">
                     <AlertTriangle className="h-7 w-7 text-white" />
                   </div>
                   <div className="md:hidden">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-500 text-xs font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/20 dark:bg-amber-500/20 border border-pink-500/30 dark:border-amber-500/30 text-pink-400 dark:text-amber-500 text-xs font-semibold">
+                      <span className="w-2 h-2 rounded-full bg-pink-500 dark:bg-amber-500 animate-pulse" />
                       Demo-Modus
                     </span>
                   </div>
@@ -266,27 +266,27 @@ export default function StylistDashboardPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-lg font-bold text-white">Du befindest dich im Demo-Modus</h3>
-                    <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-500 text-xs font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/20 dark:bg-amber-500/20 border border-pink-500/30 dark:border-amber-500/30 text-pink-400 dark:text-amber-500 text-xs font-semibold">
+                      <span className="w-2 h-2 rounded-full bg-pink-500 dark:bg-amber-500 animate-pulse" />
                       Demo-Modus
                     </span>
                   </div>
-                  <p className="text-muted-foreground text-sm mb-4">
+                  <p className="text-slate-300 dark:text-muted-foreground text-sm mb-4">
                     Um das System vollständig nutzen zu können, musst du den Onboarding-Prozess abschließen. 
                     Das dauert nur ca. 10 Minuten.
                   </p>
                   
                   {/* Open Tasks */}
                   <div className="flex flex-wrap gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                      <Shield className="h-4 w-4 text-amber-400" />
-                      <span className="text-sm text-amber-300">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-700/50 dark:bg-amber-500/10 border border-slate-600/50 dark:border-amber-500/20">
+                      <Shield className="h-4 w-4 text-pink-400 dark:text-amber-400" />
+                      <span className="text-sm text-slate-200 dark:text-amber-300">
                         {openQuestions} {openQuestions === 1 ? 'Frage' : 'Fragen'} zu beantworten
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                      <FileText className="h-4 w-4 text-amber-400" />
-                      <span className="text-sm text-amber-300">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-700/50 dark:bg-amber-500/10 border border-slate-600/50 dark:border-amber-500/20">
+                      <FileText className="h-4 w-4 text-emerald-400 dark:text-amber-400" />
+                      <span className="text-sm text-slate-200 dark:text-amber-300">
                         {openDocs} {openDocs === 1 ? 'Dokument' : 'Dokumente'} hochzuladen
                       </span>
                     </div>
@@ -296,7 +296,7 @@ export default function StylistDashboardPage() {
                 {/* CTA Button */}
                 <Button 
                   size="lg"
-                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 w-full md:w-auto"
+                  className="bg-gradient-to-r from-pink-500 to-rose-600 dark:from-amber-500 dark:to-orange-500 hover:from-pink-600 hover:to-rose-700 dark:hover:from-amber-600 dark:hover:to-orange-600 text-white shadow-lg shadow-pink-500/30 dark:shadow-amber-500/25 w-full md:w-auto"
                   onClick={() => setOnboardingDialogOpen(true)}
                 >
                   Onboarding starten
@@ -324,17 +324,17 @@ export default function StylistDashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-6"
         >
-          <Card className="border-amber-500/50 bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-amber-500/5 overflow-hidden relative">
+          <Card className="border-slate-700/50 dark:border-amber-500/50 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 dark:from-amber-500/10 dark:via-orange-500/10 dark:to-amber-500/5 overflow-hidden relative">
             {/* Decorative background */}
-            <div className="absolute inset-0 opacity-5">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500 rounded-full blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-orange-500 rounded-full blur-3xl" />
+            <div className="absolute inset-0 opacity-10 dark:opacity-5">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500 dark:bg-amber-500 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-pink-500 dark:bg-orange-500 rounded-full blur-3xl" />
             </div>
             
             <CardContent className="py-5 px-5 relative z-10">
               <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
                 {/* Icon */}
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-amber-500/20">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 dark:from-amber-500 dark:to-orange-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/30 dark:shadow-amber-500/20">
                   <FileCheck className="h-6 w-6 text-white" />
                 </div>
                 
@@ -342,36 +342,36 @@ export default function StylistDashboardPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="text-base font-bold text-white">Onboarding fast geschafft!</h3>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-500 text-xs font-semibold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 dark:bg-amber-500/20 border border-emerald-500/30 dark:border-amber-500/30 text-emerald-400 dark:text-amber-500 text-xs font-semibold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-amber-500 animate-pulse" />
                       Unvollständig
                     </span>
                   </div>
                   
-                  <p className="text-muted-foreground text-sm mb-3">
+                  <p className="text-slate-300 dark:text-muted-foreground text-sm mb-3">
                     Schließe dein Onboarding ab, um alle Funktionen nutzen zu können.
                   </p>
                   
                   {/* Status Items */}
                   <div className="flex flex-wrap gap-3">
                     {hasComplianceIssues && (
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                        <Shield className="h-4 w-4 text-amber-400" />
-                        <span className="text-sm text-amber-300">
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-700/50 dark:bg-amber-500/10 border border-slate-600/50 dark:border-amber-500/20">
+                        <Shield className="h-4 w-4 text-pink-400 dark:text-amber-400" />
+                        <span className="text-sm text-slate-200 dark:text-amber-300">
                           {complianceIssues} {complianceIssues === 1 ? 'Frage' : 'Fragen'} noch offen
                         </span>
                       </div>
                     )}
                     {hasPendingDocs && (
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                        <FileText className="h-4 w-4 text-amber-400" />
-                        <span className="text-sm text-amber-300">
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-700/50 dark:bg-amber-500/10 border border-slate-600/50 dark:border-amber-500/20">
+                        <FileText className="h-4 w-4 text-emerald-400 dark:text-amber-400" />
+                        <span className="text-sm text-slate-200 dark:text-amber-300">
                           {totalPendingDocs} {totalPendingDocs === 1 ? 'Dokument' : 'Dokumente'} noch hochzuladen
                         </span>
                       </div>
                     )}
                     {!hasComplianceIssues && !hasPendingDocs && (
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/30">
                         <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                         <span className="text-sm text-emerald-300">
                           Alles ausgefüllt – bitte abschließen
@@ -384,7 +384,7 @@ export default function StylistDashboardPage() {
                 {/* CTA Button */}
                 <Button 
                   size="lg"
-                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 w-full md:w-auto"
+                  className="bg-gradient-to-r from-emerald-500 to-teal-600 dark:from-amber-500 dark:to-orange-500 hover:from-emerald-600 hover:to-teal-700 dark:hover:from-amber-600 dark:hover:to-orange-600 text-white shadow-lg shadow-emerald-500/30 dark:shadow-amber-500/25 w-full md:w-auto"
                   onClick={() => setOnboardingDialogOpen(true)}
                 >
                   Onboarding abschließen

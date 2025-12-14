@@ -371,7 +371,7 @@ export default function DatenschutzAdminPage() {
                     onChange={(e) =>
                       setPageConfig((prev) => ({ ...prev, contactEmail: e.target.value }))
                     }
-                    placeholder="datenschutz@nicnoa.de"
+                    placeholder="datenschutz@nicnoa.online"
                   />
                 </div>
                 <div className="space-y-2">

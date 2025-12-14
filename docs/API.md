@@ -2,7 +2,7 @@
 
 ## 📡 REST API Reference
 
-**Version:** 1.2  
+**Version:** 1.3  
 **Base URL:** `https://nicnoa.vercel.app/api`  
 **Authentifizierung:** NextAuth.js Session Cookie
 
@@ -25,7 +25,9 @@
 13. [Real-time APIs (Pusher)](#13-real-time-apis-pusher)
 14. [Video Call APIs (Daily.co)](#14-video-call-apis-dailyco)
 15. [Analytics APIs (PostHog)](#15-analytics-apis-posthog)
-16. [Error Handling](#16-error-handling)
+16. [E-Mail Analytics APIs](#16-e-mail-analytics-apis)
+17. [Webhooks](#17-webhooks)
+18. [Error Handling](#18-error-handling)
 
 ---
 
@@ -1151,7 +1153,151 @@ Heatmap-Daten abrufen.
 
 ---
 
-## 16. Error Handling
+## 16. E-Mail Analytics APIs
+
+### Übersicht
+
+E-Mail Analytics bietet umfassende Einblicke in den E-Mail-Versand, Zustellraten, Öffnungen, Klicks und Domain-Status.
+
+### GET /api/admin/email-analytics
+Vollständige E-Mail-Analytics-Daten abrufen.
+
+**Response:**
+```json
+{
+  "isConfigured": true,
+  "stats": {
+    "total": 1250,
+    "sent": 1200,
+    "delivered": 1150,
+    "opened": 580,
+    "clicked": 230,
+    "bounced": 25,
+    "complained": 5,
+    "deliveryRate": 95.83,
+    "openRate": 50.43,
+    "clickRate": 20.0,
+    "bounceRate": 2.08
+  },
+  "dailyStats": [
+    {
+      "date": "2025-12-10",
+      "sent": 45,
+      "delivered": 43,
+      "opened": 22,
+      "clicked": 8,
+      "bounced": 1
+    }
+  ],
+  "templateStats": [
+    {
+      "templateId": "uuid",
+      "templateName": "Willkommen",
+      "sent": 250,
+      "delivered": 245,
+      "opened": 180,
+      "clicked": 65
+    }
+  ],
+  "domains": [
+    {
+      "id": "uuid",
+      "name": "nicnoa.de",
+      "status": "verified",
+      "region": "eu-west-1",
+      "createdAt": "2025-01-01T00:00:00Z",
+      "records": [
+        {
+          "type": "MX",
+          "name": "@",
+          "value": "mx.resend.com",
+          "status": "verified"
+        },
+        {
+          "type": "TXT",
+          "name": "@",
+          "value": "v=spf1 include:resend.com ~all",
+          "status": "verified"
+        }
+      ]
+    }
+  ],
+  "recentEmails": [
+    {
+      "id": "uuid",
+      "to": "user@example.com",
+      "subject": "Willkommen bei NICNOA",
+      "status": "delivered",
+      "createdAt": "2025-12-14T10:30:00Z",
+      "deliveredAt": "2025-12-14T10:30:05Z",
+      "openedAt": "2025-12-14T11:15:00Z"
+    }
+  ]
+}
+```
+
+**Response bei nicht konfiguriertem Resend (200):**
+```json
+{
+  "isConfigured": false,
+  "message": "Resend ist nicht konfiguriert. Bitte konfigurieren Sie die Resend-Integration in den Einstellungen.",
+  "configUrl": "/admin/settings/integrations"
+}
+```
+
+---
+
+## 17. Webhooks
+
+### POST /api/webhooks/resend
+Resend Webhook Handler für E-Mail-Events.
+
+**Unterstützte Events:**
+| Event | Beschreibung | Aktion |
+|-------|--------------|--------|
+| `email.sent` | E-Mail wurde gesendet | Status → SENT |
+| `email.delivered` | E-Mail wurde zugestellt | Status → DELIVERED, deliveredAt setzen |
+| `email.delivery_delayed` | Zustellung verzögert | Warnung loggen |
+| `email.bounced` | E-Mail ist zurückgekommen | Status → BOUNCED |
+| `email.complained` | Spam-Beschwerde | Status → COMPLAINED |
+| `email.opened` | E-Mail wurde geöffnet | openedAt setzen |
+| `email.clicked` | Link wurde geklickt | clickedAt setzen |
+
+**Request Body (von Resend):**
+```json
+{
+  "type": "email.delivered",
+  "created_at": "2025-12-14T10:30:05Z",
+  "data": {
+    "email_id": "re_123abc",
+    "from": "noreply@nicnoa.de",
+    "to": ["user@example.com"],
+    "subject": "Willkommen bei NICNOA",
+    "created_at": "2025-12-14T10:30:00Z"
+  }
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "processed": true
+}
+```
+
+**Webhook-Verifizierung:**
+- Header: `svix-id`, `svix-timestamp`, `svix-signature`
+- Verwendet Svix für Signatur-Validierung (optional konfigurierbar)
+
+**Setup:**
+1. Webhook-URL bei Resend konfigurieren: `https://nicnoa.vercel.app/api/webhooks/resend`
+2. Webhook-Secret in Admin-Einstellungen speichern
+3. Events auswählen: `email.*`
+
+---
+
+## 18. Error Handling
 
 ### Standard-Fehlerformat
 
@@ -1256,7 +1402,7 @@ Warnt vor ablaufenden Abonnements.
 
 ---
 
-**Letzte Aktualisierung:** 12. Dezember 2025
+**Letzte Aktualisierung:** 14. Dezember 2025
 
 
 

@@ -371,7 +371,7 @@ export default function ImpressumAdminPage() {
                     onChange={(e) =>
                       setPageConfig((prev) => ({ ...prev, contactEmail: e.target.value }))
                     }
-                    placeholder="info@nicnoa.de"
+                    placeholder="info@nicnoa.online"
                   />
                 </div>
                 <div className="space-y-2">

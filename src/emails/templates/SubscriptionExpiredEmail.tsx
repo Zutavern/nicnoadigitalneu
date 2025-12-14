@@ -64,7 +64,7 @@ export function SubscriptionExpiredEmail({
 
       <Text style={helpText}>
         Bei Fragen oder Problemen mit der Zahlung kontaktiere uns unter{' '}
-        <a href="mailto:support@nicnoa.de" style={link}>support@nicnoa.de</a>
+        <a href="mailto:support@nicnoa.online" style={link}>support@nicnoa.online</a>
       </Text>
 
       {content.footer && (

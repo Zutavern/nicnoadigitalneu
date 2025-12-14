@@ -1224,7 +1224,7 @@ export function getMockStylistProfile() {
   return {
     id: 'demo-stylist-001',
     name: 'Demo Stylist',
-    email: 'demo.stylist@nicnoa.de',
+    email: 'demo.stylist@nicnoa.online',
     image: null,
     profile: {
       bio: 'Leidenschaftliche Friseurin mit über 8 Jahren Erfahrung in allen Bereichen des Haarstylings. Spezialisiert auf Balayage, moderne Schnitte und kreative Colorationen.',
@@ -1372,7 +1372,7 @@ export function getMockFindSalon() {
 export function getMockStylistSettings() {
   return {
     name: 'Demo Stylist',
-    email: 'demo.stylist@nicnoa.de',
+    email: 'demo.stylist@nicnoa.online',
     phone: '+49 170 1234567',
     bio: 'Leidenschaftliche Friseurin mit über 8 Jahren Erfahrung.',
     address: 'Musterstraße 123',
@@ -1430,14 +1430,14 @@ export function getMockConversations() {
             userId: '00000000-0000-0000-0000-000000000002',
             role: 'ADMIN',
             lastReadAt: null,
-            user: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', email: 'salon@nicnoa.de', image: null, role: 'SALON_OWNER' }
+            user: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', email: 'salon@nicnoa.online', image: null, role: 'SALON_OWNER' }
           },
           { 
             id: 'cp-2', 
             userId: '00000000-0000-0000-0000-000000000001',
             role: 'MEMBER',
             lastReadAt: null,
-            user: { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', email: 'admin@nicnoa.de', image: null, role: 'ADMIN' }
+            user: { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', email: 'admin@nicnoa.online', image: null, role: 'ADMIN' }
           },
         ],
         lastMessage: {
@@ -1460,14 +1460,14 @@ export function getMockConversations() {
             userId: '00000000-0000-0000-0000-000000000003',
             role: 'MEMBER',
             lastReadAt: null,
-            user: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', email: 'stylist@nicnoa.de', image: null, role: 'STYLIST' }
+            user: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', email: 'stylist@nicnoa.online', image: null, role: 'STYLIST' }
           },
           { 
             id: 'cp-4', 
             userId: '00000000-0000-0000-0000-000000000001',
             role: 'ADMIN',
             lastReadAt: null,
-            user: { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', email: 'admin@nicnoa.de', image: null, role: 'ADMIN' }
+            user: { id: '00000000-0000-0000-0000-000000000001', name: 'Admin Test', email: 'admin@nicnoa.online', image: null, role: 'ADMIN' }
           },
         ],
         lastMessage: {
@@ -1490,14 +1490,14 @@ export function getMockConversations() {
             userId: '00000000-0000-0000-0000-000000000002',
             role: 'ADMIN',
             lastReadAt: null,
-            user: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', email: 'salon@nicnoa.de', image: null, role: 'SALON_OWNER' }
+            user: { id: '00000000-0000-0000-0000-000000000002', name: 'Salon Betreiber', email: 'salon@nicnoa.online', image: null, role: 'SALON_OWNER' }
           },
           { 
             id: 'cp-6', 
             userId: '00000000-0000-0000-0000-000000000003',
             role: 'MEMBER',
             lastReadAt: null,
-            user: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', email: 'stylist@nicnoa.de', image: null, role: 'STYLIST' }
+            user: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', email: 'stylist@nicnoa.online', image: null, role: 'STYLIST' }
           },
         ],
         lastMessage: {
@@ -1627,7 +1627,7 @@ export function getMockAdminUsers() {
       {
         id: 'user-4',
         name: 'Thomas Admin',
-        email: 'thomas@nicnoa.de',
+        email: 'thomas@nicnoa.online',
         role: 'ADMIN',
         status: 'ACTIVE',
         createdAt: getRelativeDate(-500),
@@ -2373,7 +2373,7 @@ export function getMockEmailBrandingSettings() {
     logoUrl: null,
     primaryColor: '#ec4899',
     companyName: 'NICNOA',
-    supportEmail: 'support@nicnoa.de',
+    supportEmail: 'support@nicnoa.online',
     footerText: '© 2024 NICNOA. Alle Rechte vorbehalten.',
   }
 }
@@ -2386,7 +2386,7 @@ export function getMockAdminSettings() {
     platform: {
       name: 'NICNOA',
       url: 'https://nicnoa.de',
-      supportEmail: 'support@nicnoa.de',
+      supportEmail: 'support@nicnoa.online',
       defaultLanguage: 'de',
       timezone: 'Europe/Berlin',
       maintenanceMode: false,
@@ -2401,8 +2401,8 @@ export function getMockAdminSettings() {
     email: {
       provider: 'resend',
       isConfigured: true,
-      fromEmail: 'noreply@nicnoa.de',
-      replyToEmail: 'support@nicnoa.de',
+      fromEmail: 'noreply@nicnoa.online',
+      replyToEmail: 'support@nicnoa.online',
     },
     storage: {
       provider: 'vercel-blob',

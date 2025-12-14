@@ -199,6 +199,10 @@ model SalonProfile {
   amenities       String[] @default([])
   images          String[] @default([])
   
+  // Branding
+  brandingLogoUrl   String?  @map("branding_logo_url")
+  brandingColor     String?  @map("branding_color") @db.VarChar(20)
+  
   // Notification Settings
   emailNotifications Boolean @default(true) @map("email_notifications")
   smsNotifications   Boolean @default(false) @map("sms_notifications")
@@ -227,6 +231,10 @@ model StylistProfile {
   street          String?
   city            String?
   zipCode         String?  @map("zip_code")
+  
+  // Branding
+  brandingLogoUrl   String?  @map("branding_logo_url")
+  brandingColor     String?  @map("branding_color") @db.VarChar(20)
   
   // Social Media
   instagramUrl    String?  @map("instagram_url")
@@ -991,7 +999,7 @@ model PlatformSettings {
   
   // Allgemein
   companyName     String   @default("NICNOA & CO.") @map("company_name") @db.VarChar(200)
-  supportEmail    String   @default("support@nicnoa.de") @map("support_email") @db.VarChar(255)
+  supportEmail    String   @default("support@nicnoa.online") @map("support_email") @db.VarChar(255)
   supportPhone    String?  @map("support_phone") @db.VarChar(50)
   defaultLanguage String   @default("de") @map("default_language") @db.VarChar(10)
   timezone        String   @default("Europe/Berlin") @db.VarChar(50)
@@ -1081,6 +1089,13 @@ model PlatformSettings {
   dailyApiKey               String?  @map("daily_api_key") @db.VarChar(500)
   dailyDomain               String?  @map("daily_domain") @db.VarChar(100) // z.B. "nicnoa" für nicnoa.daily.co
   dailyEnabled              Boolean  @default(false) @map("daily_enabled")
+
+  // Resend E-Mail Service
+  resendApiKey              String?  @map("resend_api_key") @db.VarChar(500)
+  resendEnabled             Boolean  @default(false) @map("resend_enabled")
+  resendFromEmail           String?  @map("resend_from_email") @db.VarChar(255)
+  resendFromName            String?  @default("NICNOA") @map("resend_from_name") @db.VarChar(100)
+  resendWebhookSecret       String?  @map("resend_webhook_secret") @db.VarChar(255)
 
   // Timestamps
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz

@@ -74,6 +74,12 @@ export async function PUT(request: Request) {
       logoUrl,
       faviconUrl,
       primaryColor,
+      // E-Mail Branding
+      emailLogoUrl,
+      emailPrimaryColor,
+      emailFooterText,
+      emailFromName,
+      emailReplyTo,
       // Billing
       trialDays,
       // SMTP
@@ -108,6 +114,12 @@ export async function PUT(request: Request) {
     if (logoUrl !== undefined) updateData.logoUrl = logoUrl
     if (faviconUrl !== undefined) updateData.faviconUrl = faviconUrl
     if (primaryColor !== undefined) updateData.primaryColor = primaryColor
+    // E-Mail Branding
+    if (emailLogoUrl !== undefined) updateData.emailLogoUrl = emailLogoUrl
+    if (emailPrimaryColor !== undefined) updateData.emailPrimaryColor = emailPrimaryColor
+    if (emailFooterText !== undefined) updateData.emailFooterText = emailFooterText
+    if (emailFromName !== undefined) updateData.emailFromName = emailFromName
+    if (emailReplyTo !== undefined) updateData.emailReplyTo = emailReplyTo
     if (trialDays !== undefined) updateData.trialDays = trialDays
     if (smtpHost !== undefined) updateData.smtpHost = smtpHost
     if (smtpPort !== undefined) updateData.smtpPort = smtpPort

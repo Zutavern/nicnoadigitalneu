@@ -35,7 +35,7 @@ async function main() {
     data: {
       id: 'default',
       companyName: 'NICNOA & CO.',
-      supportEmail: 'support@nicnoa.de',
+      supportEmail: 'support@nicnoa.online',
       defaultLanguage: 'de',
       timezone: 'Europe/Berlin',
       currency: 'EUR',

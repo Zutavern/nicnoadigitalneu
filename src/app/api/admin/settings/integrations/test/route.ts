@@ -166,6 +166,46 @@ export async function GET(request: Request) {
         }
       }
 
+      case 'resend': {
+        if (!settings?.resendApiKey) {
+          return NextResponse.json({ success: false, error: 'Kein API-Key konfiguriert' })
+        }
+
+        try {
+          // Resend API-Key validieren durch Abruf der Domains
+          const res = await fetch('https://api.resend.com/domains', {
+            headers: {
+              'Authorization': `Bearer ${settings.resendApiKey}`,
+            },
+          })
+
+          if (!res.ok) {
+            if (res.status === 401) {
+              return NextResponse.json({ 
+                success: false, 
+                error: 'Ungültiger API-Key' 
+              })
+            }
+            return NextResponse.json({ 
+              success: false, 
+              error: `API Error: ${res.status}` 
+            })
+          }
+
+          const data = await res.json()
+          const domainCount = data.data?.length || 0
+          return NextResponse.json({ 
+            success: true, 
+            message: `Verbunden! ${domainCount} Domain(s) konfiguriert` 
+          })
+        } catch (err) {
+          return NextResponse.json({ 
+            success: false, 
+            error: err instanceof Error ? err.message : 'Verbindungsfehler' 
+          })
+        }
+      }
+
       default:
         return NextResponse.json({ error: 'Unbekannte Integration' }, { status: 400 })
     }

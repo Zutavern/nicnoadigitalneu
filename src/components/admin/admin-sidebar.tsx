@@ -48,6 +48,7 @@ import {
   Wallet,
   X,
   Database,
+  Palette,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -143,7 +144,14 @@ const menuItems: MenuSection[] = [
   {
     title: 'Marketing',
     items: [
-      { label: 'Referral-Programm', href: '/admin/referrals', icon: Gift },
+      {
+        label: 'Marketing',
+        icon: Gift,
+        children: [
+          { label: 'Branding', href: '/admin/marketing/branding', icon: Palette },
+          { label: 'Referral-Programm', href: '/admin/referrals', icon: Gift },
+        ],
+      },
     ],
   },
   {
@@ -223,6 +231,7 @@ const menuItems: MenuSection[] = [
           { label: 'SEO', href: '/admin/seo', icon: Search },
           { label: 'Fehlermeldungen', href: '/admin/error-messages', icon: AlertTriangle },
           { label: 'E-Mail Templates', href: '/admin/email-templates', icon: Mail },
+          { label: 'E-Mail Analytics', href: '/admin/settings/email-analytics', icon: BarChart3 },
         ],
       },
     ],
@@ -347,7 +356,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                   className={cn(
                     "flex items-center justify-center rounded-lg p-3 text-sm transition-all",
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/40 dark:shadow-primary/25"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
@@ -374,7 +383,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
             "flex items-center gap-3 rounded-lg px-3 text-sm transition-all",
             depth === 0 ? "py-2.5" : "py-2",
             isActive
-              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/40 dark:shadow-primary/25"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
@@ -390,9 +399,9 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
       {/* Admin Badge */}
       {!collapsed && (
         <div className="mx-4 mt-4">
-          <div className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 px-3 py-2">
-            <Shield className="h-4 w-4 text-purple-500" />
-            <span className="text-sm font-medium text-purple-500">Admin Panel</span>
+          <div className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 dark:from-purple-500/10 dark:to-pink-500/10 border border-purple-500/30 dark:border-purple-500/20 px-3 py-2">
+            <Shield className="h-4 w-4 text-purple-600 dark:text-purple-500" />
+            <span className="text-sm font-medium text-purple-600 dark:text-purple-500">Admin Panel</span>
           </div>
         </div>
       )}

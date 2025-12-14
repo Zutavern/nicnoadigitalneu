@@ -238,7 +238,7 @@ export default function HelpPage() {
                 </div>
                 <div>
                   <p className="font-medium">E-Mail Support</p>
-                  <p className="text-sm text-muted-foreground">support@nicnoa.de</p>
+                  <p className="text-sm text-muted-foreground">support@nicnoa.online</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer">

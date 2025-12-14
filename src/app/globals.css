@@ -40,64 +40,64 @@
 
 @layer base {
   :root {
-    /* === Shadcn/UI Base Variables === */
-    --background: 20 14.3% 4.1%;
-    --foreground: 0 0% 95%;
+    /* === LIGHT MODE - Shadcn/UI Base Variables === */
+    --background: 220 14% 96%;            /* Leichtes Grau */
+    --foreground: 222.2 84% 4.9%;         /* Fast Schwarz */
     
-    --primary: 151 15% 50%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 151 25% 40%;               /* NICNOA Grün */
+    --primary-foreground: 0 0% 100%;      /* Weiß auf Grün */
     
-    --card: 24 9.8% 10%;
-    --card-foreground: 0 0% 95%;
+    --card: 0 0% 100%;                    /* Weiß - Cards bleiben weiß */
+    --card-foreground: 222.2 84% 4.9%;    /* Schwarz */
     
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 0 0% 100%;                 /* Weiß */
+    --popover-foreground: 222.2 84% 4.9%; /* Schwarz */
     
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 210 40% 96.1%;           /* Sehr helles Grau-Blau */
+    --secondary-foreground: 222.2 47.4% 11.2%;
     
-    --muted: 0 0% 15%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 210 40% 96.1%;               /* Hellgrau */
+    --muted-foreground: 215.4 16.3% 46.9%; /* Mittelgrau für Sekundärtext */
     
-    --accent: 12 6.5% 15.1%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 210 40% 96.1%;              /* Hellgrau */
+    --accent-foreground: 222.2 47.4% 11.2%;
     
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 60.2%;         /* Rot */
+    --destructive-foreground: 0 0% 100%;  /* Weiß */
     
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 142 71.8% 29.2%;
+    --border: 214.3 31.8% 91.4%;          /* Helle Borders */
+    --input: 214.3 31.8% 91.4%;
+    --ring: 151 25% 40%;                  /* NICNOA Grün */
     
     --radius: 0.75rem;
     
-    /* === Design System Brand Colors (NICNOA Classic Default) === */
-    --brand-primary: 151 15% 43%;
+    /* === Design System Brand Colors (NICNOA Light) === */
+    --brand-primary: 151 25% 40%;
     --brand-primary-foreground: 0 0% 100%;
-    --brand-secondary: 36 33% 94%;
-    --brand-secondary-foreground: 151 20% 25%;
+    --brand-secondary: 210 40% 96.1%;
+    --brand-secondary-foreground: 222.2 47.4% 11.2%;
     --brand-accent: 24 79% 56%;
     --brand-accent-foreground: 0 0% 100%;
     
     /* === Gradient Colors === */
-    --gradient-from: 151 25% 35%;
-    --gradient-via: 80 20% 45%;
-    --gradient-to: 24 70% 50%;
+    --gradient-from: 151 25% 40%;
+    --gradient-via: 80 20% 50%;
+    --gradient-to: 24 70% 55%;
     
     /* === Glow/Animation Colors === */
     --glow-primary: 151 40% 50%;
     --glow-secondary: 24 70% 55%;
     
     /* === Surface Colors (für Marketing-Seiten) === */
-    --surface-background: 36 20% 97%;
-    --surface-card: 36 25% 95%;
-    --surface-muted: 36 15% 92%;
-    --surface-warm: 36 30% 95%;
+    --surface-background: 210 40% 98%;
+    --surface-card: 0 0% 100%;
+    --surface-muted: 210 40% 96%;
+    --surface-warm: 36 30% 98%;
     
     /* === Animation/Particle Colors === */
-    --animation-particle: 151 30% 60%;
-    --animation-orbit: 24 60% 60%;
-    --animation-pulse: 80 25% 55%;
+    --animation-particle: 151 30% 50%;
+    --animation-orbit: 24 60% 55%;
+    --animation-pulse: 80 25% 50%;
     
     /* === Typography === */
     --font-family: Inter, system-ui, sans-serif;
@@ -113,33 +113,33 @@
     --radius-xl: 1rem;
     --radius-full: 9999px;
     
-    /* === Shadows === */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-glow: 0 0 20px hsl(151 40% 50% / 0.3);
+    /* === Shadows (stärker für Light Mode) === */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.08);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.12), 0 2px 4px -2px rgb(0 0 0 / 0.08);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.12), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+    --shadow-glow: 0 0 20px hsl(151 40% 50% / 0.2);
   }
   .dark {
-    /* === Shadcn/UI Base Variables (Dark) === */
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
+    /* === DARK MODE - Shadcn/UI Base Variables === */
+    --background: 224 71.4% 4.1%;         /* Sehr dunkel */
+    --foreground: 210 20% 98%;            /* Fast Weiß */
     --card: 224 71.4% 4.1%;
     --card-foreground: 210 20% 98%;
     --popover: 224 71.4% 4.1%;
     --popover-foreground: 210 20% 98%;
-    --primary: 210 20% 98%;
-    --primary-foreground: 220.9 39.3% 11%;
+    --primary: 151 25% 50%;               /* NICNOA Grün (heller für Dark) */
+    --primary-foreground: 0 0% 100%;      /* Weiß */
     --secondary: 215 27.9% 16.9%;
     --secondary-foreground: 210 20% 98%;
     --muted: 215 27.9% 16.9%;
     --muted-foreground: 217.9 10.6% 64.9%;
     --accent: 215 27.9% 16.9%;
     --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive: 0 62.8% 50%;           /* Rot (heller für Dark) */
+    --destructive-foreground: 0 0% 100%;
     --border: 215 27.9% 16.9%;
     --input: 215 27.9% 16.9%;
-    --ring: 216 12.2% 83.9%;
+    --ring: 151 25% 50%;                  /* NICNOA Grün */
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
