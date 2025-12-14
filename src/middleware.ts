@@ -46,12 +46,15 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Telefon-Verifizierung prüfen (nur für Nicht-Admins)
-  // User ohne verifizierte Telefonnummer werden zur Verifizierungsseite weitergeleitet
-  const phoneVerified = token?.phoneVerified as boolean | undefined
+  // Telefon-Verifizierung prüfen (nur für Nicht-Admins und nur für NEUE User)
+  // Bestehende User (phoneVerified === undefined/null) werden durchgelassen
+  // Nur User mit explizit phoneVerified === false werden zur Verifizierung weitergeleitet
+  const phoneVerified = token?.phoneVerified as boolean | undefined | null
   const isPhoneVerifyPage = pathname === '/verify-phone'
   
-  if (token && token.role !== 'ADMIN' && !phoneVerified && isDashboardRoute && !isPhoneVerifyPage) {
+  // Nur blockieren wenn phoneVerified EXPLIZIT false ist (neue Registrierungen)
+  // undefined/null bedeutet: Bestehender User ohne Phone-Feld → durchlassen
+  if (token && token.role !== 'ADMIN' && phoneVerified === false && isDashboardRoute && !isPhoneVerifyPage) {
     // Erlauben: API-Calls für SMS-Verifizierung
     if (pathname.startsWith('/api/auth/send-sms') || 
         pathname.startsWith('/api/auth/verify-sms') ||
@@ -69,8 +72,8 @@ export async function middleware(req: NextRequest) {
     const role = token.role as string
     const onboardingCompleted = token.onboardingCompleted as boolean
     
-    // Erst Telefon-Verifizierung prüfen
-    if (!phoneVerified && role !== 'ADMIN') {
+    // Erst Telefon-Verifizierung prüfen (nur wenn explizit false)
+    if (phoneVerified === false && role !== 'ADMIN') {
       return NextResponse.redirect(new URL('/verify-phone', req.url))
     }
     

@@ -123,7 +123,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             image: user.image,
             role: user.role,
             onboardingCompleted: user.onboardingCompleted,
-            phoneVerified: user.phoneVerified,
+            // null/undefined = bestehender User ohne Telefon-Feld → als verifiziert behandeln
+            // false = neue Registrierung, muss noch verifiziert werden
+            // true = explizit verifiziert
+            phoneVerified: user.phoneVerified ?? true,
           }
         } catch (error) {
           console.error("Auth error:", error)
