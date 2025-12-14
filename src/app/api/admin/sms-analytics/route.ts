@@ -40,6 +40,28 @@ async function fetchSevenIoData(apiKey: string): Promise<{
   let journal: SevenIoCache['journal'] = []
   let error: string | null = null
 
+  // seven.io Fehlercodes (werden als Zahl im Body zurückgegeben, auch bei HTTP 200)
+  const SEVEN_IO_ERROR_CODES: Record<number, string> = {
+    100: 'Fehlerhafte Anfrage',
+    101: 'API-Schlüssel fehlt',
+    102: 'Aktion fehlt',
+    103: 'Aktion existiert nicht',
+    201: 'Empfänger fehlt',
+    202: 'Empfänger-Nummer ungültig',
+    301: 'Nachrichtentext fehlt',
+    305: 'Zu viele Empfänger',
+    401: 'Nachrichtentyp ungültig',
+    402: 'Route nicht verfügbar',
+    403: 'Encoding nicht verfügbar',
+    500: 'Absender fehlt',
+    600: 'Interner Fehler',
+    700: 'Nicht genügend Guthaben',
+    900: 'Authentifizierung fehlgeschlagen',
+    901: 'Signatur ungültig',
+    902: 'API-Key deaktiviert',
+    903: 'IP nicht erlaubt',
+  }
+
   try {
     // Balance abrufen
     const balanceResponse = await fetch('https://gateway.seven.io/api/balance', {
@@ -48,19 +70,22 @@ async function fetchSevenIoData(apiKey: string): Promise<{
       },
     })
 
-    if (balanceResponse.ok) {
-      const balanceText = await balanceResponse.text()
-      const parsedBalance = parseFloat(balanceText)
-      if (!isNaN(parsedBalance)) {
-        balance = parsedBalance
-      }
-    } else {
-      const statusCode = await balanceResponse.text()
-      if (statusCode.trim() === '900') {
-        error = 'Authentifizierung fehlgeschlagen - API-Key prüfen'
+    const balanceText = await balanceResponse.text().then(t => t.trim())
+    const parsedValue = parseFloat(balanceText)
+    
+    // Prüfen ob es ein Fehlercode ist (ganzzahlige Werte 100-999)
+    if (!isNaN(parsedValue) && Number.isInteger(parsedValue) && parsedValue >= 100 && parsedValue <= 999) {
+      const errorMessage = SEVEN_IO_ERROR_CODES[parsedValue]
+      if (errorMessage) {
+        error = `${errorMessage} (Code ${parsedValue})`
       } else {
-        error = `API Fehler: ${statusCode}`
+        error = `API Fehler (Code ${parsedValue})`
       }
+    } else if (!isNaN(parsedValue) && parsedValue >= 0) {
+      // Gültiger Balance-Wert (Dezimalzahl oder 0)
+      balance = parsedValue
+    } else {
+      error = `Ungültige API-Antwort: ${balanceText.substring(0, 50)}`
     }
 
     // Journal/Logs abrufen (letzte 100 Einträge)
