@@ -55,9 +55,8 @@ export async function renderEmailPreview(
       return { error: `Template "${templateSlug}" nicht gefunden` }
     }
 
-    // Fetch platform settings for branding
-    const settings = await prisma.platformSettings.findUnique({
-      where: { id: 'default' },
+    // Fetch platform settings for branding (use findFirst since there's only one record)
+    const settings = await prisma.platformSettings.findFirst({
       select: {
         companyName: true,
         emailLogoUrl: true,
@@ -66,6 +65,15 @@ export async function renderEmailPreview(
         emailFromName: true,
       },
     })
+    
+    // Debug log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📧 Email Branding Settings:', {
+        logoUrl: settings?.emailLogoUrl,
+        primaryColor: settings?.emailPrimaryColor,
+        footerText: settings?.emailFooterText?.substring(0, 50),
+      })
+    }
 
     // Default preview data
     const defaultPreviewData: PreviewData = {
@@ -220,6 +228,62 @@ const FOOTER_LINKS = [
 ]
 
 /**
+ * Generate a stylized text logo when no image logo is uploaded
+ * Creates a professional "NICNOA&CO." style text logo
+ */
+function generateTextLogo(companyName: string, primaryColor: string): string {
+  // Split company name for styling (e.g., "NICNOA & CO." -> styled parts)
+  // Default styling creates a modern, professional look
+  
+  // Check if it's the default NICNOA name - apply special styling
+  if (companyName.toUpperCase().includes('NICNOA')) {
+    return `
+      <div style="display: inline-block; text-align: center;">
+        <span style="
+          font-family: 'Georgia', 'Times New Roman', serif;
+          font-size: 32px;
+          font-weight: 700;
+          letter-spacing: 4px;
+          color: #ffffff;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        ">NICNOA</span>
+        <span style="
+          font-family: 'Georgia', 'Times New Roman', serif;
+          font-size: 20px;
+          font-weight: 400;
+          letter-spacing: 2px;
+          color: rgba(255,255,255,0.9);
+          margin-left: 4px;
+        ">&amp;CO.</span>
+        <div style="
+          margin-top: 4px;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-size: 10px;
+          font-weight: 500;
+          letter-spacing: 3px;
+          color: rgba(255,255,255,0.7);
+          text-transform: uppercase;
+        ">DIGITAL</div>
+      </div>
+    `
+  }
+  
+  // Generic styling for custom company names
+  return `
+    <div style="display: inline-block; text-align: center;">
+      <span style="
+        font-family: 'Georgia', 'Times New Roman', serif;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        color: #ffffff;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      ">${companyName.toUpperCase()}</span>
+    </div>
+  `
+}
+
+/**
  * Wrap HTML content with branded email template
  */
 function wrapWithBranding(
@@ -232,6 +296,11 @@ function wrapWithBranding(
   }
 ): string {
   const { logoUrl, primaryColor, footerText, companyName } = branding
+
+  // Generate logo HTML - either image or styled text
+  const logoHtml = logoUrl 
+    ? `<img src="${logoUrl}" alt="${companyName}" style="max-height: 48px; width: auto;" />`
+    : generateTextLogo(companyName, primaryColor)
 
   // Generate footer links HTML
   const footerLinksHtml = FOOTER_LINKS
@@ -274,12 +343,6 @@ function wrapWithBranding(
     .header img {
       max-height: 48px;
       width: auto;
-    }
-    .header h1 {
-      color: #ffffff;
-      margin: 16px 0 0 0;
-      font-size: 24px;
-      font-weight: 600;
     }
     .content {
       padding: 32px;
@@ -335,7 +398,7 @@ function wrapWithBranding(
   <div class="wrapper">
     <div class="container">
       <div class="header">
-        ${logoUrl ? `<img src="${logoUrl}" alt="${companyName}" />` : `<h1>${companyName}</h1>`}
+        ${logoHtml}
       </div>
       <div class="content">
         ${content}
@@ -389,10 +452,8 @@ export async function sendEmail(options: {
   useTestSender?: boolean // Use Resend's test domain (onboarding@resend.dev)
 }): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
-    // Get Resend configuration - use type assertion for new fields
-    const settings = await prisma.platformSettings.findUnique({
-      where: { id: 'default' },
-    }) as {
+    // Get Resend configuration - use findFirst since there's only one record
+    const settings = await prisma.platformSettings.findFirst() as {
       resendApiKey?: string | null
       resendEnabled?: boolean
       resendFromEmail?: string | null

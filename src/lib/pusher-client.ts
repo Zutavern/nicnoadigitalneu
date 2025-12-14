@@ -13,7 +13,13 @@ export interface PusherConfig {
 
 // Get or create Pusher client instance
 export function getPusherClient(config: PusherConfig): Pusher | null {
-  if (!config.enabled || !config.key) {
+  if (!config.enabled || !config.key || !config.cluster) {
+    return null
+  }
+
+  // Basic validation - Pusher keys are typically alphanumeric
+  if (config.key.length < 10 || !/^[a-zA-Z0-9]+$/.test(config.key)) {
+    console.warn('⚠️ Invalid Pusher key format - Real-time features disabled')
     return null
   }
 
@@ -21,15 +27,20 @@ export function getPusherClient(config: PusherConfig): Pusher | null {
     return pusherInstance
   }
 
-  pusherInstance = new Pusher(config.key, {
-    cluster: config.cluster,
-    authEndpoint: '/api/pusher/auth',
-    auth: {
-      headers: {
-        'Content-Type': 'application/json',
+  try {
+    pusherInstance = new Pusher(config.key, {
+      cluster: config.cluster,
+      authEndpoint: '/api/pusher/auth',
+      auth: {
+        headers: {
+          'Content-Type': 'application/json',
+        },
       },
-    },
-  })
+    })
+  } catch (error) {
+    console.warn('⚠️ Failed to initialize Pusher:', error)
+    return null
+  }
 
   // Debug logging in development
   if (process.env.NODE_ENV === 'development') {
@@ -39,8 +50,19 @@ export function getPusherClient(config: PusherConfig): Pusher | null {
     pusherInstance.connection.bind('disconnected', () => {
       console.log('🔴 Pusher disconnected')
     })
-    pusherInstance.connection.bind('error', (err: Error) => {
-      console.error('❌ Pusher error:', err)
+    pusherInstance.connection.bind('error', (err: unknown) => {
+      // Pusher sometimes returns empty objects for connection errors
+      // This is usually due to invalid credentials or network issues
+      if (err && typeof err === 'object' && Object.keys(err).length === 0) {
+        console.warn('⚠️ Pusher connection failed - check your Pusher credentials in Admin → Settings → Integrations')
+      } else {
+        console.error('❌ Pusher error:', err)
+      }
+    })
+    pusherInstance.connection.bind('state_change', (states: { current: string; previous: string }) => {
+      if (states.current === 'failed') {
+        console.warn('⚠️ Pusher connection failed - Real-time features disabled')
+      }
     })
   }
 

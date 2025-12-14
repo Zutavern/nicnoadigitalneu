@@ -48,6 +48,7 @@ interface EmailTemplate {
     headline: string
     body: string
     buttonText?: string
+    buttonUrl?: string
     footer?: string
   }
   category: string
@@ -133,7 +134,7 @@ export default function EmailTemplatesPage() {
     })
   }
 
-  // Preview generieren
+  // Preview generieren - verwendet das globale Branding aus Platform-Settings
   const generatePreview = async (slug: string, content?: Record<string, string | undefined>) => {
     setIsGeneratingPreview(true)
     try {
@@ -142,7 +143,16 @@ export default function EmailTemplatesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           templateSlug: slug,
-          customContent: content,
+          // customContent muss im korrekten Format sein: { subject?, content? }
+          customContent: content ? {
+            content: {
+              headline: content.headline,
+              body: content.body,
+              buttonText: content.buttonText,
+              buttonUrl: content.buttonUrl,
+              footer: content.footer,
+            }
+          } : undefined,
         }),
       })
       
@@ -190,13 +200,14 @@ export default function EmailTemplatesPage() {
     }
   }
 
-  // Live-Preview bei Änderungen
+  // Live-Preview bei Änderungen - nutzt globales Branding (Logo, Farbe, Footer-Links)
   const updatePreview = useCallback(() => {
     if (!selectedTemplate) return
     generatePreview(selectedTemplate.slug, {
       headline: editedHeadline,
       body: editedBody,
       buttonText: editedButtonText,
+      buttonUrl: selectedTemplate.content?.buttonUrl || '#',
       footer: editedFooter,
     })
   }, [selectedTemplate, editedHeadline, editedBody, editedButtonText, editedFooter])
