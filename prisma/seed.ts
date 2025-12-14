@@ -39,7 +39,7 @@ async function main() {
     // Admin
     {
       id: '00000000-0000-0000-0000-000000000001',
-      email: 'admin@nicnoa.online',
+      email: 'admin@nicnoa.de',
       name: 'Admin Test',
       password: hashedPassword,
       role: 'ADMIN' as const,

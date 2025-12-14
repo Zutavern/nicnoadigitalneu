@@ -42,6 +42,8 @@ export async function GET() {
         posthogApiKey: true,
         posthogHost: true,
         posthogPersonalApiKey: true,
+        posthogProjectId: true,
+        posthogEnabled: true,
         
         // Daily.co
         dailyApiKey: true,
@@ -75,6 +77,8 @@ export async function GET() {
           posthogApiKey: true,
           posthogHost: true,
           posthogPersonalApiKey: true,
+          posthogProjectId: true,
+          posthogEnabled: true,
           dailyApiKey: true,
           dailyEnabled: true,
           resendApiKey: true,
@@ -116,6 +120,8 @@ export async function GET() {
       posthogApiKey: maskKey(settings.posthogApiKey),
       posthogHost: settings.posthogHost,
       posthogPersonalApiKey: maskKey(settings.posthogPersonalApiKey),
+      posthogProjectId: settings.posthogProjectId,
+      posthogEnabled: settings.posthogEnabled,
       
       // Daily.co
       dailyApiKey: maskKey(settings.dailyApiKey),
@@ -207,6 +213,12 @@ export async function PUT(request: Request) {
     }
     if (body.posthogPersonalApiKey !== undefined) {
       updateData.posthogPersonalApiKey = body.posthogPersonalApiKey || null
+    }
+    if (body.posthogProjectId !== undefined) {
+      updateData.posthogProjectId = body.posthogProjectId || null
+    }
+    if (body.posthogEnabled !== undefined) {
+      updateData.posthogEnabled = body.posthogEnabled
     }
 
     // Daily.co

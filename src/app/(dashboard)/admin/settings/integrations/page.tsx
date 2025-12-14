@@ -82,6 +82,8 @@ interface IntegrationSettings {
   posthogApiKey: string | null
   posthogHost: string | null
   posthogPersonalApiKey: string | null
+  posthogProjectId: string | null
+  posthogEnabled: boolean
   
   // Daily.co
   dailyApiKey: string | null
@@ -124,6 +126,8 @@ export default function IntegrationsPage() {
   const [posthogApiKey, setPosthogApiKey] = useState('')
   const [posthogHost, setPosthogHost] = useState('https://eu.i.posthog.com')
   const [posthogPersonalApiKey, setPosthogPersonalApiKey] = useState('')
+  const [posthogProjectId, setPosthogProjectId] = useState('')
+  const [posthogEnabled, setPosthogEnabled] = useState(false)
   
   const [dailyApiKey, setDailyApiKey] = useState('')
   const [dailyEnabled, setDailyEnabled] = useState(false)
@@ -151,6 +155,8 @@ export default function IntegrationsPage() {
       setPusherCluster(data.pusherCluster || 'eu')
       setPusherEnabled(data.pusherEnabled || false)
       setPosthogHost(data.posthogHost || 'https://eu.i.posthog.com')
+      setPosthogProjectId(data.posthogProjectId || '')
+      setPosthogEnabled(data.posthogEnabled || false)
       setDailyEnabled(data.dailyEnabled || false)
       setResendEnabled(data.resendEnabled || false)
       setResendFromEmail(data.resendFromEmail || '')
@@ -181,6 +187,8 @@ export default function IntegrationsPage() {
         pusherCluster,
         pusherEnabled,
         posthogHost: posthogHost || null,
+        posthogProjectId: posthogProjectId || null,
+        posthogEnabled,
         dailyEnabled,
         resendEnabled,
         resendFromEmail: resendFromEmail || null,
@@ -673,7 +681,7 @@ export default function IntegrationsPage() {
                 <h3 className="font-semibold">Analytics</h3>
                 <p className="text-sm text-muted-foreground">PostHog</p>
               </div>
-              {settings?.posthogApiKey && (
+              {settings?.posthogEnabled && settings?.posthogApiKey && (
                 <Badge className="ml-auto mr-4 bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
                   <CheckCircle2 className="h-3 w-3 mr-1" />
                   Aktiv
@@ -733,7 +741,7 @@ export default function IntegrationsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="posthogPersonalApiKey">Personal API Key (optional)</Label>
+                  <Label htmlFor="posthogPersonalApiKey">Personal API Key (für Analytics)</Label>
                   <div className="relative">
                     <Input
                       id="posthogPersonalApiKey"
@@ -753,7 +761,29 @@ export default function IntegrationsPage() {
                       {showSecrets['posthogPersonal'] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">Für Server-Side API Calls (Feature Flags, etc.)</p>
+                  <p className="text-xs text-muted-foreground">Benötigt für Analytics-Dashboard (Settings → Personal API Keys)</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="posthogProjectId">Project ID</Label>
+                  <Input
+                    id="posthogProjectId"
+                    value={posthogProjectId}
+                    onChange={(e) => setPosthogProjectId(e.target.value)}
+                    placeholder={settings?.posthogProjectId || '12345'}
+                  />
+                  <p className="text-xs text-muted-foreground">Die numerische Projekt-ID (Project Settings → Project ID)</p>
+                </div>
+
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <Label>PostHog aktivieren</Label>
+                    <p className="text-xs text-muted-foreground">Event-Tracking und Analytics</p>
+                  </div>
+                  <Switch
+                    checked={posthogEnabled}
+                    onCheckedChange={setPosthogEnabled}
+                  />
                 </div>
 
                 <p className="text-xs text-muted-foreground">
