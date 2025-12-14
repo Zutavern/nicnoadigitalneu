@@ -242,6 +242,9 @@ export default function IntegrationsPage() {
       if (resendApiKey && !resendApiKey.includes('•')) {
         payload.resendApiKey = resendApiKey
       }
+      if (sevenIoApiKey && !sevenIoApiKey.includes('•')) {
+        payload.sevenIoApiKey = sevenIoApiKey
+      }
       if (resendWebhookSecret && !resendWebhookSecret.includes('•')) {
         payload.resendWebhookSecret = resendWebhookSecret
       }
