@@ -23,6 +23,7 @@ import {
   HandshakeIcon,
   User,
   Palette,
+  FileText,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -86,6 +87,7 @@ const menuItems = [
     title: 'Marketing',
     items: [
       { label: 'Salon Branding', href: '/salon/marketing', icon: Palette },
+      { label: 'Preislisten', href: '/salon/marketing/pricelist', icon: FileText },
     ],
   },
   {

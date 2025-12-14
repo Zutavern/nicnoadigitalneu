@@ -149,6 +149,7 @@ const menuItems: MenuSection[] = [
         icon: Gift,
         children: [
           { label: 'Branding', href: '/admin/marketing/branding', icon: Palette },
+          { label: 'Preislisten-Hintergründe', href: '/admin/marketing/branding/pricelist-backgrounds', icon: FileText },
           { label: 'Referral-Programm', href: '/admin/referrals', icon: Gift },
         ],
       },

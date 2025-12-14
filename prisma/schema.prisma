@@ -256,6 +256,9 @@ model SalonProfile {
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Preislisten-Hintergründe
+  pricelistBackgrounds PricelistBackground[]
 
   @@map("salon_profiles")
 }
@@ -3304,4 +3307,30 @@ enum BackupRestoreStatus {
   COMPLETED
   FAILED
   CANCELLED
+}
+
+// ============================================
+// Pricelist Background Templates
+// ============================================
+
+model PricelistBackground {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  url         String   @db.VarChar(500) // Vercel Blob URL
+  filename    String   @db.VarChar(255)
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(false) @map("is_active")
+  
+  // Zuordnung: 'admin' für plattformweite, 'salon' für salon-eigene
+  type        String   @db.VarChar(20) // 'admin' | 'salon'
+  
+  // Nur bei type='salon' - Zuordnung zum Salon
+  salonId     String?  @map("salon_id") @db.Uuid
+  salon       SalonProfile? @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  @@index([type, isActive])
+  @@index([salonId, isActive])
+  @@map("pricelist_backgrounds")
 }
