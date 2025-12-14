@@ -227,6 +227,8 @@ export async function GET(request: Request) {
         }
 
         try {
+          console.log('🔍 seven.io Test - API-Key (erste 8 Zeichen):', sevenIoApiKey.substring(0, 8) + '...')
+          
           // seven.io Balance-API zum Prüfen der Credentials
           const res = await fetch('https://gateway.seven.io/api/balance', {
             headers: {
@@ -235,6 +237,10 @@ export async function GET(request: Request) {
           })
 
           const responseText = await res.text().then(t => t.trim())
+          
+          console.log('🔍 seven.io Response - HTTP Status:', res.status)
+          console.log('🔍 seven.io Response - Body:', responseText)
+          
           const parsedValue = parseFloat(responseText)
           
           // ZUERST auf Fehlercodes prüfen (ganzzahlige Werte 100-999)
@@ -242,7 +248,8 @@ export async function GET(request: Request) {
             const errorMessage = SEVEN_IO_ERRORS[parsedValue] || `API Fehler (Code ${parsedValue})`
             return NextResponse.json({ 
               success: false, 
-              error: errorMessage
+              error: errorMessage,
+              debug: { httpStatus: res.status, rawResponse: responseText }
             })
           }
           
@@ -250,15 +257,18 @@ export async function GET(request: Request) {
           if (!isNaN(parsedValue) && parsedValue >= 0) {
             return NextResponse.json({ 
               success: true, 
-              message: `Verbunden! Guthaben: ${parsedValue.toFixed(2)}€` 
+              message: `Verbunden! Guthaben: ${parsedValue.toFixed(2)}€`,
+              debug: { httpStatus: res.status, rawResponse: responseText }
             })
           }
 
           return NextResponse.json({ 
             success: false, 
-            error: `Ungültige API-Antwort: ${responseText.substring(0, 50)}` 
+            error: `Ungültige API-Antwort: ${responseText.substring(0, 50)}`,
+            debug: { httpStatus: res.status, rawResponse: responseText }
           })
         } catch (err) {
+          console.error('🔍 seven.io Test - Error:', err)
           return NextResponse.json({ 
             success: false, 
             error: err instanceof Error ? err.message : 'Verbindungsfehler' 

@@ -277,9 +277,17 @@ export default function IntegrationsPage() {
       const data = await res.json()
       
       if (data.success) {
-        toast.success(`${integration} Verbindung erfolgreich!`)
+        toast.success(data.message || `${integration} Verbindung erfolgreich!`)
+        // Debug-Info in Console loggen
+        if (data.debug) {
+          console.log(`✅ ${integration} Test Debug:`, data.debug)
+        }
       } else {
-        toast.error(`${integration} Verbindung fehlgeschlagen: ${data.error}`)
+        toast.error(`${integration}: ${data.error}`)
+        // Debug-Info in Console loggen
+        if (data.debug) {
+          console.log(`❌ ${integration} Test Debug:`, data.debug)
+        }
       }
     } catch (error) {
       toast.error(`Verbindungstest fehlgeschlagen`)
