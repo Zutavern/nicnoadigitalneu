@@ -119,6 +119,16 @@ export async function POST(request: Request) {
     const sevenIoEnabled = (settings as Record<string, unknown> | null)?.sevenIoEnabled === true
     const sevenIoApiKey = (settings as Record<string, unknown> | null)?.sevenIoApiKey as string | undefined
     const sevenIoSenderId = ((settings as Record<string, unknown> | null)?.sevenIoSenderId as string) || 'NICNOA'
+    const sevenIoTestNumbers = ((settings as Record<string, unknown> | null)?.sevenIoTestNumbers as string) || ''
+    
+    // Prüfe ob dies eine Testnummer ist
+    const testNumbersList = sevenIoTestNumbers
+      .split(',')
+      .map(n => normalizePhone(n.trim()))
+      .filter(n => n.length > 0)
+    const isTestNumber = testNumbersList.some(testNum => 
+      normalizedPhone.includes(testNum) || testNum.includes(normalizedPhone)
+    )
     
     // Prüfe auf bestehende Verifikation für diese Nummer
     const existingVerification = await prisma.phoneVerification.findFirst({
@@ -158,8 +168,8 @@ export async function POST(request: Request) {
       }, { status: 429 })
     }
     
-    // Neuen Code generieren
-    const code = generateCode(sevenIoEnabled)
+    // Neuen Code generieren (Testnummern bekommen immer "1111")
+    const code = isTestNumber ? '1111' : generateCode(sevenIoEnabled)
     const expiresAt = new Date(Date.now() + CODE_EXPIRES_MINUTES * 60 * 1000)
     
     // Bestehende unverifizierten Einträge für diese Session löschen
@@ -196,10 +206,13 @@ export async function POST(request: Request) {
       })
     }
     
-    // SMS senden
+    // SMS senden (Testnummern überspringen)
     const smsText = `Dein NICNOA&CO. Bestätigungscode ist: ${code}`
     
-    if (sevenIoEnabled && sevenIoApiKey) {
+    if (isTestNumber) {
+      // Testnummer - keine SMS senden, nur loggen
+      console.log(`📱 [TEST-NUMMER] ${normalizedPhone} - Code ist "1111" - keine SMS gesendet`)
+    } else if (sevenIoEnabled && sevenIoApiKey) {
       // SMS über seven.io senden
       const formattedPhone = formatPhoneE164(normalizedPhone)
       const result = await sendSmsViaSevenIo(formattedPhone, smsText, sevenIoApiKey, sevenIoSenderId)
@@ -232,12 +245,16 @@ export async function POST(request: Request) {
     
     return NextResponse.json({
       success: true,
-      message: sevenIoEnabled ? 'SMS wurde gesendet' : 'Bestätigungscode bereit (Test-Modus)',
+      message: isTestNumber 
+        ? 'Testnummer erkannt - Code ist "1111"' 
+        : (sevenIoEnabled ? 'SMS wurde gesendet' : 'Bestätigungscode bereit (Test-Modus)'),
       maskedPhone,
       remainingSms: MAX_SMS_PER_NUMBER - (verification?.smsCount || 1),
       expiresIn: CODE_EXPIRES_MINUTES,
-      // Im Testmodus (ohne seven.io) den Code zurückgeben
-      ...(!sevenIoEnabled && process.env.NODE_ENV !== 'production' && { testCode: code }),
+      isTestNumber,
+      // Im Testmodus (ohne seven.io) oder bei Testnummern den Code zurückgeben
+      ...(isTestNumber && { testCode: '1111' }),
+      ...(!sevenIoEnabled && !isTestNumber && process.env.NODE_ENV !== 'production' && { testCode: code }),
     })
     
   } catch (error) {

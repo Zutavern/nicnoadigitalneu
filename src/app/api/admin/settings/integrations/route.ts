@@ -33,6 +33,7 @@ interface IntegrationSettingsResult {
   sevenIoApiKey: string | null
   sevenIoEnabled: boolean
   sevenIoSenderId: string | null
+  sevenIoTestNumbers: string | null
 }
 
 // GET /api/admin/settings/integrations
@@ -112,6 +113,7 @@ export async function GET() {
       sevenIoApiKey: maskKey(settings.sevenIoApiKey),
       sevenIoEnabled: settings.sevenIoEnabled ?? false,
       sevenIoSenderId: settings.sevenIoSenderId,
+      sevenIoTestNumbers: settings.sevenIoTestNumbers,
       
       // Stripe (aus env)
       stripeConfigured: !!(process.env.STRIPE_SECRET_KEY && process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
@@ -234,6 +236,9 @@ export async function PUT(request: Request) {
     }
     if (body.sevenIoSenderId !== undefined) {
       updateData.sevenIoSenderId = body.sevenIoSenderId || 'NICNOA'
+    }
+    if (body.sevenIoTestNumbers !== undefined) {
+      updateData.sevenIoTestNumbers = body.sevenIoTestNumbers || null
     }
 
     // Update oder Create

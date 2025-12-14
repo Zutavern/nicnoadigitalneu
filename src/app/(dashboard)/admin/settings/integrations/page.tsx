@@ -101,6 +101,7 @@ interface IntegrationSettings {
   sevenIoApiKey: string | null
   sevenIoEnabled: boolean
   sevenIoSenderId: string | null
+  sevenIoTestNumbers: string | null
   
   // Stripe (read-only, aus env)
   stripeConfigured: boolean
@@ -148,6 +149,7 @@ export default function IntegrationsPage() {
   const [sevenIoApiKey, setSevenIoApiKey] = useState('')
   const [sevenIoEnabled, setSevenIoEnabled] = useState(false)
   const [sevenIoSenderId, setSevenIoSenderId] = useState('NICNOA')
+  const [sevenIoTestNumbers, setSevenIoTestNumbers] = useState('')
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true)
@@ -174,6 +176,7 @@ export default function IntegrationsPage() {
       setResendFromName(data.resendFromName || 'NICNOA')
       setSevenIoEnabled(data.sevenIoEnabled || false)
       setSevenIoSenderId(data.sevenIoSenderId || 'NICNOA')
+      setSevenIoTestNumbers(data.sevenIoTestNumbers || '')
       
       // API Keys werden maskiert zurückgegeben, also nicht überschreiben
     } catch (error) {
@@ -208,6 +211,7 @@ export default function IntegrationsPage() {
         resendFromName: resendFromName || null,
         sevenIoEnabled,
         sevenIoSenderId: sevenIoSenderId || 'NICNOA',
+        sevenIoTestNumbers: sevenIoTestNumbers || null,
       }
       
       // Nur nicht-leere API-Keys senden
@@ -1150,6 +1154,19 @@ export default function IntegrationsPage() {
                   />
                   <p className="text-xs text-muted-foreground">
                     Der Name, der als Absender in der SMS angezeigt wird. Max. 11 alphanumerische Zeichen.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="sevenIoTestNumbers">Test-Telefonnummern (optional)</Label>
+                  <Input
+                    id="sevenIoTestNumbers"
+                    value={sevenIoTestNumbers}
+                    onChange={(e) => setSevenIoTestNumbers(e.target.value)}
+                    placeholder="01512236345, 01701234567"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Komma-getrennte Liste von Telefonnummern, die keine SMS erhalten. Code &quot;1111&quot; wird automatisch akzeptiert.
                   </p>
                 </div>
 
