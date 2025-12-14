@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { 
   Loader2, Mail, Lock, Eye, EyeOff, User, Building2, Scissors, Check, X, 
-  MapPin, Phone, Globe, Instagram, Facebook, ArrowLeft, Sparkles, PartyPopper
+  Phone, ArrowLeft, Sparkles, PartyPopper, Info
 } from 'lucide-react'
 import * as LucideIcons from 'lucide-react'
 import { AuthEvents, identifyUser } from '@/lib/analytics'
@@ -105,6 +105,9 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [formError, setFormError] = useState('')
   
+  // SMS-Verifizierung aktiviert?
+  const [smsEnabled, setSmsEnabled] = useState<boolean | null>(null)
+  
   // Session-ID für SMS-Verifizierung
   const [sessionId] = useState(() => generateSessionId())
   
@@ -125,10 +128,6 @@ export default function RegisterPage() {
     useRef<HTMLInputElement>(null),
   ]
   
-  // PLZ Lookup
-  const plzDebounceRef = useRef<NodeJS.Timeout | null>(null)
-  const [isLookingUpPlz, setIsLookingUpPlz] = useState(false)
-  
   // Created User ID (nach Registrierung)
   const [createdUserId, setCreatedUserId] = useState<string | null>(null)
   
@@ -138,78 +137,36 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
     role: '' as UserRole | '',
-    // Kontaktdaten
-    street: '',
-    zipCode: '',
-    city: '',
+    // Telefon für SMS-Verifizierung
     phone: '',
-    // Social Media
-    website: '',
-    instagram: '',
-    facebook: '',
-    tiktok: '',
   })
 
-  // Lade Auth Page Config
+  // Lade Auth Page Config und SMS-Config
   useEffect(() => {
     fetch('/api/auth-page-config')
       .then(res => res.json())
       .then(data => setConfig({ ...defaultConfig, ...data }))
       .catch(() => {})
+    
+    // SMS-Config laden
+    fetch('/api/platform/sms-config')
+      .then(res => res.json())
+      .then(data => setSmsEnabled(data.enabled))
+      .catch(() => setSmsEnabled(false))
   }, [])
 
   const isPasswordValid = passwordRequirements.every(req => req.test(formData.password))
   const doPasswordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword !== ''
   
-  // Kontakt-Validierung
-  const isContactValid = 
-    formData.street.length >= 3 &&
-    /^\d{5}$/.test(formData.zipCode) &&
-    formData.city.length >= 2 &&
-    /^\+?[\d\s\-()]{8,20}$/.test(formData.phone.replace(/\s/g, ''))
+  // Telefon-Validierung
+  const isPhoneValid = /^\+?[\d\s\-()]{8,20}$/.test(formData.phone.replace(/\s/g, ''))
 
   const handleRoleSelect = (role: UserRole) => {
     setFormData({ ...formData, role })
     setStep(2)
   }
-  
-  // PLZ Lookup via OpenPLZ API
-  const lookupPLZ = async (plz: string) => {
-    if (plz.length !== 5) return
-    
-    setIsLookingUpPlz(true)
-    try {
-      const response = await fetch(`https://openplzapi.org/de/Localities?postalCode=${plz}`)
-      if (response.ok) {
-        const data = await response.json()
-        if (data && data.length > 0) {
-          setFormData(prev => ({ ...prev, city: data[0].name }))
-        }
-      }
-    } catch (error) {
-      console.error('PLZ lookup error:', error)
-    } finally {
-      setIsLookingUpPlz(false)
-    }
-  }
-  
-  const handlePLZChange = (value: string) => {
-    const cleanValue = value.replace(/\D/g, '').slice(0, 5)
-    setFormData(prev => ({ ...prev, zipCode: cleanValue }))
-    
-    if (plzDebounceRef.current) {
-      clearTimeout(plzDebounceRef.current)
-    }
-    if (cleanValue.length === 5) {
-      plzDebounceRef.current = setTimeout(() => {
-        lookupPLZ(cleanValue)
-      }, 300)
-    } else {
-      setFormData(prev => ({ ...prev, city: '' }))
-    }
-  }
 
-  // Step 2 -> Step 3 (Account erstellen)
+  // Step 2 -> Account erstellen
   const handleAccountSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     AuthEvents.signupStarted('email_form')
@@ -226,24 +183,11 @@ export default function RegisterPage() {
       return
     }
 
-    setFormError('')
-    setStep(3)
-  }
-  
-  // Step 3 -> Step 4 (Kontakt speichern & SMS senden)
-  const handleContactSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!isContactValid) {
-      setFormError('Bitte füllen Sie alle Pflichtfelder korrekt aus')
-      return
-    }
-    
     setIsLoading(true)
     setFormError('')
     
     try {
-      // User registrieren
+      // User registrieren (ohne Kontaktdaten)
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -252,14 +196,6 @@ export default function RegisterPage() {
           email: formData.email,
           password: formData.password,
           role: formData.role,
-          street: formData.street,
-          zipCode: formData.zipCode,
-          city: formData.city,
-          phone: formData.phone,
-          website: formData.website || '',
-          instagram: formData.instagram || '',
-          facebook: formData.facebook || '',
-          tiktok: formData.tiktok || '',
         }),
       })
 
@@ -273,10 +209,13 @@ export default function RegisterPage() {
       
       setCreatedUserId(data.user.id)
       
-      // SMS senden
-      await sendSms()
-      
-      setStep(4)
+      // Prüfen ob SMS-Verifizierung aktiviert ist
+      if (smsEnabled) {
+        setStep(3) // SMS-Verifizierung
+      } else {
+        // Ohne SMS-Verifizierung direkt einloggen und zum Welcome-Screen
+        await loginAndComplete(data.user.id)
+      }
       
     } catch {
       AuthEvents.signupFailed('unknown_error')
@@ -286,8 +225,36 @@ export default function RegisterPage() {
     }
   }
   
+  // Login und Abschluss
+  const loginAndComplete = async (userId: string) => {
+    AuthEvents.signupCompleted('email')
+    
+    // Auto-login
+    const result = await signIn('credentials', {
+      email: formData.email,
+      password: formData.password,
+      redirect: false,
+    })
+    
+    if (result?.error) {
+      setFormError('Konto erstellt, aber Anmeldung fehlgeschlagen. Bitte melden Sie sich manuell an.')
+    } else {
+      identifyUser(userId, { 
+        email: formData.email, 
+        name: formData.name,
+        role: formData.role 
+      })
+      setStep(4) // Willkommen
+    }
+  }
+  
   // SMS senden
   const sendSms = async () => {
+    if (!isPhoneValid) {
+      setSmsError('Bitte geben Sie eine gültige Telefonnummer ein')
+      return false
+    }
+    
     setIsResending(true)
     setSmsError('')
     
@@ -327,6 +294,12 @@ export default function RegisterPage() {
     } finally {
       setIsResending(false)
     }
+  }
+  
+  // Telefon bestätigen und SMS senden
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    await sendSms()
   }
   
   // Code Input Handler
@@ -393,27 +366,8 @@ export default function RegisterPage() {
         })
       }
       
-      AuthEvents.signupCompleted('email')
-      
-      // Auto-login
-      const result = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-      })
-      
-      if (result?.error) {
-        setFormError('Verifizierung erfolgreich, aber Anmeldung fehlgeschlagen')
-      } else {
-        if (createdUserId) {
-          identifyUser(createdUserId, { 
-            email: formData.email, 
-            name: formData.name,
-            role: formData.role 
-          })
-        }
-        setStep(5) // Willkommen
-      }
+      // Login und Abschluss
+      await loginAndComplete(createdUserId!)
       
     } catch {
       setSmsError('Fehler bei der Verifizierung')
@@ -424,9 +378,9 @@ export default function RegisterPage() {
   
   // Telefonnummer ändern
   const handleChangePhone = () => {
-    setStep(3)
     setSmsSent(false)
     setSmsCode(['', '', '', ''])
+    setSmsError('')
   }
 
   const handleOAuthSignIn = (provider: string) => {
@@ -438,9 +392,16 @@ export default function RegisterPage() {
     signIn(provider, { callbackUrl: '/onboarding' })
   }
   
-  // Zur Guided Tour
+  // Zur Guided Tour / Dashboard
   const handleStartTour = () => {
     router.push('/onboarding?tour=true')
+    router.refresh()
+  }
+  
+  const handleGoToDashboard = () => {
+    // Je nach Rolle weiterleiten
+    const dashboardPath = formData.role === 'SALON_OWNER' ? '/salon' : '/stylist'
+    router.push(dashboardPath)
     router.refresh()
   }
 
@@ -455,9 +416,8 @@ export default function RegisterPage() {
   const stepTitles: Record<number, string> = {
     1: 'Wählen Sie Ihre Rolle',
     2: 'Konto erstellen',
-    3: 'Kontakt & Social Media',
-    4: 'Telefon verifizieren',
-    5: 'Willkommen!',
+    3: 'Telefon verifizieren',
+    4: 'Willkommen!',
   }
 
   return (
@@ -481,9 +441,9 @@ export default function RegisterPage() {
             )}
 
             {/* Progress Indicator */}
-            {step > 1 && step < 5 && (
+            {step > 1 && step < 4 && (
               <div className="flex items-center gap-2 mb-4">
-                {[2, 3, 4].map((s) => (
+                {(smsEnabled ? [2, 3] : [2]).map((s) => (
                   <div
                     key={s}
                     className={`h-1.5 flex-1 rounded-full transition-colors ${
@@ -497,7 +457,7 @@ export default function RegisterPage() {
             {/* Title & Subtitle */}
             <div className="space-y-2">
               <h1 className="text-3xl font-bold text-white">
-                {step === 5 ? 'Willkommen bei NICNOA&CO!' : stepTitles[step]}
+                {step === 4 ? 'Willkommen bei NICNOA&CO!' : stepTitles[step]}
               </h1>
               {step === 1 && config.registerSubtitle && (
                 <p className="text-slate-400">{config.registerSubtitle}</p>
@@ -750,298 +710,175 @@ export default function RegisterPage() {
                     <Button 
                       type="submit" 
                       className="w-full h-12 bg-white text-black hover:bg-slate-200" 
-                      disabled={isLoading || !isPasswordValid || !doPasswordsMatch}
+                      disabled={isLoading || !isPasswordValid || !doPasswordsMatch || !formData.name || !formData.email}
                     >
-                      Weiter
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Wird erstellt...
+                        </>
+                      ) : (
+                        'Konto erstellen'
+                      )}
                     </Button>
                   </form>
                 </motion.div>
               )}
 
-              {/* Step 3: Contact & Social Media */}
+              {/* Step 3: SMS Verification */}
               {step === 3 && (
                 <motion.div
                   key="step3"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="space-y-4"
+                  className="space-y-6"
                 >
-                  <button
-                    onClick={() => setStep(2)}
-                    className="text-sm text-slate-400 hover:text-white flex items-center gap-2"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Zurück
-                  </button>
-                  
-                  <p className="text-slate-400 text-sm">
-                    Wir benötigen Ihre Kontaktdaten für die Verifizierung.
-                  </p>
-
-                  <form onSubmit={handleContactSubmit} className="space-y-4">
-                    {/* Straße */}
-                    <div className="space-y-2">
-                      <Label htmlFor="street" className="text-slate-300">
-                        Straße und Hausnummer <span className="text-red-400">*</span>
-                      </Label>
-                      <div className="relative">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
-                        <Input
-                          id="street"
-                          type="text"
-                          placeholder="Musterstraße 123"
-                          className="pl-10 h-12 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus:border-primary"
-                          value={formData.street}
-                          onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                          required
-                        />
+                  {!smsSent ? (
+                    // Telefonnummer eingeben
+                    <>
+                      <div className="text-center space-y-2">
+                        <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                          <Phone className="h-8 w-8 text-primary" />
+                        </div>
+                        <p className="text-slate-400">
+                          Bitte geben Sie Ihre Mobilnummer ein, um Ihr Konto zu verifizieren.
+                        </p>
                       </div>
-                    </div>
 
-                    {/* PLZ & Stadt */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="zipCode" className="text-slate-300">
-                          PLZ <span className="text-red-400">*</span>
-                        </Label>
-                        <Input
-                          id="zipCode"
-                          type="text"
-                          placeholder="12345"
-                          maxLength={5}
-                          className="h-12 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus:border-primary"
-                          value={formData.zipCode}
-                          onChange={(e) => handlePLZChange(e.target.value)}
-                          required
-                        />
+                      {smsError && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center"
+                        >
+                          {smsError}
+                        </motion.div>
+                      )}
+
+                      <form onSubmit={handlePhoneSubmit} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="phone" className="text-slate-300">Mobilnummer</Label>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+                            <Input
+                              id="phone"
+                              type="tel"
+                              placeholder="+49 170 1234567"
+                              className="pl-10 h-12 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus:border-primary"
+                              value={formData.phone}
+                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <Button 
+                          type="submit" 
+                          className="w-full h-12 bg-white text-black hover:bg-slate-200" 
+                          disabled={isResending || !isPhoneValid}
+                        >
+                          {isResending ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Wird gesendet...
+                            </>
+                          ) : (
+                            'SMS-Code anfordern'
+                          )}
+                        </Button>
+                      </form>
+                    </>
+                  ) : (
+                    // Code eingeben
+                    <>
+                      <div className="text-center space-y-2">
+                        <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                          <Phone className="h-8 w-8 text-primary" />
+                        </div>
+                        <p className="text-slate-400">
+                          Wir haben dir eine SMS mit einem Bestätigungscode an
+                        </p>
+                        <p className="text-white font-mono text-lg">
+                          {maskedPhone || formData.phone}
+                        </p>
+                        <p className="text-slate-400 text-sm">gesendet.</p>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="city" className="text-slate-300">
-                          Stadt <span className="text-red-400">*</span>
-                        </Label>
-                        <div className="relative">
+
+                      {smsError && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center"
+                        >
+                          {smsError}
+                        </motion.div>
+                      )}
+
+                      {/* Code Input */}
+                      <div className="flex justify-center gap-3">
+                        {smsCode.map((digit, index) => (
                           <Input
-                            id="city"
+                            key={index}
+                            ref={codeInputRefs[index]}
                             type="text"
-                            placeholder="Stadt"
-                            className="h-12 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus:border-primary"
-                            value={formData.city}
-                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                            required
+                            inputMode="numeric"
+                            maxLength={1}
+                            value={digit}
+                            onChange={(e) => handleCodeInput(index, e.target.value)}
+                            onKeyDown={(e) => handleCodeKeyDown(index, e)}
+                            className="w-14 h-14 text-center text-2xl font-bold bg-slate-900 border-slate-700 text-white focus:border-primary"
+                            disabled={isLoading}
                           />
-                          {isLookingUpPlz && (
-                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-slate-500" />
+                        ))}
+                      </div>
+
+                      {isLoading && (
+                        <div className="flex justify-center">
+                          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      <div className="space-y-3">
+                        <button
+                          onClick={handleChangePhone}
+                          className="text-sm text-slate-400 hover:text-white flex items-center gap-2 mx-auto"
+                        >
+                          Falsche Nummer? <span className="text-primary">Telefonnummer ändern</span>
+                        </button>
+
+                        <div className="text-center">
+                          <p className="text-slate-500 text-sm mb-2">Keine SMS erhalten?</p>
+                          {blockedUntil && blockedUntil > new Date() ? (
+                            <p className="text-red-400 text-sm">
+                              Bitte warte {Math.ceil((blockedUntil.getTime() - Date.now()) / 60000)} Minuten.
+                            </p>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={sendSms}
+                              disabled={isResending || remainingSms <= 0}
+                              className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                            >
+                              {isResending ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              ) : null}
+                              Erneut senden {remainingSms > 0 && `(noch ${remainingSms})`}
+                            </Button>
                           )}
                         </div>
                       </div>
-                    </div>
-
-                    {/* Telefon */}
-                    <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-slate-300">
-                        Telefon (Mobil) <span className="text-red-400">*</span>
-                      </Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
-                        <Input
-                          id="phone"
-                          type="tel"
-                          placeholder="+49 170 1234567"
-                          className="pl-10 h-12 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus:border-primary"
-                          value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <p className="text-xs text-slate-500">
-                        Wir senden Ihnen einen SMS-Code zur Verifizierung.
-                      </p>
-                    </div>
-
-                    <div className="relative py-2">
-                      <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t border-slate-800" />
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-slate-950 px-2 text-slate-600">
-                          Social Media (optional)
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Website */}
-                    <div className="space-y-2">
-                      <Label htmlFor="website" className="text-slate-300">Website</Label>
-                      <div className="relative">
-                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
-                        <Input
-                          id="website"
-                          type="url"
-                          placeholder="https://ihre-website.de"
-                          className="pl-10 h-12 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus:border-primary"
-                          value={formData.website}
-                          onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Social Media Grid */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="instagram" className="text-slate-300">Instagram</Label>
-                        <div className="relative">
-                          <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
-                          <Input
-                            id="instagram"
-                            type="text"
-                            placeholder="@username"
-                            className="pl-10 h-12 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus:border-primary"
-                            value={formData.instagram}
-                            onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="facebook" className="text-slate-300">Facebook</Label>
-                        <div className="relative">
-                          <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
-                          <Input
-                            id="facebook"
-                            type="text"
-                            placeholder="@pagename"
-                            className="pl-10 h-12 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus:border-primary"
-                            value={formData.facebook}
-                            onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="tiktok" className="text-slate-300">TikTok</Label>
-                      <Input
-                        id="tiktok"
-                        type="text"
-                        placeholder="@username"
-                        className="h-12 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus:border-primary"
-                        value={formData.tiktok}
-                        onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })}
-                      />
-                    </div>
-
-                    <Button 
-                      type="submit" 
-                      className="w-full h-12 bg-white text-black hover:bg-slate-200" 
-                      disabled={isLoading || !isContactValid}
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Wird verarbeitet...
-                        </>
-                      ) : (
-                        'SMS-Code anfordern'
-                      )}
-                    </Button>
-                  </form>
+                    </>
+                  )}
                 </motion.div>
               )}
 
-              {/* Step 4: SMS Verification */}
+              {/* Step 4: Welcome */}
               {step === 4 && (
                 <motion.div
                   key="step4"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="space-y-6"
-                >
-                  <div className="text-center space-y-2">
-                    <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                      <Phone className="h-8 w-8 text-primary" />
-                    </div>
-                    <p className="text-slate-400">
-                      Wir haben dir eine SMS mit einem Bestätigungscode an
-                    </p>
-                    <p className="text-white font-mono text-lg">
-                      {maskedPhone || formData.phone}
-                    </p>
-                    <p className="text-slate-400 text-sm">gesendet.</p>
-                  </div>
-
-                  {smsError && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center"
-                    >
-                      {smsError}
-                    </motion.div>
-                  )}
-
-                  {/* Code Input */}
-                  <div className="flex justify-center gap-3">
-                    {smsCode.map((digit, index) => (
-                      <Input
-                        key={index}
-                        ref={codeInputRefs[index]}
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => handleCodeInput(index, e.target.value)}
-                        onKeyDown={(e) => handleCodeKeyDown(index, e)}
-                        className="w-14 h-14 text-center text-2xl font-bold bg-slate-900 border-slate-700 text-white focus:border-primary"
-                        disabled={isLoading}
-                      />
-                    ))}
-                  </div>
-
-                  {isLoading && (
-                    <div className="flex justify-center">
-                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="space-y-3">
-                    <button
-                      onClick={handleChangePhone}
-                      className="text-sm text-slate-400 hover:text-white flex items-center gap-2 mx-auto"
-                    >
-                      Falsche Nummer? <span className="text-primary">Telefonnummer ändern</span>
-                    </button>
-
-                    <div className="text-center">
-                      <p className="text-slate-500 text-sm mb-2">Keine SMS erhalten?</p>
-                      {blockedUntil && blockedUntil > new Date() ? (
-                        <p className="text-red-400 text-sm">
-                          Bitte warte {Math.ceil((blockedUntil.getTime() - Date.now()) / 60000)} Minuten.
-                        </p>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={sendSms}
-                          disabled={isResending || remainingSms <= 0}
-                          className="border-slate-700 text-slate-300 hover:bg-slate-800"
-                        >
-                          {isResending ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          ) : null}
-                          Erneut senden {remainingSms > 0 && `(noch ${remainingSms})`}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Step 5: Welcome */}
-              {step === 5 && (
-                <motion.div
-                  key="step5"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
@@ -1061,36 +898,61 @@ export default function RegisterPage() {
                       Willkommen bei NICNOA&CO.online!
                     </h2>
                     <p className="text-slate-400">
-                      Dein Konto wurde erfolgreich erstellt und verifiziert.
+                      Dein Konto wurde erfolgreich erstellt.
                     </p>
                   </div>
 
                   <div className="flex items-center justify-center gap-2 text-green-400">
                     <Check className="h-5 w-5" />
-                    <span>E-Mail verifiziert</span>
+                    <span>Account erstellt</span>
                   </div>
-                  <div className="flex items-center justify-center gap-2 text-green-400">
-                    <Check className="h-5 w-5" />
-                    <span>Telefon verifiziert</span>
+                  {smsEnabled && (
+                    <div className="flex items-center justify-center gap-2 text-green-400">
+                      <Check className="h-5 w-5" />
+                      <span>Telefon verifiziert</span>
+                    </div>
+                  )}
+
+                  {/* Demo-Hinweis */}
+                  <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-left">
+                    <div className="flex items-start gap-3">
+                      <Info className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="text-white font-medium">Demo-Version bereit!</p>
+                        <p className="text-slate-400 mt-1">
+                          Wir haben dir eine Demo-Version bereitgestellt, in der du alles klicken und dich mit der Plattform vertraut machen kannst.
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
-                  <Button
-                    onClick={handleStartTour}
-                    className="w-full h-12 bg-white text-black hover:bg-slate-200"
-                  >
-                    <Sparkles className="mr-2 h-5 w-5" />
-                    Zur Guided Tour
-                  </Button>
+                  <div className="space-y-3">
+                    <Button
+                      onClick={handleStartTour}
+                      className="w-full h-12 bg-white text-black hover:bg-slate-200"
+                    >
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      Info-Tour starten
+                    </Button>
+                    
+                    <Button
+                      onClick={handleGoToDashboard}
+                      variant="outline"
+                      className="w-full h-12 border-slate-700 text-slate-300 hover:bg-slate-800"
+                    >
+                      Direkt zum Dashboard
+                    </Button>
+                  </div>
 
                   <p className="text-slate-500 text-xs">
-                    Wir zeigen dir alles, was du wissen musst.
+                    Die Info-Tour zeigt dir alles, was du wissen musst.
                   </p>
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* CTA to Login */}
-            {step < 5 && (
+            {step < 4 && (
               <p className="text-slate-400 text-sm">
                 {config.registerCtaText}{' '}
                 <Link href="/login" className="text-primary hover:underline">

@@ -43,6 +43,7 @@ export async function POST(request: Request) {
     const user = await prisma.user.update({
       where: { id: userId },
       data: {
+        phone: normalizedPhone,
         phoneVerified: true,
         phoneVerifiedAt: new Date(),
       },

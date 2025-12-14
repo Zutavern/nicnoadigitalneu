@@ -55,6 +55,11 @@ export async function GET() {
         resendFromEmail: true,
         resendFromName: true,
         resendWebhookSecret: true,
+        
+        // seven.io SMS
+        sevenIoApiKey: true,
+        sevenIoEnabled: true,
+        sevenIoSenderId: true,
       },
     })
 
@@ -86,6 +91,9 @@ export async function GET() {
           resendFromEmail: true,
           resendFromName: true,
           resendWebhookSecret: true,
+          sevenIoApiKey: true,
+          sevenIoEnabled: true,
+          sevenIoSenderId: true,
         },
       })
     }
@@ -133,6 +141,11 @@ export async function GET() {
       resendFromEmail: settings.resendFromEmail,
       resendFromName: settings.resendFromName,
       resendWebhookSecret: maskKey(settings.resendWebhookSecret),
+      
+      // seven.io SMS
+      sevenIoApiKey: maskKey((settings as Record<string, unknown>).sevenIoApiKey as string | null),
+      sevenIoEnabled: (settings as Record<string, unknown>).sevenIoEnabled as boolean,
+      sevenIoSenderId: (settings as Record<string, unknown>).sevenIoSenderId as string | null,
       
       // Stripe (aus env)
       stripeConfigured: !!(process.env.STRIPE_SECRET_KEY && process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
@@ -244,6 +257,17 @@ export async function PUT(request: Request) {
     }
     if (body.resendWebhookSecret !== undefined) {
       updateData.resendWebhookSecret = body.resendWebhookSecret || null
+    }
+
+    // seven.io SMS
+    if (body.sevenIoApiKey !== undefined) {
+      updateData.sevenIoApiKey = body.sevenIoApiKey || null
+    }
+    if (body.sevenIoEnabled !== undefined) {
+      updateData.sevenIoEnabled = body.sevenIoEnabled
+    }
+    if (body.sevenIoSenderId !== undefined) {
+      updateData.sevenIoSenderId = body.sevenIoSenderId || 'NICNOA'
     }
 
     // Update oder Create

@@ -13,13 +13,16 @@ const MAX_SMS_PER_NUMBER = 3 // Max 3 SMS pro Nummer
 const BLOCK_DURATION_MINUTES = 15 // 15 Minuten Sperre nach Limit
 const CODE_EXPIRES_MINUTES = 10 // Code gültig für 10 Minuten
 
+// seven.io API
+const SEVEN_IO_API_URL = 'https://gateway.seven.io/api/sms'
+
 /**
  * Generiert einen 4-stelligen numerischen Code
- * Im Testmodus wird immer "1111" zurückgegeben
+ * Im Testmodus wird immer "1111" zurückgegeben, außer seven.io ist aktiviert
  */
-function generateCode(): string {
-  if (process.env.NODE_ENV !== 'production') {
-    return '1111' // Testcode
+function generateCode(sevenIoEnabled: boolean): string {
+  if (!sevenIoEnabled && process.env.NODE_ENV !== 'production') {
+    return '1111' // Testcode wenn seven.io nicht aktiv
   }
   return crypto.randomInt(1000, 9999).toString()
 }
@@ -31,12 +34,91 @@ function normalizePhone(phone: string): string {
   return phone.replace(/[\s\-()]/g, '')
 }
 
+/**
+ * Formatiert Telefonnummer für E.164 Format
+ */
+function formatPhoneE164(phone: string): string {
+  let normalized = phone.replace(/[\s\-()]/g, '')
+  
+  // Deutsche Handynummern normalisieren
+  if (normalized.startsWith('0')) {
+    normalized = '+49' + normalized.substring(1)
+  } else if (normalized.startsWith('49') && !normalized.startsWith('+')) {
+    normalized = '+' + normalized
+  } else if (!normalized.startsWith('+')) {
+    normalized = '+49' + normalized
+  }
+  
+  return normalized
+}
+
+/**
+ * Sendet SMS über seven.io
+ */
+async function sendSmsViaSevenIo(
+  phone: string, 
+  text: string, 
+  apiKey: string, 
+  senderId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch(SEVEN_IO_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Api-Key': apiKey,
+      },
+      body: JSON.stringify({
+        to: phone,
+        text,
+        from: senderId,
+      }),
+    })
+
+    const responseText = await response.text()
+    
+    // Prüfen ob es ein einfacher Status-Code ist
+    const statusCode = parseInt(responseText.trim(), 10)
+    
+    if (!isNaN(statusCode)) {
+      if (statusCode === 100) {
+        return { success: true }
+      } else {
+        return { success: false, error: `seven.io Fehlercode: ${statusCode}` }
+      }
+    }
+
+    // JSON-Format
+    try {
+      const data = JSON.parse(responseText)
+      if (data.success === '100' || data.messages?.some((m: { success: boolean }) => m.success)) {
+        return { success: true }
+      }
+      return { success: false, error: data.messages?.[0]?.error_text || 'SMS konnte nicht gesendet werden' }
+    } catch {
+      return { success: false, error: 'Unerwartete Antwort von seven.io' }
+    }
+  } catch (error) {
+    console.error('seven.io API error:', error)
+    return { success: false, error: 'Verbindungsfehler zu seven.io' }
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
     const { phone, sessionId } = sendSmsSchema.parse(body)
     
     const normalizedPhone = normalizePhone(phone)
+    
+    // Lade seven.io Konfiguration
+    const settings = await prisma.platformSettings.findFirst()
+    
+    // Type-safe access mit optionalem Chaining
+    const sevenIoEnabled = (settings as Record<string, unknown> | null)?.sevenIoEnabled === true
+    const sevenIoApiKey = (settings as Record<string, unknown> | null)?.sevenIoApiKey as string | undefined
+    const sevenIoSenderId = ((settings as Record<string, unknown> | null)?.sevenIoSenderId as string) || 'NICNOA'
     
     // Prüfe auf bestehende Verifikation für diese Nummer
     const existingVerification = await prisma.phoneVerification.findFirst({
@@ -77,7 +159,7 @@ export async function POST(request: Request) {
     }
     
     // Neuen Code generieren
-    const code = generateCode()
+    const code = generateCode(sevenIoEnabled)
     const expiresAt = new Date(Date.now() + CODE_EXPIRES_MINUTES * 60 * 1000)
     
     // Bestehende unverifizierten Einträge für diese Session löschen
@@ -114,13 +196,29 @@ export async function POST(request: Request) {
       })
     }
     
-    // SMS senden (im Testmodus nur loggen)
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`📱 [TEST] SMS an ${normalizedPhone}: Dein Bestätigungscode ist ${code}`)
+    // SMS senden
+    const smsText = `Dein NICNOA&CO. Bestätigungscode ist: ${code}`
+    
+    if (sevenIoEnabled && sevenIoApiKey) {
+      // SMS über seven.io senden
+      const formattedPhone = formatPhoneE164(normalizedPhone)
+      const result = await sendSmsViaSevenIo(formattedPhone, smsText, sevenIoApiKey, sevenIoSenderId)
+      
+      if (!result.success) {
+        console.error(`📱 [seven.io] SMS-Fehler: ${result.error}`)
+        return NextResponse.json({
+          error: 'SMS-Versand fehlgeschlagen',
+          message: result.error || 'Die SMS konnte nicht gesendet werden. Bitte versuche es später erneut.',
+        }, { status: 500 })
+      }
+      
+      console.log(`📱 [seven.io] SMS erfolgreich an ${formattedPhone} gesendet`)
+    } else if (process.env.NODE_ENV !== 'production') {
+      // Testmodus: Nur loggen
+      console.log(`📱 [TEST] SMS an ${normalizedPhone}: ${smsText}`)
     } else {
-      // TODO: Echte SMS-Integration (Twilio, etc.)
-      // await sendSmsViaTwilio(normalizedPhone, `Dein NICNOA&CO. Bestätigungscode ist: ${code}`)
-      console.log(`📱 [PROD] SMS würde an ${normalizedPhone} gesendet werden`)
+      // Produktion ohne seven.io: Warnung loggen
+      console.warn(`📱 [WARN] seven.io nicht konfiguriert - SMS wird nicht gesendet`)
     }
     
     // Maskierte Telefonnummer für Anzeige
@@ -134,12 +232,12 @@ export async function POST(request: Request) {
     
     return NextResponse.json({
       success: true,
-      message: 'SMS wurde gesendet',
+      message: sevenIoEnabled ? 'SMS wurde gesendet' : 'Bestätigungscode bereit (Test-Modus)',
       maskedPhone,
       remainingSms: MAX_SMS_PER_NUMBER - (verification?.smsCount || 1),
       expiresIn: CODE_EXPIRES_MINUTES,
-      // Im Testmodus den Code zurückgeben (für einfaches Testen)
-      ...(process.env.NODE_ENV !== 'production' && { testCode: code }),
+      // Im Testmodus (ohne seven.io) den Code zurückgeben
+      ...(!sevenIoEnabled && process.env.NODE_ENV !== 'production' && { testCode: code }),
     })
     
   } catch (error) {

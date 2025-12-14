@@ -24,6 +24,7 @@ import {
   Copy,
   Sparkles,
   Mail,
+  Phone,
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -96,6 +97,11 @@ interface IntegrationSettings {
   resendFromName: string | null
   resendWebhookSecret: string | null
   
+  // seven.io SMS
+  sevenIoApiKey: string | null
+  sevenIoEnabled: boolean
+  sevenIoSenderId: string | null
+  
   // Stripe (read-only, aus env)
   stripeConfigured: boolean
 }
@@ -137,6 +143,11 @@ export default function IntegrationsPage() {
   const [resendFromEmail, setResendFromEmail] = useState('')
   const [resendFromName, setResendFromName] = useState('NICNOA')
   const [resendWebhookSecret, setResendWebhookSecret] = useState('')
+  
+  // seven.io SMS
+  const [sevenIoApiKey, setSevenIoApiKey] = useState('')
+  const [sevenIoEnabled, setSevenIoEnabled] = useState(false)
+  const [sevenIoSenderId, setSevenIoSenderId] = useState('NICNOA')
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true)
@@ -161,6 +172,8 @@ export default function IntegrationsPage() {
       setResendEnabled(data.resendEnabled || false)
       setResendFromEmail(data.resendFromEmail || '')
       setResendFromName(data.resendFromName || 'NICNOA')
+      setSevenIoEnabled(data.sevenIoEnabled || false)
+      setSevenIoSenderId(data.sevenIoSenderId || 'NICNOA')
       
       // API Keys werden maskiert zurückgegeben, also nicht überschreiben
     } catch (error) {
@@ -193,6 +206,8 @@ export default function IntegrationsPage() {
         resendEnabled,
         resendFromEmail: resendFromEmail || null,
         resendFromName: resendFromName || null,
+        sevenIoEnabled,
+        sevenIoSenderId: sevenIoSenderId || 'NICNOA',
       }
       
       // Nur nicht-leere API-Keys senden
@@ -225,6 +240,9 @@ export default function IntegrationsPage() {
       }
       if (resendWebhookSecret && !resendWebhookSecret.includes('•')) {
         payload.resendWebhookSecret = resendWebhookSecret
+      }
+      if (sevenIoApiKey && !sevenIoApiKey.includes('•')) {
+        payload.sevenIoApiKey = sevenIoApiKey
       }
 
       const res = await fetch('/api/admin/settings/integrations', {
@@ -1025,6 +1043,134 @@ export default function IntegrationsPage() {
                     disabled={testingConnection === 'resend' || !settings?.resendApiKey}
                   >
                     {testingConnection === 'resend' ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Zap className="h-4 w-4 mr-2" />
+                    )}
+                    Verbindung testen
+                  </Button>
+                  <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                    {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                    Speichern
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* SMS-Verifizierung */}
+        <AccordionItem value="sms" className="border rounded-lg overflow-hidden">
+          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center">
+                <Phone className="h-5 w-5 text-white" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold">SMS-Verifizierung</h3>
+                <p className="text-sm text-muted-foreground">seven.io</p>
+              </div>
+              {settings?.sevenIoEnabled && (
+                <Badge className="ml-auto mr-4 bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  Aktiv
+                </Badge>
+              )}
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-6 pb-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Phone className="h-5 w-5 text-cyan-500" />
+                    <div>
+                      <CardTitle className="text-base">seven.io</CardTitle>
+                      <CardDescription>SMS-Verifizierung bei der Registrierung für neue Nutzer</CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={sevenIoEnabled}
+                      onCheckedChange={setSevenIoEnabled}
+                    />
+                    <Label className="text-sm">Aktiviert</Label>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {!sevenIoEnabled && (
+                  <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-4 text-sm text-amber-600 dark:text-amber-400">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium">SMS-Verifizierung deaktiviert</p>
+                        <p className="text-xs mt-1 text-amber-600/80 dark:text-amber-400/80">
+                          Neue Nutzer können sich ohne SMS-Verifizierung registrieren. Die Telefonnummer wird dann nicht verifiziert.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="sevenIoApiKey">API Key</Label>
+                  <div className="relative">
+                    <Input
+                      id="sevenIoApiKey"
+                      type={showSecrets['sevenIo'] ? 'text' : 'password'}
+                      value={sevenIoApiKey}
+                      onChange={(e) => setSevenIoApiKey(e.target.value)}
+                      placeholder={settings?.sevenIoApiKey || 'xxxxxxxxxxxxxxxxxxxxxxxx'}
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                      onClick={() => toggleShowSecret('sevenIo')}
+                    >
+                      {showSecrets['sevenIo'] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Findest du unter seven.io → API-Key
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="sevenIoSenderId">Absender-ID (max. 11 Zeichen)</Label>
+                  <Input
+                    id="sevenIoSenderId"
+                    value={sevenIoSenderId}
+                    onChange={(e) => setSevenIoSenderId(e.target.value.slice(0, 11))}
+                    placeholder="NICNOA"
+                    maxLength={11}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Der Name, der als Absender in der SMS angezeigt wird. Max. 11 alphanumerische Zeichen.
+                  </p>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  <a href="https://app.seven.io/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    app.seven.io <ExternalLink className="inline h-3 w-3" />
+                  </a>
+                  {' · '}
+                  <a href="https://docs.seven.io/en/rest-api/endpoints/sms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    API-Dokumentation <ExternalLink className="inline h-3 w-3" />
+                  </a>
+                </p>
+
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => testConnection('sevenio')}
+                    disabled={testingConnection === 'sevenio' || !settings?.sevenIoApiKey}
+                  >
+                    {testingConnection === 'sevenio' ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     ) : (
                       <Zap className="h-4 w-4 mr-2" />

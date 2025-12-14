@@ -206,6 +206,55 @@ export async function GET(request: Request) {
         }
       }
 
+      case 'sevenio': {
+        // Type-safe access für die neuen Felder
+        const sevenIoApiKey = (settings as Record<string, unknown> | null)?.sevenIoApiKey as string | undefined
+        
+        if (!sevenIoApiKey) {
+          return NextResponse.json({ success: false, error: 'Kein API-Key konfiguriert' })
+        }
+
+        try {
+          // seven.io Balance-API zum Prüfen der Credentials
+          const res = await fetch('https://gateway.seven.io/api/balance', {
+            headers: {
+              'X-Api-Key': sevenIoApiKey,
+            },
+          })
+
+          const responseText = await res.text()
+          
+          // seven.io gibt bei Erfolg die Balance als Zahl zurück
+          const balance = parseFloat(responseText)
+          
+          if (!isNaN(balance)) {
+            return NextResponse.json({ 
+              success: true, 
+              message: `Verbunden! Guthaben: ${balance.toFixed(2)}€` 
+            })
+          }
+          
+          // Bei Fehlercodes
+          const statusCode = parseInt(responseText.trim(), 10)
+          if (statusCode === 900) {
+            return NextResponse.json({ 
+              success: false, 
+              error: 'Authentifizierung fehlgeschlagen - API-Key prüfen' 
+            })
+          }
+
+          return NextResponse.json({ 
+            success: false, 
+            error: `API Error: ${responseText.substring(0, 50)}` 
+          })
+        } catch (err) {
+          return NextResponse.json({ 
+            success: false, 
+            error: err instanceof Error ? err.message : 'Verbindungsfehler' 
+          })
+        }
+      }
+
       default:
         return NextResponse.json({ error: 'Unbekannte Integration' }, { status: 400 })
     }

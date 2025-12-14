@@ -16,13 +16,13 @@ const registerSchema = z.object({
     .regex(/[^A-Za-z0-9]/, "Passwort muss mindestens ein Sonderzeichen enthalten"),
   role: z.enum(["SALON_OWNER", "STYLIST"]),
   
-  // Kontaktdaten (Pflicht)
-  street: z.string().min(3, "Straße muss mindestens 3 Zeichen lang sein"),
-  zipCode: z.string().regex(/^\d{5}$/, "PLZ muss 5 Ziffern haben"),
-  city: z.string().min(2, "Stadt muss mindestens 2 Zeichen lang sein"),
-  phone: z.string().regex(/^\+?[\d\s\-()]{8,20}$/, "Ungültige Telefonnummer"),
+  // Kontaktdaten werden jetzt im Onboarding abgefragt (optional bei Registrierung)
+  street: z.string().optional().or(z.literal("")),
+  zipCode: z.string().optional().or(z.literal("")),
+  city: z.string().optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
   
-  // Social Media (Optional)
+  // Social Media werden im Onboarding abgefragt (optional)
   website: z.string().url().optional().or(z.literal("")),
   instagram: z.string().optional().or(z.literal("")),
   facebook: z.string().optional().or(z.literal("")),
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     // Hash password
     const hashedPassword = await bcrypt.hash(validatedData.password, 12)
 
-    // Create user with contact and social media data
+    // Create user (Kontaktdaten werden im Onboarding ergänzt)
     const user = await prisma.user.create({
       data: {
         name: validatedData.name,
@@ -72,15 +72,15 @@ export async function POST(request: Request) {
         password: hashedPassword,
         role: validatedData.role,
         onboardingCompleted: false,
+        phoneVerified: false, // Wird bei SMS-Verifizierung auf true gesetzt
         
-        // Kontaktdaten
-        street: validatedData.street,
-        zipCode: validatedData.zipCode,
-        city: validatedData.city,
-        phone: validatedData.phone,
-        phoneVerified: false, // Muss noch per SMS verifiziert werden
+        // Kontaktdaten (optional, werden im Onboarding ergänzt)
+        street: validatedData.street || null,
+        zipCode: validatedData.zipCode || null,
+        city: validatedData.city || null,
+        phone: validatedData.phone || null,
         
-        // Social Media (nur wenn nicht leer)
+        // Social Media (optional)
         website: validatedData.website || null,
         instagram: validatedData.instagram || null,
         facebook: validatedData.facebook || null,
