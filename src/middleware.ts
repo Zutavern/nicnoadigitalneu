@@ -22,7 +22,7 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/', '/login', '/registrieren', '/passwort-vergessen', '/passwort-zuruecksetzen', '/api/auth', '/preise', '/faq', '/features', '/produkt', '/unternehmen', '/uber-uns', '/partner', '/roadmap', '/updates', '/beta-programm', '/agb', '/datenschutz', '/impressum']
+  const publicRoutes = ['/', '/login', '/registrieren', '/passwort-vergessen', '/passwort-zuruecksetzen', '/api/auth', '/preise', '/faq', '/features', '/produkt', '/unternehmen', '/uber-uns', '/partner', '/roadmap', '/updates', '/beta-programm', '/agb', '/datenschutz', '/impressum', '/verify-phone']
   const isPublicRoute = publicRoutes.some(route => 
     pathname === route || pathname.startsWith('/api/auth')
   )
@@ -46,11 +46,33 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
+  // Telefon-Verifizierung prüfen (nur für Nicht-Admins)
+  // User ohne verifizierte Telefonnummer werden zur Verifizierungsseite weitergeleitet
+  const phoneVerified = token?.phoneVerified as boolean | undefined
+  const isPhoneVerifyPage = pathname === '/verify-phone'
+  
+  if (token && token.role !== 'ADMIN' && !phoneVerified && isDashboardRoute && !isPhoneVerifyPage) {
+    // Erlauben: API-Calls für SMS-Verifizierung
+    if (pathname.startsWith('/api/auth/send-sms') || 
+        pathname.startsWith('/api/auth/verify-sms') ||
+        pathname.startsWith('/api/auth/complete-registration')) {
+      return NextResponse.next()
+    }
+    
+    // Zur Verifizierungsseite umleiten
+    return NextResponse.redirect(new URL('/verify-phone', req.url))
+  }
+
   // If user is logged in and tries to access auth pages
   if (token && (pathname === '/login' || pathname === '/registrieren')) {
     // Redirect based on role
     const role = token.role as string
     const onboardingCompleted = token.onboardingCompleted as boolean
+    
+    // Erst Telefon-Verifizierung prüfen
+    if (!phoneVerified && role !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/verify-phone', req.url))
+    }
     
     // Nutzer, die das Onboarding nicht abgeschlossen haben, zur Onboarding-Seite
     if ((role === 'STYLIST' || role === 'SALON_OWNER') && !onboardingCompleted) {

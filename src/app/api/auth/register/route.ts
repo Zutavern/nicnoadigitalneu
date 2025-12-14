@@ -15,6 +15,18 @@ const registerSchema = z.object({
     .regex(/[0-9]/, "Passwort muss mindestens eine Zahl enthalten")
     .regex(/[^A-Za-z0-9]/, "Passwort muss mindestens ein Sonderzeichen enthalten"),
   role: z.enum(["SALON_OWNER", "STYLIST"]),
+  
+  // Kontaktdaten (Pflicht)
+  street: z.string().min(3, "Straße muss mindestens 3 Zeichen lang sein"),
+  zipCode: z.string().regex(/^\d{5}$/, "PLZ muss 5 Ziffern haben"),
+  city: z.string().min(2, "Stadt muss mindestens 2 Zeichen lang sein"),
+  phone: z.string().regex(/^\+?[\d\s\-()]{8,20}$/, "Ungültige Telefonnummer"),
+  
+  // Social Media (Optional)
+  website: z.string().url().optional().or(z.literal("")),
+  instagram: z.string().optional().or(z.literal("")),
+  facebook: z.string().optional().or(z.literal("")),
+  tiktok: z.string().optional().or(z.literal("")),
 })
 
 export async function POST(request: Request) {
@@ -52,7 +64,7 @@ export async function POST(request: Request) {
     // Hash password
     const hashedPassword = await bcrypt.hash(validatedData.password, 12)
 
-    // Create user
+    // Create user with contact and social media data
     const user = await prisma.user.create({
       data: {
         name: validatedData.name,
@@ -60,6 +72,19 @@ export async function POST(request: Request) {
         password: hashedPassword,
         role: validatedData.role,
         onboardingCompleted: false,
+        
+        // Kontaktdaten
+        street: validatedData.street,
+        zipCode: validatedData.zipCode,
+        city: validatedData.city,
+        phone: validatedData.phone,
+        phoneVerified: false, // Muss noch per SMS verifiziert werden
+        
+        // Social Media (nur wenn nicht leer)
+        website: validatedData.website || null,
+        instagram: validatedData.instagram || null,
+        facebook: validatedData.facebook || null,
+        tiktok: validatedData.tiktok || null,
       },
     })
 

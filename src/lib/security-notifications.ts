@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 interface LoginEventParams {
   userId: string
   userEmail: string
+  userName?: string
   success: boolean
   reason?: string
 }

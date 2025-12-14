@@ -92,6 +92,23 @@ model User {
 
   // Analytics
   analyticsEvents AnalyticsEvent[]
+  
+  // Telefon-Verifizierung
+  phone             String?   @db.VarChar(20)
+  phoneVerified     Boolean   @default(false) @map("phone_verified")
+  phoneVerifiedAt   DateTime? @map("phone_verified_at") @db.Timestamptz
+  phoneVerifications PhoneVerification[]
+  
+  // Kontaktdaten (Registrierung)
+  street            String?   @db.VarChar(255)
+  zipCode           String?   @map("zip_code") @db.VarChar(10)
+  city              String?   @db.VarChar(100)
+  
+  // Social Media (Registrierung)
+  website           String?   @db.VarChar(255)
+  instagram         String?   @db.VarChar(100)
+  facebook          String?   @db.VarChar(100)
+  tiktok            String?   @db.VarChar(100)
 
   @@map("users")
 }
@@ -133,6 +150,32 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+// Phone SMS Verification
+model PhoneVerification {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Kann User-ID sein (nach Registrierung) oder temp Session-ID
+  userId        String?   @map("user_id") @db.Uuid
+  sessionId     String?   @map("session_id") @db.VarChar(100)
+  
+  phone         String    @db.VarChar(20)
+  code          String    @db.VarChar(6)
+  attempts      Int       @default(0)  // Fehlversuche bei Code-Eingabe
+  smsCount      Int       @default(0) @map("sms_count")  // Anzahl gesendeter SMS
+  lastSmsSentAt DateTime? @map("last_sms_sent_at") @db.Timestamptz
+  blockedUntil  DateTime? @map("blocked_until") @db.Timestamptz
+  verified      Boolean   @default(false)
+  
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  expiresAt     DateTime  @map("expires_at") @db.Timestamptz
+  
+  user          User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([phone])
+  @@index([sessionId])
+  @@map("phone_verifications")
 }
 
 // ============================================

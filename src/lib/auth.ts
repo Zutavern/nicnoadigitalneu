@@ -17,6 +17,7 @@ declare module "next-auth" {
       image?: string | null
       role: UserRole
       onboardingCompleted: boolean
+      phoneVerified: boolean
       sessionTerminated?: boolean
     }
   }
@@ -24,6 +25,7 @@ declare module "next-auth" {
   interface User {
     role: UserRole
     onboardingCompleted: boolean
+    phoneVerified: boolean
   }
 }
 
@@ -32,6 +34,7 @@ declare module "next-auth/jwt" {
     id: string
     role: UserRole
     onboardingCompleted: boolean
+    phoneVerified: boolean
     sessionCreatedAt?: number
     sessionTerminated?: boolean
   }
@@ -84,7 +87,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             await handleLoginEvent({
               userId: '',
               userEmail: email,
-            }, false).catch(console.error)
+              success: false,
+              reason: 'User not found or no password',
+            }).catch(console.error)
             return null
           }
 
@@ -97,16 +102,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             await handleLoginEvent({
               userId: user.id,
               userEmail: email,
-              userName: user.name,
-            }, false).catch(console.error)
+              userName: user.name ?? undefined,
+              success: false,
+              reason: 'Invalid password',
+            }).catch(console.error)
             return null
           }
 
           await handleLoginEvent({
             userId: user.id,
             userEmail: email,
-            userName: user.name,
-          }, true).catch(console.error)
+            userName: user.name ?? undefined,
+            success: true,
+          }).catch(console.error)
 
           return {
             id: user.id,
@@ -115,6 +123,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             image: user.image,
             role: user.role,
             onboardingCompleted: user.onboardingCompleted,
+            phoneVerified: user.phoneVerified,
           }
         } catch (error) {
           console.error("Auth error:", error)
@@ -129,6 +138,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id as string
         token.role = user.role
         token.onboardingCompleted = user.onboardingCompleted
+        token.phoneVerified = user.phoneVerified
         token.sessionCreatedAt = Date.now() // Timestamp für Session-Invalidierung
       }
 
@@ -136,6 +146,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (trigger === "update" && session) {
         token.role = session.user.role
         token.onboardingCompleted = session.user.onboardingCompleted
+        if (session.user.phoneVerified !== undefined) {
+          token.phoneVerified = session.user.phoneVerified
+        }
       }
 
       // Prüfe ob User noch aktive Session hat (für Session-Invalidierung)
@@ -182,6 +195,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id
         session.user.role = token.role
         session.user.onboardingCompleted = token.onboardingCompleted
+        session.user.phoneVerified = token.phoneVerified
       }
       return session
     },
@@ -199,33 +213,36 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             await handleLoginEvent({
               userId: user.id,
               userEmail: user.email || '',
-              userName: user.name,
-            }, true)
+              userName: user.name ?? undefined,
+              success: true,
+            })
           }
         } catch (error) {
           console.error('Error creating active session:', error)
         }
       }
     },
-    async signOut({ token }) {
+    async signOut(message) {
       // Deaktiviere ActiveSession bei Logout
-      if (token?.id) {
+      // In NextAuth v5, the signOut event receives either { session } or { token }
+      const tokenData = 'token' in message ? message.token : null
+      if (tokenData?.id) {
         try {
           await prisma.activeSession.updateMany({
-            where: { userId: token.id as string, isActive: true },
+            where: { userId: tokenData.id as string, isActive: true },
             data: { isActive: false },
           })
           
           // Log Logout
           const user = await prisma.user.findUnique({
-            where: { id: token.id as string },
+            where: { id: tokenData.id as string },
             select: { email: true },
           })
           
           if (user) {
             await prisma.securityLog.create({
               data: {
-                userId: token.id as string,
+                userId: tokenData.id as string,
                 userEmail: user.email,
                 event: 'LOGOUT',
                 status: 'SUCCESS',
