@@ -160,8 +160,8 @@ export function DashboardHeader({ baseUrl, accentColor = 'primary' }: DashboardH
           <LanguageSelector />
         </div>
 
-        {/* AI Credits Badge - nur für Salon und Admin, nicht für Stylisten */}
-        {credits && (baseUrl === '/salon' || baseUrl === '/admin') && (
+        {/* AI Credits Badge */}
+        {credits && (
           <Link
             href={`${baseUrl}/credits`}
             className={cn(

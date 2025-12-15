@@ -23,6 +23,7 @@ import {
   Palette,
   FileText,
   Share2,
+  Sparkles,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -75,6 +76,7 @@ const menuItems = [
     title: 'Profil',
     items: [
       { label: 'Mein Profil', href: '/stylist/profile', icon: User },
+      { label: 'AI Credits', href: '/stylist/credits', icon: Sparkles },
       { label: 'Bewertungen', href: '/stylist/reviews', icon: Star },
       { label: 'Nachrichten', href: '/stylist/messages', icon: MessageSquare },
       { label: 'Empfehlungen', href: '/stylist/referral', icon: Gift },
