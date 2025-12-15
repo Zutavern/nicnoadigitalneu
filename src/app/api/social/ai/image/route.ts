@@ -4,13 +4,13 @@
  * POST /api/social/ai/image
  * Generiert Bilder für Social Media Posts via OpenRouter
  * 
- * Verwendet den chat/completions Endpoint mit modalities: ["image", "text"]
- * gemäß OpenRouter Dokumentation
+ * Verwendet die zentrale OpenRouter-Konfiguration aus der Datenbank
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { put } from '@vercel/blob'
+import { prisma } from '@/lib/prisma'
 import { 
   PLATFORM_IMAGE_FORMATS, 
   getDefaultFormat, 
@@ -18,8 +18,49 @@ import {
   type ImageFormat 
 } from '@/lib/social/image-formats'
 
-// OpenRouter Config
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
+// Cache für OpenRouter-Konfiguration
+interface OpenRouterConfig {
+  apiKey: string | null
+  enabled: boolean
+  siteUrl: string | null
+  siteName: string | null
+}
+
+let configCache: OpenRouterConfig | null = null
+let configCacheTimestamp = 0
+const CONFIG_CACHE_TTL = 5 * 60 * 1000 // 5 Minuten
+
+/**
+ * Lädt die OpenRouter-Konfiguration aus der Datenbank
+ */
+async function getOpenRouterConfig(): Promise<OpenRouterConfig> {
+  const now = Date.now()
+  if (configCache && (now - configCacheTimestamp) < CONFIG_CACHE_TTL) {
+    return configCache
+  }
+
+  const settings = await prisma.platformSettings.findUnique({
+    where: { id: 'default' },
+    select: {
+      openRouterApiKey: true,
+      openRouterEnabled: true,
+      openRouterSiteUrl: true,
+      openRouterSiteName: true,
+    },
+  })
+
+  configCache = {
+    apiKey: settings?.openRouterApiKey || null,
+    enabled: settings?.openRouterEnabled ?? false,
+    siteUrl: settings?.openRouterSiteUrl || process.env.NEXT_PUBLIC_APP_URL || null,
+    siteName: settings?.openRouterSiteName || 'NICNOA',
+  }
+  configCacheTimestamp = now
+
+  return configCache
+}
+
+// OpenRouter API URL
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
 
 // Unterstützte Bildmodelle über OpenRouter (mit image output_modalities)
@@ -95,9 +136,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
     }
     
-    if (!OPENROUTER_API_KEY) {
+    // Hole OpenRouter-Konfiguration aus der Datenbank
+    const config = await getOpenRouterConfig()
+    
+    if (!config.apiKey) {
       return NextResponse.json(
-        { error: 'OpenRouter API Key nicht konfiguriert. Bitte OPENROUTER_API_KEY in .env setzen.' },
+        { 
+          error: 'OpenRouter API-Key nicht konfiguriert',
+          hint: 'Bitte den OpenRouter API-Key unter Admin → Einstellungen → Integrationen hinterlegen.'
+        },
+        { status: 500 }
+      )
+    }
+    
+    if (!config.enabled) {
+      return NextResponse.json(
+        { 
+          error: 'OpenRouter ist deaktiviert',
+          hint: 'Bitte OpenRouter unter Admin → Einstellungen → Integrationen aktivieren.'
+        },
         { status: 500 }
       )
     }
@@ -175,10 +232,10 @@ export async function POST(request: NextRequest) {
     const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Authorization': `Bearer ${config.apiKey}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-        'X-Title': 'NICNOA Social Media',
+        'HTTP-Referer': config.siteUrl || 'http://localhost:3000',
+        'X-Title': config.siteName || 'NICNOA Social Media',
       },
       body: JSON.stringify({
         model: modelId,
@@ -239,7 +296,8 @@ export async function POST(request: NextRequest) {
         { 
           error: 'Keine Bilddaten in der Antwort',
           hint: 'Das gewählte Modell unterstützt möglicherweise keine Bildgenerierung. Versuche ein anderes Modell.',
-          availableModels: Object.keys(IMAGE_MODELS)
+          availableModels: Object.keys(IMAGE_MODELS),
+          response: data
         },
         { status: 500 }
       )
@@ -314,7 +372,11 @@ export async function POST(request: NextRequest) {
  * GET: Verfügbare Modelle und Formate abrufen
  */
 export async function GET() {
+  // Prüfe ob OpenRouter konfiguriert ist
+  const config = await getOpenRouterConfig()
+  
   return NextResponse.json({
+    configured: !!config.apiKey && config.enabled,
     models: Object.entries(IMAGE_MODELS).map(([key, value]) => ({
       id: key,
       modelId: value,
