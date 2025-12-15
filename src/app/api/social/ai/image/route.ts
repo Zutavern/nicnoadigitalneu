@@ -524,7 +524,7 @@ export async function GET() {
       free: model.free,
       supportsAspectRatio: model.supportsAspectRatio,
     })),
-    defaultModel: 'gemini-2.0-flash',
+    defaultModel: 'gemini-2.5-flash',
     platforms: Object.keys(PLATFORM_IMAGE_FORMATS),
     formats: PLATFORM_IMAGE_FORMATS,
     styles: [
