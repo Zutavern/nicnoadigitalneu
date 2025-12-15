@@ -74,19 +74,33 @@ const IMAGE_MODELS = {
   // Google Gemini Modelle - funktionieren zuverlässig für Bildgenerierung
   'gemini-2.0-flash': {
     id: 'google/gemini-2.0-flash-exp:free',
-    name: 'Gemini 2.0 Flash',
-    description: 'Schnell & kostenlos, gute Qualität',
+    name: 'Gemini 2.0 Flash (Kostenlos)',
+    description: 'Schnell & kostenlos - kann bei hoher Nutzung Rate Limits haben',
     free: true,
     supportsAspectRatio: true,
   },
   'gemini-2.5-flash': {
     id: 'google/gemini-2.5-flash-preview-05-20',
-    name: 'Gemini 2.5 Flash Preview',
-    description: 'Neueste Version, beste Qualität',
+    name: 'Gemini 2.5 Flash',
+    description: 'Neueste Version, beste Qualität, zuverlässiger',
     free: false,
     supportsAspectRatio: true,
   },
+  'gemini-2.0-flash-thinking': {
+    id: 'google/gemini-2.0-flash-thinking-exp:free',
+    name: 'Gemini 2.0 Thinking (Kostenlos)',
+    description: 'Alternative kostenlose Version',
+    free: true,
+    supportsAspectRatio: true,
+  },
 } as const
+
+// Fallback-Reihenfolge bei Rate Limits
+const MODEL_FALLBACK_ORDER = [
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-thinking',
+  'gemini-2.5-flash',
+]
 
 type ModelKey = keyof typeof IMAGE_MODELS
 
@@ -263,75 +277,119 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    console.log('[AI Image] Using model:', selectedModel.id)
-    console.log('[AI Image] Final prompt:', finalPrompt.slice(0, 200) + '...')
-    
     // Aspect Ratio für Gemini
     const aspectRatio = getGeminiAspectRatio(imageFormat)
     
-    // OpenRouter API Call - Gemini mit modalities und image_config
-    const requestBody: Record<string, unknown> = {
-      model: selectedModel.id,
-      messages: [
-        {
-          role: 'user',
-          content: finalPrompt,
+    // Funktion für API-Call mit Retry-Logik
+    async function tryGenerateImage(modelKey: ModelKey): Promise<{ success: boolean; data?: unknown; error?: string; status?: number }> {
+      const modelConfig = IMAGE_MODELS[modelKey]
+      if (!modelConfig) {
+        return { success: false, error: `Ungültiges Modell: ${modelKey}` }
+      }
+      
+      console.log('[AI Image] Trying model:', modelConfig.id)
+      
+      const requestBody: Record<string, unknown> = {
+        model: modelConfig.id,
+        messages: [
+          {
+            role: 'user',
+            content: finalPrompt,
+          },
+        ],
+        modalities: ['image', 'text'],
+      }
+      
+      if (modelConfig.supportsAspectRatio) {
+        requestBody.image_config = {
+          aspect_ratio: aspectRatio,
+        }
+      }
+      
+      const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': config.siteUrl || 'http://localhost:3000',
+          'X-Title': config.siteName || 'NICNOA Social Media',
         },
-      ],
-      modalities: ['image', 'text'],
+        body: JSON.stringify(requestBody),
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('[AI Image] Error with', modelConfig.id, ':', response.status, errorText)
+        return { success: false, error: errorText, status: response.status }
+      }
+      
+      const data = await response.json()
+      return { success: true, data }
     }
     
-    // Aspect Ratio nur für Modelle die es unterstützen
-    if (selectedModel.supportsAspectRatio) {
-      requestBody.image_config = {
-        aspect_ratio: aspectRatio,
+    // Versuche das gewählte Modell, dann Fallbacks bei Rate Limits
+    let result: { success: boolean; data?: unknown; error?: string; status?: number }
+    let usedModel = model
+    let triedModels: string[] = []
+    
+    // Zuerst das gewählte Modell versuchen
+    result = await tryGenerateImage(model as ModelKey)
+    triedModels.push(model)
+    
+    // Bei Rate Limit (429) automatisch Fallback-Modelle versuchen
+    if (!result.success && result.status === 429) {
+      console.log('[AI Image] Rate limited, trying fallback models...')
+      
+      for (const fallbackModel of MODEL_FALLBACK_ORDER) {
+        if (triedModels.includes(fallbackModel)) continue
+        
+        // Kurze Pause zwischen Versuchen
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        result = await tryGenerateImage(fallbackModel as ModelKey)
+        triedModels.push(fallbackModel)
+        
+        if (result.success) {
+          usedModel = fallbackModel
+          console.log('[AI Image] Fallback successful with:', fallbackModel)
+          break
+        }
+        
+        // Bei nicht-429 Fehler abbrechen
+        if (result.status !== 429) break
       }
     }
     
-    console.log('[AI Image] Request body:', JSON.stringify(requestBody).slice(0, 500))
-    
-    const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${config.apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': config.siteUrl || 'http://localhost:3000',
-        'X-Title': config.siteName || 'NICNOA Social Media',
-      },
-      body: JSON.stringify(requestBody),
-    })
-    
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('[AI Image] OpenRouter Error:', response.status, errorText)
-      
-      // Detaillierte Fehlermeldung
+    // Wenn immer noch nicht erfolgreich
+    if (!result.success) {
       let errorMessage = 'Bildgenerierung fehlgeschlagen'
-      let errorHint = 'Versuche ein anderes Modell.'
+      let errorHint = 'Versuche es später erneut.'
       
       try {
-        const errorJson = JSON.parse(errorText)
+        const errorJson = JSON.parse(result.error || '{}')
         errorMessage = errorJson.error?.message || errorJson.message || errorMessage
         
-        // Spezifische Fehlerbehandlung
-        if (errorMessage.includes('rate limit')) {
-          errorHint = 'API Rate Limit erreicht. Bitte warte einen Moment.'
+        if (result.status === 429 || errorMessage.includes('rate limit') || errorMessage.includes('rate-limited')) {
+          errorMessage = 'Alle Modelle sind gerade ausgelastet (Rate Limit)'
+          errorHint = 'Die kostenlosen Modelle haben begrenzte Kapazität. Bitte warte 1-2 Minuten und versuche es erneut, oder wähle ein kostenpflichtiges Modell.'
         } else if (errorMessage.includes('insufficient') || errorMessage.includes('credits')) {
           errorHint = 'Nicht genügend Credits. Prüfe deinen OpenRouter Account.'
-        } else if (errorMessage.includes('not support')) {
-          errorHint = 'Dieses Modell unterstützt keine Bildgenerierung.'
         }
       } catch {
-        errorMessage = errorText.slice(0, 200)
+        // Ignore parse error
       }
       
       return NextResponse.json(
-        { error: errorMessage, hint: errorHint },
-        { status: response.status }
+        { 
+          error: errorMessage, 
+          hint: errorHint,
+          triedModels,
+        },
+        { status: result.status || 500 }
       )
     }
     
-    const data = await response.json()
+    const data = result.data as Record<string, unknown>
     console.log('[AI Image] Response keys:', Object.keys(data))
     
     // Bild-URL aus der Antwort extrahieren
@@ -412,6 +470,8 @@ export async function POST(request: NextRequest) {
       blobUrl = blob.url
     }
     
+    const finalModelConfig = IMAGE_MODELS[usedModel as ModelKey]
+    
     return NextResponse.json({
       success: true,
       imageUrl: blobUrl,
@@ -419,9 +479,11 @@ export async function POST(request: NextRequest) {
       format: imageFormat,
       platform: platform.toUpperCase(),
       model: {
-        key: model,
-        id: selectedModel.id,
-        name: selectedModel.name,
+        key: usedModel,
+        id: finalModelConfig?.id || selectedModel.id,
+        name: finalModelConfig?.name || selectedModel.name,
+        usedFallback: usedModel !== model,
+        triedModels,
       },
       dimensions: {
         width: imageFormat.width,

@@ -103,8 +103,9 @@ const imageStyles = [
 
 // AI-Bild-Modelle (nur Gemini - funktioniert zuverlässig für Bildgenerierung)
 const imageModels = [
-  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: 'Schnell & kostenlos', free: true },
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Neueste Version, beste Qualität', free: false },
+  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: 'Schnell & kostenlos (kann Rate Limits haben)', free: true },
+  { id: 'gemini-2.0-flash-thinking', name: 'Gemini 2.0 Thinking', description: 'Alternative kostenlose Version', free: true },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Beste Qualität, zuverlässiger', free: false },
 ]
 
 interface MediaItem {
@@ -311,7 +312,9 @@ export default function CreatePostPage() {
       const data = await res.json()
       
       if (!res.ok) {
-        throw new Error(data.error || 'Bildgenerierung fehlgeschlagen')
+        const errorMsg = data.error || 'Bildgenerierung fehlgeschlagen'
+        const hint = data.hint || ''
+        throw new Error(hint ? `${errorMsg}\n\n${hint}` : errorMsg)
       }
       
       const newMedia: MediaItem = {
@@ -325,7 +328,13 @@ export default function CreatePostPage() {
       
       setMediaItems(prev => [...prev, newMedia])
       setAiImageDialogOpen(false)
-      toast.success('KI-Bild erfolgreich generiert!')
+      
+      // Zeige welches Modell verwendet wurde
+      if (data.model?.usedFallback) {
+        toast.success(`KI-Bild generiert! (Fallback: ${data.model.name})`)
+      } else {
+        toast.success('KI-Bild erfolgreich generiert!')
+      }
     } catch (error) {
       console.error('AI Image error:', error)
       toast.error(error instanceof Error ? error.message : 'Bildgenerierung fehlgeschlagen')
