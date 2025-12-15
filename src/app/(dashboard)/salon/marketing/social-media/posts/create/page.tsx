@@ -101,11 +101,10 @@ const imageStyles = [
   { id: 'artistic', name: 'Künstlerisch', description: 'Kreative Interpretation' },
 ]
 
-// AI-Bild-Modelle
+// AI-Bild-Modelle (nur Gemini - funktioniert zuverlässig für Bildgenerierung)
 const imageModels = [
-  { id: 'flux-schnell', name: 'Flux Schnell', description: 'Schnell & kostenlos', free: true },
-  { id: 'flux-pro', name: 'Flux Pro', description: 'Höchste Qualität', free: false },
-  { id: 'gemini-flash', name: 'Gemini Flash', description: 'Google AI (kostenlos)', free: true },
+  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: 'Schnell & kostenlos', free: true },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Neueste Version, beste Qualität', free: false },
 ]
 
 interface MediaItem {
@@ -152,7 +151,7 @@ export default function CreatePostPage() {
   // AI Image State - verbessert
   const [aiImagePrompt, setAiImagePrompt] = useState('')
   const [aiImageStyle, setAiImageStyle] = useState('vivid')
-  const [aiImageModel, setAiImageModel] = useState('flux-schnell')
+  const [aiImageModel, setAiImageModel] = useState('gemini-2.0-flash')
   const [useContentAsPrompt, setUseContentAsPrompt] = useState(true)
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const [aiImageDialogOpen, setAiImageDialogOpen] = useState(false)

@@ -5,6 +5,7 @@
  * Generiert Bilder für Social Media Posts via OpenRouter
  * 
  * Verwendet die zentrale OpenRouter-Konfiguration aus der Datenbank
+ * Nutzt Google Gemini Modelle für Bildgenerierung
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -63,22 +64,56 @@ async function getOpenRouterConfig(): Promise<OpenRouterConfig> {
 // OpenRouter API URL
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
 
-// Unterstützte Bildmodelle über OpenRouter (mit image output_modalities)
+/**
+ * Verfügbare Bildgenerierungs-Modelle
+ * 
+ * Nur Modelle die tatsächlich Bildgenerierung über modalities: ["image", "text"] unterstützen
+ * Gemini-Modelle sind die zuverlässigsten für Bildgenerierung über OpenRouter
+ */
 const IMAGE_MODELS = {
-  'gemini-flash': 'google/gemini-2.0-flash-exp:free',
-  'gemini-image': 'google/gemini-2.5-flash-preview-05-20',
-  'flux-pro': 'black-forest-labs/flux-1.1-pro',
-  'flux-schnell': 'black-forest-labs/flux-schnell:free',
+  // Google Gemini Modelle - funktionieren zuverlässig für Bildgenerierung
+  'gemini-2.0-flash': {
+    id: 'google/gemini-2.0-flash-exp:free',
+    name: 'Gemini 2.0 Flash',
+    description: 'Schnell & kostenlos, gute Qualität',
+    free: true,
+    supportsAspectRatio: true,
+  },
+  'gemini-2.5-flash': {
+    id: 'google/gemini-2.5-flash-preview-05-20',
+    name: 'Gemini 2.5 Flash Preview',
+    description: 'Neueste Version, beste Qualität',
+    free: false,
+    supportsAspectRatio: true,
+  },
 } as const
+
+type ModelKey = keyof typeof IMAGE_MODELS
 
 interface GenerateImageRequest {
   prompt?: string
   postContent?: string // Generiert automatisch Prompt aus Post-Inhalt
   platform: string
   format?: string // z.B. 'feed_square', 'story'
-  model?: keyof typeof IMAGE_MODELS
+  model?: ModelKey
   style?: 'vivid' | 'natural' | 'artistic'
   industry?: string
+}
+
+/**
+ * Konvertiert unser Format zu Gemini Aspect Ratios
+ */
+function getGeminiAspectRatio(imageFormat: ImageFormat): string {
+  const ratio = imageFormat.width / imageFormat.height
+  
+  // Gemini unterstützte Aspect Ratios: 1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9
+  if (ratio > 2) return '21:9'        // Ultra-wide
+  if (ratio > 1.5) return '16:9'      // Landscape wide
+  if (ratio > 1.2) return '4:3'       // Landscape
+  if (ratio > 0.9) return '1:1'       // Square
+  if (ratio > 0.7) return '4:5'       // Portrait (Instagram)
+  if (ratio > 0.6) return '3:4'       // Portrait
+  return '9:16'                        // Stories/Reels
 }
 
 /**
@@ -101,17 +136,17 @@ function generateImagePromptFromContent(
   
   // Style-spezifische Anweisungen
   const styleInstructions = {
-    vivid: 'Vibrant, eye-catching colors with high contrast and saturation.',
+    vivid: 'Vibrant, eye-catching colors with high contrast.',
     natural: 'Natural, realistic photography style with soft lighting.',
     artistic: 'Artistic, creative interpretation with unique visual elements.',
   }
   
   // Plattform-spezifische Anweisungen
   const platformInstructions = {
-    INSTAGRAM: 'Optimized for Instagram feed - visually striking, lifestyle-focused.',
+    INSTAGRAM: 'Optimized for Instagram - visually striking, lifestyle-focused.',
     FACEBOOK: 'Suitable for Facebook - engaging, shareable content.',
     LINKEDIN: 'Professional and business-appropriate for LinkedIn.',
-    TWITTER: 'Bold and attention-grabbing for Twitter/X feed.',
+    TWITTER: 'Bold and attention-grabbing for Twitter/X.',
     TIKTOK: 'Trendy, dynamic visual style for TikTok.',
     YOUTUBE: 'High-quality thumbnail style for YouTube.',
   }
@@ -121,11 +156,11 @@ function generateImagePromptFromContent(
   const styleHint = styleInstructions[style as keyof typeof styleInstructions] || styleInstructions.vivid
   
   return `Create a professional ${industry} related image. 
-Context: "${cleanContent}"
+Topic: "${cleanContent}"
 Style: ${styleHint}
 Platform: ${platformHint}
 ${platformSuffix}
-High quality, professional photography or illustration. No text overlays. Clean composition.`
+High quality, professional. No text overlays. Clean composition.`
 }
 
 export async function POST(request: NextRequest) {
@@ -165,10 +200,22 @@ export async function POST(request: NextRequest) {
       postContent, 
       platform, 
       format, 
-      model = 'flux-schnell', // Kostenloses Modell als Default
+      model = 'gemini-2.0-flash', // Kostenloses Gemini Modell als Default
       style = 'vivid', 
       industry = 'Beauty/Salon' 
     } = body
+    
+    // Modell validieren
+    const selectedModel = IMAGE_MODELS[model as ModelKey]
+    if (!selectedModel) {
+      return NextResponse.json(
+        { 
+          error: `Ungültiges Modell: ${model}`,
+          availableModels: Object.keys(IMAGE_MODELS)
+        },
+        { status: 400 }
+      )
+    }
     
     // Format bestimmen
     const platformFormats = PLATFORM_IMAGE_FORMATS[platform.toUpperCase()]
@@ -216,18 +263,32 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    console.log('[AI Image] Using model:', IMAGE_MODELS[model])
+    console.log('[AI Image] Using model:', selectedModel.id)
     console.log('[AI Image] Final prompt:', finalPrompt.slice(0, 200) + '...')
     
-    // OpenRouter API Call - korrekt mit chat/completions und modalities
-    const modelId = IMAGE_MODELS[model]
+    // Aspect Ratio für Gemini
+    const aspectRatio = getGeminiAspectRatio(imageFormat)
     
-    // Aspect Ratio für Gemini/Flux
-    const aspectRatio = imageFormat.width > imageFormat.height 
-      ? '16:9' 
-      : imageFormat.width < imageFormat.height 
-        ? '9:16' 
-        : '1:1'
+    // OpenRouter API Call - Gemini mit modalities und image_config
+    const requestBody: Record<string, unknown> = {
+      model: selectedModel.id,
+      messages: [
+        {
+          role: 'user',
+          content: finalPrompt,
+        },
+      ],
+      modalities: ['image', 'text'],
+    }
+    
+    // Aspect Ratio nur für Modelle die es unterstützen
+    if (selectedModel.supportsAspectRatio) {
+      requestBody.image_config = {
+        aspect_ratio: aspectRatio,
+      }
+    }
+    
+    console.log('[AI Image] Request body:', JSON.stringify(requestBody).slice(0, 500))
     
     const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
       method: 'POST',
@@ -237,22 +298,7 @@ export async function POST(request: NextRequest) {
         'HTTP-Referer': config.siteUrl || 'http://localhost:3000',
         'X-Title': config.siteName || 'NICNOA Social Media',
       },
-      body: JSON.stringify({
-        model: modelId,
-        messages: [
-          {
-            role: 'user',
-            content: finalPrompt,
-          },
-        ],
-        modalities: ['image', 'text'],
-        // Image config für Gemini-Modelle
-        ...(model.startsWith('gemini') && {
-          image_config: {
-            aspect_ratio: aspectRatio,
-          },
-        }),
-      }),
+      body: JSON.stringify(requestBody),
     })
     
     if (!response.ok) {
@@ -261,43 +307,66 @@ export async function POST(request: NextRequest) {
       
       // Detaillierte Fehlermeldung
       let errorMessage = 'Bildgenerierung fehlgeschlagen'
+      let errorHint = 'Versuche ein anderes Modell.'
+      
       try {
         const errorJson = JSON.parse(errorText)
         errorMessage = errorJson.error?.message || errorJson.message || errorMessage
+        
+        // Spezifische Fehlerbehandlung
+        if (errorMessage.includes('rate limit')) {
+          errorHint = 'API Rate Limit erreicht. Bitte warte einen Moment.'
+        } else if (errorMessage.includes('insufficient') || errorMessage.includes('credits')) {
+          errorHint = 'Nicht genügend Credits. Prüfe deinen OpenRouter Account.'
+        } else if (errorMessage.includes('not support')) {
+          errorHint = 'Dieses Modell unterstützt keine Bildgenerierung.'
+        }
       } catch {
         errorMessage = errorText.slice(0, 200)
       }
       
       return NextResponse.json(
-        { error: errorMessage, details: errorText },
+        { error: errorMessage, hint: errorHint },
         { status: response.status }
       )
     }
     
     const data = await response.json()
-    console.log('[AI Image] Response structure:', JSON.stringify(data).slice(0, 500))
+    console.log('[AI Image] Response keys:', Object.keys(data))
     
     // Bild-URL aus der Antwort extrahieren
-    // OpenRouter gibt Bilder in message.images[] zurück
     let imageDataUrl: string | null = null
     
     const message = data.choices?.[0]?.message
     if (message?.images && message.images.length > 0) {
-      // Neues Format: images Array
-      imageDataUrl = message.images[0]?.image_url?.url
-    } else if (message?.content && message.content.startsWith('data:image')) {
+      // Standard Format: images Array mit image_url
+      const imageObj = message.images[0]
+      imageDataUrl = imageObj?.image_url?.url || imageObj?.url
+    } else if (message?.content && typeof message.content === 'string' && message.content.startsWith('data:image')) {
       // Falls das Bild direkt im content ist
       imageDataUrl = message.content
     }
     
     if (!imageDataUrl) {
-      console.error('[AI Image] No image in response:', JSON.stringify(data))
+      console.error('[AI Image] No image in response:', JSON.stringify(data).slice(0, 1000))
+      
+      // Prüfe ob eine Text-Antwort kam
+      const textContent = message?.content
+      if (textContent && typeof textContent === 'string') {
+        return NextResponse.json(
+          { 
+            error: 'Das Modell hat kein Bild generiert',
+            hint: 'Das Modell hat stattdessen Text zurückgegeben. Versuche einen anderen Prompt oder Modell.',
+            modelResponse: textContent.slice(0, 200)
+          },
+          { status: 500 }
+        )
+      }
+      
       return NextResponse.json(
         { 
           error: 'Keine Bilddaten in der Antwort',
-          hint: 'Das gewählte Modell unterstützt möglicherweise keine Bildgenerierung. Versuche ein anderes Modell.',
-          availableModels: Object.keys(IMAGE_MODELS),
-          response: data
+          hint: 'Das Modell hat möglicherweise ein Problem. Versuche es erneut.',
         },
         { status: 500 }
       )
@@ -349,11 +418,16 @@ export async function POST(request: NextRequest) {
       prompt: finalPrompt,
       format: imageFormat,
       platform: platform.toUpperCase(),
-      model: model,
+      model: {
+        key: model,
+        id: selectedModel.id,
+        name: selectedModel.name,
+      },
       dimensions: {
         width: imageFormat.width,
         height: imageFormat.height,
         ratio: imageFormat.ratio,
+        geminiAspectRatio: aspectRatio,
       },
     })
   } catch (error) {
@@ -361,7 +435,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: error instanceof Error ? error.message : 'Bildgenerierung fehlgeschlagen',
-        hint: 'Prüfe die Konsole für Details'
+        hint: 'Prüfe die Server-Logs für Details'
       },
       { status: 500 }
     )
@@ -377,12 +451,15 @@ export async function GET() {
   
   return NextResponse.json({
     configured: !!config.apiKey && config.enabled,
-    models: Object.entries(IMAGE_MODELS).map(([key, value]) => ({
-      id: key,
-      modelId: value,
-      name: key.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-      free: value.includes(':free'),
+    models: Object.entries(IMAGE_MODELS).map(([key, model]) => ({
+      key,
+      id: model.id,
+      name: model.name,
+      description: model.description,
+      free: model.free,
+      supportsAspectRatio: model.supportsAspectRatio,
     })),
+    defaultModel: 'gemini-2.0-flash',
     platforms: Object.keys(PLATFORM_IMAGE_FORMATS),
     formats: PLATFORM_IMAGE_FORMATS,
     styles: [
@@ -390,5 +467,6 @@ export async function GET() {
       { id: 'natural', name: 'Natürlich', description: 'Realistischer Look' },
       { id: 'artistic', name: 'Künstlerisch', description: 'Kreative Interpretation' },
     ],
+    aspectRatios: ['1:1', '4:5', '9:16', '16:9', '4:3', '3:4'],
   })
 }
