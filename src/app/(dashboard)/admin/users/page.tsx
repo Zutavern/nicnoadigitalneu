@@ -15,6 +15,10 @@ import {
   X,
   Ban,
   Trash2,
+  Coins,
+  Infinity,
+  TrendingUp,
+  TrendingDown,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -67,8 +71,18 @@ export default function UsersPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [viewDialogOpen, setViewDialogOpen] = useState(false)
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
+  const [creditsDialogOpen, setCreditsDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // Credits state
+  const [userCredits, setUserCredits] = useState<{
+    balance: number
+    isUnlimited: boolean
+  } | null>(null)
+  const [creditsAmount, setCreditsAmount] = useState('')
+  const [creditsReason, setCreditsReason] = useState('')
+  const [setUnlimited, setSetUnlimited] = useState(false)
   
   // Form state
   const [formData, setFormData] = useState({
@@ -141,6 +155,61 @@ export default function UsersPage() {
   const handleLoginAs = async (user: User) => {
     toast.info('Diese Funktion wird noch implementiert')
     console.log('Impersonating user:', user.id)
+  }
+
+  const handleAdjustCredits = async (user: User) => {
+    setSelectedUser(user)
+    setCreditsAmount('')
+    setCreditsReason('')
+    setUserCredits(null)
+    setSetUnlimited(false)
+    setCreditsDialogOpen(true)
+    
+    // Lade aktuelle Credits des Users
+    try {
+      const res = await fetch(`/api/admin/credits?userId=${user.id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setUserCredits({
+          balance: data.balance ?? 0,
+          isUnlimited: data.isUnlimited ?? false,
+        })
+        setSetUnlimited(data.isUnlimited ?? false)
+      }
+    } catch (error) {
+      console.error('Error fetching user credits:', error)
+    }
+  }
+
+  const handleSaveCredits = async () => {
+    if (!selectedUser) return
+    setIsSubmitting(true)
+    
+    try {
+      const res = await fetch('/api/admin/credits/adjust', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          amount: creditsAmount ? parseFloat(creditsAmount) : undefined,
+          reason: creditsReason || 'Admin-Anpassung',
+          isUnlimited: setUnlimited,
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Fehler beim Speichern')
+      }
+
+      toast.success(setUnlimited ? 'Unlimited-Status aktiviert' : 'Credits erfolgreich angepasst')
+      setCreditsDialogOpen(false)
+      setSelectedUser(null)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleCreateUser = async () => {
@@ -264,6 +333,7 @@ export default function UsersPage() {
     onDelete: handleDeleteClick,
     onResetPassword: handleResetPassword,
     onLoginAs: handleLoginAs,
+    onAdjustCredits: handleAdjustCredits,
   }), [])
 
   // Bulk Actions
@@ -781,6 +851,124 @@ export default function UsersPage() {
             <Button onClick={handleChangePassword} disabled={isSubmitting || !isPasswordValid}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Passwort ändern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Credits Dialog */}
+      <Dialog open={creditsDialogOpen} onOpenChange={setCreditsDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Coins className="h-5 w-5 text-amber-500" />
+              AI Credits anpassen
+            </DialogTitle>
+            <DialogDescription>
+              Passen Sie die Credits für "{selectedUser?.name || selectedUser?.email}" an
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Aktuelle Credits Anzeige */}
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-1">Aktueller Stand</p>
+              <div className="flex items-center gap-2">
+                {userCredits?.isUnlimited ? (
+                  <div className="flex items-center gap-2 text-amber-500">
+                    <Infinity className="h-6 w-6" />
+                    <span className="text-2xl font-bold">Unlimited</span>
+                  </div>
+                ) : (
+                  <span className="text-2xl font-bold">
+                    {userCredits?.balance?.toFixed(2) ?? '—'} Credits
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Unlimited Toggle */}
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <Infinity className="h-5 w-5 text-amber-500" />
+                <div>
+                  <p className="font-medium">Unlimited aktivieren</p>
+                  <p className="text-sm text-muted-foreground">
+                    Unbegrenzte AI-Nutzung (Tracking bleibt aktiv)
+                  </p>
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={setUnlimited}
+                onChange={(e) => setSetUnlimited(e.target.checked)}
+                className="h-5 w-5 rounded border-gray-300"
+              />
+            </div>
+
+            {/* Credits Betrag */}
+            {!setUnlimited && (
+              <div className="space-y-2">
+                <Label htmlFor="credits-amount">Credits hinzufügen/abziehen</Label>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setCreditsAmount(prev => {
+                      const val = parseFloat(prev || '0')
+                      return String(val - 10)
+                    })}
+                  >
+                    <TrendingDown className="h-4 w-4 text-red-500" />
+                  </Button>
+                  <Input
+                    id="credits-amount"
+                    type="number"
+                    step="0.01"
+                    value={creditsAmount}
+                    onChange={(e) => setCreditsAmount(e.target.value)}
+                    placeholder="z.B. 50 oder -10"
+                    className="text-center"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setCreditsAmount(prev => {
+                      const val = parseFloat(prev || '0')
+                      return String(val + 10)
+                    })}
+                  >
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Positiv = Gutschrift, Negativ = Abzug
+                </p>
+              </div>
+            )}
+
+            {/* Grund */}
+            <div className="space-y-2">
+              <Label htmlFor="credits-reason">Grund (optional)</Label>
+              <Input
+                id="credits-reason"
+                value={creditsReason}
+                onChange={(e) => setCreditsReason(e.target.value)}
+                placeholder="z.B. Testguthaben, Bonus..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreditsDialogOpen(false)}>
+              Abbrechen
+            </Button>
+            <Button 
+              onClick={handleSaveCredits} 
+              disabled={isSubmitting || (!setUnlimited && !creditsAmount)}
+            >
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Speichern
             </Button>
           </DialogFooter>
         </DialogContent>

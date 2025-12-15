@@ -182,9 +182,9 @@ export interface UsageLogEntry {
   userId?: string
   salonId?: string
   userType: 'admin' | 'salon_owner' | 'chair_renter'
-  requestType: 'translation' | 'chat' | 'completion' | 'embedding'
+  requestType: 'translation' | 'chat' | 'completion' | 'embedding' | 'image_generation' | 'video_generation'
   model: string
-  provider: 'openrouter' | 'openai' | 'deepl'
+  provider: 'openrouter' | 'openai' | 'deepl' | 'replicate'
   inputTokens: number
   outputTokens: number
   totalTokens: number
@@ -193,7 +193,20 @@ export interface UsageLogEntry {
   success: boolean
   errorMessage?: string
   metadata?: Record<string, unknown>
+  // Neue Felder für Feature-Tracking und Credits
+  feature?: 'social_post' | 'video_gen' | 'image_gen' | 'translation' | 'chat' | 'hashtags' | 'content_improvement'
+  creditsUsed?: number
+  creditsPaid?: boolean
 }
+
+// Feature-Typen für bessere Typsicherheit
+export type AIFeature = UsageLogEntry['feature']
+
+// Request-Typen
+export type AIRequestType = UsageLogEntry['requestType']
+
+// Provider-Typen
+export type AIProvider = UsageLogEntry['provider']
 
 
 

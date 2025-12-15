@@ -26,6 +26,7 @@ import {
   Shield,
   Calendar,
   Hash,
+  Coins,
 } from 'lucide-react'
 
 // User Type
@@ -80,6 +81,7 @@ interface ColumnOptions {
   onDelete?: (user: User) => void
   onResetPassword?: (user: User) => void
   onLoginAs?: (user: User) => void
+  onAdjustCredits?: (user: User) => void
 }
 
 export const createColumns = (options: ColumnOptions = {}): ColumnDef<User>[] => [
@@ -268,6 +270,10 @@ export const createColumns = (options: ColumnOptions = {}): ColumnDef<User>[] =>
             <DropdownMenuItem onClick={() => options.onResetPassword?.(user)}>
               <Key className="mr-2 h-4 w-4" />
               Passwort zurücksetzen
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => options.onAdjustCredits?.(user)}>
+              <Coins className="mr-2 h-4 w-4" />
+              Credits anpassen
             </DropdownMenuItem>
             {user.role !== 'ADMIN' && (
               <DropdownMenuItem onClick={() => options.onLoginAs?.(user)}>

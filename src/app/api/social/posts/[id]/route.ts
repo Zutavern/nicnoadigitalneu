@@ -18,7 +18,8 @@ const updatePostSchema = z.object({
   scheduledFor: z.string().datetime().optional().nullable(),
   status: z.enum(['DRAFT', 'SCHEDULED', 'CANCELLED']).optional(),
   platformSettings: z.record(z.any()).optional(),
-  accountIds: z.array(z.string().uuid()).optional(),
+  croppedMedia: z.record(z.any()).optional(),
+  aiImagePrompt: z.string().optional().nullable(),
 })
 
 interface RouteParams {
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
     }
-    
+
     const { id } = await params
     
     const post = await prisma.socialMediaPost.findFirst({
@@ -53,6 +54,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 profileImageUrl: true,
               },
             },
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
           },
         },
       },
@@ -80,10 +89,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
     }
-    
+
     const { id } = await params
-    const body = await request.json()
-    const validatedData = updatePostSchema.parse(body)
     
     // Prüfen ob Post existiert und dem User gehört
     const existingPost = await prisma.socialMediaPost.findFirst({
@@ -97,38 +104,45 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Post nicht gefunden' }, { status: 404 })
     }
     
-    // Bereits veröffentlichte Posts können nicht bearbeitet werden
-    if (existingPost.status === 'PUBLISHED' || existingPost.status === 'PUBLISHING') {
+    // Nur Drafts und geplante Posts können bearbeitet werden
+    if (!['DRAFT', 'SCHEDULED'].includes(existingPost.status)) {
       return NextResponse.json(
         { error: 'Veröffentlichte Posts können nicht bearbeitet werden' },
         { status: 400 }
       )
     }
     
-    // Update-Daten vorbereiten
-    const updateData: Record<string, unknown> = {}
+    const body = await request.json()
+    const validatedData = updatePostSchema.parse(body)
     
-    if (validatedData.content !== undefined) updateData.content = validatedData.content
-    if (validatedData.mediaUrls !== undefined) updateData.mediaUrls = validatedData.mediaUrls
-    if (validatedData.mediaTypes !== undefined) updateData.mediaTypes = validatedData.mediaTypes
-    if (validatedData.hashtags !== undefined) updateData.hashtags = validatedData.hashtags
-    if (validatedData.mentions !== undefined) updateData.mentions = validatedData.mentions
-    if (validatedData.linkUrl !== undefined) updateData.linkUrl = validatedData.linkUrl
-    if (validatedData.platforms !== undefined) updateData.platforms = validatedData.platforms
-    if (validatedData.platformSettings !== undefined) updateData.platformSettings = validatedData.platformSettings
-    
-    if (validatedData.scheduledFor !== undefined) {
-      updateData.scheduledFor = validatedData.scheduledFor ? new Date(validatedData.scheduledFor) : null
-    }
-    
-    if (validatedData.status !== undefined) {
-      updateData.status = validatedData.status
+    // Status-Logik
+    let newStatus = validatedData.status || existingPost.status
+    if (validatedData.scheduledFor) {
+      newStatus = 'SCHEDULED'
+    } else if (validatedData.status === 'DRAFT') {
+      newStatus = 'DRAFT'
     }
     
     // Post aktualisieren
     const updatedPost = await prisma.socialMediaPost.update({
       where: { id },
-      data: updateData,
+      data: {
+        ...(validatedData.content !== undefined && { content: validatedData.content }),
+        ...(validatedData.mediaUrls !== undefined && { mediaUrls: validatedData.mediaUrls }),
+        ...(validatedData.mediaTypes !== undefined && { mediaTypes: validatedData.mediaTypes }),
+        ...(validatedData.hashtags !== undefined && { hashtags: validatedData.hashtags }),
+        ...(validatedData.mentions !== undefined && { mentions: validatedData.mentions }),
+        ...(validatedData.linkUrl !== undefined && { linkUrl: validatedData.linkUrl }),
+        ...(validatedData.platforms !== undefined && { platforms: validatedData.platforms }),
+        ...(validatedData.scheduledFor !== undefined && { 
+          scheduledFor: validatedData.scheduledFor ? new Date(validatedData.scheduledFor) : null 
+        }),
+        ...(validatedData.platformSettings !== undefined && { platformSettings: validatedData.platformSettings }),
+        ...(validatedData.croppedMedia !== undefined && { croppedMedia: validatedData.croppedMedia }),
+        ...(validatedData.aiImagePrompt !== undefined && { aiImagePrompt: validatedData.aiImagePrompt }),
+        status: newStatus,
+        updatedAt: new Date(),
+      },
       include: {
         postAccounts: {
           include: {
@@ -145,25 +159,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         },
       },
     })
-    
-    // Account-Verknüpfungen aktualisieren wenn angegeben
-    if (validatedData.accountIds !== undefined) {
-      // Alte Verknüpfungen löschen
-      await prisma.socialMediaPostAccount.deleteMany({
-        where: { postId: id },
-      })
-      
-      // Neue Verknüpfungen erstellen
-      if (validatedData.accountIds.length > 0) {
-        await prisma.socialMediaPostAccount.createMany({
-          data: validatedData.accountIds.map(accountId => ({
-            postId: id,
-            accountId,
-            status: updatedPost.status,
-          })),
-        })
-      }
-    }
     
     return NextResponse.json(updatedPost)
   } catch (error) {
@@ -191,7 +186,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
     }
-    
+
     const { id } = await params
     
     // Prüfen ob Post existiert und dem User gehört
@@ -206,12 +201,26 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Post nicht gefunden' }, { status: 404 })
     }
     
-    // Post löschen (Cascade löscht auch PostAccounts)
+    // Veröffentlichte Posts nicht löschen, sondern auf CANCELLED setzen
+    if (existingPost.status === 'PUBLISHED') {
+      await prisma.socialMediaPost.update({
+        where: { id },
+        data: { status: 'CANCELLED' },
+      })
+      return NextResponse.json({ message: 'Post wurde storniert' })
+    }
+    
+    // Post-Account-Verknüpfungen löschen
+    await prisma.socialMediaPostAccount.deleteMany({
+      where: { postId: id },
+    })
+    
+    // Post löschen
     await prisma.socialMediaPost.delete({
       where: { id },
     })
     
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ message: 'Post gelöscht' })
   } catch (error) {
     console.error('[Social Post DELETE] Error:', error)
     return NextResponse.json(
@@ -221,3 +230,90 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+// POST /api/social/posts/[id] - Spezielle Aktionen (Duplizieren, Sofort veröffentlichen)
+export async function POST(request: NextRequest, { params }: RouteParams) {
+  try {
+    const session = await auth()
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
+    }
+
+    const { id } = await params
+    const body = await request.json()
+    const action = body.action as string
+    
+    const existingPost = await prisma.socialMediaPost.findFirst({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+    })
+    
+    if (!existingPost) {
+      return NextResponse.json({ error: 'Post nicht gefunden' }, { status: 404 })
+    }
+    
+    switch (action) {
+      case 'duplicate': {
+        const duplicate = await prisma.socialMediaPost.create({
+          data: {
+            userId: session.user.id,
+            content: existingPost.content,
+            mediaUrls: existingPost.mediaUrls,
+            mediaTypes: existingPost.mediaTypes,
+            hashtags: existingPost.hashtags,
+            mentions: existingPost.mentions,
+            linkUrl: existingPost.linkUrl,
+            platforms: existingPost.platforms,
+            platformSettings: existingPost.platformSettings || {},
+            croppedMedia: existingPost.croppedMedia || {},
+            aiGenerated: existingPost.aiGenerated,
+            aiPrompt: existingPost.aiPrompt,
+            aiModel: existingPost.aiModel,
+            aiImagePrompt: existingPost.aiImagePrompt,
+            status: 'DRAFT',
+          },
+        })
+        return NextResponse.json(duplicate, { status: 201 })
+      }
+      
+      case 'schedule': {
+        const scheduledFor = body.scheduledFor
+        if (!scheduledFor) {
+          return NextResponse.json({ error: 'Datum erforderlich' }, { status: 400 })
+        }
+        
+        const scheduled = await prisma.socialMediaPost.update({
+          where: { id },
+          data: {
+            scheduledFor: new Date(scheduledFor),
+            status: 'SCHEDULED',
+          },
+        })
+        return NextResponse.json(scheduled)
+      }
+      
+      case 'publish_now': {
+        // TODO: Implementiere tatsächliche Veröffentlichung
+        const published = await prisma.socialMediaPost.update({
+          where: { id },
+          data: {
+            status: 'PUBLISHING',
+            scheduledFor: new Date(),
+          },
+        })
+        return NextResponse.json(published)
+      }
+      
+      default:
+        return NextResponse.json({ error: 'Unbekannte Aktion' }, { status: 400 })
+    }
+  } catch (error) {
+    console.error('[Social Post Action] Error:', error)
+    return NextResponse.json(
+      { error: 'Fehler bei der Aktion' },
+      { status: 500 }
+    )
+  }
+}

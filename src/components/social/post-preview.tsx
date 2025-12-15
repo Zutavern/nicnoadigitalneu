@@ -45,6 +45,25 @@ interface PostPreviewProps {
   className?: string
 }
 
+// Plattform-Konfiguration für Video-Support
+const PLATFORM_CONFIG = {
+  INSTAGRAM: { supportsVideo: true, videoRequired: false },
+  FACEBOOK: { supportsVideo: true, videoRequired: false },
+  LINKEDIN: { supportsVideo: true, videoRequired: false },
+  TWITTER: { supportsVideo: true, videoRequired: false },
+  TIKTOK: { supportsVideo: true, videoRequired: true },
+  YOUTUBE: { supportsVideo: true, videoRequired: true },
+}
+
+// Prüft ob eine URL ein Video ist
+const isVideoUrl = (url: string): boolean => {
+  const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.m4v']
+  const lowerUrl = url.toLowerCase()
+  return videoExtensions.some(ext => lowerUrl.includes(ext)) || 
+         lowerUrl.includes('video') ||
+         lowerUrl.includes('/v/')
+}
+
 const PLATFORM_ICONS = {
   INSTAGRAM: Instagram,
   FACEBOOK: Facebook,
@@ -232,13 +251,24 @@ function InstagramPreview({ content, mediaUrls, userName, userAvatar, currentIma
         {mediaUrls.length > 0 ? (
           <>
             <div className="aspect-square relative overflow-hidden">
-              <Image
-                src={mediaUrls[currentImageIndex]}
-                alt="Post"
-                fill
-                className="object-contain bg-black"
-                sizes="(max-width: 768px) 100vw, 400px"
-              />
+              {isVideoUrl(mediaUrls[currentImageIndex]) ? (
+                <video
+                  src={mediaUrls[currentImageIndex]}
+                  className="w-full h-full object-contain bg-black"
+                  controls
+                  playsInline
+                  muted
+                  loop
+                />
+              ) : (
+                <Image
+                  src={mediaUrls[currentImageIndex]}
+                  alt="Post"
+                  fill
+                  className="object-contain bg-black"
+                  sizes="(max-width: 768px) 100vw, 400px"
+                />
+              )}
             </div>
             
             {/* Image Navigation */}
@@ -259,12 +289,13 @@ function InstagramPreview({ content, mediaUrls, userName, userAvatar, currentIma
                 
                 {/* Dots indicator */}
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
-                  {mediaUrls.map((_, i) => (
+                  {mediaUrls.map((url, i) => (
                     <div
                       key={i}
                       className={cn(
                         "w-1.5 h-1.5 rounded-full transition-colors",
-                        i === currentImageIndex ? "bg-blue-500" : "bg-white/60"
+                        i === currentImageIndex ? "bg-blue-500" : "bg-white/60",
+                        isVideoUrl(url) && "ring-1 ring-white"
                       )}
                     />
                   ))}
@@ -351,13 +382,23 @@ function FacebookPreview({ content, mediaUrls, userName, userAvatar }: {
       {mediaUrls.length > 0 && (
         <div className="relative bg-zinc-100 dark:bg-zinc-800">
           <div className="aspect-[4/5] max-h-[400px] relative overflow-hidden">
-            <Image
-              src={mediaUrls[0]}
-              alt="Post"
-              fill
-              className="object-contain bg-black"
-              sizes="(max-width: 768px) 100vw, 400px"
-            />
+            {isVideoUrl(mediaUrls[0]) ? (
+              <video
+                src={mediaUrls[0]}
+                className="w-full h-full object-contain bg-black"
+                controls
+                playsInline
+                muted
+              />
+            ) : (
+              <Image
+                src={mediaUrls[0]}
+                alt="Post"
+                fill
+                className="object-contain bg-black"
+                sizes="(max-width: 768px) 100vw, 400px"
+              />
+            )}
           </div>
           {mediaUrls.length > 1 && (
             <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
@@ -444,13 +485,23 @@ function LinkedInPreview({ content, mediaUrls, userName, userAvatar }: {
       {mediaUrls.length > 0 && (
         <div className="relative bg-zinc-100 dark:bg-zinc-800">
           <div className="aspect-[1.91/1] relative overflow-hidden">
-            <Image
-              src={mediaUrls[0]}
-              alt="Post"
-              fill
-              className="object-contain bg-black"
-              sizes="(max-width: 768px) 100vw, 400px"
-            />
+            {isVideoUrl(mediaUrls[0]) ? (
+              <video
+                src={mediaUrls[0]}
+                className="w-full h-full object-contain bg-black"
+                controls
+                playsInline
+                muted
+              />
+            ) : (
+              <Image
+                src={mediaUrls[0]}
+                alt="Post"
+                fill
+                className="object-contain bg-black"
+                sizes="(max-width: 768px) 100vw, 400px"
+              />
+            )}
           </div>
         </div>
       )}
@@ -556,25 +607,46 @@ function TwitterPreview({ content, mediaUrls, userName, userAvatar, userHandle }
             <div className="mt-3 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
               {mediaUrls.length === 1 ? (
                 <div className="aspect-[16/9] relative bg-zinc-100 dark:bg-zinc-900">
-                  <Image
-                    src={mediaUrls[0]}
-                    alt="Post"
-                    fill
-                    className="object-contain bg-black"
-                    sizes="(max-width: 768px) 100vw, 400px"
-                  />
+                  {isVideoUrl(mediaUrls[0]) ? (
+                    <video
+                      src={mediaUrls[0]}
+                      className="w-full h-full object-contain bg-black"
+                      controls
+                      playsInline
+                      muted
+                    />
+                  ) : (
+                    <Image
+                      src={mediaUrls[0]}
+                      alt="Post"
+                      fill
+                      className="object-contain bg-black"
+                      sizes="(max-width: 768px) 100vw, 400px"
+                    />
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-0.5">
                   {mediaUrls.slice(0, 4).map((url, i) => (
                     <div key={i} className="aspect-square relative bg-zinc-100 dark:bg-zinc-900">
-                      <Image
-                        src={url}
-                        alt={`Media ${i + 1}`}
-                        fill
-                        className="object-cover"
-                        sizes="200px"
-                      />
+                      {isVideoUrl(url) ? (
+                        <video
+                          src={url}
+                          className="w-full h-full object-cover"
+                          muted
+                          playsInline
+                          onMouseEnter={(e) => e.currentTarget.play()}
+                          onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0 }}
+                        />
+                      ) : (
+                        <Image
+                          src={url}
+                          alt={`Media ${i + 1}`}
+                          fill
+                          className="object-cover"
+                          sizes="200px"
+                        />
+                      )}
                       {i === 3 && mediaUrls.length > 4 && (
                         <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                           <span className="text-white text-xl font-bold">+{mediaUrls.length - 4}</span>
@@ -635,13 +707,25 @@ function TikTokPreview({ content, mediaUrls, userName }: {
   userName: string
 }) {
   const handleName = userName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+  const hasVideo = mediaUrls.some(url => isVideoUrl(url))
+  const videoUrl = mediaUrls.find(url => isVideoUrl(url))
+  const imageUrl = mediaUrls.find(url => !isVideoUrl(url))
   
   return (
     <div className="bg-black text-white relative overflow-hidden" style={{ aspectRatio: '9/16', maxHeight: '500px' }}>
-      {/* Background Media */}
-      {mediaUrls.length > 0 ? (
+      {/* Background Media - Video hat Priorität für TikTok */}
+      {hasVideo && videoUrl ? (
+        <video
+          src={videoUrl}
+          className="absolute inset-0 w-full h-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
+      ) : mediaUrls.length > 0 ? (
         <Image
-          src={mediaUrls[0]}
+          src={imageUrl || mediaUrls[0]}
           alt="Post"
           fill
           className="object-cover"
@@ -654,12 +738,14 @@ function TikTokPreview({ content, mediaUrls, userName }: {
       {/* Gradient Overlays */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30" />
       
-      {/* Play Button Indicator */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-          <Play className="h-8 w-8 text-white fill-white ml-1" />
+      {/* Play Button Indicator - nur wenn kein Video oder Video pausiert */}
+      {!hasVideo && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <Play className="h-8 w-8 text-white fill-white ml-1" />
+          </div>
         </div>
-      </div>
+      )}
       
       {/* Side Actions */}
       <div className="absolute right-2 bottom-28 flex flex-col items-center gap-5">
@@ -773,22 +859,38 @@ function YouTubePreview({ content, mediaUrls, userName, userAvatar }: {
         <p className="text-sm whitespace-pre-wrap break-words">{content}</p>
       </div>
       
-      {/* Media - YouTube Community: 16:9 oder 1:1 */}
-      {mediaUrls.length > 0 && (
-        <div className="px-3 pb-3">
-          <div className="rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-            <div className="aspect-video relative">
-              <Image
-                src={mediaUrls[0]}
-                alt="Post"
-                fill
-                className="object-contain bg-black"
-                sizes="(max-width: 768px) 100vw, 400px"
-              />
+      {/* Media - YouTube Community: 16:9 oder 1:1 - Video hat Priorität */}
+      {mediaUrls.length > 0 && (() => {
+        const videoUrl = mediaUrls.find(url => isVideoUrl(url))
+        const imageUrl = mediaUrls.find(url => !isVideoUrl(url))
+        const displayUrl = videoUrl || imageUrl || mediaUrls[0]
+        const isVideo = isVideoUrl(displayUrl)
+        
+        return (
+          <div className="px-3 pb-3">
+            <div className="rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+              <div className="aspect-video relative">
+                {isVideo ? (
+                  <video
+                    src={displayUrl}
+                    className="w-full h-full object-contain bg-black"
+                    controls
+                    playsInline
+                  />
+                ) : (
+                  <Image
+                    src={displayUrl}
+                    alt="Post"
+                    fill
+                    className="object-contain bg-black"
+                    sizes="(max-width: 768px) 100vw, 400px"
+                  />
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
       
       {/* Actions */}
       <div className="px-3 pb-3 flex items-center gap-1">

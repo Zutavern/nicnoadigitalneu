@@ -68,6 +68,11 @@ interface IntegrationSettings {
   openRouterSiteUrl: string | null
   openRouterSiteName: string | null
   
+  // Replicate / Video-AI
+  replicateApiKey: string | null
+  replicateEnabled: boolean
+  replicateDefaultVideoModel: string | null
+  
   // DeepL
   deeplApiKey: string | null
   translationProvider: string | null
@@ -150,6 +155,11 @@ export default function IntegrationsPage() {
   const [sevenIoEnabled, setSevenIoEnabled] = useState(false)
   const [sevenIoSenderId, setSevenIoSenderId] = useState('NICNOA')
   const [sevenIoTestNumbers, setSevenIoTestNumbers] = useState('')
+  
+  // Replicate / Video-AI
+  const [replicateApiKey, setReplicateApiKey] = useState('')
+  const [replicateEnabled, setReplicateEnabled] = useState(false)
+  const [replicateDefaultVideoModel, setReplicateDefaultVideoModel] = useState('minimax-video-01')
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true)
@@ -177,6 +187,8 @@ export default function IntegrationsPage() {
       setSevenIoEnabled(data.sevenIoEnabled || false)
       setSevenIoSenderId(data.sevenIoSenderId || 'NICNOA')
       setSevenIoTestNumbers(data.sevenIoTestNumbers || '')
+      setReplicateEnabled(data.replicateEnabled || false)
+      setReplicateDefaultVideoModel(data.replicateDefaultVideoModel || 'minimax-video-01')
       
       // API Keys werden maskiert zurückgegeben, also nicht überschreiben
     } catch (error) {
@@ -212,6 +224,8 @@ export default function IntegrationsPage() {
         sevenIoEnabled,
         sevenIoSenderId: sevenIoSenderId || 'NICNOA',
         sevenIoTestNumbers: sevenIoTestNumbers || null,
+        replicateEnabled,
+        replicateDefaultVideoModel: replicateDefaultVideoModel || 'minimax-video-01',
       }
       
       // Nur nicht-leere API-Keys senden
@@ -247,6 +261,9 @@ export default function IntegrationsPage() {
       }
       if (resendWebhookSecret && !resendWebhookSecret.includes('•')) {
         payload.resendWebhookSecret = resendWebhookSecret
+      }
+      if (replicateApiKey && !replicateApiKey.includes('•')) {
+        payload.replicateApiKey = replicateApiKey
       }
       if (sevenIoApiKey && !sevenIoApiKey.includes('•')) {
         payload.sevenIoApiKey = sevenIoApiKey
@@ -352,9 +369,9 @@ export default function IntegrationsPage() {
               </div>
               <div className="text-left">
                 <h3 className="font-semibold">AI & Übersetzungen</h3>
-                <p className="text-sm text-muted-foreground">OpenRouter, DeepL</p>
+                <p className="text-sm text-muted-foreground">OpenRouter, DeepL, Replicate</p>
               </div>
-              {(settings?.openRouterEnabled || settings?.deeplApiKey) && (
+              {(settings?.openRouterEnabled || settings?.deeplApiKey || settings?.replicateEnabled) && (
                 <Badge className="ml-auto mr-4 bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
                   <CheckCircle2 className="h-3 w-3 mr-1" />
                   Aktiv
@@ -549,6 +566,122 @@ export default function IntegrationsPage() {
                       disabled={testingConnection === 'deepl' || !settings?.deeplApiKey}
                     >
                       {testingConnection === 'deepl' ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Zap className="h-4 w-4 mr-2" />
+                      )}
+                      Verbindung testen
+                    </Button>
+                    <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                      {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                      Speichern
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Replicate */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Video className="h-5 w-5 text-rose-500" />
+                      <div>
+                        <CardTitle className="text-base">Replicate</CardTitle>
+                        <CardDescription>Video-Generierung & erweiterte AI-Modelle</CardDescription>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={replicateEnabled}
+                        onCheckedChange={setReplicateEnabled}
+                      />
+                      <Label className="text-sm">Aktiviert</Label>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="replicateApiKey">API Token</Label>
+                      <div className="relative">
+                        <Input
+                          id="replicateApiKey"
+                          type={showSecrets['replicate'] ? 'text' : 'password'}
+                          value={replicateApiKey}
+                          onChange={(e) => setReplicateApiKey(e.target.value)}
+                          placeholder={settings?.replicateApiKey || 'r8_...'}
+                          className="pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                          onClick={() => toggleShowSecret('replicate')}
+                        >
+                          {showSecrets['replicate'] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Hol dir deinen Token auf{' '}
+                        <a href="https://replicate.com/account/api-tokens" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                          replicate.com <ExternalLink className="inline h-3 w-3" />
+                        </a>
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="replicateDefaultVideoModel">Standard Video-Modell</Label>
+                      <Select value={replicateDefaultVideoModel} onValueChange={setReplicateDefaultVideoModel}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Modell wählen" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="minimax-video-01">
+                            <div className="flex items-center gap-2">
+                              <span>Minimax Video-01</span>
+                              <Badge variant="secondary" className="text-xs">Empfohlen</Badge>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="minimax-video-01-live">Minimax Video-01 Live (Image-to-Video)</SelectItem>
+                          <SelectItem value="luma-ray">Luma Ray</SelectItem>
+                          <SelectItem value="stable-video-diffusion">Stable Video Diffusion</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                    <h4 className="text-sm font-medium">Verfügbare Funktionen</h4>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Video className="h-4 w-4" />
+                        <span>Text-to-Video Generierung</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Video className="h-4 w-4" />
+                        <span>Image-to-Video Animation</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Sparkles className="h-4 w-4" />
+                        <span>Bild-Upscaling & Enhancement</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Sparkles className="h-4 w-4" />
+                        <span>Social Media Content</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => testConnection('replicate')}
+                      disabled={testingConnection === 'replicate' || !settings?.replicateApiKey}
+                    >
+                      {testingConnection === 'replicate' ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       ) : (
                         <Zap className="h-4 w-4 mr-2" />

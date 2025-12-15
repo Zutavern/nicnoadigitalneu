@@ -276,6 +276,48 @@ export async function GET(request: Request) {
         }
       }
 
+      case 'replicate': {
+        const replicateApiKey = settings?.replicateApiKey
+        
+        if (!replicateApiKey) {
+          return NextResponse.json({ success: false, error: 'Kein API-Token konfiguriert' })
+        }
+
+        try {
+          // Replicate API - Abruf der verfügbaren Modelle zum Testen der Credentials
+          const res = await fetch('https://api.replicate.com/v1/models', {
+            headers: {
+              'Authorization': `Bearer ${replicateApiKey}`,
+            },
+          })
+
+          if (!res.ok) {
+            if (res.status === 401) {
+              return NextResponse.json({ 
+                success: false, 
+                error: 'Ungültiger API-Token' 
+              })
+            }
+            return NextResponse.json({ 
+              success: false, 
+              error: `API Error: ${res.status}` 
+            })
+          }
+
+          const data = await res.json()
+          const modelCount = data.results?.length || 0
+          return NextResponse.json({ 
+            success: true, 
+            message: `Verbunden! ${modelCount} Modelle abgerufen` 
+          })
+        } catch (err) {
+          return NextResponse.json({ 
+            success: false, 
+            error: err instanceof Error ? err.message : 'Verbindungsfehler' 
+          })
+        }
+      }
+
       default:
         return NextResponse.json({ error: 'Unbekannte Integration' }, { status: 400 })
     }

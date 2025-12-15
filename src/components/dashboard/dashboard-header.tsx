@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession, signOut } from 'next-auth/react'
-import { Search, User, Settings, LogOut, ChevronDown, Menu, X, Moon, Sun } from 'lucide-react'
+import { Search, User, Settings, LogOut, ChevronDown, Menu, X, Moon, Sun, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -31,11 +31,36 @@ export function DashboardHeader({ baseUrl, accentColor = 'primary' }: DashboardH
   const { theme, setTheme } = useTheme()
   const [searchExpanded, setSearchExpanded] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [credits, setCredits] = useState<{ balance: number; isUnlimited: boolean } | null>(null)
+
+  // Lade Credits
+  const fetchCredits = useCallback(async () => {
+    if (!session?.user?.id) return
+    try {
+      const res = await fetch('/api/user/credits')
+      if (res.ok) {
+        const data = await res.json()
+        setCredits({
+          balance: data.credits?.balance ?? 0,
+          isUnlimited: data.credits?.isUnlimited ?? false,
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching credits:', error)
+    }
+  }, [session?.user?.id])
 
   // Avoid hydration mismatch for theme-dependent content
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Load credits when session is available
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchCredits()
+    }
+  }, [session?.user?.id, fetchCredits])
 
   const showHamburger = isMobile || isTablet
 
@@ -134,6 +159,32 @@ export function DashboardHeader({ baseUrl, accentColor = 'primary' }: DashboardH
         <div className="hidden md:block">
           <LanguageSelector />
         </div>
+
+        {/* AI Credits Badge */}
+        {credits && (
+          <Link
+            href={`${baseUrl}/credits`}
+            className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-sm font-medium transition-all hover:scale-105",
+              credits.isUnlimited
+                ? "bg-gradient-to-r from-violet-500/20 via-purple-500/20 to-fuchsia-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30 shadow-sm shadow-purple-500/10"
+                : credits.balance > 10
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                  : credits.balance > 0
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                    : "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30"
+            )}
+            title={credits.isUnlimited ? 'Unlimited AI Credits' : `${credits.balance.toFixed(0)} AI Credits`}
+          >
+            <Sparkles className={cn(
+              "h-4 w-4",
+              credits.isUnlimited && "animate-pulse"
+            )} />
+            <span className="hidden sm:inline font-semibold">
+              {credits.isUnlimited ? '∞' : credits.balance.toFixed(0)}
+            </span>
+          </Link>
+        )}
 
         {/* Notifications */}
         <NotificationBell />

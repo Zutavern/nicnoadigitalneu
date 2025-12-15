@@ -3,8 +3,9 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { clearOpenRouterConfigCache } from '@/lib/openrouter/client'
 import { clearTranslationApiCache } from '@/lib/translation/translation-service'
+import { clearReplicateConfigCache } from '@/lib/replicate/client'
 
-// Interface für Settings mit seven.io Feldern (TypeScript Cache workaround)
+// Interface für Settings mit seven.io und Replicate Feldern (TypeScript Cache workaround)
 interface IntegrationSettingsResult {
   openRouterApiKey: string | null
   openRouterEnabled: boolean
@@ -34,6 +35,10 @@ interface IntegrationSettingsResult {
   sevenIoEnabled: boolean
   sevenIoSenderId: string | null
   sevenIoTestNumbers: string | null
+  // Replicate
+  replicateApiKey: string | null
+  replicateEnabled: boolean
+  replicateDefaultVideoModel: string | null
 }
 
 // GET /api/admin/settings/integrations
@@ -114,6 +119,11 @@ export async function GET() {
       sevenIoEnabled: settings.sevenIoEnabled ?? false,
       sevenIoSenderId: settings.sevenIoSenderId,
       sevenIoTestNumbers: settings.sevenIoTestNumbers,
+      
+      // Replicate
+      replicateApiKey: maskKey(settings.replicateApiKey),
+      replicateEnabled: settings.replicateEnabled ?? false,
+      replicateDefaultVideoModel: settings.replicateDefaultVideoModel,
       
       // Stripe (aus env)
       stripeConfigured: !!(process.env.STRIPE_SECRET_KEY && process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
@@ -241,6 +251,17 @@ export async function PUT(request: Request) {
       updateData.sevenIoTestNumbers = body.sevenIoTestNumbers || null
     }
 
+    // Replicate
+    if (body.replicateApiKey !== undefined) {
+      updateData.replicateApiKey = body.replicateApiKey || null
+    }
+    if (body.replicateEnabled !== undefined) {
+      updateData.replicateEnabled = body.replicateEnabled
+    }
+    if (body.replicateDefaultVideoModel !== undefined) {
+      updateData.replicateDefaultVideoModel = body.replicateDefaultVideoModel || 'minimax-video-01'
+    }
+
     // Update oder Create
     await prisma.platformSettings.upsert({
       where: { id: 'default' },
@@ -251,6 +272,7 @@ export async function PUT(request: Request) {
     // Caches leeren
     clearOpenRouterConfigCache()
     clearTranslationApiCache()
+    clearReplicateConfigCache()
 
     return NextResponse.json({ success: true })
   } catch (error) {

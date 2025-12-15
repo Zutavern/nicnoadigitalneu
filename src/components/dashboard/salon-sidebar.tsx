@@ -25,6 +25,7 @@ import {
   Palette,
   FileText,
   Share2,
+  Coins,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -82,6 +83,7 @@ const menuItems = [
     items: [
       { label: 'Mein Profil', href: '/salon/profile', icon: User },
       { label: 'Salonprofil', href: '/salon/salon-profile', icon: Building2 },
+      { label: 'AI Credits', href: '/salon/credits', icon: Coins },
     ],
   },
   {

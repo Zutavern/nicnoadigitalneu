@@ -74,14 +74,63 @@ import { de } from 'date-fns/locale'
 import { PostPreview } from '@/components/social/post-preview'
 import { ImageCropper } from '@/components/social/image-cropper'
 
-// Plattform-Konfiguration
+// Plattform-Konfiguration mit Video-Support
 const platforms = [
-  { id: 'INSTAGRAM', name: 'Instagram', icon: Instagram, color: 'from-purple-500 to-pink-500', maxLength: 2200, maxImages: 10 },
-  { id: 'FACEBOOK', name: 'Facebook', icon: Facebook, color: 'from-blue-600 to-blue-500', maxLength: 63206, maxImages: 10 },
-  { id: 'LINKEDIN', name: 'LinkedIn', icon: Linkedin, color: 'from-blue-700 to-blue-600', maxLength: 3000, maxImages: 9 },
-  { id: 'TWITTER', name: 'X/Twitter', icon: Twitter, color: 'from-gray-800 to-black', maxLength: 280, maxImages: 4 },
-  { id: 'TIKTOK', name: 'TikTok', icon: Share2, color: 'from-pink-500 to-cyan-500', maxLength: 2200, maxImages: 35 },
-  { id: 'YOUTUBE', name: 'YouTube', icon: Youtube, color: 'from-red-600 to-red-500', maxLength: 5000, maxImages: 1 },
+  { id: 'INSTAGRAM', name: 'Instagram', icon: Instagram, color: 'from-purple-500 to-pink-500', maxLength: 2200, maxImages: 10, supportsVideo: true, videoRequired: false },
+  { id: 'FACEBOOK', name: 'Facebook', icon: Facebook, color: 'from-blue-600 to-blue-500', maxLength: 63206, maxImages: 10, supportsVideo: true, videoRequired: false },
+  { id: 'LINKEDIN', name: 'LinkedIn', icon: Linkedin, color: 'from-blue-700 to-blue-600', maxLength: 3000, maxImages: 9, supportsVideo: true, videoRequired: false },
+  { id: 'TWITTER', name: 'X/Twitter', icon: Twitter, color: 'from-gray-800 to-black', maxLength: 280, maxImages: 4, supportsVideo: true, videoRequired: false },
+  { id: 'TIKTOK', name: 'TikTok', icon: Share2, color: 'from-pink-500 to-cyan-500', maxLength: 2200, maxImages: 35, supportsVideo: true, videoRequired: true },
+  { id: 'YOUTUBE', name: 'YouTube', icon: Youtube, color: 'from-red-600 to-red-500', maxLength: 5000, maxImages: 1, supportsVideo: true, videoRequired: true },
+]
+
+// Video-Modelle für Replicate (vereinfacht für Einsteiger)
+const videoModels = [
+  { 
+    id: 'minimax-video-01', 
+    name: 'Schnelles Video', 
+    description: 'Erstellt ein Video aus deiner Beschreibung',
+    type: 'text-to-video' as const,
+    credits: 50,
+    duration: '~1 Min',
+    quality: 'Gut',
+  },
+  { 
+    id: 'cogvideox', 
+    name: 'CogVideoX', 
+    description: 'Open-Source Alternative für Text-zu-Video',
+    type: 'text-to-video' as const,
+    credits: 40,
+    duration: '~1.5 Min',
+    quality: 'Gut',
+  },
+  { 
+    id: 'minimax-video-01-live', 
+    name: 'Bild zum Leben erwecken', 
+    description: 'Macht ein Bild zu einem kurzen Video',
+    type: 'image-to-video' as const,
+    credits: 50,
+    duration: '~1 Min',
+    quality: 'Sehr gut',
+  },
+  { 
+    id: 'animatediff', 
+    name: 'AnimateDiff', 
+    description: 'Animiert ein Bild mit Bewegungssteuerung',
+    type: 'image-animation' as const,
+    credits: 10,
+    duration: '~45 Sek',
+    quality: 'Standard',
+  },
+  { 
+    id: 'stable-video-diffusion', 
+    name: 'Bild-Animation', 
+    description: 'Klassische Bild-Animation (günstigste Option)',
+    type: 'image-animation' as const,
+    credits: 10,
+    duration: '~30 Sek',
+    quality: 'Standard',
+  },
 ]
 
 // Tonalitäten für AI
@@ -101,12 +150,35 @@ const imageStyles = [
   { id: 'artistic', name: 'Künstlerisch', description: 'Kreative Interpretation' },
 ]
 
-// AI-Bild-Modelle (basierend auf OpenRouter Dokumentation)
-const imageModels = [
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Beste Qualität, zuverlässig', free: false },
-  { id: 'flux-2-pro', name: 'Flux 2 Pro', description: 'Hochwertige Bildgenerierung', free: false },
-  { id: 'flux-2-flex', name: 'Flux 2 Flex', description: 'Flexible Bildgenerierung', free: false },
+// AI-Bild-Modelle - OpenRouter (Text-zu-Bild via Chat)
+const openRouterImageModels = [
+  { id: 'gemini-2-flash', name: 'Gemini 2.0 Flash ⚡', description: 'Schnell, kostenlos & zuverlässig', free: true, credits: 1, recommended: true, provider: 'openrouter' },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Neuestes Gemini-Modell', free: false, credits: 3, provider: 'openrouter' },
+  { id: 'ideogram-v2', name: 'Ideogram V2', description: 'Beste Qualität, Text auf Bildern', free: false, credits: 5, provider: 'openrouter' },
+  { id: 'recraft-v3', name: 'Recraft V3', description: 'Kreativ & stilvoll', free: false, credits: 5, provider: 'openrouter' },
+  { id: 'dall-e-3', name: 'DALL-E 3', description: 'OpenAI Standard - bewährt', free: false, credits: 8, provider: 'openrouter' },
 ]
+
+// AI-Bild-Modelle - Replicate (Spezialisiert auf Bildgenerierung)
+const replicateImageModels = [
+  { id: 'flux-schnell', name: 'Flux Schnell ⚡', description: 'Ultra-schnell & günstig', free: true, credits: 1, recommended: true, provider: 'replicate' },
+  { id: 'flux-dev', name: 'Flux Dev', description: 'Gute Qualität mit Prompt-Treue', free: false, credits: 3, provider: 'replicate' },
+  { id: 'sdxl-lightning', name: 'SDXL Lightning ⚡', description: 'Ultra-schnell in 4 Schritten', free: true, credits: 1, provider: 'replicate' },
+  { id: 'sd35-turbo', name: 'SD 3.5 Turbo', description: 'Neueste SD Version, schnell', free: false, credits: 2, provider: 'replicate' },
+  { id: 'playground-v25', name: 'Playground V2.5', description: 'Ästhetisch für Social Media', free: false, credits: 2, provider: 'replicate' },
+  { id: 'realvisxl', name: 'RealVisXL V4', description: 'Fotorealistisch - für Produktbilder', free: false, credits: 2, provider: 'replicate' },
+  { id: 'flux-pro-11', name: 'Flux Pro 1.1 ✨', description: 'Premium Qualität', free: false, credits: 5, provider: 'replicate' },
+  { id: 'ideogram', name: 'Ideogram V2 Turbo', description: 'Beste Text-auf-Bild Qualität', free: false, credits: 3, provider: 'replicate' },
+]
+
+// Kombinierte Liste für Anzeige
+const allImageModels = [
+  ...replicateImageModels.map(m => ({ ...m, providerName: 'Replicate' })),
+  ...openRouterImageModels.map(m => ({ ...m, providerName: 'OpenRouter' })),
+]
+
+// Legacy alias für Kompatibilität
+const imageModels = allImageModels
 
 interface MediaItem {
   id: string
@@ -152,10 +224,19 @@ export default function CreatePostPage() {
   // AI Image State - verbessert
   const [aiImagePrompt, setAiImagePrompt] = useState('')
   const [aiImageStyle, setAiImageStyle] = useState('vivid')
-  const [aiImageModel, setAiImageModel] = useState('gemini-2.5-flash')
+  const [aiImageModel, setAiImageModel] = useState('flux-schnell') // Replicate - schnell & günstig
   const [useContentAsPrompt, setUseContentAsPrompt] = useState(true)
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const [aiImageDialogOpen, setAiImageDialogOpen] = useState(false)
+  
+  // Video State
+  const [mediaMode, setMediaMode] = useState<'image' | 'video'>('image')
+  const [videoModel, setVideoModel] = useState('minimax-video-01')
+  const [videoPrompt, setVideoPrompt] = useState('')
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false)
+  const [aiVideoDialogOpen, setAiVideoDialogOpen] = useState(false)
+  const [videoSourceImage, setVideoSourceImage] = useState<string | null>(null)
+  const [replicateEnabled, setReplicateEnabled] = useState(false)
   
   // Submission State
   const [isSaving, setIsSaving] = useState(false)
@@ -175,9 +256,50 @@ export default function CreatePostPage() {
       
       if (cleanContent.length > 20) {
         setAiImagePrompt(`Erstelle ein passendes Bild für: "${cleanContent}"`)
+        setVideoPrompt(cleanContent) // Auch Video-Prompt aktualisieren
       }
     }
   }, [content, useContentAsPrompt])
+
+  // Prüfe ob Replicate aktiviert ist
+  useEffect(() => {
+    const checkReplicate = async () => {
+      try {
+        const res = await fetch('/api/social/ai/video')
+        if (res.ok) {
+          const data = await res.json()
+          setReplicateEnabled(data.enabled)
+        }
+      } catch {
+        setReplicateEnabled(false)
+      }
+    }
+    checkReplicate()
+  }, [])
+
+  // Automatisch Video-Modus aktivieren wenn nur Video-Plattformen ausgewählt
+  useEffect(() => {
+    const selectedPlatformData = platforms.filter(p => selectedPlatforms.includes(p.id))
+    const allRequireVideo = selectedPlatformData.every(p => p.videoRequired)
+    const anySupportsVideo = selectedPlatformData.some(p => p.supportsVideo)
+    
+    if (allRequireVideo && anySupportsVideo) {
+      setMediaMode('video')
+    }
+  }, [selectedPlatforms])
+
+  // Hilfsfunktionen für Video
+  const supportsVideo = () => {
+    const selectedPlatformData = platforms.filter(p => selectedPlatforms.includes(p.id))
+    return selectedPlatformData.some(p => p.supportsVideo)
+  }
+
+  const requiresVideo = () => {
+    const selectedPlatformData = platforms.filter(p => selectedPlatforms.includes(p.id))
+    return selectedPlatformData.some(p => p.videoRequired)
+  }
+
+  const selectedVideoModel = videoModels.find(m => m.id === videoModel)
 
   // Berechne Limits
   const getMaxLength = () => {
@@ -271,7 +393,7 @@ export default function CreatePostPage() {
     setMediaItems(prev => prev.filter(m => m.id !== mediaId))
   }
   
-  // AI Bild generieren - verbessert mit auto-Prompt
+  // AI Bild generieren - verbessert mit auto-Prompt und Provider-Auswahl
   const generateAIImage = async () => {
     // Prüfen ob wir Content haben wenn useContentAsPrompt aktiv ist
     if (useContentAsPrompt && !content.trim()) {
@@ -287,9 +409,19 @@ export default function CreatePostPage() {
     setIsGeneratingImage(true)
     
     try {
+      // Bestimme den Provider basierend auf dem gewählten Modell
+      const selectedModelConfig = allImageModels.find(m => m.id === aiImageModel)
+      const provider = selectedModelConfig?.provider || 'replicate'
+      
+      // Wähle die richtige API basierend auf dem Provider
+      const apiEndpoint = provider === 'replicate' 
+        ? '/api/social/ai/image-replicate'
+        : '/api/social/ai/image'
+      
       const requestBody = useContentAsPrompt 
         ? {
             postContent: content + (hashtags.length > 0 ? ' ' + hashtags.map(h => `#${h}`).join(' ') : ''),
+            prompt: content + (hashtags.length > 0 ? ' ' + hashtags.map(h => `#${h}`).join(' ') : ''), // Auch prompt für Replicate
             platform: selectedPlatforms[0] || 'INSTAGRAM',
             style: aiImageStyle,
             model: aiImageModel,
@@ -303,7 +435,9 @@ export default function CreatePostPage() {
             industry: 'Friseur/Beauty/Salon',
           }
       
-      const res = await fetch('/api/social/ai/image', {
+      console.log(`[AI Image] Using provider: ${provider}, endpoint: ${apiEndpoint}`)
+      
+      const res = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
@@ -340,6 +474,76 @@ export default function CreatePostPage() {
       toast.error(error instanceof Error ? error.message : 'Bildgenerierung fehlgeschlagen')
     } finally {
       setIsGeneratingImage(false)
+    }
+  }
+
+  // AI Video generieren
+  const generateAIVideo = async () => {
+    if (!videoPrompt.trim()) {
+      toast.error('Bitte beschreibe das gewünschte Video')
+      return
+    }
+
+    const model = videoModels.find(m => m.id === videoModel)
+    if (!model) {
+      toast.error('Bitte wähle ein Video-Modell aus')
+      return
+    }
+
+    // Prüfe ob Bild benötigt wird
+    if ((model.type === 'image-to-video' || model.type === 'image-animation') && !videoSourceImage) {
+      toast.error('Dieses Modell benötigt ein Bild als Ausgangspunkt')
+      return
+    }
+
+    setIsGeneratingVideo(true)
+
+    try {
+      const res = await fetch('/api/social/ai/video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: videoPrompt,
+          type: model.type === 'image-animation' ? 'image-to-video' : model.type,
+          model: videoModel,
+          imageUrl: videoSourceImage,
+          optimizePrompt: true,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || data.hint || 'Video-Generierung fehlgeschlagen')
+      }
+
+      const newMedia: MediaItem = {
+        id: `video-${Date.now()}`,
+        url: data.videoUrl,
+        type: 'video',
+        originalName: 'KI-generiertes Video',
+        isAiGenerated: true,
+        aiPrompt: videoPrompt,
+      }
+
+      setMediaItems(prev => [...prev, newMedia])
+      setAiVideoDialogOpen(false)
+      toast.success(`Video generiert! (${data.credits?.used || model.credits} Credits verwendet)`)
+    } catch (error) {
+      console.error('AI Video error:', error)
+      toast.error(error instanceof Error ? error.message : 'Video-Generierung fehlgeschlagen')
+    } finally {
+      setIsGeneratingVideo(false)
+    }
+  }
+
+  // Video-Bild aus vorhandenen Medien wählen
+  const selectImageForVideo = (imageUrl: string) => {
+    setVideoSourceImage(imageUrl)
+    // Wechsle zu passendem Modell wenn nötig
+    const currentModel = videoModels.find(m => m.id === videoModel)
+    if (currentModel?.type === 'text-to-video') {
+      setVideoModel('minimax-video-01-live') // Wechsle zu Bild-zu-Video Modell
     }
   }
   
@@ -964,14 +1168,45 @@ export default function CreatePostPage() {
                                   <SelectTrigger className="mt-1">
                                     <SelectValue />
                                   </SelectTrigger>
-                                  <SelectContent>
-                                    {imageModels.map(model => (
-                                      <SelectItem key={model.id} value={model.id}>
+                                  <SelectContent className="max-h-80">
+                                    {/* Replicate Modelle - Spezialisiert */}
+                                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
+                                      🚀 Replicate (Spezialisiert)
+                                    </div>
+                                    {replicateImageModels.map(model => (
+                                      <SelectItem key={`replicate-${model.id}`} value={model.id}>
                                         <div className="flex items-center gap-2">
-                                          {model.name}
+                                          <span>{model.name}</span>
                                           {model.free && (
-                                            <Badge variant="secondary" className="text-xs">
+                                            <Badge variant="secondary" className="text-xs py-0">
                                               Kostenlos
+                                            </Badge>
+                                          )}
+                                          {model.recommended && (
+                                            <Badge className="text-xs py-0 bg-green-500">
+                                              Empfohlen
+                                            </Badge>
+                                          )}
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                    
+                                    {/* OpenRouter Modelle - Vielseitig */}
+                                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 mt-1">
+                                      🌐 OpenRouter (Vielseitig)
+                                    </div>
+                                    {openRouterImageModels.map(model => (
+                                      <SelectItem key={`openrouter-${model.id}`} value={model.id}>
+                                        <div className="flex items-center gap-2">
+                                          <span>{model.name}</span>
+                                          {model.free && (
+                                            <Badge variant="secondary" className="text-xs py-0">
+                                              Kostenlos
+                                            </Badge>
+                                          )}
+                                          {model.recommended && (
+                                            <Badge className="text-xs py-0 bg-green-500">
+                                              Empfohlen
                                             </Badge>
                                           )}
                                         </div>
@@ -979,6 +1214,9 @@ export default function CreatePostPage() {
                                     ))}
                                   </SelectContent>
                                 </Select>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {allImageModels.find(m => m.id === aiImageModel)?.description}
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -1007,7 +1245,166 @@ export default function CreatePostPage() {
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
+
+                      {/* AI Video Button - nur wenn Video unterstützt */}
+                      {supportsVideo() && replicateEnabled && (
+                        <Dialog open={aiVideoDialogOpen} onOpenChange={setAiVideoDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              className="gap-2 border-cyan-500/50 text-cyan-600 hover:bg-cyan-500/10"
+                            >
+                              <Film className="h-4 w-4" />
+                              KI-Video erstellen
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-lg">
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2">
+                                <Film className="h-5 w-5 text-cyan-500" />
+                                KI-Video generieren
+                              </DialogTitle>
+                              <DialogDescription>
+                                Erstelle ein kurzes Video für {selectedPlatforms.map(p => platforms.find(pl => pl.id === p)?.name).join(', ')}
+                              </DialogDescription>
+                            </DialogHeader>
+                            
+                            <div className="space-y-4 py-4">
+                              {/* Video-Modell Auswahl */}
+                              <div>
+                                <Label>Video-Typ wählen</Label>
+                                <div className="grid gap-2 mt-2">
+                                  {videoModels.map(model => (
+                                    <div
+                                      key={model.id}
+                                      onClick={() => setVideoModel(model.id)}
+                                      className={cn(
+                                        "p-3 rounded-lg border cursor-pointer transition-all",
+                                        videoModel === model.id 
+                                          ? "border-cyan-500 bg-cyan-500/10" 
+                                          : "border-border hover:border-cyan-500/50"
+                                      )}
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <div>
+                                          <p className="font-medium text-sm">{model.name}</p>
+                                          <p className="text-xs text-muted-foreground">{model.description}</p>
+                                        </div>
+                                        <div className="text-right">
+                                          <Badge variant="secondary" className="text-xs">
+                                            {model.credits} Credits
+                                          </Badge>
+                                          <p className="text-xs text-muted-foreground mt-1">{model.duration}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Bild-Auswahl für Bild-zu-Video Modelle */}
+                              {selectedVideoModel && (selectedVideoModel.type === 'image-to-video' || selectedVideoModel.type === 'image-animation') && (
+                                <div>
+                                  <Label>Ausgangsbild wählen</Label>
+                                  {mediaItems.filter(m => m.type === 'image').length > 0 ? (
+                                    <div className="grid grid-cols-4 gap-2 mt-2">
+                                      {mediaItems.filter(m => m.type === 'image').map(img => (
+                                        <div
+                                          key={img.id}
+                                          onClick={() => selectImageForVideo(img.url)}
+                                          className={cn(
+                                            "relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all",
+                                            videoSourceImage === img.url 
+                                              ? "border-cyan-500" 
+                                              : "border-transparent hover:border-cyan-500/50"
+                                          )}
+                                        >
+                                          <Image src={img.url} alt="Bild" fill className="object-cover" />
+                                          {videoSourceImage === img.url && (
+                                            <div className="absolute inset-0 bg-cyan-500/20 flex items-center justify-center">
+                                              <Check className="h-6 w-6 text-white" />
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-sm text-muted-foreground mt-2 p-3 bg-muted rounded-lg">
+                                      Lade erst ein Bild hoch oder generiere ein KI-Bild, um es zu animieren.
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Video-Beschreibung */}
+                              <div>
+                                <Label>Beschreibe dein Video</Label>
+                                <Textarea
+                                  value={videoPrompt}
+                                  onChange={(e) => setVideoPrompt(e.target.value)}
+                                  placeholder={selectedVideoModel?.type === 'text-to-video' 
+                                    ? "z.B. 'Eine Stylistin arbeitet an einer eleganten Hochsteckfrisur im modernen Salon'"
+                                    : "z.B. 'Sanfte Bewegung, Haare wehen im Wind'"
+                                  }
+                                  className="mt-2 min-h-[80px]"
+                                />
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Tipp: Beschreibe Bewegungen und Stimmung für beste Ergebnisse
+                                </p>
+                              </div>
+
+                              {/* Credits-Info */}
+                              <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
+                                <div className="flex items-center gap-2">
+                                  <Sparkles className="h-4 w-4 text-cyan-500" />
+                                  <span className="text-sm">Kosten</span>
+                                </div>
+                                <Badge variant="outline">{selectedVideoModel?.credits || 50} Credits</Badge>
+                              </div>
+                            </div>
+                            
+                            <DialogFooter>
+                              <Button variant="outline" onClick={() => setAiVideoDialogOpen(false)}>
+                                Abbrechen
+                              </Button>
+                              <Button
+                                onClick={generateAIVideo}
+                                disabled={
+                                  isGeneratingVideo || 
+                                  !videoPrompt.trim() ||
+                                  ((selectedVideoModel?.type === 'image-to-video' || selectedVideoModel?.type === 'image-animation') && !videoSourceImage)
+                                }
+                                className="bg-gradient-to-r from-cyan-500 to-blue-500"
+                              >
+                                {isGeneratingVideo ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Generiere... (2-4 Min)
+                                  </>
+                                ) : (
+                                  <>
+                                    <Film className="h-4 w-4 mr-2" />
+                                    Video generieren
+                                  </>
+                                )}
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      )}
                     </div>
+
+                    {/* Video-Hinweis für YouTube/TikTok */}
+                    {requiresVideo() && !replicateEnabled && (
+                      <div className="mt-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                        <p className="text-xs text-amber-600 flex items-center gap-1">
+                          <Info className="h-3 w-3" />
+                          {selectedPlatforms.includes('YOUTUBE') || selectedPlatforms.includes('TIKTOK') 
+                            ? 'YouTube/TikTok funktioniert am besten mit Videos. Video-Generierung ist unter Admin → Einstellungen aktivierbar.'
+                            : 'Video-Upload wird unterstützt.'}
+                        </p>
+                      </div>
+                    )}
                   </CardHeader>
                   <CardContent>
                     {/* Upload Progress */}
@@ -1051,25 +1448,61 @@ export default function CreatePostPage() {
                                 className="object-cover"
                               />
                             ) : (
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <Film className="h-8 w-8 text-muted-foreground" />
+                              <div className="absolute inset-0">
+                                {/* Video Player */}
+                                <video
+                                  src={media.url}
+                                  className="w-full h-full object-cover"
+                                  muted
+                                  loop
+                                  playsInline
+                                  onMouseEnter={(e) => e.currentTarget.play()}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.pause()
+                                    e.currentTarget.currentTime = 0
+                                  }}
+                                />
+                                {/* Video Icon Badge */}
+                                <div className="absolute bottom-2 right-2">
+                                  <Badge className="bg-cyan-500/90">
+                                    <Film className="h-3 w-3" />
+                                  </Badge>
+                                </div>
                               </div>
                             )}
                             
                             {/* Overlay Actions */}
                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                               {media.type === 'image' && (
-                                <Button
-                                  size="icon"
-                                  variant="secondary"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setSelectedMediaForCrop(media)
-                                    setCropDialogOpen(true)
-                                  }}
-                                >
-                                  <Crop className="h-4 w-4" />
-                                </Button>
+                                <>
+                                  <Button
+                                    size="icon"
+                                    variant="secondary"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setSelectedMediaForCrop(media)
+                                      setCropDialogOpen(true)
+                                    }}
+                                    title="Zuschneiden"
+                                  >
+                                    <Crop className="h-4 w-4" />
+                                  </Button>
+                                  {/* Use for Video Button */}
+                                  {supportsVideo() && replicateEnabled && (
+                                    <Button
+                                      size="icon"
+                                      variant="secondary"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        selectImageForVideo(media.url)
+                                        setAiVideoDialogOpen(true)
+                                      }}
+                                      title="Zu Video animieren"
+                                    >
+                                      <Film className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </>
                               )}
                               <Button
                                 size="icon"
@@ -1078,6 +1511,7 @@ export default function CreatePostPage() {
                                   e.stopPropagation()
                                   removeMedia(media.id)
                                 }}
+                                title="Löschen"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -1087,7 +1521,9 @@ export default function CreatePostPage() {
                             <div className="absolute top-2 left-2 flex gap-1">
                               <Badge className="bg-black/70">{index + 1}</Badge>
                               {media.isAiGenerated && (
-                                <Badge className="bg-purple-500/90">
+                                <Badge className={cn(
+                                  media.type === 'video' ? "bg-cyan-500/90" : "bg-purple-500/90"
+                                )}>
                                   <Sparkles className="h-3 w-3" />
                                 </Badge>
                               )}

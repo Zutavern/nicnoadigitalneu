@@ -18,6 +18,7 @@ import {
   getAIPromptSuffix,
   type ImageFormat 
 } from '@/lib/social/image-formats'
+import { logAIUsage } from '@/lib/openrouter/usage-tracker'
 
 // Cache für OpenRouter-Konfiguration
 interface OpenRouterConfig {
@@ -71,38 +72,99 @@ const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
  * https://openrouter.ai/docs/features/multimodal/image-generation
  * 
  * Modelle mit output_modalities: ["image", "text"]
+ * 
+ * WICHTIG: Nur Modelle die tatsächlich funktionieren!
  */
 const IMAGE_MODELS = {
-  // Google Gemini - offiziell unterstützt für Bildgenerierung
+  // Google Gemini 2.0 Flash - EMPFOHLEN, funktioniert zuverlässig
+  'gemini-2-flash': {
+    id: 'google/gemini-2.0-flash-exp:free',
+    name: 'Gemini 2.0 Flash',
+    description: 'Schnell, kostenlos & zuverlässig - empfohlen',
+    free: true,
+    supportsAspectRatio: true,
+    credits: 1,
+    provider: 'openrouter',
+  },
+  // Google Gemini 2.5 Flash Image - Neueste Version
   'gemini-2.5-flash': {
-    id: 'google/gemini-2.5-flash-image-preview',
-    name: 'Gemini 2.5 Flash Image',
-    description: 'Offizielle Bildgenerierung, beste Qualität',
+    id: 'google/gemini-2.5-flash-preview-05-20',
+    name: 'Gemini 2.5 Flash',
+    description: 'Neuestes Gemini-Modell mit Bildgenerierung',
     free: false,
     supportsAspectRatio: true,
+    credits: 3,
+    provider: 'openrouter',
   },
-  // Flux 2 Modelle - ebenfalls offiziell unterstützt
-  'flux-2-pro': {
-    id: 'black-forest-labs/flux.2-pro',
-    name: 'Flux 2 Pro',
-    description: 'Hochwertige Bildgenerierung',
+  // Ideogram V2 - Hochqualität, Text auf Bildern
+  'ideogram-v2': {
+    id: 'ideogram-ai/ideogram-v2',
+    name: 'Ideogram V2',
+    description: 'Beste Qualität, besonders für Text auf Bildern',
+    free: false,
+    supportsAspectRatio: true,
+    credits: 5,
+    provider: 'openrouter',
+  },
+  // Recraft V3 - Kreativ & Stilvoll
+  'recraft-v3': {
+    id: 'recraft-ai/recraft-v3',
+    name: 'Recraft V3',
+    description: 'Kreative & stilvolle Bildgenerierung',
+    free: false,
+    supportsAspectRatio: true,
+    credits: 5,
+    provider: 'openrouter',
+  },
+  // DALL-E 3 - OpenAI Standard
+  'dall-e-3': {
+    id: 'openai/dall-e-3',
+    name: 'DALL-E 3',
+    description: 'OpenAI Standard - bewährte Qualität',
+    free: false,
+    supportsAspectRatio: true,
+    credits: 8,
+    provider: 'openrouter',
+  },
+  // Flux Schnell via OpenRouter - KOSTENLOS und SCHNELL
+  'flux-schnell': {
+    id: 'black-forest-labs/flux-schnell',
+    name: 'Flux Schnell',
+    description: 'Schnell & günstig - Open Source',
+    free: false, // Nicht wirklich kostenlos auf OpenRouter
+    supportsAspectRatio: true,
+    credits: 2,
+    provider: 'openrouter',
+  },
+  // Flux Pro 1.1 - Hochqualität
+  'flux-pro': {
+    id: 'black-forest-labs/flux-1.1-pro',
+    name: 'Flux Pro 1.1',
+    description: 'Premium Qualität für besondere Anlässe',
+    free: false,
+    supportsAspectRatio: true,
+    credits: 10,
+    provider: 'openrouter',
+  },
+  // Stable Diffusion 3.5 Large Turbo - Schnell & günstig
+  'sd35-turbo': {
+    id: 'stability-ai/stable-diffusion-3.5-large-turbo',
+    name: 'SD 3.5 Large Turbo',
+    description: 'Schnelle Stable Diffusion 3.5 Variante',
     free: false,
     supportsAspectRatio: false,
-  },
-  'flux-2-flex': {
-    id: 'black-forest-labs/flux.2-flex',
-    name: 'Flux 2 Flex',
-    description: 'Flexible Bildgenerierung',
-    free: false,
-    supportsAspectRatio: false,
+    credits: 3,
+    provider: 'openrouter',
   },
 } as const
 
-// Fallback-Reihenfolge bei Fehlern
+// Fallback-Reihenfolge bei Fehlern (kostenlose/zuverlässige zuerst)
 const MODEL_FALLBACK_ORDER = [
-  'gemini-2.5-flash',
-  'flux-2-pro',
-  'flux-2-flex',
+  'gemini-2-flash',     // Kostenlos & zuverlässig
+  'gemini-2.5-flash',   // Neueste Version
+  'sd35-turbo',         // Schnell
+  'flux-schnell',       // Open Source
+  'ideogram-v2',        // Hochqualität
 ]
 
 type ModelKey = keyof typeof IMAGE_MODELS
@@ -181,6 +243,8 @@ High quality, professional. No text overlays. Clean composition.`
 }
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now()
+  
   try {
     const session = await auth()
     
@@ -217,7 +281,7 @@ export async function POST(request: NextRequest) {
       postContent, 
       platform, 
       format, 
-      model = 'gemini-2.0-flash', // Kostenloses Gemini Modell als Default
+      model = 'flux-schnell', // Schnelles, kostenloses Modell als Default
       style = 'vivid', 
       industry = 'Beauty/Salon' 
     } = body
@@ -474,6 +538,25 @@ export async function POST(request: NextRequest) {
     }
     
     const finalModelConfig = IMAGE_MODELS[usedModel as ModelKey]
+    
+    // Logge AI-Nutzung und ziehe Credits ab (ca. 5 Credits pro Bild)
+    const responseTime = Date.now() - startTime
+    const estimatedCost = 0.005 // ~$0.005 pro Bild = ca. 5 Credits
+    await logAIUsage({
+      userId: session.user.id,
+      userType: 'salon_owner', // TODO: Aus Session ermitteln
+      requestType: 'image_generation',
+      model: finalModelConfig?.id || selectedModel.id,
+      provider: 'openrouter',
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+      costUsd: estimatedCost,
+      responseTimeMs: responseTime,
+      success: true,
+      feature: 'image_generation',
+      creditsUsed: 5, // 5 Credits pro Bild
+    })
     
     return NextResponse.json({
       success: true,

@@ -49,6 +49,7 @@ import {
   X,
   Database,
   Palette,
+  Share2,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -149,6 +150,7 @@ const menuItems: MenuSection[] = [
         icon: Gift,
         children: [
           { label: 'Branding', href: '/admin/marketing/branding', icon: Palette },
+          { label: 'Social Media', href: '/admin/marketing/social-media', icon: Share2 },
           { label: 'Preislisten-Hintergründe', href: '/admin/marketing/branding/pricelist-backgrounds', icon: FileText },
           { label: 'Referral-Programm', href: '/admin/referrals', icon: Gift },
         ],

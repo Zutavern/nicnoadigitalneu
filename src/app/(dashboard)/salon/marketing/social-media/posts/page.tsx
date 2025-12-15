@@ -316,17 +316,20 @@ export default function PostsPage() {
           {filteredPosts.map((post) => (
             <Card key={post.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
-                <div className="flex gap-4">
-                  {/* Media Preview */}
-                  {post.mediaUrls && post.mediaUrls.length > 0 && (
-                    <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                      <img
-                        src={post.mediaUrls[0]}
-                        alt="Post media"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
+                    <div 
+                      className="flex gap-4 cursor-pointer"
+                      onClick={() => window.location.href = `/salon/marketing/social-media/posts/${post.id}/edit`}
+                    >
+                      {/* Media Preview */}
+                      {post.mediaUrls && post.mediaUrls.length > 0 && (
+                        <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                          <img
+                            src={post.mediaUrls[0]}
+                            alt="Post media"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
                   
                   {/* Content */}
                   <div className="flex-1 min-w-0">
@@ -368,7 +371,11 @@ export default function PostsPage() {
                       {/* Actions */}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -394,7 +401,8 @@ export default function PostsPage() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
                             className="text-destructive"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation()
                               setPostToDelete(post.id)
                               setDeleteDialogOpen(true)
                             }}

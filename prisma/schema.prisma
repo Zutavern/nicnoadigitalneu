@@ -116,6 +116,10 @@ model User {
   contentTemplates      ContentTemplate[]
   hashtagCollections    HashtagCollection[]
 
+  // Credits System
+  credits               UserCredits?
+  creditTransactions    CreditTransaction[]
+
   @@map("users")
 }
 
@@ -1118,6 +1122,12 @@ model PlatformSettings {
   openRouterSiteUrl         String?  @map("openrouter_site_url") @db.VarChar(255)
   openRouterSiteName        String?  @map("openrouter_site_name") @db.VarChar(100)
 
+  // Replicate Konfiguration (Video/Bild-Generierung)
+  replicateApiKey           String?  @map("replicate_api_key") @db.VarChar(500)
+  replicateEnabled          Boolean  @default(false) @map("replicate_enabled")
+  replicateDefaultVideoModel String? @default("minimax/video-01") @map("replicate_default_video_model") @db.VarChar(100)
+  replicateWebhookSecret    String?  @map("replicate_webhook_secret") @db.VarChar(255)
+
   // Tone of Voice für Blog-Artikel
   blogToneOfVoice           String?  @map("blog_tone_of_voice") @db.Text
   blogToneOfVoicePrompt     String?  @map("blog_tone_of_voice_prompt") @db.Text
@@ -1177,13 +1187,20 @@ model AIUsageLog {
   // Request Details
   requestType     String   @map("request_type") @db.VarChar(50)  // 'translation', 'chat', 'completion', 'embedding'
   model           String   @db.VarChar(100)                      // z.B. 'openai/gpt-4o-mini'
-  provider        String   @default("openrouter") @db.VarChar(30) // 'openrouter', 'openai', 'deepl'
+  provider        String   @default("openrouter") @db.VarChar(30) // 'openrouter', 'openai', 'deepl', 'replicate'
+  
+  // Feature-Kategorisierung
+  feature         String?  @db.VarChar(50)  // 'social_post', 'video_gen', 'image_gen', 'translation', 'chat'
   
   // Token & Kosten
   inputTokens     Int      @default(0) @map("input_tokens")
   outputTokens    Int      @default(0) @map("output_tokens")
   totalTokens     Int      @default(0) @map("total_tokens")
   costUsd         Decimal  @default(0) @map("cost_usd") @db.Decimal(10, 6)
+  
+  // Credits-Abrechnung
+  creditsUsed     Decimal  @default(0) @map("credits_used") @db.Decimal(10, 4)
+  creditsPaid     Boolean  @default(false) @map("credits_paid")
   
   // Performance
   responseTimeMs  Int?     @map("response_time_ms")
@@ -1200,8 +1217,10 @@ model AIUsageLog {
   @@index([userId])
   @@index([salonId])
   @@index([requestType])
+  @@index([feature])
   @@index([createdAt])
   @@index([userType, createdAt])
+  @@index([creditsPaid])
   @@map("ai_usage_logs")
 }
 
@@ -3571,4 +3590,116 @@ model HashtagCollection {
   @@index([userId, category])
   @@index([isGlobal])
   @@map("hashtag_collections")
+}
+
+// ============================================
+// Credits System
+// ============================================
+
+// Nutzer-Credits (Balance pro User)
+model UserCredits {
+  id              String   @id @default(cuid())
+  userId          String   @unique @map("user_id") @db.Uuid
+  
+  // Balance
+  balance         Decimal  @default(0) @db.Decimal(10, 4)
+  lifetimeUsed    Decimal  @default(0) @map("lifetime_used") @db.Decimal(10, 4)
+  lifetimeBought  Decimal  @default(0) @map("lifetime_bought") @db.Decimal(10, 4)
+  
+  // Unlimited für Test-Accounts (Tracking läuft weiter, aber kein Limit)
+  isUnlimited     Boolean  @default(false) @map("is_unlimited")
+  
+  // Info
+  lastTopUpAt     DateTime? @map("last_top_up_at") @db.Timestamptz
+  lowBalanceAlert Boolean  @default(true) @map("low_balance_alert")
+  alertThreshold  Decimal  @default(10) @map("alert_threshold") @db.Decimal(10, 2)
+  
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions    CreditTransaction[]
+
+  @@map("user_credits")
+}
+
+// Credit-Transaktionen (Verlauf aller Bewegungen)
+model CreditTransaction {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id") @db.Uuid
+  userCreditsId   String?  @map("user_credits_id")
+  
+  // Transaktionstyp
+  type            String   @db.VarChar(30) // 'purchase', 'usage', 'bonus', 'refund', 'admin_adjustment', 'expiry'
+  
+  // Beträge (positiv = Gutschrift, negativ = Verbrauch)
+  amount          Decimal  @db.Decimal(10, 4)
+  balanceBefore   Decimal  @map("balance_before") @db.Decimal(10, 4)
+  balanceAfter    Decimal  @map("balance_after") @db.Decimal(10, 4)
+  
+  // Beschreibung & Referenzen
+  description     String?  @db.VarChar(500)
+  packageId       String?  @map("package_id")
+  aiUsageLogId    String?  @map("ai_usage_log_id")
+  stripePaymentId String?  @map("stripe_payment_id") @db.VarChar(255)
+  
+  // Admin-Aktionen
+  adminUserId     String?  @map("admin_user_id") @db.Uuid
+  adminNote       String?  @map("admin_note") @db.Text
+  
+  // Zusätzliche Infos
+  metadata        Json?    @db.JsonB
+  
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userCredits     UserCredits? @relation(fields: [userCreditsId], references: [id])
+  package         CreditPackage? @relation(fields: [packageId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@index([packageId])
+  @@map("credit_transactions")
+}
+
+// Credit-Pakete (kaufbare Pakete)
+model CreditPackage {
+  id            String   @id @default(cuid())
+  
+  // Paket-Info
+  name          String   @db.VarChar(100)
+  description   String?  @db.VarChar(500)
+  
+  // Werte
+  credits       Decimal  @db.Decimal(10, 2)
+  priceEur      Decimal  @map("price_eur") @db.Decimal(10, 2)
+  
+  // Bonus (optional)
+  bonusCredits  Decimal  @default(0) @map("bonus_credits") @db.Decimal(10, 2)
+  bonusPercent  Int?     @map("bonus_percent") // z.B. 10 für 10% Bonus
+  
+  // Status & Sortierung
+  isActive      Boolean  @default(true) @map("is_active")
+  isPopular     Boolean  @default(false) @map("is_popular")
+  isHidden      Boolean  @default(false) @map("is_hidden")
+  sortOrder     Int      @default(0) @map("sort_order")
+  
+  // Limits
+  maxPerUser    Int?     @map("max_per_user")
+  validDays     Int?     @map("valid_days") // Credits verfallen nach X Tagen
+  
+  // Stripe
+  stripePriceId String?  @map("stripe_price_id") @db.VarChar(255)
+  
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  transactions  CreditTransaction[]
+
+  @@index([isActive, sortOrder])
+  @@map("credit_packages")
 }
