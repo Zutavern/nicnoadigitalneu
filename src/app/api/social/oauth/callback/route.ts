@@ -1,0 +1,158 @@
+/**
+ * OAuth Callback Route
+ * 
+ * GET /api/social/oauth/callback
+ * Verarbeitet den OAuth-Callback und speichert den Account
+ */
+
+import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { decryptToken, encryptToken } from '@/lib/social/crypto'
+import { instagramProvider } from '@/lib/social/providers/instagram'
+import { facebookProvider } from '@/lib/social/providers/facebook'
+import type { SocialProvider, SocialPlatform } from '@/lib/social/types'
+import { cookies } from 'next/headers'
+
+const PROVIDERS: Record<string, SocialProvider> = {
+  instagram: instagramProvider,
+  facebook: facebookProvider,
+}
+
+const PLATFORM_MAP: Record<string, SocialPlatform> = {
+  instagram: 'INSTAGRAM',
+  facebook: 'FACEBOOK',
+}
+
+export async function GET(request: NextRequest) {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const successUrl = `${baseUrl}/salon/marketing/social-media/accounts?connected=true`
+  const errorUrl = `${baseUrl}/salon/marketing/social-media/accounts?error=`
+  
+  try {
+    const session = await auth()
+    
+    if (!session?.user?.id) {
+      return NextResponse.redirect(`${errorUrl}unauthorized`)
+    }
+    
+    const { searchParams } = new URL(request.url)
+    const code = searchParams.get('code')
+    const state = searchParams.get('state')
+    const error = searchParams.get('error')
+    const errorDescription = searchParams.get('error_description')
+    
+    // Fehler von OAuth Provider
+    if (error) {
+      console.error('[OAuth Callback] Provider Error:', error, errorDescription)
+      return NextResponse.redirect(`${errorUrl}${encodeURIComponent(errorDescription || error)}`)
+    }
+    
+    if (!code || !state) {
+      return NextResponse.redirect(`${errorUrl}missing_params`)
+    }
+    
+    // State validieren
+    const cookieStore = await cookies()
+    const savedState = cookieStore.get('oauth_state')?.value
+    
+    if (!savedState || savedState !== state) {
+      return NextResponse.redirect(`${errorUrl}invalid_state`)
+    }
+    
+    // State dekodieren
+    let stateData: { userId: string; platform: string; timestamp: number }
+    
+    try {
+      stateData = JSON.parse(decryptToken(state))
+    } catch {
+      return NextResponse.redirect(`${errorUrl}invalid_state_data`)
+    }
+    
+    // User-ID prüfen
+    if (stateData.userId !== session.user.id) {
+      return NextResponse.redirect(`${errorUrl}user_mismatch`)
+    }
+    
+    // Timestamp prüfen (max 10 Minuten alt)
+    if (Date.now() - stateData.timestamp > 600000) {
+      return NextResponse.redirect(`${errorUrl}state_expired`)
+    }
+    
+    const platform = stateData.platform
+    const provider = PROVIDERS[platform]
+    
+    if (!provider) {
+      return NextResponse.redirect(`${errorUrl}invalid_platform`)
+    }
+    
+    // Token holen
+    const redirectUri = `${baseUrl}/api/social/oauth/callback`
+    const tokens = await provider.exchangeCodeForTokens(code, redirectUri)
+    
+    // Account-Info holen
+    const accountInfo = await provider.getAccountInfo(tokens.accessToken)
+    
+    // Token verschlüsseln für Speicherung
+    const encryptedAccessToken = encryptToken(tokens.accessToken)
+    const encryptedRefreshToken = tokens.refreshToken 
+      ? encryptToken(tokens.refreshToken) 
+      : null
+    
+    // Account in DB speichern/aktualisieren
+    const platformEnum = PLATFORM_MAP[platform]
+    
+    await prisma.socialMediaAccount.upsert({
+      where: {
+        userId_platform_platformAccountId: {
+          userId: session.user.id,
+          platform: platformEnum,
+          platformAccountId: accountInfo.platformAccountId,
+        },
+      },
+      update: {
+        accountName: accountInfo.accountName,
+        accountHandle: accountInfo.accountHandle,
+        profileImageUrl: accountInfo.profileImageUrl,
+        accessToken: encryptedAccessToken,
+        refreshToken: encryptedRefreshToken,
+        tokenExpiresAt: tokens.expiresAt,
+        tokenScope: tokens.scope,
+        followersCount: accountInfo.followersCount,
+        followingCount: accountInfo.followingCount,
+        postsCount: accountInfo.postsCount,
+        metricsUpdatedAt: new Date(),
+        isActive: true,
+        lastError: null,
+        lastSyncAt: new Date(),
+      },
+      create: {
+        userId: session.user.id,
+        platform: platformEnum,
+        platformAccountId: accountInfo.platformAccountId,
+        accountName: accountInfo.accountName,
+        accountHandle: accountInfo.accountHandle,
+        profileImageUrl: accountInfo.profileImageUrl,
+        accessToken: encryptedAccessToken,
+        refreshToken: encryptedRefreshToken,
+        tokenExpiresAt: tokens.expiresAt,
+        tokenScope: tokens.scope,
+        followersCount: accountInfo.followersCount,
+        followingCount: accountInfo.followingCount,
+        postsCount: accountInfo.postsCount,
+        metricsUpdatedAt: new Date(),
+      },
+    })
+    
+    // State Cookie löschen
+    cookieStore.delete('oauth_state')
+    
+    // Erfolg - zur Accounts-Seite weiterleiten
+    return NextResponse.redirect(`${successUrl}&platform=${platform}`)
+  } catch (error) {
+    console.error('[OAuth Callback] Error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'unknown_error'
+    return NextResponse.redirect(`${errorUrl}${encodeURIComponent(errorMessage)}`)
+  }
+}
+

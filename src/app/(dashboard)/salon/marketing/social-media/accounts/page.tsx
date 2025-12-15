@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -28,13 +29,13 @@ import {
   Share2,
   RefreshCw,
   Trash2,
-  ExternalLink,
   CheckCircle2,
   AlertCircle,
   Users,
   FileText,
   Clock,
   Link as LinkIcon,
+  ExternalLink,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
@@ -57,33 +58,41 @@ interface Account {
   createdAt: string
 }
 
-const platformConfig: Record<string, {
+interface PlatformConfig {
   name: string
   icon: React.ElementType
   color: string
   gradient: string
-  connectUrl?: string
+  oauthEnabled: boolean
   description: string
-}> = {
+  setupUrl?: string
+}
+
+const platformConfig: Record<string, PlatformConfig> = {
   INSTAGRAM: {
     name: 'Instagram',
     icon: Instagram,
     color: 'text-pink-500',
     gradient: 'from-purple-500 via-pink-500 to-orange-400',
+    oauthEnabled: true,
     description: 'Teile Bilder und Stories',
+    setupUrl: 'https://developers.facebook.com/docs/instagram-api',
   },
   FACEBOOK: {
     name: 'Facebook',
     icon: Facebook,
     color: 'text-blue-600',
     gradient: 'from-blue-600 to-blue-500',
+    oauthEnabled: true,
     description: 'Erreiche deine Community',
+    setupUrl: 'https://developers.facebook.com/docs/pages-api',
   },
   LINKEDIN: {
     name: 'LinkedIn',
     icon: Linkedin,
     color: 'text-blue-700',
     gradient: 'from-blue-700 to-blue-600',
+    oauthEnabled: false, // Coming soon
     description: 'Professionelles Networking',
   },
   TWITTER: {
@@ -91,6 +100,7 @@ const platformConfig: Record<string, {
     icon: Twitter,
     color: 'text-gray-900',
     gradient: 'from-gray-800 to-black',
+    oauthEnabled: false, // Coming soon
     description: 'Kurze Updates & Trends',
   },
   TIKTOK: {
@@ -98,6 +108,7 @@ const platformConfig: Record<string, {
     icon: Share2,
     color: 'text-pink-500',
     gradient: 'from-pink-500 to-cyan-400',
+    oauthEnabled: false, // Coming soon
     description: 'Virale Kurzvideos',
   },
   YOUTUBE: {
@@ -105,21 +116,8 @@ const platformConfig: Record<string, {
     icon: Youtube,
     color: 'text-red-600',
     gradient: 'from-red-600 to-red-500',
+    oauthEnabled: false, // Coming soon
     description: 'Video-Content',
-  },
-  PINTEREST: {
-    name: 'Pinterest',
-    icon: Share2,
-    color: 'text-red-500',
-    gradient: 'from-red-500 to-red-400',
-    description: 'Visuelle Inspiration',
-  },
-  THREADS: {
-    name: 'Threads',
-    icon: Share2,
-    color: 'text-black',
-    gradient: 'from-gray-900 to-black',
-    description: 'Text-basierte Konversationen',
   },
 }
 
@@ -127,6 +125,38 @@ export default function SocialMediaAccounts() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+
+  // URL-Parameter für Erfolg/Fehler verarbeiten
+  useEffect(() => {
+    const connected = searchParams.get('connected')
+    const platform = searchParams.get('platform')
+    const error = searchParams.get('error')
+
+    if (connected === 'true' && platform) {
+      const config = platformConfig[platform.toUpperCase()]
+      toast.success(`${config?.name || platform} erfolgreich verbunden!`, {
+        description: 'Du kannst jetzt Posts planen und veröffentlichen.',
+      })
+      // URL bereinigen
+      window.history.replaceState({}, '', '/salon/marketing/social-media/accounts')
+    }
+
+    if (error) {
+      const errorMessages: Record<string, string> = {
+        unauthorized: 'Du bist nicht angemeldet.',
+        missing_params: 'OAuth-Parameter fehlen.',
+        invalid_state: 'Ungültiger OAuth-State.',
+        state_expired: 'OAuth-Session abgelaufen. Bitte erneut versuchen.',
+        user_mismatch: 'User-Mismatch. Bitte erneut anmelden.',
+        invalid_platform: 'Ungültige Plattform.',
+      }
+      toast.error('Verbindung fehlgeschlagen', {
+        description: errorMessages[error] || error,
+      })
+      window.history.replaceState({}, '', '/salon/marketing/social-media/accounts')
+    }
+  }, [searchParams])
 
   useEffect(() => {
     loadAccounts()
@@ -166,22 +196,44 @@ export default function SocialMediaAccounts() {
     }
   }
 
-  const connectPlatform = (platform: string) => {
+  const connectPlatform = async (platform: string) => {
+    const config = platformConfig[platform]
+    
+    if (!config?.oauthEnabled) {
+      toast.info(`${config?.name} wird bald verfügbar sein!`, {
+        description: 'Wir arbeiten an der Integration.',
+        duration: 4000,
+      })
+      return
+    }
+
     setConnectingPlatform(platform)
-    // TODO: OAuth-Flow starten
-    // Für jetzt: Info-Toast
-    toast.info(
-      `OAuth-Verbindung für ${platformConfig[platform]?.name} wird in einer zukünftigen Version verfügbar sein.`,
-      { duration: 5000 }
-    )
-    setConnectingPlatform(null)
+    
+    // Redirect zum OAuth-Flow
+    window.location.href = `/api/social/oauth/${platform.toLowerCase()}`
   }
 
-  // Verfügbare Plattformen (noch nicht verbunden)
+  const refreshAccount = async (accountId: string) => {
+    try {
+      toast.info('Account wird synchronisiert...')
+      const res = await fetch(`/api/social/accounts/${accountId}/refresh`, {
+        method: 'POST',
+      })
+
+      if (res.ok) {
+        toast.success('Account synchronisiert')
+        loadAccounts()
+      } else {
+        const data = await res.json()
+        throw new Error(data.error || 'Fehler beim Synchronisieren')
+      }
+    } catch (error) {
+      console.error('Error refreshing:', error)
+      toast.error(error instanceof Error ? error.message : 'Fehler beim Synchronisieren')
+    }
+  }
+
   const connectedPlatforms = accounts.map(a => a.platform)
-  const availablePlatforms = Object.keys(platformConfig).filter(
-    p => !connectedPlatforms.includes(p)
-  )
 
   if (isLoading) {
     return (
@@ -207,7 +259,10 @@ export default function SocialMediaAccounts() {
       {/* Verbundene Accounts */}
       {accounts.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Verbundene Accounts</h2>
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-green-500" />
+            Verbundene Accounts ({accounts.length})
+          </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {accounts.map((account) => {
               const config = platformConfig[account.platform]
@@ -299,7 +354,7 @@ export default function SocialMediaAccounts() {
 
                       {/* Error */}
                       {account.lastError && (
-                        <div className="flex items-start gap-2 p-2 rounded-lg bg-red-50 text-red-600 text-xs">
+                        <div className="flex items-start gap-2 p-2 rounded-lg bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 text-xs">
                           <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
                           <span className="line-clamp-2">{account.lastError}</span>
                         </div>
@@ -307,7 +362,12 @@ export default function SocialMediaAccounts() {
 
                       {/* Aktionen */}
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1" disabled>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={() => refreshAccount(account.id)}
+                        >
                           <RefreshCw className="h-3 w-3 mr-1" />
                           Sync
                         </Button>
@@ -348,13 +408,15 @@ export default function SocialMediaAccounts() {
 
       {/* Verfügbare Plattformen */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Plus className="h-5 w-5 text-purple-500" />
           {accounts.length > 0 ? 'Weitere Plattformen verbinden' : 'Plattformen verbinden'}
         </h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Object.entries(platformConfig).map(([key, config]) => {
             const isConnected = connectedPlatforms.includes(key)
             const Icon = config.icon
+            const isConnecting = connectingPlatform === key
 
             return (
               <motion.div
@@ -363,15 +425,28 @@ export default function SocialMediaAccounts() {
                 whileTap={{ scale: isConnected ? 1 : 0.98 }}
               >
                 <Card className={cn(
-                  'cursor-pointer transition-all h-full',
+                  'cursor-pointer transition-all h-full relative overflow-hidden',
                   isConnected 
-                    ? 'opacity-50 cursor-not-allowed' 
-                    : 'hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10'
+                    ? 'opacity-60 cursor-not-allowed' 
+                    : config.oauthEnabled
+                      ? 'hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10'
+                      : 'hover:border-gray-400/50'
                 )}>
+                  {/* Coming Soon Badge */}
+                  {!config.oauthEnabled && !isConnected && (
+                    <Badge 
+                      variant="secondary" 
+                      className="absolute top-3 right-3 text-[10px]"
+                    >
+                      Bald verfügbar
+                    </Badge>
+                  )}
+                  
                   <CardContent className="pt-6 text-center">
                     <div className={cn(
                       'h-14 w-14 rounded-full mx-auto flex items-center justify-center bg-gradient-to-br',
-                      config.gradient
+                      config.gradient,
+                      !config.oauthEnabled && !isConnected && 'opacity-50'
                     )}>
                       <Icon className="h-7 w-7 text-white" />
                     </div>
@@ -379,20 +454,23 @@ export default function SocialMediaAccounts() {
                     <p className="text-xs text-muted-foreground mt-1">{config.description}</p>
                     
                     <Button
-                      variant="outline"
+                      variant={config.oauthEnabled ? 'default' : 'outline'}
                       size="sm"
-                      className="mt-4 w-full"
-                      disabled={isConnected || connectingPlatform === key}
+                      className={cn(
+                        'mt-4 w-full',
+                        config.oauthEnabled && !isConnected && 'bg-purple-600 hover:bg-purple-700'
+                      )}
+                      disabled={isConnected || isConnecting}
                       onClick={() => !isConnected && connectPlatform(key)}
                     >
-                      {connectingPlatform === key ? (
+                      {isConnecting ? (
                         <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                       ) : isConnected ? (
                         <CheckCircle2 className="h-3 w-3 mr-1" />
                       ) : (
-                        <Plus className="h-3 w-3 mr-1" />
+                        <ExternalLink className="h-3 w-3 mr-1" />
                       )}
-                      {isConnected ? 'Verbunden' : 'Verbinden'}
+                      {isConnecting ? 'Verbinde...' : isConnected ? 'Verbunden' : 'Verbinden'}
                     </Button>
                   </CardContent>
                 </Card>
@@ -402,20 +480,37 @@ export default function SocialMediaAccounts() {
         </div>
       </div>
 
-      {/* Info-Box */}
-      <Card className="border-dashed border-blue-500/30 bg-blue-500/5">
+      {/* Setup Info */}
+      <Card className="border-dashed border-amber-500/30 bg-amber-500/5">
         <CardContent className="py-6">
           <div className="flex items-start gap-4">
-            <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="h-5 w-5 text-blue-500" />
+            <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="h-5 w-5 text-amber-500" />
             </div>
-            <div>
-              <h3 className="font-medium text-blue-700 dark:text-blue-400">OAuth-Verbindungen</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Die direkte Verbindung zu Social Media Plattformen erfordert OAuth-Autorisierung.
-                In der aktuellen Version kannst du Content vorbereiten und manuell veröffentlichen.
-                Automatische Veröffentlichung wird in einem zukünftigen Update verfügbar sein.
+            <div className="space-y-2">
+              <h3 className="font-medium text-amber-700 dark:text-amber-400">
+                Facebook/Instagram App erforderlich
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Um Instagram und Facebook zu verbinden, benötigst du eine Facebook App mit den 
+                entsprechenden Berechtigungen. Die App-Credentials müssen in den Umgebungsvariablen 
+                konfiguriert sein.
               </p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                <code className="text-xs bg-muted px-2 py-1 rounded">FACEBOOK_APP_ID</code>
+                <code className="text-xs bg-muted px-2 py-1 rounded">FACEBOOK_APP_SECRET</code>
+                <code className="text-xs bg-muted px-2 py-1 rounded">INSTAGRAM_APP_ID</code>
+                <code className="text-xs bg-muted px-2 py-1 rounded">INSTAGRAM_APP_SECRET</code>
+              </div>
+              <a 
+                href="https://developers.facebook.com/apps" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-purple-600 hover:underline mt-2"
+              >
+                Facebook Developer Portal öffnen
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </div>
           </div>
         </CardContent>
@@ -423,4 +518,3 @@ export default function SocialMediaAccounts() {
     </div>
   )
 }
-
