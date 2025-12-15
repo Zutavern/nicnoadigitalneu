@@ -129,11 +129,13 @@ export default function SalonStylistsPage() {
 
       if (connectionsRes.ok) {
         const data = await connectionsRes.json()
-        setConnections(data)
+        // API gibt { connections: [...] } zurück
+        setConnections(data.connections || data || [])
       }
       if (invitationsRes.ok) {
         const data = await invitationsRes.json()
-        setInvitations(data)
+        // API gibt { invitations: [...] } zurück
+        setInvitations(data.invitations || data || [])
       }
     } catch (error) {
       console.error('Error fetching data:', error)

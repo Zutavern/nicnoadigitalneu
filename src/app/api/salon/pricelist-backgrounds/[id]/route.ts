@@ -12,7 +12,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   try {
     const session = await auth()
     
-    if (!session?.user || session.user.role !== 'SALON') {
+    if (!session?.user || session.user.role !== 'SALON_OWNER') {
       return NextResponse.json(
         { error: 'Nicht autorisiert' },
         { status: 401 }
@@ -93,7 +93,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
   try {
     const session = await auth()
     
-    if (!session?.user || session.user.role !== 'SALON') {
+    if (!session?.user || session.user.role !== 'SALON_OWNER') {
       return NextResponse.json(
         { error: 'Nicht autorisiert' },
         { status: 401 }

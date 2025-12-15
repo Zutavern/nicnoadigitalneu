@@ -13,36 +13,26 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Nicht authentifiziert' }, { status: 401 })
     }
 
-    // Check if demo mode is active
-    const demoMode = await isDemoModeActive()
-    if (demoMode) {
-      return NextResponse.json({
-        ...getMockSalonRevenue(),
-        _source: 'demo',
-        _message: 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
-      })
-    }
-
-    const { searchParams } = new URL(request.url)
-    const period = searchParams.get('period') || '6months'
-
     // Salon des Benutzers finden
     const salon = await prisma.salon.findFirst({
       where: { ownerId: session.user.id },
       select: { id: true },
     })
 
-    if (!salon) {
+    // Check if demo mode is active OR no salon exists (show mock data)
+    const demoMode = await isDemoModeActive()
+    if (demoMode || !salon) {
       return NextResponse.json({
-        totalRevenue: 0,
-        rentalIncome: 0,
-        bookingCommission: 0,
-        previousMonthRevenue: 0,
-        growth: 0,
-        monthlyData: [],
-        topStylists: [],
+        ...getMockSalonRevenue(),
+        _source: 'demo',
+        _message: !salon 
+          ? 'Kein Salon vorhanden - Es werden Beispieldaten angezeigt'
+          : 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
       })
     }
+
+    const { searchParams } = new URL(request.url)
+    const period = searchParams.get('period') || '6months'
 
     // Zeitraum berechnen
     const months = period === '1month' ? 1 : period === '3months' ? 3 : period === '12months' ? 12 : 6
@@ -65,7 +55,7 @@ export async function GET(request: Request) {
       prisma.payment.aggregate({
         where: {
           receiverId: session.user.id,
-          type: 'BOOKING_COMMISSION',
+          type: 'BOOKING',
           status: 'PAID',
           paidAt: { gte: startDate, lte: endDate },
         },
@@ -81,8 +71,8 @@ export async function GET(request: Request) {
       }),
     ])
 
-    const rentalIncome = rentalPayments._sum.amount?.toNumber() || 0
-    const bookingCommission = bookingPayments._sum.amount?.toNumber() || 0
+    const rentalIncome = rentalPayments._sum?.amount?.toNumber() || 0
+    const bookingCommission = bookingPayments._sum?.amount?.toNumber() || 0
     const totalRevenue = rentalIncome + bookingCommission
     const previousMonthRevenue = previousMonthPayments._sum.amount?.toNumber() || 0
 

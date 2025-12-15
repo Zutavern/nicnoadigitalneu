@@ -55,9 +55,15 @@ export function NotificationBell({ className }: NotificationBellProps) {
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [isOpen, setIsOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const errorCountRef = useRef(0)
 
   const isAuthenticated = status === 'authenticated'
+
+  // Prevent hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const fetchNotifications = useCallback(async () => {
     // Keine Requests wenn nicht authentifiziert
@@ -158,6 +164,19 @@ export function NotificationBell({ className }: NotificationBellProps) {
       await handleMarkAsRead(notification.id)
     }
     setIsOpen(false)
+  }
+
+  // Render placeholder during SSR to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        className={cn('relative rounded-full', className)}
+      >
+        <Bell className="h-5 w-5" />
+      </Button>
+    )
   }
 
   return (

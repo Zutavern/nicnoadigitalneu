@@ -13,16 +13,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    // Check if demo mode is active
-    const demoMode = await isDemoModeActive()
-    if (demoMode) {
-      return NextResponse.json({
-        ...getMockSalonAnalytics(),
-        _source: 'demo',
-        _message: 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
-      })
-    }
-
     const { searchParams } = new URL(request.url)
     const period = parseInt(searchParams.get('period') || '30')
 
@@ -33,8 +23,16 @@ export async function GET(request: Request) {
       },
     })
 
-    if (!salon) {
-      return NextResponse.json({ error: 'Salon nicht gefunden' }, { status: 404 })
+    // Check if demo mode is active OR no salon exists
+    const demoMode = await isDemoModeActive()
+    if (demoMode || !salon) {
+      return NextResponse.json({
+        ...getMockSalonAnalytics(),
+        _source: 'demo',
+        _message: !salon 
+          ? 'Kein Salon vorhanden - Es werden Beispieldaten angezeigt'
+          : 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
+      })
     }
 
     const now = new Date()

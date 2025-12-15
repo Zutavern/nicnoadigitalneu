@@ -15,7 +15,7 @@ export async function GET() {
     }
 
     // Stuhlmieter oder Salon - beide können Preislisten erstellen
-    if (!['STYLIST', 'SALON'].includes(session.user.role)) {
+    if (!['STYLIST', 'SALON_OWNER'].includes(session.user.role)) {
       return NextResponse.json(
         { error: 'Nicht autorisiert' },
         { status: 401 }
@@ -58,7 +58,7 @@ export async function GET() {
     }
 
     // Wenn Salon, hole eigene aktive Hintergründe
-    if (session.user.role === 'SALON') {
+    if (session.user.role === 'SALON_OWNER') {
       const salonProfile = await prisma.salonProfile.findUnique({
         where: { userId: session.user.id },
       })

@@ -11,16 +11,6 @@ export async function GET() {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    // Check if demo mode is active
-    const demoMode = await isDemoModeActive()
-    if (demoMode) {
-      return NextResponse.json({
-        ...getMockSalonReviews(),
-        _source: 'demo',
-        _message: 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
-      })
-    }
-
     // Find the salon owned by this user
     const salon = await prisma.salon.findFirst({
       where: {
@@ -28,14 +18,15 @@ export async function GET() {
       },
     })
 
-    if (!salon) {
-      return NextResponse.json({ 
-        reviews: [],
-        stats: {
-          averageRating: 0,
-          totalReviews: 0,
-          ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
-        }
+    // Check if demo mode is active OR no salon exists (show mock data)
+    const demoMode = await isDemoModeActive()
+    if (demoMode || !salon) {
+      return NextResponse.json({
+        ...getMockSalonReviews(),
+        _source: 'demo',
+        _message: !salon 
+          ? 'Kein Salon vorhanden - Es werden Beispieldaten angezeigt'
+          : 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
       })
     }
 
@@ -43,25 +34,27 @@ export async function GET() {
     const reviews = await prisma.review.findMany({
       where: {
         salonId: salon.id,
-      },
-      include: {
-        customer: true,
-        stylist: {
-          select: {
-            name: true,
-          },
-        },
-        booking: {
-          select: {
-            services: true,
-          },
-        },
+        isPublic: true,
       },
       orderBy: {
         createdAt: 'desc',
       },
       take: 50,
     })
+
+    // Get stylist names for the reviews
+    const stylistIds = reviews
+      .filter(r => r.stylistId)
+      .map(r => r.stylistId as string)
+    
+    const stylists = stylistIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: stylistIds } },
+          select: { id: true, name: true },
+        })
+      : []
+
+    const stylistMap = new Map(stylists.map(s => [s.id, s.name]))
 
     // Calculate stats
     const totalReviews = reviews.length
@@ -81,13 +74,13 @@ export async function GET() {
     // Format reviews for response
     const formattedReviews = reviews.map(review => ({
       id: review.id,
-      customerName: `${review.customer.firstName} ${review.customer.lastName}`,
+      customerName: review.reviewerName || 'Anonymer Kunde',
       customerImage: null,
-      stylistName: review.stylist?.name || 'Unbekannt',
+      stylistName: review.stylistId ? (stylistMap.get(review.stylistId) || 'Unbekannt') : 'Unbekannt',
       rating: review.rating,
       comment: review.comment,
       createdAt: review.createdAt.toISOString(),
-      serviceName: review.booking?.services?.[0] || null,
+      serviceName: null, // No service relation in current schema
     }))
 
     return NextResponse.json({

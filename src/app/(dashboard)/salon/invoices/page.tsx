@@ -86,7 +86,8 @@ export default function SalonInvoicesPage() {
         const response = await fetch(`/api/salon/invoices?${params.toString()}`)
         if (response.ok) {
           const data = await response.json()
-          setInvoices(Array.isArray(data) ? data : [])
+          // Handle both formats: direct array or { invoices: [...] }
+          setInvoices(Array.isArray(data) ? data : (data.invoices || []))
         }
       } catch (error) {
         console.error('Error fetching invoices:', error)

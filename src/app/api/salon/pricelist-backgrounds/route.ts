@@ -3,44 +3,51 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { put, del } from '@vercel/blob'
 
-// GET - Salon-Hintergründe abrufen (eigene + Admin als Fallback)
+// GET - Salon-Hintergründe abrufen (eigene + Admin immer sichtbar)
 export async function GET() {
   try {
     const session = await auth()
     
-    if (!session?.user || session.user.role !== 'SALON') {
+    if (!session?.user || session.user.role !== 'SALON_OWNER') {
       return NextResponse.json(
         { error: 'Nicht autorisiert' },
         { status: 401 }
       )
     }
 
-    // Salon-Profil finden
+    // Salon-Profil finden (optional - falls nicht vorhanden, nur Admin-Hintergründe)
     const salonProfile = await prisma.salonProfile.findUnique({
       where: { userId: session.user.id },
     })
 
-    if (!salonProfile) {
-      return NextResponse.json(
-        { error: 'Salon-Profil nicht gefunden' },
-        { status: 404 }
-      )
+    // Eigene Salon-Hintergründe (nur wenn Profil existiert)
+    let salonBackgrounds: Array<{
+      id: string
+      url: string
+      filename: string
+      sortOrder: number
+      isActive: boolean
+      type: string
+      salonId: string | null
+      createdAt: Date
+      updatedAt: Date
+    }> = []
+
+    if (salonProfile) {
+      salonBackgrounds = await prisma.pricelistBackground.findMany({
+        where: { 
+          type: 'salon',
+          salonId: salonProfile.id,
+        },
+        orderBy: [
+          { isActive: 'desc' },
+          { sortOrder: 'asc' },
+          { createdAt: 'desc' },
+        ],
+      })
     }
 
-    // Prüfe ob Salon eigene Hintergründe hat
-    const salonBackgrounds = await prisma.pricelistBackground.findMany({
-      where: { 
-        type: 'salon',
-        salonId: salonProfile.id,
-      },
-      orderBy: [
-        { isActive: 'desc' },
-        { sortOrder: 'asc' },
-        { createdAt: 'desc' },
-      ],
-    })
-
-    // Admin-Hintergründe (aktive)
+    // Admin-Hintergründe (aktive) - IMMER laden
     const adminBackgrounds = await prisma.pricelistBackground.findMany({
       where: { 
         type: 'admin',
@@ -64,6 +71,7 @@ export async function GET() {
       adminActiveCount: adminBackgrounds.length,
       hasOwnBackgrounds,
       useOwnBackgrounds,
+      hasSalonProfile: !!salonProfile,
       maxActive: 6,
     })
   } catch (error) {
@@ -80,7 +88,7 @@ export async function POST(request: Request) {
   try {
     const session = await auth()
     
-    if (!session?.user || session.user.role !== 'SALON') {
+    if (!session?.user || session.user.role !== 'SALON_OWNER') {
       return NextResponse.json(
         { error: 'Nicht autorisiert' },
         { status: 401 }

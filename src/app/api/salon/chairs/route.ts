@@ -7,11 +7,6 @@ import { isDemoModeActive, getMockSalonChairs } from '@/lib/mock-data'
 // GET /api/salon/chairs - Alle Stühle des Salons abrufen
 export async function GET() {
   try {
-    // Demo-Modus prüfen
-    if (await isDemoModeActive()) {
-      return NextResponse.json(getMockSalonChairs())
-    }
-
     const session = await auth()
     
     if (!session?.user?.id) {
@@ -27,8 +22,15 @@ export async function GET() {
       where: { ownerId: session.user.id }
     })
 
-    if (!salon) {
-      return NextResponse.json({ error: 'Kein Salon gefunden' }, { status: 404 })
+    // Demo-Modus prüfen ODER kein Salon vorhanden
+    if (await isDemoModeActive() || !salon) {
+      return NextResponse.json({
+        ...getMockSalonChairs(),
+        _source: 'demo',
+        _message: !salon 
+          ? 'Kein Salon vorhanden - Es werden Beispieldaten angezeigt'
+          : 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
+      })
     }
 
     // Stühle mit aktuellen Mietern abrufen

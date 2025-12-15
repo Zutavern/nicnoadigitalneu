@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -32,6 +34,10 @@ import {
   RefreshCw,
   Building2,
   Sparkles,
+  Crown,
+  Users,
+  ArrowRight,
+  Palette,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
@@ -48,10 +54,13 @@ interface PricelistBackground {
 }
 
 export default function SalonPricelistPage() {
+  const { data: session } = useSession()
+  const router = useRouter()
   const [salonBackgrounds, setSalonBackgrounds] = useState<PricelistBackground[]>([])
   const [adminBackgrounds, setAdminBackgrounds] = useState<PricelistBackground[]>([])
   const [salonActiveCount, setSalonActiveCount] = useState(0)
   const [hasOwnBackgrounds, setHasOwnBackgrounds] = useState(false)
+  const [hasSalonProfile, setHasSalonProfile] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -62,6 +71,13 @@ export default function SalonPricelistPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const MAX_ACTIVE = 6
+  
+  // Demo-Modus: Onboarding nicht abgeschlossen ODER kein Salon-Profil vorhanden
+  // Das Banner wird angezeigt für Nutzer, die noch nicht als zahlende Kunden aktiv sind
+  const isDemoMode = !isLoading && (
+    (session?.user && !session.user.onboardingCompleted) || 
+    !hasSalonProfile
+  )
 
   // Daten laden
   const fetchBackgrounds = useCallback(async () => {
@@ -69,10 +85,11 @@ export default function SalonPricelistPage() {
       const res = await fetch('/api/salon/pricelist-backgrounds')
       if (!res.ok) throw new Error('Fehler beim Laden')
       const data = await res.json()
-      setSalonBackgrounds(data.salonBackgrounds)
-      setAdminBackgrounds(data.adminBackgrounds)
-      setSalonActiveCount(data.salonActiveCount)
-      setHasOwnBackgrounds(data.hasOwnBackgrounds)
+      setSalonBackgrounds(data.salonBackgrounds || [])
+      setAdminBackgrounds(data.adminBackgrounds || [])
+      setSalonActiveCount(data.salonActiveCount || 0)
+      setHasOwnBackgrounds(data.hasOwnBackgrounds || false)
+      setHasSalonProfile(data.hasSalonProfile || false)
       
       // Setze Tab basierend auf vorhandenen eigenen Hintergründen
       if (data.hasOwnBackgrounds) {
@@ -269,6 +286,101 @@ export default function SalonPricelistPage() {
         </Button>
       </div>
 
+      {/* Demo-Modus Banner */}
+      {isDemoMode && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-background">
+            {/* Decorative Elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+            
+            <CardContent className="relative py-10 px-8">
+              <div className="flex flex-col lg:flex-row items-center gap-8">
+                {/* Icon & Badge */}
+                <div className="flex-shrink-0">
+                  <div className="relative">
+                    <div className="h-24 w-24 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20">
+                      <Palette className="h-12 w-12 text-white" />
+                    </div>
+                    <div className="absolute -top-2 -right-2">
+                      <Badge className="bg-amber-500 text-white border-0 shadow-md">
+                        <Crown className="h-3 w-3 mr-1" />
+                        Premium
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 text-center lg:text-left space-y-4">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-2">
+                      Eigene Preislisten-Designs für deinen Salon
+                    </h2>
+                    <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl">
+                      Als <span className="font-semibold text-primary">nicnoa.online Salonbetreiber-Kunde</span> kannst du 
+                      eigene Hintergrund-Templates hochladen. Alle Stuhlmieter in deinem Salon nutzen dann 
+                      automatisch dein Corporate Design für ihre Preislisten – <span className="italic">einheitlich & professionell</span>.
+                    </p>
+                  </div>
+
+                  {/* Features */}
+                  <div className="flex flex-wrap justify-center lg:justify-start gap-4 text-sm">
+                    <div className="flex items-center gap-2 bg-background/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                      <span>Bis zu 6 eigene Designs</span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-background/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                      <Users className="h-4 w-4 text-blue-500" />
+                      <span>Für alle Stuhlmieter</span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-background/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                      <Building2 className="h-4 w-4 text-purple-500" />
+                      <span>Einheitliches Branding</span>
+                    </div>
+                  </div>
+
+                  {/* CTA */}
+                  <div className="pt-2">
+                    <Button 
+                      size="lg" 
+                      className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20 gap-2"
+                      onClick={() => router.push('/salon/upgrade')}
+                    >
+                      <Crown className="h-5 w-5" />
+                      Jetzt Stühle vermieten
+                      <ArrowRight className="h-5 w-5" />
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-3">
+                      Schalte alle Funktionen frei und starte mit der Stuhlvermietung
+                    </p>
+                  </div>
+                </div>
+
+                {/* Preview Mockup */}
+                <div className="hidden xl:block flex-shrink-0">
+                  <div className="relative">
+                    {/* Stacked preview cards */}
+                    <div className="absolute -left-4 -top-2 w-32 aspect-[210/297] rounded-lg bg-gradient-to-br from-rose-100 to-rose-50 dark:from-rose-900/30 dark:to-rose-800/20 shadow-lg border opacity-60 transform -rotate-6" />
+                    <div className="absolute -right-2 -top-1 w-32 aspect-[210/297] rounded-lg bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 shadow-lg border opacity-80 transform rotate-3" />
+                    <div className="relative w-32 aspect-[210/297] rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 shadow-xl border-2 border-primary/30 flex items-center justify-center">
+                      <div className="text-center p-4">
+                        <FileImage className="h-8 w-8 mx-auto text-primary/50 mb-2" />
+                        <p className="text-[10px] text-muted-foreground">Dein Design</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Aktuell verwendete Hintergründe */}
       <Card>
         <CardHeader>
@@ -309,15 +421,17 @@ export default function SalonPricelistPage() {
 
       {/* Tabs für Admin/Eigene */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'own' | 'admin')}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className={cn("grid w-full", isDemoMode ? "grid-cols-1" : "grid-cols-2")}>
           <TabsTrigger value="admin" className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             Plattform-Vorlagen ({adminBackgrounds.length})
           </TabsTrigger>
-          <TabsTrigger value="own" className="flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
-            Eigene Hintergründe ({salonBackgrounds.length})
-          </TabsTrigger>
+          {!isDemoMode && (
+            <TabsTrigger value="own" className="flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Eigene Hintergründe ({salonBackgrounds.length})
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Plattform-Vorlagen (nur Ansicht) */}
@@ -358,7 +472,8 @@ export default function SalonPricelistPage() {
           </Card>
         </TabsContent>
 
-        {/* Eigene Hintergründe */}
+        {/* Eigene Hintergründe - nur für Nicht-Demo-Nutzer */}
+        {!isDemoMode && (
         <TabsContent value="own" className="space-y-4">
           {/* Status */}
           {salonBackgrounds.length > 0 && (
@@ -510,11 +625,12 @@ export default function SalonPricelistPage() {
                     </Card>
                   </motion.div>
                 ))}
-              </AnimatePresence>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+                </AnimatePresence>
+              </div>
+            )}
+          </TabsContent>
+        )}
+        </Tabs>
 
       {/* Delete Dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>

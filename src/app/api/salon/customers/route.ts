@@ -11,13 +11,21 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Nicht authentifiziert' }, { status: 401 })
     }
 
-    // Check if demo mode is active
+    // Salon des Benutzers finden
+    const salon = await prisma.salon.findFirst({
+      where: { ownerId: session.user.id },
+      select: { id: true },
+    })
+
+    // Check if demo mode is active OR no salon exists
     const demoMode = await isDemoModeActive()
-    if (demoMode) {
+    if (demoMode || !salon) {
       return NextResponse.json({
         ...getMockSalonCustomers(),
         _source: 'demo',
-        _message: 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
+        _message: !salon 
+          ? 'Kein Salon vorhanden - Es werden Beispieldaten angezeigt'
+          : 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
       })
     }
 
@@ -25,16 +33,6 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
     const search = searchParams.get('search')
-
-    // Salon des Benutzers finden
-    const salon = await prisma.salon.findFirst({
-      where: { ownerId: session.user.id },
-      select: { id: true },
-    })
-
-    if (!salon) {
-      return NextResponse.json({ customers: [], total: 0, totalPages: 0 })
-    }
 
     const where: Record<string, unknown> = {
       salonId: salon.id,

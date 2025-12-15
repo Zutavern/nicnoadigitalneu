@@ -15,16 +15,6 @@ export async function GET() {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 403 })
     }
 
-    // Check if demo mode is active
-    const demoMode = await isDemoModeActive()
-    if (demoMode) {
-      return NextResponse.json({
-        ...getMockSalonStats(),
-        _source: 'demo',
-        _message: 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
-      })
-    }
-
     const userId = session.user.id
 
     // Salon des Benutzers finden
@@ -47,21 +37,15 @@ export async function GET() {
       },
     })
 
-    if (!salon) {
+    // Check if demo mode is active OR no salon exists
+    const demoMode = await isDemoModeActive()
+    if (demoMode || !salon) {
       return NextResponse.json({
-        overview: {
-          totalChairs: 0,
-          availableChairs: 0,
-          rentedChairs: 0,
-          totalRentals: 0,
-          monthlyRentalIncome: 0,
-          averageRating: 0,
-          totalReviews: 0,
-        },
-        chairs: [],
-        rentals: [],
-        recentReviews: [],
-        monthlyIncome: [],
+        ...getMockSalonStats(),
+        _source: 'demo',
+        _message: !salon 
+          ? 'Kein Salon vorhanden - Es werden Beispieldaten angezeigt'
+          : 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
       })
     }
 

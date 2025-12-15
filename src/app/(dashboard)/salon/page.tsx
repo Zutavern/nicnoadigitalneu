@@ -29,6 +29,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Progress } from '@/components/ui/progress'
 import { useWidgetConfig, WidgetSettingsPanel, type WidgetConfig } from '@/components/dashboard/widget-settings'
+import { Sparkles } from 'lucide-react'
 
 // ============== WIDGET CONFIG ==============
 
@@ -93,6 +94,8 @@ interface SalonStats {
     month: string
     income: number
   }>
+  _source?: 'demo' | 'live'
+  _message?: string
 }
 
 const quickActions = [
@@ -170,6 +173,7 @@ export default function SalonDashboardPage() {
   const [stats, setStats] = useState<SalonStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isDemoMode, setIsDemoMode] = useState(false)
   
   // Widget configuration
   const defaultWidgets = useMemo(() => DEFAULT_SALON_WIDGETS, [])
@@ -187,6 +191,10 @@ export default function SalonDashboardPage() {
         }
         const data = await response.json()
         setStats(data)
+        // Check if we're in demo mode
+        if (data._source === 'demo') {
+          setIsDemoMode(true)
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten')
       } finally {
@@ -219,10 +227,90 @@ export default function SalonDashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Demo Mode Banner */}
+      {isDemoMode && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+            {/* Decorative Elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+            
+            <CardContent className="relative py-8 px-6 md:py-10 md:px-8">
+              <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
+                {/* Icon & Badge */}
+                <div className="flex-shrink-0">
+                  <div className="relative">
+                    <div className="h-20 w-20 lg:h-24 lg:w-24 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                      <Building2 className="h-10 w-10 lg:h-12 lg:w-12 text-white" />
+                    </div>
+                    <div className="absolute -top-2 -right-2">
+                      <Badge className="bg-amber-500 text-white border-0 shadow-md text-xs">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        Demo
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 text-center lg:text-left space-y-3">
+                  <div>
+                    <h2 className="text-xl lg:text-2xl font-bold text-white mb-2">
+                      Das sind Demodaten
+                    </h2>
+                    <p className="text-slate-300 text-base lg:text-lg leading-relaxed max-w-2xl">
+                      Erstelle jetzt deinen eigenen Salon und starte mit der Stuhlvermietung! 
+                      Mit <span className="font-semibold text-cyan-400">nicnoa.online</span> findest du 
+                      schnell und einfach passende Stuhlmieter für dein Geschäft.
+                    </p>
+                  </div>
+                  
+                  {/* Features */}
+                  <div className="flex flex-wrap justify-center lg:justify-start gap-2 pt-2">
+                    <div className="flex items-center gap-1.5 text-sm text-slate-400">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      <span>Kostenlos starten</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-sm text-slate-400">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      <span>Stylisten finden</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-sm text-slate-400">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      <span>Einnahmen steigern</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CTA */}
+                <div className="flex flex-col items-center gap-2">
+                  <Button 
+                    size="lg" 
+                    className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg shadow-blue-500/25 font-semibold"
+                    asChild
+                  >
+                    <Link href="/salon/onboarding">
+                      <Armchair className="mr-2 h-5 w-5" />
+                      Jetzt Stühle vermieten
+                    </Link>
+                  </Button>
+                  <p className="text-xs text-slate-500">Keine Kreditkarte erforderlich</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: isDemoMode ? 0.1 : 0 }}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -232,7 +320,12 @@ export default function SalonDashboardPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-3xl font-bold">{stats.salon.name}</h1>
-                {stats.salon.isVerified && (
+                {isDemoMode && (
+                  <Badge variant="outline" className="border-amber-500 text-amber-500 animate-pulse">
+                    Demo
+                  </Badge>
+                )}
+                {stats.salon.isVerified && !isDemoMode && (
                   <Badge variant="secondary" className="bg-green-500/10 text-green-500">
                     <CheckCircle2 className="h-3 w-3 mr-1" />
                     Verifiziert

@@ -7,10 +7,6 @@ import { isDemoModeActive, getMockSalonConnections } from '@/lib/mock-data'
 // GET /api/salon/connections - Alle verbundenen Stylisten abrufen
 export async function GET() {
   try {
-    if (await isDemoModeActive()) {
-      return NextResponse.json(getMockSalonConnections())
-    }
-
     const session = await auth()
     if (!session?.user?.id || session.user.role !== UserRole.SALON_OWNER) {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 403 })
@@ -21,8 +17,16 @@ export async function GET() {
       select: { id: true },
     })
 
-    if (!salon) {
-      return NextResponse.json({ error: 'Salon nicht gefunden' }, { status: 404 })
+    // Demo-Modus prüfen ODER kein Salon vorhanden
+    const demoMode = await isDemoModeActive()
+    if (demoMode || !salon) {
+      return NextResponse.json({
+        connections: getMockSalonConnections(),
+        _source: 'demo',
+        _message: !salon 
+          ? 'Kein Salon vorhanden - Es werden Beispieldaten angezeigt'
+          : 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
+      })
     }
 
     const connections = await prisma.salonStylistConnection.findMany({
@@ -128,7 +132,7 @@ export async function GET() {
       })
     )
 
-    return NextResponse.json(connectionsWithDetails)
+    return NextResponse.json({ connections: connectionsWithDetails })
   } catch (error) {
     console.error('Error fetching connections:', error)
     return NextResponse.json(

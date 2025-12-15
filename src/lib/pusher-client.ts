@@ -44,23 +44,35 @@ export function getPusherClient(config: PusherConfig): Pusher | null {
 
   // Debug logging in development
   if (process.env.NODE_ENV === 'development') {
+    let connectionErrorLogged = false
+    
     pusherInstance.connection.bind('connected', () => {
+      connectionErrorLogged = false // Reset on successful connection
       console.log('🟢 Pusher connected')
     })
     pusherInstance.connection.bind('disconnected', () => {
       console.log('🔴 Pusher disconnected')
     })
     pusherInstance.connection.bind('error', (err: unknown) => {
+      // Avoid duplicate error messages
+      if (connectionErrorLogged) return
+      connectionErrorLogged = true
+      
       // Pusher sometimes returns empty objects for connection errors
-      // This is usually due to invalid credentials or network issues
-      if (err && typeof err === 'object' && Object.keys(err).length === 0) {
+      // This is usually due to invalid credentials, network issues, or WebSocket close events
+      const isEmptyError = !err || 
+        (typeof err === 'object' && Object.keys(err as object).length === 0) ||
+        (err instanceof Error && !err.message)
+      
+      if (isEmptyError) {
         console.warn('⚠️ Pusher connection failed - check your Pusher credentials in Admin → Settings → Integrations')
       } else {
-        console.error('❌ Pusher error:', err)
+        console.warn('⚠️ Pusher error:', err)
       }
     })
     pusherInstance.connection.bind('state_change', (states: { current: string; previous: string }) => {
-      if (states.current === 'failed') {
+      if (states.current === 'failed' && !connectionErrorLogged) {
+        connectionErrorLogged = true
         console.warn('⚠️ Pusher connection failed - Real-time features disabled')
       }
     })

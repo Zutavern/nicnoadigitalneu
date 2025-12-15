@@ -7,11 +7,6 @@ import { isDemoModeActive, getMockSalonChairRentals } from '@/lib/mock-data'
 // GET /api/salon/chair-rentals - Alle Mietanfragen/Mieten abrufen
 export async function GET(request: Request) {
   try {
-    // Demo-Modus prüfen
-    if (await isDemoModeActive()) {
-      return NextResponse.json(getMockSalonChairRentals())
-    }
-
     const session = await auth()
     
     if (!session?.user?.id) {
@@ -22,17 +17,25 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 })
     }
 
-    const { searchParams } = new URL(request.url)
-    const status = searchParams.get('status') as RentalStatus | null
-
     // Salon des Besitzers finden
     const salon = await prisma.salon.findFirst({
       where: { ownerId: session.user.id }
     })
 
-    if (!salon) {
-      return NextResponse.json({ error: 'Kein Salon gefunden' }, { status: 404 })
+    // Demo-Modus prüfen ODER kein Salon vorhanden
+    const demoMode = await isDemoModeActive()
+    if (demoMode || !salon) {
+      return NextResponse.json({
+        ...getMockSalonChairRentals(),
+        _source: 'demo',
+        _message: !salon 
+          ? 'Kein Salon vorhanden - Es werden Beispieldaten angezeigt'
+          : 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
+      })
     }
+
+    const { searchParams } = new URL(request.url)
+    const status = searchParams.get('status') as RentalStatus | null
 
     // Where-Klausel bauen
     const where: Record<string, unknown> = {

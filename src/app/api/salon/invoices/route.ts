@@ -9,14 +9,16 @@ function mapPaymentToInvoice(payment: any) {
   const statusMap: Record<PaymentStatus, string> = {
     [PaymentStatus.PENDING]: 'SENT',
     [PaymentStatus.PAID]: 'PAID',
-    [PaymentStatus.FAILED]: 'OVERDUE',
+    [PaymentStatus.OVERDUE]: 'OVERDUE',
+    [PaymentStatus.CANCELLED]: 'CANCELLED',
     [PaymentStatus.REFUNDED]: 'CANCELLED',
   }
 
   const typeMap: Record<PaymentType, string> = {
-    [PaymentType.CHAIR_RENT]: 'RENT',
-    [PaymentType.BOOKING_COMMISSION]: 'COMMISSION',
-    [PaymentType.PLATFORM_FEE]: 'FEE',
+    [PaymentType.CHAIR_RENTAL]: 'RENT',
+    [PaymentType.BOOKING]: 'COMMISSION',
+    [PaymentType.SUBSCRIPTION]: 'FEE',
+    [PaymentType.DEPOSIT]: 'FEE',
     [PaymentType.OTHER]: 'OTHER',
   }
 
@@ -24,7 +26,9 @@ function mapPaymentToInvoice(payment: any) {
     id: payment.id,
     invoiceNumber: `INV-${payment.id.slice(0, 8).toUpperCase()}`,
     type: typeMap[payment.type as PaymentType] || 'OTHER',
-    amount: payment.amount.toNumber(),
+    amount: typeof payment.amount === 'object' && payment.amount.toNumber 
+      ? payment.amount.toNumber() 
+      : Number(payment.amount),
     status: statusMap[payment.status as PaymentStatus] || 'SENT',
     issuedDate: payment.createdAt.toISOString(),
     dueDate: payment.dueDate?.toISOString() || payment.createdAt.toISOString(),
@@ -32,21 +36,23 @@ function mapPaymentToInvoice(payment: any) {
       ? payment.updatedAt.toISOString() 
       : null,
     description: payment.description || getDefaultDescription(payment.type),
-    stylist: payment.payer ? { 
-      name: payment.payer.name,
-      email: payment.payer.email,
+    stylist: payment.sender ? { 
+      name: payment.sender.name || 'Unbekannt',
+      email: payment.sender.email || '',
     } : null,
   }
 }
 
 function getDefaultDescription(type: PaymentType): string {
   switch (type) {
-    case PaymentType.CHAIR_RENT:
+    case PaymentType.CHAIR_RENTAL:
       return 'Stuhlmiete'
-    case PaymentType.BOOKING_COMMISSION:
+    case PaymentType.BOOKING:
       return 'Buchungsprovision'
-    case PaymentType.PLATFORM_FEE:
-      return 'Plattformgebühr'
+    case PaymentType.SUBSCRIPTION:
+      return 'Abo-Gebühr'
+    case PaymentType.DEPOSIT:
+      return 'Kaution'
     default:
       return 'Sonstige Zahlung'
   }
@@ -59,13 +65,21 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 403 })
     }
 
-    // Check if demo mode is active
+    // Get salon for this owner
+    const salon = await prisma.salon.findFirst({
+      where: { ownerId: session.user.id },
+      select: { id: true },
+    })
+
+    // Check if demo mode is active OR no salon exists (show mock data)
     const demoMode = await isDemoModeActive()
-    if (demoMode) {
+    if (demoMode || !salon) {
       return NextResponse.json({
         invoices: getMockSalonInvoices().invoices,
         _source: 'demo',
-        _message: 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
+        _message: !salon 
+          ? 'Kein Salon vorhanden - Es werden Beispieldaten angezeigt'
+          : 'Demo-Modus aktiv - Es werden Beispieldaten angezeigt'
       })
     }
 
@@ -73,16 +87,6 @@ export async function GET(request: Request) {
     const search = searchParams.get('search')
     const status = searchParams.get('status')
     const type = searchParams.get('type')
-
-    // Get salon for this owner
-    const salon = await prisma.salon.findUnique({
-      where: { ownerId: session.user.id },
-      select: { id: true },
-    })
-
-    if (!salon) {
-      return NextResponse.json({ error: 'Salon nicht gefunden' }, { status: 404 })
-    }
 
     // Build where clause
     const whereClause: any = {
@@ -94,8 +98,8 @@ export async function GET(request: Request) {
         DRAFT: PaymentStatus.PENDING,
         SENT: PaymentStatus.PENDING,
         PAID: PaymentStatus.PAID,
-        OVERDUE: PaymentStatus.FAILED,
-        CANCELLED: PaymentStatus.REFUNDED,
+        OVERDUE: PaymentStatus.OVERDUE,
+        CANCELLED: PaymentStatus.CANCELLED,
       }
       if (statusMap[status]) {
         whereClause.status = statusMap[status]
@@ -104,9 +108,9 @@ export async function GET(request: Request) {
 
     if (type && type !== 'ALL') {
       const typeMap: Record<string, PaymentType> = {
-        RENT: PaymentType.CHAIR_RENT,
-        COMMISSION: PaymentType.BOOKING_COMMISSION,
-        FEE: PaymentType.PLATFORM_FEE,
+        RENT: PaymentType.CHAIR_RENTAL,
+        COMMISSION: PaymentType.BOOKING,
+        FEE: PaymentType.SUBSCRIPTION,
         OTHER: PaymentType.OTHER,
       }
       if (typeMap[type]) {
@@ -116,19 +120,24 @@ export async function GET(request: Request) {
 
     const payments = await prisma.payment.findMany({
       where: whereClause,
-      include: {
-        payer: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-      },
       orderBy: { createdAt: 'desc' },
       take: 100,
     })
 
-    const invoices = payments.map(mapPaymentToInvoice)
+    // Get payer details separately
+    const payerIds = [...new Set(payments.map(p => p.payerId))]
+    const payers = payerIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: payerIds } },
+          select: { id: true, name: true, email: true },
+        })
+      : []
+    const payerMap = new Map(payers.map(p => [p.id, p]))
+
+    const invoices = payments.map(payment => {
+      const payer = payerMap.get(payment.payerId)
+      return mapPaymentToInvoice({ ...payment, sender: payer })
+    })
 
     // Filter by search term if provided
     let filteredInvoices = invoices
@@ -151,4 +160,3 @@ export async function GET(request: Request) {
     )
   }
 }
-

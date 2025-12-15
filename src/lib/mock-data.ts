@@ -132,51 +132,61 @@ export function getMockStylistStats() {
 export const mockStylistStats = getMockStylistStats()
 
 // ============================================
-// Salon Stats Mock Data
+// Salon Stats Mock Data (für Salon Dashboard)
 // ============================================
 export function getMockSalonStats() {
   return {
+    salon: {
+      id: 'demo-salon-1',
+      name: 'Mein Traum-Salon',
+      city: 'Berlin',
+      isVerified: true,
+    },
     overview: {
-      totalStylists: 6,
-      totalChairs: 8,
-      occupiedChairs: 6,
-      totalCustomers: 312,
-      totalBookings: 1847,
-      monthlyRevenue: 24680,
-      totalRevenue: 186500,
-      averageRating: 4.7,
-      totalReviews: 156,
+      totalChairs: 6,
+      availableChairs: 2,
+      rentedChairs: 4,
+      totalRentals: 4,
+      monthlyRentalIncome: 3200,
+      averageRating: 4.8,
+      totalReviews: 47,
+      pendingRequests: 2,
     },
-    growth: {
-      bookings: 15.2,
-      revenue: 11.8,
-      customers: 8.5,
-    },
-    recentBookings: [
-      {
-        id: 'sb-1',
-        customerName: 'Emma Wagner',
-        stylistName: 'Sarah Müller',
-        serviceName: 'Färbung & Schnitt',
-        startTime: getTodayAt(10, 0),
-        price: 145,
-        status: 'CONFIRMED',
-      },
+    chairs: [
+      { id: 'c1', name: 'Stuhl 1 - Premium', description: 'Mit eigenem Waschbecken', monthlyRate: 850, isAvailable: false, isRented: true, amenities: ['Waschbecken', 'Spiegel', 'Beleuchtung'] },
+      { id: 'c2', name: 'Stuhl 2 - Standard', description: 'Im Hauptbereich', monthlyRate: 650, isAvailable: false, isRented: true, amenities: ['Spiegel', 'Beleuchtung'] },
+      { id: 'c3', name: 'Stuhl 3 - Standard', description: 'Nahe Eingang', monthlyRate: 650, isAvailable: false, isRented: true, amenities: ['Spiegel', 'Beleuchtung'] },
+      { id: 'c4', name: 'Stuhl 4 - Comfort', description: 'Fensterplatz', monthlyRate: 750, isAvailable: false, isRented: true, amenities: ['Spiegel', 'Beleuchtung', 'Fenster'] },
+      { id: 'c5', name: 'Stuhl 5 - Starter', description: 'Im Nebenraum', monthlyRate: 550, isAvailable: true, isRented: false, amenities: ['Spiegel'] },
+      { id: 'c6', name: 'Stuhl 6 - Starter', description: 'Im Nebenraum', monthlyRate: 550, isAvailable: true, isRented: false, amenities: ['Spiegel'] },
     ],
-    topStylists: [
-      { id: 'st-1', name: 'Sarah Müller', bookings: 87, revenue: 8750, rating: 4.9 },
-      { id: 'st-2', name: 'Alex Schmidt', bookings: 72, revenue: 6480, rating: 4.8 },
-      { id: 'st-3', name: 'Julia Weber', bookings: 65, revenue: 5850, rating: 4.7 },
+    rentals: [
+      { id: 'r1', chairName: 'Stuhl 1 - Premium', monthlyRent: 850, startDate: getRelativeDate(-120), stylist: { id: 'st1', name: 'Sarah Müller', email: 'sarah@example.com', image: null } },
+      { id: 'r2', chairName: 'Stuhl 2 - Standard', monthlyRent: 650, startDate: getRelativeDate(-90), stylist: { id: 'st2', name: 'Alex Schmidt', email: 'alex@example.com', image: null } },
+      { id: 'r3', chairName: 'Stuhl 3 - Standard', monthlyRent: 650, startDate: getRelativeDate(-60), stylist: { id: 'st3', name: 'Julia Weber', email: 'julia@example.com', image: null } },
+      { id: 'r4', chairName: 'Stuhl 4 - Comfort', monthlyRent: 750, startDate: getRelativeDate(-30), stylist: { id: 'st4', name: 'Max Braun', email: 'max@example.com', image: null } },
     ],
-    chairOccupancy: [
-      { id: 'c1', name: 'Stuhl 1', stylist: 'Sarah Müller', status: 'OCCUPIED' },
-      { id: 'c2', name: 'Stuhl 2', stylist: 'Alex Schmidt', status: 'OCCUPIED' },
-      { id: 'c3', name: 'Stuhl 3', stylist: 'Julia Weber', status: 'OCCUPIED' },
-      { id: 'c4', name: 'Stuhl 4', stylist: 'Max Braun', status: 'OCCUPIED' },
-      { id: 'c5', name: 'Stuhl 5', stylist: null, status: 'AVAILABLE' },
-      { id: 'c6', name: 'Stuhl 6', stylist: 'Lena Klein', status: 'OCCUPIED' },
+    recentReviews: [
+      { id: 'rev1', rating: 5, title: 'Top Salon!', comment: 'Super Location, faire Preise und tolles Ambiente. Meine Kunden lieben es hier!', reviewerName: 'Sarah M.', createdAt: getRelativeDate(-3) },
+      { id: 'rev2', rating: 5, title: 'Perfekte Ausstattung', comment: 'Alles was man braucht ist da. Die Stuhlmiete ist fair kalkuliert.', reviewerName: 'Alex S.', createdAt: getRelativeDate(-7) },
+      { id: 'rev3', rating: 4, title: 'Empfehlenswert', comment: 'Gute Lage, nettes Team. Einziger Nachteil: Parkplätze sind manchmal knapp.', reviewerName: 'Julia W.', createdAt: getRelativeDate(-14) },
+    ],
+    monthlyIncome: [
+      { month: getMonthName(-5), income: 2800 },
+      { month: getMonthName(-4), income: 2900 },
+      { month: getMonthName(-3), income: 3100 },
+      { month: getMonthName(-2), income: 3200 },
+      { month: getMonthName(-1), income: 3200 },
+      { month: getMonthName(0), income: 3200 },
     ],
   }
+}
+
+// Hilfsfunktion für Monatsnamen
+function getMonthName(offset: number): string {
+  const date = new Date()
+  date.setMonth(date.getMonth() + offset)
+  return date.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' })
 }
 
 export const mockSalonStats = getMockSalonStats()
@@ -942,6 +952,27 @@ export function getMockStylistReviews() {
 // ============================================
 export function getMockSalonRevenue() {
   return {
+    // Neue API-Struktur (für SalonRevenuePage)
+    totalRevenue: 24680,
+    rentalIncome: 15600,
+    bookingCommission: 5200,
+    previousMonthRevenue: 23500,
+    growth: 8.1,
+    monthlyData: [
+      { month: 'Jul 2024', rental: 2400, commission: 800, total: 3200 },
+      { month: 'Aug 2024', rental: 2500, commission: 850, total: 3350 },
+      { month: 'Sep 2024', rental: 2650, commission: 900, total: 3550 },
+      { month: 'Okt 2024', rental: 2800, commission: 950, total: 3750 },
+      { month: 'Nov 2024', rental: 2950, commission: 1000, total: 3950 },
+      { month: 'Dez 2024', rental: 3100, commission: 1050, total: 4150 },
+    ],
+    topStylists: [
+      { id: 'stylist-1', name: 'Sarah Müller', revenue: 4850, bookings: 42 },
+      { id: 'stylist-2', name: 'Alex Schmidt', revenue: 3920, bookings: 35 },
+      { id: 'stylist-3', name: 'Julia Weber', revenue: 3450, bookings: 28 },
+      { id: 'stylist-4', name: 'Max Braun', revenue: 2980, bookings: 24 },
+    ],
+    // Zusätzliche Daten für erweiterte Ansichten
     summary: {
       totalRevenue: 24680,
       thisMonth: 8450,
@@ -949,20 +980,12 @@ export function getMockSalonRevenue() {
       change: 8.1,
       pendingPayments: 1250,
     },
-    monthlyRevenue: [
-      { month: 'Jul', revenue: 18500, expenses: 12000, profit: 6500 },
-      { month: 'Aug', revenue: 19200, expenses: 12500, profit: 6700 },
-      { month: 'Sep', revenue: 20800, expenses: 13000, profit: 7800 },
-      { month: 'Okt', revenue: 22100, expenses: 13500, profit: 8600 },
-      { month: 'Nov', revenue: 23500, expenses: 14000, profit: 9500 },
-      { month: 'Dez', revenue: 24680, expenses: 14500, profit: 10180 },
-    ],
     revenueBySource: [
       { source: 'Stuhlmieten', amount: 15600, percentage: 63.2 },
       { source: 'Produktverkauf', amount: 5200, percentage: 21.1 },
       { source: 'Zusatzleistungen', amount: 3880, percentage: 15.7 },
     ],
-    rentalIncome: [
+    rentalIncomeDetails: [
       { stylist: 'Sarah Müller', chair: 'Stuhl 1', monthlyRent: 700, status: 'PAID' },
       { stylist: 'Alex Schmidt', chair: 'Stuhl 2', monthlyRent: 650, status: 'PAID' },
       { stylist: 'Julia Weber', chair: 'Stuhl 3', monthlyRent: 650, status: 'PENDING' },
@@ -1111,28 +1134,56 @@ export function getMockSalonReviews() {
     reviews: [
       {
         id: 'srv-1',
-        rating: 5,
-        title: 'Fantastischer Salon!',
-        comment: 'Tolles Ambiente, super freundliches Team. Mein neuer Stammsalon!',
         customerName: 'Emma W.',
+        customerImage: null,
         stylistName: 'Sarah Müller',
-        serviceName: 'Balayage',
+        rating: 5,
+        comment: 'Tolles Ambiente, super freundliches Team. Mein neuer Stammsalon! Fantastischer Salon!',
         createdAt: getRelativeDate(-3),
-        response: 'Herzlichen Dank! Wir freuen uns auf Ihren nächsten Besuch.',
+        serviceName: 'Balayage',
       },
       {
         id: 'srv-2',
-        rating: 4,
-        title: 'Sehr professionell',
-        comment: 'Gute Beratung und schönes Ergebnis. Nur Parkplätze sind schwer zu finden.',
         customerName: 'Sophie M.',
+        customerImage: null,
         stylistName: 'Alex Schmidt',
-        serviceName: 'Herrenhaarschnitt',
+        rating: 4,
+        comment: 'Gute Beratung und schönes Ergebnis. Nur Parkplätze sind schwer zu finden.',
         createdAt: getRelativeDate(-7),
-        response: null,
+        serviceName: 'Herrenhaarschnitt',
+      },
+      {
+        id: 'srv-3',
+        customerName: 'Laura K.',
+        customerImage: null,
+        stylistName: 'Julia Weber',
+        rating: 5,
+        comment: 'Endlich eine Friseurin, die versteht was ich will! Super zufrieden mit dem Ergebnis.',
+        createdAt: getRelativeDate(-10),
+        serviceName: 'Damenhaarschnitt',
+      },
+      {
+        id: 'srv-4',
+        customerName: 'Thomas B.',
+        customerImage: null,
+        stylistName: 'Max Braun',
+        rating: 5,
+        comment: 'Sehr professioneller Service, angenehme Atmosphäre. Komme gerne wieder!',
+        createdAt: getRelativeDate(-14),
+        serviceName: 'Bart-Styling',
+      },
+      {
+        id: 'srv-5',
+        customerName: 'Maria S.',
+        customerImage: null,
+        stylistName: 'Sarah Müller',
+        rating: 4,
+        comment: 'Schöne Ergebnisse, nur die Wartezeit war etwas lang.',
+        createdAt: getRelativeDate(-21),
+        serviceName: 'Färbung',
       },
     ],
-    summary: {
+    stats: {
       averageRating: 4.7,
       totalReviews: 156,
       ratingDistribution: {
@@ -1141,7 +1192,7 @@ export function getMockSalonReviews() {
         3: 8,
         2: 3,
         1: 1,
-      },
+      } as Record<number, number>,
     },
   }
 }
@@ -1154,30 +1205,89 @@ export function getMockSalonInvoices() {
     invoices: [
       {
         id: 'sinv-1',
-        invoiceNumber: 'SALON-2024-001',
-        date: getRelativeDate(-5),
-        amount: 2600,
-        status: 'PAID',
-        type: 'Stuhlmieten',
-        description: 'Mieteinnahmen Dezember 2024',
-        stylists: ['Sarah Müller', 'Alex Schmidt', 'Julia Weber', 'Max Braun'],
+        invoiceNumber: 'INV-2024-DEC-001',
+        type: 'RENT' as const,
+        amount: 700,
+        status: 'PAID' as const,
+        issuedDate: getRelativeDate(-5),
+        dueDate: getRelativeDate(-5),
+        paidDate: getRelativeDate(-3),
+        description: 'Stuhlmiete Dezember 2024 - Stuhl 1',
+        stylist: { name: 'Sarah Müller', email: 'sarah@example.de' },
       },
       {
         id: 'sinv-2',
-        invoiceNumber: 'SALON-2024-002',
-        date: getRelativeDate(-35),
-        amount: 2600,
-        status: 'PAID',
-        type: 'Stuhlmieten',
-        description: 'Mieteinnahmen November 2024',
-        stylists: ['Sarah Müller', 'Alex Schmidt', 'Julia Weber', 'Max Braun'],
+        invoiceNumber: 'INV-2024-DEC-002',
+        type: 'RENT' as const,
+        amount: 650,
+        status: 'PAID' as const,
+        issuedDate: getRelativeDate(-5),
+        dueDate: getRelativeDate(-5),
+        paidDate: getRelativeDate(-4),
+        description: 'Stuhlmiete Dezember 2024 - Stuhl 2',
+        stylist: { name: 'Alex Schmidt', email: 'alex@example.de' },
+      },
+      {
+        id: 'sinv-3',
+        invoiceNumber: 'INV-2024-DEC-003',
+        type: 'RENT' as const,
+        amount: 650,
+        status: 'SENT' as const,
+        issuedDate: getRelativeDate(-5),
+        dueDate: getRelativeDate(10),
+        paidDate: null,
+        description: 'Stuhlmiete Dezember 2024 - Stuhl 3',
+        stylist: { name: 'Julia Weber', email: 'julia@example.de' },
+      },
+      {
+        id: 'sinv-4',
+        invoiceNumber: 'INV-2024-DEC-004',
+        type: 'RENT' as const,
+        amount: 600,
+        status: 'PAID' as const,
+        issuedDate: getRelativeDate(-5),
+        dueDate: getRelativeDate(-5),
+        paidDate: getRelativeDate(-2),
+        description: 'Stuhlmiete Dezember 2024 - Stuhl 4',
+        stylist: { name: 'Max Braun', email: 'max@example.de' },
+      },
+      {
+        id: 'sinv-5',
+        invoiceNumber: 'INV-2024-NOV-001',
+        type: 'RENT' as const,
+        amount: 700,
+        status: 'PAID' as const,
+        issuedDate: getRelativeDate(-35),
+        dueDate: getRelativeDate(-35),
+        paidDate: getRelativeDate(-33),
+        description: 'Stuhlmiete November 2024 - Stuhl 1',
+        stylist: { name: 'Sarah Müller', email: 'sarah@example.de' },
+      },
+      {
+        id: 'sinv-6',
+        invoiceNumber: 'INV-2024-COM-001',
+        type: 'COMMISSION' as const,
+        amount: 245.50,
+        status: 'PAID' as const,
+        issuedDate: getRelativeDate(-10),
+        dueDate: getRelativeDate(-5),
+        paidDate: getRelativeDate(-7),
+        description: 'Buchungsprovision November 2024',
+        stylist: { name: 'Sarah Müller', email: 'sarah@example.de' },
+      },
+      {
+        id: 'sinv-7',
+        invoiceNumber: 'INV-2024-COM-002',
+        type: 'COMMISSION' as const,
+        amount: 189.00,
+        status: 'OVERDUE' as const,
+        issuedDate: getRelativeDate(-20),
+        dueDate: getRelativeDate(-5),
+        paidDate: null,
+        description: 'Buchungsprovision Oktober 2024',
+        stylist: { name: 'Alex Schmidt', email: 'alex@example.de' },
       },
     ],
-    summary: {
-      totalReceived: 5200,
-      pendingPayments: 650,
-      totalStylists: 4,
-    },
   }
 }
 

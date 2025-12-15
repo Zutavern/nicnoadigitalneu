@@ -138,73 +138,84 @@ export function DashboardHeader({ baseUrl, accentColor = 'primary' }: DashboardH
         {/* Notifications */}
         <NotificationBell />
 
-        {/* User Menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2 px-2 h-10 touch-target">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={session?.user?.image || ''} />
-                <AvatarFallback className={`bg-${accentColor}/10 text-${accentColor}`}>
-                  {getInitials(session?.user?.name)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="hidden lg:block text-left">
-                <p className="text-sm font-medium">{session?.user?.name || 'Benutzer'}</p>
+        {/* User Menu - Render placeholder during SSR to prevent hydration mismatch */}
+        {!mounted ? (
+          <Button variant="ghost" className="flex items-center gap-2 px-2 h-10 touch-target">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className={`bg-${accentColor}/10 text-${accentColor}`}>
+                {getInitials(session?.user?.name)}
+              </AvatarFallback>
+            </Avatar>
+            <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
+          </Button>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-2 px-2 h-10 touch-target">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={session?.user?.image || ''} />
+                  <AvatarFallback className={`bg-${accentColor}/10 text-${accentColor}`}>
+                    {getInitials(session?.user?.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden lg:block text-left">
+                  <p className="text-sm font-medium">{session?.user?.name || 'Benutzer'}</p>
+                  <p className="text-xs text-muted-foreground">{session?.user?.email}</p>
+                </div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="px-2 py-1.5">
+                <p className="text-sm font-medium">{session?.user?.name}</p>
                 <p className="text-xs text-muted-foreground">{session?.user?.email}</p>
               </div>
-              <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <div className="px-2 py-1.5">
-              <p className="text-sm font-medium">{session?.user?.name}</p>
-              <p className="text-xs text-muted-foreground">{session?.user?.email}</p>
-            </div>
-            <DropdownMenuSeparator />
-            
-            {/* Theme toggle for mobile */}
-            <DropdownMenuItem 
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="md:hidden cursor-pointer"
-            >
-              {mounted && theme === 'dark' ? (
-                <>
-                  <Sun className="mr-2 h-4 w-4" />
-                  <span>Helles Design</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="mr-2 h-4 w-4" />
-                  <span>Dunkles Design</span>
-                </>
-              )}
-            </DropdownMenuItem>
-            
-            <DropdownMenuItem asChild>
-              <Link href={`${baseUrl}/profile`} className="cursor-pointer">
-                <User className="mr-2 h-4 w-4" />
-                Profil bearbeiten
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href={`${baseUrl}/settings`} className="cursor-pointer">
-                <Settings className="mr-2 h-4 w-4" />
-                Einstellungen
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-destructive cursor-pointer"
-              onClick={() => {
-                const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
-                signOut({ callbackUrl: `${baseUrl}/` })
-              }}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Abmelden
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuSeparator />
+              
+              {/* Theme toggle for mobile */}
+              <DropdownMenuItem 
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="md:hidden cursor-pointer"
+              >
+                {theme === 'dark' ? (
+                  <>
+                    <Sun className="mr-2 h-4 w-4" />
+                    <span>Helles Design</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="mr-2 h-4 w-4" />
+                    <span>Dunkles Design</span>
+                  </>
+                )}
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem asChild>
+                <Link href={`${baseUrl}/profile`} className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  Profil bearbeiten
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`${baseUrl}/settings`} className="cursor-pointer">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Einstellungen
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive cursor-pointer"
+                onClick={() => {
+                  const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+                  signOut({ callbackUrl: `${baseUrl}/` })
+                }}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Abmelden
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </header>
   )
