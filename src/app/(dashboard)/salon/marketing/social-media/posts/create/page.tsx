@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
@@ -32,6 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from '@/components/ui/dialog'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -61,8 +62,9 @@ import {
   Crop,
   ImagePlus,
   Film,
-  Palette,
   Eye,
+  ChevronRight,
+  Info,
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -99,18 +101,29 @@ const imageStyles = [
   { id: 'artistic', name: 'Künstlerisch', description: 'Kreative Interpretation' },
 ]
 
+// AI-Bild-Modelle
+const imageModels = [
+  { id: 'flux-schnell', name: 'Flux Schnell', description: 'Schnell & kostenlos', free: true },
+  { id: 'flux-pro', name: 'Flux Pro', description: 'Höchste Qualität', free: false },
+  { id: 'gemini-flash', name: 'Gemini Flash', description: 'Google AI (kostenlos)', free: true },
+]
+
 interface MediaItem {
   id: string
   url: string
   type: 'image' | 'video'
   originalName?: string
   croppedVersions?: Record<string, Record<string, string>>
+  isAiGenerated?: boolean
+  aiPrompt?: string
 }
 
 export default function CreatePostPage() {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [activeTab, setActiveTab] = useState<'ai' | 'manual'>('ai')
+  
+  // Workflow Step: 1 = Content, 2 = Media, 3 = Schedule
+  const [currentStep, setCurrentStep] = useState(1)
   
   // Form State
   const [content, setContent] = useState('')
@@ -136,16 +149,35 @@ export default function CreatePostPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isImproving, setIsImproving] = useState(false)
   
-  // AI Image State
+  // AI Image State - verbessert
   const [aiImagePrompt, setAiImagePrompt] = useState('')
   const [aiImageStyle, setAiImageStyle] = useState('vivid')
+  const [aiImageModel, setAiImageModel] = useState('flux-schnell')
+  const [useContentAsPrompt, setUseContentAsPrompt] = useState(true)
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const [aiImageDialogOpen, setAiImageDialogOpen] = useState(false)
   
   // Submission State
   const [isSaving, setIsSaving] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [showPreview, setShowPreview] = useState(false)
+  const [showPreview, setShowPreview] = useState(true)
+
+  // Auto-Update AI Image Prompt when content changes
+  useEffect(() => {
+    if (useContentAsPrompt && content.trim()) {
+      // Generiere einen sinnvollen Bildprompt aus dem Content
+      const cleanContent = content
+        .replace(/#\w+/g, '')
+        .replace(/https?:\/\/\S+/g, '')
+        .replace(/\n+/g, ' ')
+        .trim()
+        .slice(0, 200)
+      
+      if (cleanContent.length > 20) {
+        setAiImagePrompt(`Erstelle ein passendes Bild für: "${cleanContent}"`)
+      }
+    }
+  }, [content, useContentAsPrompt])
 
   // Berechne Limits
   const getMaxLength = () => {
@@ -239,9 +271,15 @@ export default function CreatePostPage() {
     setMediaItems(prev => prev.filter(m => m.id !== mediaId))
   }
   
-  // AI Bild generieren
+  // AI Bild generieren - verbessert mit auto-Prompt
   const generateAIImage = async () => {
-    if (!aiImagePrompt.trim()) {
+    // Prüfen ob wir Content haben wenn useContentAsPrompt aktiv ist
+    if (useContentAsPrompt && !content.trim()) {
+      toast.error('Bitte erst den Post-Text schreiben, damit ein passendes Bild generiert werden kann')
+      return
+    }
+    
+    if (!useContentAsPrompt && !aiImagePrompt.trim()) {
       toast.error('Bitte beschreibe das gewünschte Bild')
       return
     }
@@ -249,35 +287,46 @@ export default function CreatePostPage() {
     setIsGeneratingImage(true)
     
     try {
+      const requestBody = useContentAsPrompt 
+        ? {
+            postContent: content + (hashtags.length > 0 ? ' ' + hashtags.map(h => `#${h}`).join(' ') : ''),
+            platform: selectedPlatforms[0] || 'INSTAGRAM',
+            style: aiImageStyle,
+            model: aiImageModel,
+            industry: 'Friseur/Beauty/Salon',
+          }
+        : {
+            prompt: aiImagePrompt,
+            platform: selectedPlatforms[0] || 'INSTAGRAM',
+            style: aiImageStyle,
+            model: aiImageModel,
+            industry: 'Friseur/Beauty/Salon',
+          }
+      
       const res = await fetch('/api/social/ai/image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: aiImagePrompt,
-          platform: selectedPlatforms[0] || 'INSTAGRAM',
-          style: aiImageStyle,
-          industry: 'Friseur/Beauty/Salon',
-        }),
+        body: JSON.stringify(requestBody),
       })
       
-      if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || 'Bildgenerierung fehlgeschlagen')
-      }
-      
       const data = await res.json()
+      
+      if (!res.ok) {
+        throw new Error(data.error || 'Bildgenerierung fehlgeschlagen')
+      }
       
       const newMedia: MediaItem = {
         id: `ai-${Date.now()}`,
         url: data.imageUrl,
         type: 'image',
-        originalName: 'AI Generated Image',
+        originalName: 'KI-generiertes Bild',
+        isAiGenerated: true,
+        aiPrompt: data.prompt,
       }
       
       setMediaItems(prev => [...prev, newMedia])
       setAiImageDialogOpen(false)
-      setAiImagePrompt('')
-      toast.success('KI-Bild generiert!')
+      toast.success('KI-Bild erfolgreich generiert!')
     } catch (error) {
       console.error('AI Image error:', error)
       toast.error(error instanceof Error ? error.message : 'Bildgenerierung fehlgeschlagen')
@@ -307,6 +356,7 @@ export default function CreatePostPage() {
     }
     setCropDialogOpen(false)
     setSelectedMediaForCrop(null)
+    toast.success('Bild zugeschnitten')
   }
 
   // AI Content generieren
@@ -340,7 +390,6 @@ export default function CreatePostPage() {
         setHashtags(data.hashtags)
       }
       toast.success('Content generiert!')
-      setActiveTab('manual')
     } catch (error) {
       console.error('Generate error:', error)
       toast.error('Fehler bei der Content-Generierung')
@@ -482,7 +531,7 @@ export default function CreatePostPage() {
           platforms: selectedPlatforms,
           status,
           scheduledFor,
-          aiGenerated: activeTab === 'ai' || isGenerating,
+          aiGenerated: isGenerating,
           aiPrompt: aiPrompt || null,
           croppedMedia: mediaItems.reduce((acc, m) => {
             if (m.croppedVersions) {
@@ -505,6 +554,10 @@ export default function CreatePostPage() {
     }
   }
 
+  // Step Navigation
+  const canProceedToStep2 = content.trim().length > 0 && selectedPlatforms.length > 0
+  const canProceedToStep3 = canProceedToStep2
+
   return (
     <div className="p-6 space-y-6">
       {/* Hidden File Input */}
@@ -525,281 +578,124 @@ export default function CreatePostPage() {
         <div className="flex-1">
           <h1 className="text-2xl font-bold">Neuen Post erstellen</h1>
           <p className="text-muted-foreground">
-            Erstelle Content mit KI-Unterstützung und automatischer Bildanpassung
+            Erstelle Content mit KI-Unterstützung
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setShowPreview(!showPreview)}
-          className="gap-2"
-        >
-          <Eye className="h-4 w-4" />
-          {showPreview ? 'Editor' : 'Vorschau'}
-        </Button>
+      </div>
+      
+      {/* Step Indicator */}
+      <div className="flex items-center gap-2 mb-6">
+        {[
+          { step: 1, label: 'Text & Plattformen' },
+          { step: 2, label: 'Medien & Bilder' },
+          { step: 3, label: 'Planen & Veröffentlichen' },
+        ].map((item, index) => (
+          <div key={item.step} className="flex items-center">
+            <button
+              onClick={() => {
+                if (item.step === 1 || (item.step === 2 && canProceedToStep2) || (item.step === 3 && canProceedToStep3)) {
+                  setCurrentStep(item.step)
+                }
+              }}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
+                currentStep === item.step 
+                  ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white" 
+                  : currentStep > item.step
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                    : "bg-muted text-muted-foreground"
+              )}
+            >
+              {currentStep > item.step ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">
+                  {item.step}
+                </span>
+              )}
+              {item.label}
+            </button>
+            {index < 2 && <ChevronRight className="h-4 w-4 mx-2 text-muted-foreground" />}
+          </div>
+        ))}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Haupt-Editor */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Plattform-Auswahl */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Plattformen</CardTitle>
-              <CardDescription>Wähle, wo du posten möchtest</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {platforms.map((platform) => {
-                  const Icon = platform.icon
-                  const isSelected = selectedPlatforms.includes(platform.id)
-                  return (
-                    <Button
-                      key={platform.id}
-                      variant={isSelected ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => togglePlatform(platform.id)}
-                      className={cn(
-                        'transition-all',
-                        isSelected && `bg-gradient-to-r ${platform.color} border-0 text-white`
-                      )}
-                    >
-                      <Icon className="h-4 w-4 mr-2" />
-                      {platform.name}
-                    </Button>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
           
-          {/* Media Upload */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <ImageIcon className="h-4 w-4" />
-                    Medien
-                  </CardTitle>
-                  <CardDescription>
-                    Max. {maxImages} Bilder/Videos für gewählte Plattformen
-                  </CardDescription>
-                </div>
-                
-                {/* AI Image Button */}
-                <Dialog open={aiImageDialogOpen} onOpenChange={setAiImageDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Wand2 className="h-4 w-4" />
-                      KI-Bild
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2">
-                        <Sparkles className="h-5 w-5 text-purple-500" />
-                        KI-Bild generieren
-                      </DialogTitle>
-                      <DialogDescription>
-                        Beschreibe das gewünschte Bild für deinen Post
-                      </DialogDescription>
-                    </DialogHeader>
-                    
-                    <div className="space-y-4 py-4">
-                      <div>
-                        <Label>Bildbeschreibung</Label>
-                        <Textarea
-                          value={aiImagePrompt}
-                          onChange={(e) => setAiImagePrompt(e.target.value)}
-                          placeholder="z.B. 'Eine elegante Balayage-Frisur in goldblonden Tönen, professionelles Salon-Setting'"
-                          className="mt-2 min-h-[100px]"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label>Stil</Label>
-                        <Select value={aiImageStyle} onValueChange={setAiImageStyle}>
-                          <SelectTrigger className="mt-2">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {imageStyles.map(style => (
-                              <SelectItem key={style.id} value={style.id}>
-                                <div>
-                                  <div className="font-medium">{style.name}</div>
-                                  <div className="text-xs text-muted-foreground">{style.description}</div>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <Button
-                        onClick={generateAIImage}
-                        disabled={isGeneratingImage || !aiImagePrompt.trim()}
-                        className="w-full bg-gradient-to-r from-purple-500 to-pink-500"
-                      >
-                        {isGeneratingImage ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Generiere...
-                          </>
-                        ) : (
-                          <>
-                            <Wand2 className="h-4 w-4 mr-2" />
-                            Bild generieren
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {/* Upload Progress */}
-              {isUploading && (
-                <div className="mb-4">
-                  <Progress value={uploadProgress} className="h-2" />
-                  <p className="text-xs text-muted-foreground mt-1">Upload läuft...</p>
-                </div>
-              )}
-              
-              {/* Drop Zone */}
-              <div
-                onDrop={handleDrop}
-                onDragOver={(e) => e.preventDefault()}
-                onClick={() => fileInputRef.current?.click()}
-                className={cn(
-                  "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
-                  "hover:border-primary hover:bg-primary/5",
-                  mediaItems.length >= maxImages && "opacity-50 pointer-events-none"
-                )}
+          {/* STEP 1: Content & Plattformen */}
+          <AnimatePresence mode="wait">
+            {currentStep === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="space-y-6"
               >
-                <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  Bilder oder Videos hierher ziehen oder klicken
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  JPG, PNG, WebP, GIF, MP4 (max. 10MB/100MB)
-                </p>
-              </div>
-              
-              {/* Media Grid */}
-              {mediaItems.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
-                  {mediaItems.map((media, index) => (
-                    <div key={media.id} className="relative group aspect-square rounded-lg overflow-hidden bg-muted">
-                      {media.type === 'image' ? (
-                        <Image
-                          src={media.url}
-                          alt={`Media ${index + 1}`}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <Film className="h-8 w-8 text-muted-foreground" />
-                        </div>
-                      )}
-                      
-                      {/* Overlay Actions */}
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        {media.type === 'image' && (
+                {/* Plattform-Auswahl */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Plattformen</CardTitle>
+                    <CardDescription>Wähle, wo du posten möchtest</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {platforms.map((platform) => {
+                        const Icon = platform.icon
+                        const isSelected = selectedPlatforms.includes(platform.id)
+                        return (
                           <Button
-                            size="icon"
-                            variant="secondary"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setSelectedMediaForCrop(media)
-                              setCropDialogOpen(true)
-                            }}
+                            key={platform.id}
+                            variant={isSelected ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => togglePlatform(platform.id)}
+                            className={cn(
+                              'transition-all',
+                              isSelected && `bg-gradient-to-r ${platform.color} border-0 text-white`
+                            )}
                           >
-                            <Crop className="h-4 w-4" />
+                            <Icon className="h-4 w-4 mr-2" />
+                            {platform.name}
                           </Button>
-                        )}
-                        <Button
-                          size="icon"
-                          variant="destructive"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            removeMedia(media.id)
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      
-                      {/* Index Badge */}
-                      <Badge className="absolute top-2 left-2 bg-black/70">
-                        {index + 1}
-                      </Badge>
-                      
-                      {/* Cropped Indicator */}
-                      {media.croppedVersions && Object.keys(media.croppedVersions).length > 0 && (
-                        <Badge className="absolute top-2 right-2 bg-green-500/90">
-                          <Check className="h-3 w-3" />
-                        </Badge>
-                      )}
+                        )
+                      })}
                     </div>
-                  ))}
-                  
-                  {/* Add More Button */}
-                  {mediaItems.length < maxImages && (
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="aspect-square rounded-lg border-2 border-dashed flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-colors"
-                    >
-                      <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                    </button>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
 
-          {/* Content-Erstellung */}
-          <Card>
-            <CardHeader className="pb-3">
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'ai' | 'manual')}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="ai" className="gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    KI-Assistent
-                  </TabsTrigger>
-                  <TabsTrigger value="manual" className="gap-2">
-                    <Send className="h-4 w-4" />
-                    Editor
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </CardHeader>
-            <CardContent>
-              <AnimatePresence mode="wait">
-                {activeTab === 'ai' ? (
-                  <motion.div
-                    key="ai"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="space-y-4"
-                  >
+                {/* Content-Erstellung */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      Content erstellen
+                    </CardTitle>
+                    <CardDescription>
+                      Nutze KI oder schreibe manuell
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* AI Prompt */}
                     <div>
                       <Label>Was möchtest du posten?</Label>
-                      <Textarea
-                        value={aiPrompt}
-                        onChange={(e) => setAiPrompt(e.target.value)}
-                        placeholder="z.B. 'Neuer Balayage-Trend für den Sommer' oder 'Tipps für gesundes Haar'"
-                        className="min-h-[100px] mt-2"
-                      />
+                      <div className="flex gap-2 mt-2">
+                        <Textarea
+                          value={aiPrompt}
+                          onChange={(e) => setAiPrompt(e.target.value)}
+                          placeholder="z.B. 'Neuer Balayage-Trend' oder 'Tipps für gesundes Haar'"
+                          className="min-h-[80px]"
+                        />
+                      </div>
                     </div>
-
-                    <div className="grid sm:grid-cols-2 gap-4">
+                    
+                    {/* AI Options */}
+                    <div className="grid sm:grid-cols-3 gap-4">
                       <div>
                         <Label>Tonalität</Label>
                         <Select value={aiTone} onValueChange={setAiTone}>
-                          <SelectTrigger className="mt-2">
+                          <SelectTrigger className="mt-1">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -811,43 +707,47 @@ export default function CreatePostPage() {
                           </SelectContent>
                         </Select>
                       </div>
-
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label>Hashtags einschließen</Label>
-                          <Switch checked={includeHashtags} onCheckedChange={setIncludeHashtags} />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <Label>Emojis verwenden</Label>
-                          <Switch checked={includeEmojis} onCheckedChange={setIncludeEmojis} />
-                        </div>
+                      
+                      <div className="flex items-center gap-2 pt-6">
+                        <Switch checked={includeHashtags} onCheckedChange={setIncludeHashtags} />
+                        <Label className="text-sm">Hashtags</Label>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 pt-6">
+                        <Switch checked={includeEmojis} onCheckedChange={setIncludeEmojis} />
+                        <Label className="text-sm">Emojis</Label>
                       </div>
                     </div>
-
+                    
                     <Button
                       onClick={generateContent}
                       disabled={isGenerating || !aiPrompt.trim()}
-                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500"
                     >
                       {isGenerating ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       ) : (
                         <Wand2 className="h-4 w-4 mr-2" />
                       )}
-                      Content generieren
+                      Content mit KI generieren
                     </Button>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="manual"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="space-y-4"
-                  >
+                    
+                    {/* Trennlinie */}
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-card px-2 text-muted-foreground">
+                          oder manuell bearbeiten
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Manual Content */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <Label>Content</Label>
+                        <Label>Post-Text</Label>
                         <span className={cn(
                           'text-xs',
                           isOverLimit ? 'text-red-500' : 'text-muted-foreground'
@@ -860,101 +760,494 @@ export default function CreatePostPage() {
                         onChange={(e) => setContent(e.target.value)}
                         placeholder="Schreibe deinen Post..."
                         className={cn(
-                          'min-h-[200px]',
-                          isOverLimit && 'border-red-500 focus-visible:ring-red-500'
+                          'min-h-[150px]',
+                          isOverLimit && 'border-red-500'
                         )}
                       />
                     </div>
 
                     {/* AI Quick Actions */}
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => improveContent('improve')}
-                        disabled={isImproving || !content}
-                      >
-                        {isImproving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Sparkles className="h-3 w-3 mr-1" />}
-                        Verbessern
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => improveContent('shorten')}
-                        disabled={isImproving || !content}
-                      >
-                        Kürzen
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => improveContent('engaging')}
-                        disabled={isImproving || !content}
-                      >
-                        Mehr Engagement
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => improveContent('emoji')}
-                        disabled={isImproving || !content}
-                      >
-                        Emojis
+                    {content && (
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => improveContent('improve')}
+                          disabled={isImproving}
+                        >
+                          {isImproving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Sparkles className="h-3 w-3 mr-1" />}
+                          Verbessern
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => improveContent('shorten')}
+                          disabled={isImproving}
+                        >
+                          Kürzen
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => improveContent('engaging')}
+                          disabled={isImproving}
+                        >
+                          Mehr Engagement
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Hashtags */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Hash className="h-4 w-4" />
+                        Hashtags
+                      </CardTitle>
+                      <Button variant="ghost" size="sm" onClick={generateHashtags} disabled={!content}>
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        Generieren
                       </Button>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </CardContent>
-          </Card>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex gap-2">
+                      <Input
+                        value={hashtagInput}
+                        onChange={(e) => setHashtagInput(e.target.value)}
+                        placeholder="Hashtag hinzufügen..."
+                        onKeyDown={(e) => e.key === 'Enter' && addHashtag()}
+                      />
+                      <Button onClick={addHashtag} disabled={!hashtagInput.trim()}>
+                        Hinzufügen
+                      </Button>
+                    </div>
 
-          {/* Hashtags */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Hash className="h-4 w-4" />
-                  Hashtags
-                </CardTitle>
-                <Button variant="ghost" size="sm" onClick={generateHashtags} disabled={!content}>
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  Generieren
+                    {hashtags.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {hashtags.map((tag) => (
+                          <Badge key={tag} variant="secondary" className="gap-1">
+                            #{tag}
+                            <button onClick={() => removeHashtag(tag)} className="ml-1 hover:text-destructive">
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                {/* Weiter zu Step 2 */}
+                <Button
+                  onClick={() => setCurrentStep(2)}
+                  disabled={!canProceedToStep2}
+                  className="w-full"
+                  size="lg"
+                >
+                  Weiter zu Medien & Bilder
+                  <ChevronRight className="h-4 w-4 ml-2" />
                 </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex gap-2">
-                <Input
-                  value={hashtagInput}
-                  onChange={(e) => setHashtagInput(e.target.value)}
-                  placeholder="Hashtag hinzufügen..."
-                  onKeyDown={(e) => e.key === 'Enter' && addHashtag()}
-                />
-                <Button onClick={addHashtag} disabled={!hashtagInput.trim()}>
-                  Hinzufügen
-                </Button>
-              </div>
-
-              {hashtags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {hashtags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="gap-1">
-                      #{tag}
-                      <button onClick={() => removeHashtag(tag)} className="ml-1 hover:text-destructive">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
+              </motion.div>
+            )}
+            
+            {/* STEP 2: Medien */}
+            {currentStep === 2 && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="space-y-6"
+              >
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <ImageIcon className="h-4 w-4" />
+                          Medien hinzufügen
+                        </CardTitle>
+                        <CardDescription>
+                          Max. {maxImages} Bilder/Videos • KI-Bilder basieren auf deinem Text
+                        </CardDescription>
+                      </div>
+                      
+                      {/* AI Image Button */}
+                      <Dialog open={aiImageDialogOpen} onOpenChange={setAiImageDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500">
+                            <Wand2 className="h-4 w-4" />
+                            KI-Bild erstellen
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-lg">
+                          <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                              <Sparkles className="h-5 w-5 text-purple-500" />
+                              KI-Bild generieren
+                            </DialogTitle>
+                            <DialogDescription>
+                              {content.trim() 
+                                ? 'Basierend auf deinem Post-Text wird ein passendes Bild generiert.'
+                                : 'Beschreibe das gewünschte Bild oder gehe zurück und schreibe erst deinen Text.'}
+                            </DialogDescription>
+                          </DialogHeader>
+                          
+                          <div className="space-y-4 py-4">
+                            {/* Auto-Prompt Toggle */}
+                            <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
+                              <div className="flex items-center gap-2">
+                                <Info className="h-4 w-4 text-muted-foreground" />
+                                <Label className="text-sm">Bild aus Post-Text ableiten</Label>
+                              </div>
+                              <Switch 
+                                checked={useContentAsPrompt} 
+                                onCheckedChange={setUseContentAsPrompt}
+                                disabled={!content.trim()}
+                              />
+                            </div>
+                            
+                            {/* Post-Text Vorschau (wenn auto) */}
+                            {useContentAsPrompt && content.trim() && (
+                              <div className="p-3 rounded-lg border bg-muted/50">
+                                <Label className="text-xs text-muted-foreground">Dein Post-Text:</Label>
+                                <p className="text-sm mt-1 line-clamp-3">{content}</p>
+                              </div>
+                            )}
+                            
+                            {/* Manueller Prompt (wenn nicht auto) */}
+                            {!useContentAsPrompt && (
+                              <div>
+                                <Label>Bildbeschreibung</Label>
+                                <Textarea
+                                  value={aiImagePrompt}
+                                  onChange={(e) => setAiImagePrompt(e.target.value)}
+                                  placeholder="z.B. 'Eine elegante Balayage-Frisur in goldblonden Tönen, professionelles Salon-Setting'"
+                                  className="mt-2 min-h-[100px]"
+                                />
+                              </div>
+                            )}
+                            
+                            {/* Stil & Modell */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label>Stil</Label>
+                                <Select value={aiImageStyle} onValueChange={setAiImageStyle}>
+                                  <SelectTrigger className="mt-1">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {imageStyles.map(style => (
+                                      <SelectItem key={style.id} value={style.id}>
+                                        {style.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              
+                              <div>
+                                <Label>KI-Modell</Label>
+                                <Select value={aiImageModel} onValueChange={setAiImageModel}>
+                                  <SelectTrigger className="mt-1">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {imageModels.map(model => (
+                                      <SelectItem key={model.id} value={model.id}>
+                                        <div className="flex items-center gap-2">
+                                          {model.name}
+                                          {model.free && (
+                                            <Badge variant="secondary" className="text-xs">
+                                              Kostenlos
+                                            </Badge>
+                                          )}
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setAiImageDialogOpen(false)}>
+                              Abbrechen
+                            </Button>
+                            <Button
+                              onClick={generateAIImage}
+                              disabled={isGeneratingImage || (useContentAsPrompt ? !content.trim() : !aiImagePrompt.trim())}
+                              className="bg-gradient-to-r from-purple-500 to-pink-500"
+                            >
+                              {isGeneratingImage ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  Generiere...
+                                </>
+                              ) : (
+                                <>
+                                  <Wand2 className="h-4 w-4 mr-2" />
+                                  Bild generieren
+                                </>
+                              )}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {/* Upload Progress */}
+                    {isUploading && (
+                      <div className="mb-4">
+                        <Progress value={uploadProgress} className="h-2" />
+                        <p className="text-xs text-muted-foreground mt-1">Upload läuft...</p>
+                      </div>
+                    )}
+                    
+                    {/* Drop Zone */}
+                    <div
+                      onDrop={handleDrop}
+                      onDragOver={(e) => e.preventDefault()}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={cn(
+                        "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+                        "hover:border-primary hover:bg-primary/5",
+                        mediaItems.length >= maxImages && "opacity-50 pointer-events-none"
+                      )}
+                    >
+                      <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+                      <p className="text-sm font-medium">
+                        Bilder oder Videos hierher ziehen
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        oder klicken zum Auswählen • JPG, PNG, WebP, GIF, MP4
+                      </p>
+                    </div>
+                    
+                    {/* Media Grid */}
+                    {mediaItems.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
+                        {mediaItems.map((media, index) => (
+                          <div key={media.id} className="relative group aspect-square rounded-lg overflow-hidden bg-muted">
+                            {media.type === 'image' ? (
+                              <Image
+                                src={media.url}
+                                alt={`Media ${index + 1}`}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <Film className="h-8 w-8 text-muted-foreground" />
+                              </div>
+                            )}
+                            
+                            {/* Overlay Actions */}
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              {media.type === 'image' && (
+                                <Button
+                                  size="icon"
+                                  variant="secondary"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSelectedMediaForCrop(media)
+                                    setCropDialogOpen(true)
+                                  }}
+                                >
+                                  <Crop className="h-4 w-4" />
+                                </Button>
+                              )}
+                              <Button
+                                size="icon"
+                                variant="destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  removeMedia(media.id)
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            
+                            {/* Badges */}
+                            <div className="absolute top-2 left-2 flex gap-1">
+                              <Badge className="bg-black/70">{index + 1}</Badge>
+                              {media.isAiGenerated && (
+                                <Badge className="bg-purple-500/90">
+                                  <Sparkles className="h-3 w-3" />
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            {/* Cropped Indicator */}
+                            {media.croppedVersions && Object.keys(media.croppedVersions).length > 0 && (
+                              <Badge className="absolute top-2 right-2 bg-green-500/90">
+                                <Check className="h-3 w-3" />
+                              </Badge>
+                            )}
+                          </div>
+                        ))}
+                        
+                        {/* Add More Button */}
+                        {mediaItems.length < maxImages && (
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="aspect-square rounded-lg border-2 border-dashed flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-colors"
+                          >
+                            <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                {/* Navigation */}
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={() => setCurrentStep(1)} className="flex-1">
+                    Zurück zum Text
+                  </Button>
+                  <Button onClick={() => setCurrentStep(3)} className="flex-1">
+                    Weiter zur Planung
+                    <ChevronRight className="h-4 w-4 ml-2" />
+                  </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </motion.div>
+            )}
+            
+            {/* STEP 3: Scheduling */}
+            {currentStep === 3 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="space-y-6"
+              >
+                {/* Zusammenfassung */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Zusammenfassung</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid gap-3">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Plattformen</span>
+                        <div className="flex gap-1">
+                          {selectedPlatforms.map(p => {
+                            const platform = platforms.find(pl => pl.id === p)
+                            if (!platform) return null
+                            const Icon = platform.icon
+                            return (
+                              <Badge key={p} variant="secondary" className="gap-1">
+                                <Icon className="h-3 w-3" />
+                              </Badge>
+                            )
+                          })}
+                        </div>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Zeichen</span>
+                        <span className={isOverLimit ? 'text-red-500' : ''}>{characterCount} / {maxLength}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Medien</span>
+                        <span>{mediaItems.length} von {maxImages}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Hashtags</span>
+                        <span>{hashtags.length}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Zeitplanung */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Zeitplanung
+                      </CardTitle>
+                      <Switch checked={isScheduling} onCheckedChange={setIsScheduling} />
+                    </div>
+                    <CardDescription>
+                      {isScheduling ? 'Post wird zur gewählten Zeit veröffentlicht' : 'Post wird als Entwurf gespeichert'}
+                    </CardDescription>
+                  </CardHeader>
+                  {isScheduling && (
+                    <CardContent className="space-y-3">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start">
+                            <CalendarIcon className="h-4 w-4 mr-2" />
+                            {scheduledDate ? format(scheduledDate, 'PPP', { locale: de }) : 'Datum wählen'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={scheduledDate}
+                            onSelect={setScheduledDate}
+                            disabled={(date) => date < new Date()}
+                            locale={de}
+                          />
+                        </PopoverContent>
+                      </Popover>
+
+                      <Input
+                        type="time"
+                        value={scheduledTime}
+                        onChange={(e) => setScheduledTime(e.target.value)}
+                      />
+                    </CardContent>
+                  )}
+                </Card>
+                
+                {/* Aktionen */}
+                <div className="space-y-2">
+                  <Button
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                    size="lg"
+                    onClick={() => savePost(isScheduling ? 'SCHEDULED' : 'DRAFT')}
+                    disabled={isSaving || isOverLimit}
+                  >
+                    {isSaving ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : isScheduling ? (
+                      <Clock className="h-4 w-4 mr-2" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    {isScheduling ? 'Post planen' : 'Als Entwurf speichern'}
+                  </Button>
+                  
+                  <Button variant="outline" onClick={() => setCurrentStep(2)} className="w-full">
+                    Zurück zu Medien
+                  </Button>
+
+                  {isOverLimit && (
+                    <p className="text-xs text-red-500 flex items-center gap-1 justify-center">
+                      <AlertCircle className="h-3 w-3" />
+                      Text ist zu lang für ausgewählte Plattformen
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Sidebar */}
+        {/* Sidebar mit Vorschau */}
         <div className="space-y-6">
-          {/* Preview oder Mini-Preview */}
-          {showPreview && selectedPlatforms.length > 0 ? (
+          {showPreview && selectedPlatforms.length > 0 && (content || mediaItems.length > 0) ? (
             <PostPreview
               content={content}
               hashtags={hashtags}
@@ -964,114 +1257,29 @@ export default function CreatePostPage() {
           ) : (
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Schnell-Vorschau</CardTitle>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  Vorschau
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="rounded-lg border p-4 bg-muted/30">
-                  {mediaItems.length > 0 && (
-                    <div className="aspect-video relative rounded-lg overflow-hidden mb-3 bg-muted">
-                      <Image
-                        src={mediaItems[0].url}
-                        alt="Preview"
-                        fill
-                        className="object-cover"
-                      />
-                      {mediaItems.length > 1 && (
-                        <Badge className="absolute top-2 right-2 bg-black/70">
-                          +{mediaItems.length - 1}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-                  
-                  {content ? (
-                    <>
-                      <p className="text-sm whitespace-pre-wrap line-clamp-4">{content}</p>
-                      {hashtags.length > 0 && (
-                        <p className="text-sm text-blue-500 mt-2 line-clamp-2">
-                          {hashtags.map(h => `#${h}`).join(' ')}
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic">
-                      Dein Post erscheint hier...
-                    </p>
-                  )}
+                <div className="rounded-lg border p-6 bg-muted/30 text-center">
+                  <Eye className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Schreibe Text oder füge Medien hinzu, um eine Vorschau zu sehen
+                  </p>
                 </div>
-
-                <Button variant="outline" className="w-full mt-3" onClick={copyContent} disabled={!content}>
-                  {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
-                  {copied ? 'Kopiert!' : 'Kopieren'}
-                </Button>
               </CardContent>
             </Card>
           )}
-
-          {/* Zeitplanung */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Zeitplanung
-                </CardTitle>
-                <Switch checked={isScheduling} onCheckedChange={setIsScheduling} />
-              </div>
-            </CardHeader>
-            {isScheduling && (
-              <CardContent className="space-y-3">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start">
-                      <CalendarIcon className="h-4 w-4 mr-2" />
-                      {scheduledDate ? format(scheduledDate, 'PPP', { locale: de }) : 'Datum wählen'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={scheduledDate}
-                      onSelect={setScheduledDate}
-                      disabled={(date) => date < new Date()}
-                      locale={de}
-                    />
-                  </PopoverContent>
-                </Popover>
-
-                <Input
-                  type="time"
-                  value={scheduledTime}
-                  onChange={(e) => setScheduledTime(e.target.value)}
-                />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Aktionen */}
-          <div className="space-y-2">
-            <Button
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-              onClick={() => savePost(isScheduling ? 'SCHEDULED' : 'DRAFT')}
-              disabled={isSaving || !content || selectedPlatforms.length === 0}
-            >
-              {isSaving ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : isScheduling ? (
-                <Clock className="h-4 w-4 mr-2" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              {isScheduling ? 'Planen' : 'Als Entwurf speichern'}
+          
+          {/* Quick Copy */}
+          {content && (
+            <Button variant="outline" className="w-full" onClick={copyContent}>
+              {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+              {copied ? 'Kopiert!' : 'Text kopieren'}
             </Button>
-
-            {isOverLimit && (
-              <p className="text-xs text-red-500 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                Text ist zu lang für ausgewählte Plattformen
-              </p>
-            )}
-          </div>
+          )}
         </div>
       </div>
       
