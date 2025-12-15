@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { generateOpenRouterCompletion } from '@/lib/openrouter/client'
+import { chatCompletion } from '@/lib/openrouter/client'
 import { logAIUsage } from '@/lib/openrouter/usage-tracker'
 import { z } from 'zod'
 
@@ -86,7 +86,7 @@ Stil: ${style}
 
 Antworte NUR mit dem JSON-Array.`
 
-    const response = await generateOpenRouterCompletion({
+    const response = await chatCompletion({
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },

@@ -120,6 +120,9 @@ model User {
   credits               UserCredits?
   creditTransactions    CreditTransaction[]
 
+  // Pricelist System
+  priceLists            PriceList[]
+
   @@map("users")
 }
 
@@ -1577,6 +1580,13 @@ enum SecurityEventType {
   USER_CREATED
   USER_DELETED
   SUSPICIOUS_ACTIVITY
+  // Rate limiting events
+  LOGIN_ATTEMPT
+  PASSWORD_RESET_ATTEMPT
+  MAGIC_LINK_ATTEMPT
+  TWO_FACTOR_ATTEMPT
+  REGISTER_ATTEMPT
+  TWO_FACTOR_CHALLENGE
 }
 
 model SecurityLog {
@@ -3702,4 +3712,163 @@ model CreditPackage {
 
   @@index([isActive, sortOrder])
   @@map("credit_packages")
+}
+
+// ============================================
+// Pricelist System (Block-basiert)
+// ============================================
+
+enum PricingModel {
+  BY_HAIR_LENGTH
+  BY_GENDER
+}
+
+enum BlockType {
+  SECTION_HEADER
+  PRICE_ITEM
+  TEXT
+  DIVIDER
+  SPACER
+  IMAGE
+  INFO_BOX
+  // Layout Container
+  TWO_COLUMN
+  THREE_COLUMN
+  // Neue Blockelemente
+  BADGE
+  QUOTE
+  ICON_TEXT
+  CONTACT_INFO
+  SOCIAL_LINKS
+  QR_CODE
+  LOGO
+  FOOTER
+}
+
+enum PriceType {
+  FIXED
+  FROM
+  RANGE
+  SURCHARGE
+  TEXT
+}
+
+enum SpacerSize {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+model PriceList {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String       @map("user_id") @db.Uuid
+  name          String       @db.VarChar(100)
+  pricingModel  PricingModel @default(BY_HAIR_LENGTH) @map("pricing_model")
+  theme         String       @default("elegant") @db.VarChar(50)
+  fontFamily    String       @default("playfair") @map("font_family") @db.VarChar(50)
+  backgroundId  String?      @map("background_id") @db.Uuid
+  showLogo      Boolean      @default(false) @map("show_logo")
+  showContact   Boolean      @default(false) @map("show_contact")
+  columns       Int          @default(1)
+  isPublished   Boolean      @default(false) @map("is_published")
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blocks PriceBlock[]
+
+  @@index([userId])
+  @@map("price_lists")
+}
+
+model PriceBlock {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  priceListId String      @map("price_list_id") @db.Uuid
+  type        BlockType
+  sortOrder   Int         @default(0) @map("sort_order")
+  
+  // Für Container-Blöcke (TWO_COLUMN, THREE_COLUMN)
+  parentBlockId String?   @map("parent_block_id") @db.Uuid
+  columnIndex   Int?      @map("column_index") // 0, 1, 2 für Position in Spalte
+  
+  // Für SECTION_HEADER
+  title       String?     @db.VarChar(150)
+  subtitle    String?     @db.VarChar(255)
+  
+  // Für PRICE_ITEM
+  itemName    String?     @map("item_name") @db.VarChar(150)
+  description String?     @db.Text
+  priceType   PriceType?  @map("price_type")
+  price       Decimal?    @db.Decimal(10, 2)
+  priceMax    Decimal?    @map("price_max") @db.Decimal(10, 2)
+  priceText   String?     @map("price_text") @db.VarChar(50)
+  qualifier   String?     @db.VarChar(100)
+  
+  // Für TEXT / INFO_BOX / QUOTE
+  content     String?     @db.Text
+  
+  // Für IMAGE / LOGO
+  imageUrl    String?     @map("image_url") @db.Text
+  
+  // Für SPACER
+  spacerSize  SpacerSize? @map("spacer_size")
+  
+  // Für BADGE
+  badgeText   String?     @map("badge_text") @db.VarChar(50)
+  badgeStyle  String?     @map("badge_style") @db.VarChar(20) // filled, outline, gradient
+  badgeColor  String?     @map("badge_color") @db.VarChar(20)
+  
+  // Für ICON_TEXT
+  iconName    String?     @map("icon_name") @db.VarChar(50)
+  
+  // Für CONTACT_INFO
+  phone       String?     @db.VarChar(50)
+  email       String?     @db.VarChar(100)
+  address     String?     @db.Text
+  website     String?     @db.VarChar(255)
+  
+  // Für SOCIAL_LINKS (JSON Array)
+  socialLinks String?     @map("social_links") @db.Text
+  
+  // Für QR_CODE
+  qrCodeUrl   String?     @map("qr_code_url") @db.VarChar(500)
+  qrCodeLabel String?     @map("qr_code_label") @db.VarChar(100)
+  
+  // Für FOOTER
+  footerText  String?     @map("footer_text") @db.Text
+  
+  // Für Column Container (TWO_COLUMN, THREE_COLUMN)
+  columnWidths Json?      @map("column_widths") // Array von Prozent-Werten [50, 50] oder [33, 33, 34]
+  
+  // Gemeinsame Styling-Optionen für alle Blöcke
+  textAlign   String?     @map("text_align") @db.VarChar(10) // left, center, right
+  
+  // Gemeinsam
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  priceList    PriceList      @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+  variants     PriceVariant[]
+  parentBlock  PriceBlock?    @relation("BlockChildren", fields: [parentBlockId], references: [id], onDelete: Cascade)
+  childBlocks  PriceBlock[]   @relation("BlockChildren")
+
+  @@index([priceListId, sortOrder])
+  @@index([parentBlockId, columnIndex, sortOrder])
+  @@map("price_blocks")
+}
+
+model PriceVariant {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  blockId   String   @map("block_id") @db.Uuid
+  label     String   @db.VarChar(50) // "Kurz", "Mittel", "Lang" oder "Damen", "Herren"
+  price     Decimal  @db.Decimal(10, 2)
+  sortOrder Int      @default(0) @map("sort_order")
+
+  // Relations
+  block PriceBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  @@index([blockId, sortOrder])
+  @@map("price_variants")
 }

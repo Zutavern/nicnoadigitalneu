@@ -2,105 +2,81 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-// GET - Verfügbare Hintergründe für Stuhlmieter (mit Vererbungslogik)
+/**
+ * GET /api/pricelist/available-backgrounds
+ * Verfügbare Hintergründe für den User laden (Salon oder Admin)
+ */
 export async function GET() {
   try {
     const session = await auth()
-    
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    // Stuhlmieter oder Salon - beide können Preislisten erstellen
-    if (!['STYLIST', 'SALON_OWNER'].includes(session.user.role)) {
-      return NextResponse.json(
-        { error: 'Nicht autorisiert' },
-        { status: 401 }
-      )
-    }
+    // 1. Prüfen ob der User einem Salon zugeordnet ist (als Stylist)
+    const connection = await prisma.salonStylistConnection.findFirst({
+      where: {
+        stylistId: session.user.id,
+        isActive: true,
+      },
+      select: { salonId: true },
+    })
 
-    let salonBackgrounds: Array<{
-      id: string
-      url: string
-      filename: string
-      sortOrder: number
-      isActive: boolean
-      type: string
-      createdAt: Date
-    }> = []
+    let backgrounds = []
+    let source: 'salon' | 'admin' = 'admin'
 
-    // Wenn Stuhlmieter, versuche Salon zu finden
-    if (session.user.role === 'STYLIST') {
-      // Prüfe ob Stuhlmieter einem Salon zugeordnet ist
-      // Dafür müssten wir eine Beziehung StylistProfile -> Salon haben
-      // Für jetzt: Stuhlmieter sehen Admin-Hintergründe direkt
-      // In Zukunft: Workspace/Salon-Zuordnung berücksichtigen
-      
-      // TODO: Wenn Stuhlmieter-Salon-Beziehung existiert:
-      // const stylistProfile = await prisma.stylistProfile.findUnique({
-      //   where: { userId: session.user.id },
-      //   include: { workspace: { include: { salon: true } } }
-      // })
-      // 
-      // if (stylistProfile?.workspace?.salon) {
-      //   salonBackgrounds = await prisma.pricelistBackground.findMany({
-      //     where: { 
-      //       type: 'salon',
-      //       salonId: stylistProfile.workspace.salon.id,
-      //       isActive: true,
-      //     },
-      //     orderBy: [{ sortOrder: 'asc' }],
-      //   })
-      // }
-    }
-
-    // Wenn Salon, hole eigene aktive Hintergründe
-    if (session.user.role === 'SALON_OWNER') {
-      const salonProfile = await prisma.salonProfile.findUnique({
-        where: { userId: session.user.id },
+    if (connection?.salonId) {
+      // 2. Salon-eigene Hintergründe prüfen
+      const salonBackgrounds = await prisma.pricelistBackground.findMany({
+        where: {
+          salonId: connection.salonId,
+          isActive: true,
+        },
+        orderBy: { sortOrder: 'asc' },
+        select: {
+          id: true,
+          url: true,
+          filename: true,
+          sortOrder: true,
+          isActive: true,
+          type: true,
+          createdAt: true,
+        },
       })
 
-      if (salonProfile) {
-        salonBackgrounds = await prisma.pricelistBackground.findMany({
-          where: { 
-            type: 'salon',
-            salonId: salonProfile.id,
-            isActive: true,
-          },
-          orderBy: [{ sortOrder: 'asc' }],
-        })
+      if (salonBackgrounds.length > 0) {
+        backgrounds = salonBackgrounds
+        source = 'salon'
       }
     }
 
-    // Hat der Salon aktive eigene Hintergründe?
-    const usesSalonBackgrounds = salonBackgrounds.length > 0
+    // 3. Falls keine Salon-Hintergründe: Admin-Hintergründe (salonId = null)
+    if (backgrounds.length === 0) {
+      backgrounds = await prisma.pricelistBackground.findMany({
+        where: {
+          salonId: null,
+          isActive: true,
+        },
+        orderBy: { sortOrder: 'asc' },
+        select: {
+          id: true,
+          url: true,
+          filename: true,
+          sortOrder: true,
+          isActive: true,
+          type: true,
+          createdAt: true,
+        },
+      })
+      source = 'admin'
+    }
 
-    // Admin-Hintergründe als Fallback
-    const adminBackgrounds = await prisma.pricelistBackground.findMany({
-      where: { 
-        type: 'admin',
-        isActive: true,
-      },
-      orderBy: [{ sortOrder: 'asc' }],
-    })
-
-    // Bestimme welche Hintergründe verwendet werden
-    const backgrounds = usesSalonBackgrounds ? salonBackgrounds : adminBackgrounds
-
-    return NextResponse.json({
-      backgrounds,
-      source: usesSalonBackgrounds ? 'salon' : 'admin',
-      count: backgrounds.length,
-    })
+    return NextResponse.json({ backgrounds, source })
   } catch (error) {
-    console.error('Error fetching available pricelist backgrounds:', error)
+    console.error('Error fetching backgrounds:', error)
     return NextResponse.json(
       { error: 'Fehler beim Laden der Hintergründe' },
       { status: 500 }
     )
   }
 }
-

@@ -1,66 +1,90 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import {
   Loader2,
-  FileImage,
+  Plus,
   LayoutTemplate,
   RefreshCw,
-  CheckCircle2,
-  Building2,
-  Sparkles,
-  Download,
+  MoreVertical,
+  Pencil,
+  Trash2,
   Eye,
-  Wand2,
+  FileDown,
+  Clock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-interface PricelistBackground {
-  id: string
-  url: string
-  filename: string
-  sortOrder: number
-  isActive: boolean
-  type: string
-  createdAt: string
-}
+import { formatDistanceToNow } from 'date-fns'
+import { de } from 'date-fns/locale'
+import type { PriceListClient } from '@/lib/pricelist/types'
+import { PRICING_MODEL_CONFIGS } from '@/lib/pricelist/types'
+import { PriceListPreview } from '@/components/pricelist'
 
 export default function StylistPricelistPage() {
-  const [backgrounds, setBackgrounds] = useState<PricelistBackground[]>([])
-  const [source, setSource] = useState<'admin' | 'salon'>('admin')
-  const [selectedBackground, setSelectedBackground] = useState<PricelistBackground | null>(null)
+  const [priceLists, setPriceLists] = useState<PriceListClient[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  // Daten laden
-  const fetchBackgrounds = useCallback(async () => {
+  const fetchPriceLists = useCallback(async () => {
     try {
-      const res = await fetch('/api/pricelist/available-backgrounds')
+      const res = await fetch('/api/pricelist')
       if (!res.ok) throw new Error('Fehler beim Laden')
       const data = await res.json()
-      setBackgrounds(data.backgrounds)
-      setSource(data.source)
-      
-      // Ersten Hintergrund automatisch auswählen
-      if (data.backgrounds.length > 0 && !selectedBackground) {
-        setSelectedBackground(data.backgrounds[0])
-      }
+      setPriceLists(data.priceLists)
     } catch (error) {
       console.error('Error:', error)
-      toast.error('Fehler beim Laden der Hintergründe')
+      toast.error('Fehler beim Laden der Preislisten')
     } finally {
       setIsLoading(false)
     }
-  }, [selectedBackground])
+  }, [])
 
   useEffect(() => {
-    fetchBackgrounds()
-  }, [fetchBackgrounds])
+    fetchPriceLists()
+  }, [fetchPriceLists])
+
+  const handleDelete = async () => {
+    if (!deleteId) return
+    
+    setIsDeleting(true)
+    try {
+      const res = await fetch(`/api/pricelist/${deleteId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Fehler beim Löschen')
+      
+      setPriceLists(prev => prev.filter(p => p.id !== deleteId))
+      toast.success('Preisliste gelöscht')
+    } catch (error) {
+      console.error('Error:', error)
+      toast.error('Fehler beim Löschen')
+    } finally {
+      setIsDeleting(false)
+      setDeleteId(null)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -80,206 +104,178 @@ export default function StylistPricelistPage() {
             Preislisten
           </h1>
           <p className="text-muted-foreground">
-            Erstelle professionelle Preislisten mit schönen Hintergründen
+            Erstelle und verwalte professionelle Preislisten
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchBackgrounds}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Aktualisieren
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={fetchPriceLists}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Aktualisieren
+          </Button>
+          <Link href="/stylist/pricelist/create">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Neue Preisliste
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      {/* Quelle Info */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3">
-            {source === 'salon' ? (
-              <>
-                <div className="p-2 rounded-lg bg-emerald-500/10">
-                  <Building2 className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="font-medium">Salon-Hintergründe</p>
-                  <p className="text-sm text-muted-foreground">
-                    Dein Salon stellt {backgrounds.length} eigene Hintergründe bereit
-                  </p>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">Plattform-Hintergründe</p>
-                  <p className="text-sm text-muted-foreground">
-                    {backgrounds.length} professionelle Vorlagen verfügbar
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {backgrounds.length === 0 ? (
+      {/* Liste */}
+      {priceLists.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center">
-            <FileImage className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-            <p className="text-lg font-medium mb-2">Keine Hintergründe verfügbar</p>
-            <p className="text-muted-foreground">
-              Es sind aktuell keine Preislisten-Hintergründe verfügbar.
+            <LayoutTemplate className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+            <p className="text-lg font-medium mb-2">Keine Preislisten vorhanden</p>
+            <p className="text-muted-foreground mb-6">
+              Erstelle deine erste Preisliste mit unserem Block-Editor
             </p>
+            <Link href="/stylist/pricelist/create">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Preisliste erstellen
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid lg:grid-cols-[1fr_400px] gap-6">
-          {/* Hintergrund-Auswahl */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Hintergrund wählen</CardTitle>
-              <CardDescription>
-                Wähle einen Hintergrund für deine Preisliste
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <AnimatePresence mode="popLayout">
-                  {backgrounds.map((bg, index) => (
-                    <motion.div
-                      key={bg.id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{ delay: index * 0.05 }}
-                      layout
-                    >
-                      <Card 
-                        className={cn(
-                          'cursor-pointer overflow-hidden transition-all hover:shadow-lg',
-                          selectedBackground?.id === bg.id && 'ring-2 ring-primary ring-offset-2'
-                        )}
-                        onClick={() => setSelectedBackground(bg)}
-                      >
-                        <div className="relative aspect-[210/297] bg-muted">
-                          <img
-                            src={bg.url}
-                            alt={bg.filename}
-                            className="absolute inset-0 w-full h-full object-cover"
-                          />
-                          
-                          {selectedBackground?.id === bg.id && (
-                            <div className="absolute top-2 right-2">
-                              <div className="p-1 rounded-full bg-primary text-primary-foreground shadow-lg">
-                                <CheckCircle2 className="h-4 w-4" />
-                              </div>
-                            </div>
-                          )}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <AnimatePresence mode="popLayout">
+            {priceLists.map((priceList, index) => {
+              const modelConfig = PRICING_MODEL_CONFIGS[priceList.pricingModel]
+              return (
+                <motion.div
+                  key={priceList.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: index * 0.05 }}
+                  layout
+                >
+                  <Card className="group hover:shadow-lg transition-all">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-lg truncate">
+                            {priceList.name}
+                          </CardTitle>
+                          <CardDescription className="flex items-center gap-2 mt-1">
+                            <Badge variant="secondary" className="text-xs">
+                              {modelConfig.label}
+                            </Badge>
+                            {priceList.isPublished && (
+                              <Badge className="text-xs bg-green-500">
+                                Veröffentlicht
+                              </Badge>
+                            )}
+                          </CardDescription>
                         </div>
-                        <CardContent className="p-2">
-                          <p className="text-xs font-medium truncate text-center">
-                            {bg.filename}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Vorschau & Aktionen */}
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  Vorschau
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {selectedBackground ? (
-                  <div className="relative">
-                    {/* A4 Vorschau mit Schatten */}
-                    <div className="relative aspect-[210/297] bg-white rounded-lg overflow-hidden shadow-2xl border">
-                      <img
-                        src={selectedBackground.url}
-                        alt={selectedBackground.filename}
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-                      
-                      {/* Platzhalter für zukünftige Text-Overlays */}
-                      <div className="absolute inset-0 flex flex-col items-center justify-start pt-8 pointer-events-none">
-                        <div className="bg-white/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow-sm">
-                          <p className="text-xs text-muted-foreground font-medium">
-                            Preisliste
-                          </p>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <Link href={`/stylist/pricelist/${priceList.id}/edit`}>
+                              <DropdownMenuItem>
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Bearbeiten
+                              </DropdownMenuItem>
+                            </Link>
+                            <DropdownMenuItem disabled>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Vorschau
+                            </DropdownMenuItem>
+                            <DropdownMenuItem disabled>
+                              <FileDown className="h-4 w-4 mr-2" />
+                              PDF exportieren
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setDeleteId(priceList.id)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Löschen
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                    </div>
-
-                    {/* Info */}
-                    <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-                      <span>Format: A4 Hochformat</span>
-                      <Badge variant="outline">
-                        {selectedBackground.filename}
-                      </Badge>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="aspect-[210/297] bg-muted rounded-lg flex items-center justify-center">
-                    <p className="text-muted-foreground">Hintergrund auswählen</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Aktionen */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wand2 className="h-5 w-5" />
-                  Preisliste erstellen
-                </CardTitle>
-                <CardDescription>
-                  Weitere Funktionen kommen bald
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button className="w-full" disabled={!selectedBackground}>
-                  <Wand2 className="h-4 w-4 mr-2" />
-                  Preisliste bearbeiten
-                  <Badge variant="secondary" className="ml-2">Bald</Badge>
-                </Button>
-                <Button variant="outline" className="w-full" disabled={!selectedBackground}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Als PDF herunterladen
-                  <Badge variant="secondary" className="ml-2">Bald</Badge>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Coming Soon Hinweis */}
-            <Card className="bg-muted/50 border-dashed">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Wand2 className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">Demnächst verfügbar</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Text-Overlays, Preisgestaltung und PDF-Export werden bald freigeschaltet.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      {/* Vorschau mit schönem Container */}
+                      <Link href={`/stylist/pricelist/${priceList.id}/edit`}>
+                        <div className="group/preview relative bg-muted/50 rounded-xl p-4 mb-3 cursor-pointer transition-all hover:shadow-lg hover:bg-muted/70">
+                          {/* Preview Container mit Schatten */}
+                          <div className="relative flex justify-center">
+                            <div 
+                              className="transition-transform group-hover/preview:scale-[1.02]"
+                              style={{
+                                filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.12)) drop-shadow(0 3px 8px rgba(0,0,0,0.08))',
+                              }}
+                            >
+                              <PriceListPreview
+                                priceList={priceList}
+                                blocks={priceList.blocks || []}
+                                scale={0.22}
+                              />
+                            </div>
+                          </div>
+                          
+                          {/* Hover Overlay */}
+                          <div className="absolute inset-0 rounded-xl flex items-center justify-center opacity-0 group-hover/preview:opacity-100 transition-opacity">
+                            <div className="bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
+                              <Pencil className="h-3.5 w-3.5 inline mr-1.5" />
+                              Bearbeiten
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                      
+                      {/* Meta */}
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {formatDistanceToNow(new Date(priceList.updatedAt), {
+                            addSuffix: true,
+                            locale: de,
+                          })}
+                        </span>
+                        <span>{priceList.blocks?.length || 0} Blöcke</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )
+            })}
+          </AnimatePresence>
         </div>
       )}
+
+      {/* Delete Dialog */}
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Preisliste löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Diese Aktion kann nicht rückgängig gemacht werden. Die Preisliste und alle
+              Inhalte werden permanent gelöscht.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+            >
+              {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
-
