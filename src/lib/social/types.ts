@@ -51,6 +51,8 @@ export interface PostContent {
 
 export interface PostResult {
   success: boolean
+  postId?: string
+  postUrl?: string
   platformPostId?: string
   error?: string
   postedAt?: Date
@@ -62,14 +64,17 @@ export interface SocialProvider {
   
   // OAuth
   generateAuthUrl(params: AuthUrlParams): string
-  exchangeCodeForTokens(code: string, redirectUri: string): Promise<OAuthTokens>
+  exchangeCodeForTokens(code: string, redirectUri: string, codeVerifier?: string): Promise<OAuthTokens>
   refreshAccessToken(refreshToken: string): Promise<OAuthTokens>
+  
+  // PKCE Support (für Twitter, TikTok)
+  getCodeVerifier?(state: string): string | undefined
   
   // Account Info
   getAccountInfo(accessToken: string): Promise<SocialAccount>
   
   // Posting
-  createPost(accessToken: string, accountId: string, content: PostContent): Promise<PostResult>
+  publishPost(accessToken: string, accountId: string, content: PostContent): Promise<PostResult>
   
   // Analytics (optional)
   getPostAnalytics?(accessToken: string, postId: string): Promise<Record<string, number>>

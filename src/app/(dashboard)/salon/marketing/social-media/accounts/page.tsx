@@ -92,32 +92,36 @@ const platformConfig: Record<string, PlatformConfig> = {
     icon: Linkedin,
     color: 'text-blue-700',
     gradient: 'from-blue-700 to-blue-600',
-    oauthEnabled: false, // Coming soon
+    oauthEnabled: true,
     description: 'Professionelles Networking',
+    setupUrl: 'https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow',
   },
   TWITTER: {
     name: 'X/Twitter',
     icon: Twitter,
     color: 'text-gray-900',
     gradient: 'from-gray-800 to-black',
-    oauthEnabled: false, // Coming soon
+    oauthEnabled: true,
     description: 'Kurze Updates & Trends',
+    setupUrl: 'https://developer.twitter.com/en/docs/authentication/oauth-2-0',
   },
   TIKTOK: {
     name: 'TikTok',
     icon: Share2,
     color: 'text-pink-500',
     gradient: 'from-pink-500 to-cyan-400',
-    oauthEnabled: false, // Coming soon
+    oauthEnabled: true,
     description: 'Virale Kurzvideos',
+    setupUrl: 'https://developers.tiktok.com/doc/login-kit-web',
   },
   YOUTUBE: {
     name: 'YouTube',
     icon: Youtube,
     color: 'text-red-600',
     gradient: 'from-red-600 to-red-500',
-    oauthEnabled: false, // Coming soon
+    oauthEnabled: false, // Benötigt Google API Setup
     description: 'Video-Content',
+    setupUrl: 'https://developers.google.com/youtube/v3/getting-started',
   },
 }
 

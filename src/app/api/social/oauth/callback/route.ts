@@ -9,20 +9,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { decryptToken, encryptToken } from '@/lib/social/crypto'
-import { instagramProvider } from '@/lib/social/providers/instagram'
-import { facebookProvider } from '@/lib/social/providers/facebook'
-import type { SocialProvider, SocialPlatform } from '@/lib/social/types'
+import { SOCIAL_PROVIDERS } from '@/lib/social'
+import type { SocialPlatform } from '@/lib/social/types'
 import { cookies } from 'next/headers'
-
-const PROVIDERS: Record<string, SocialProvider> = {
-  instagram: instagramProvider,
-  facebook: facebookProvider,
-}
-
-const PLATFORM_MAP: Record<string, SocialPlatform> = {
-  instagram: 'INSTAGRAM',
-  facebook: 'FACEBOOK',
-}
 
 export async function GET(request: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -80,15 +69,21 @@ export async function GET(request: NextRequest) {
     }
     
     const platform = stateData.platform
-    const provider = PROVIDERS[platform]
+    const provider = SOCIAL_PROVIDERS[platform]
     
     if (!provider) {
       return NextResponse.redirect(`${errorUrl}invalid_platform`)
     }
     
+    // Code Verifier holen falls PKCE verwendet wird (Twitter, TikTok)
+    let codeVerifier: string | undefined
+    if (provider.getCodeVerifier) {
+      codeVerifier = provider.getCodeVerifier(state)
+    }
+    
     // Token holen
     const redirectUri = `${baseUrl}/api/social/oauth/callback`
-    const tokens = await provider.exchangeCodeForTokens(code, redirectUri)
+    const tokens = await provider.exchangeCodeForTokens(code, redirectUri, codeVerifier)
     
     // Account-Info holen
     const accountInfo = await provider.getAccountInfo(tokens.accessToken)
@@ -99,9 +94,10 @@ export async function GET(request: NextRequest) {
       ? encryptToken(tokens.refreshToken) 
       : null
     
-    // Account in DB speichern/aktualisieren
-    const platformEnum = PLATFORM_MAP[platform]
+    // Platform als Enum casten
+    const platformEnum = platform as SocialPlatform
     
+    // Account in DB speichern/aktualisieren
     await prisma.socialMediaAccount.upsert({
       where: {
         userId_platform_platformAccountId: {
@@ -148,11 +144,10 @@ export async function GET(request: NextRequest) {
     cookieStore.delete('oauth_state')
     
     // Erfolg - zur Accounts-Seite weiterleiten
-    return NextResponse.redirect(`${successUrl}&platform=${platform}`)
+    return NextResponse.redirect(`${successUrl}&platform=${platform.toLowerCase()}`)
   } catch (error) {
     console.error('[OAuth Callback] Error:', error)
     const errorMessage = error instanceof Error ? error.message : 'unknown_error'
     return NextResponse.redirect(`${errorUrl}${encodeURIComponent(errorMessage)}`)
   }
 }
-

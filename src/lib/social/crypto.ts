@@ -90,3 +90,28 @@ export function isTokenExpired(expiresAt: Date | null | undefined): boolean {
   return expiresAt <= new Date()
 }
 
+/**
+ * PKCE: Generiert einen Code Verifier für OAuth 2.0 PKCE Flow
+ * RFC 7636 konform: 43-128 Zeichen, URL-safe
+ */
+export function generateCodeVerifier(): string {
+  return randomBytes(32)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '')
+}
+
+/**
+ * PKCE: Generiert den Code Challenge aus dem Verifier (S256 Methode)
+ */
+export function generateCodeChallenge(verifier: string): string {
+  const { createHash } = require('crypto')
+  return createHash('sha256')
+    .update(verifier)
+    .digest('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '')
+}
+

@@ -97,6 +97,7 @@
     "react-image-crop": "^11.0.10",
     "recharts": "^3.5.1",
     "resend": "^6.5.2",
+    "sharp": "^0.34.5",
     "sonner": "^2.0.1",
     "stripe": "^20.0.0",
     "svix": "^1.82.0",

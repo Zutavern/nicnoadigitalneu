@@ -7,16 +7,9 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { generateOAuthState, encryptToken } from '@/lib/social/crypto'
-import { instagramProvider } from '@/lib/social/providers/instagram'
-import { facebookProvider } from '@/lib/social/providers/facebook'
-import type { SocialProvider } from '@/lib/social/types'
+import { encryptToken } from '@/lib/social/crypto'
+import { SOCIAL_PROVIDERS } from '@/lib/social'
 import { cookies } from 'next/headers'
-
-const PROVIDERS: Record<string, SocialProvider> = {
-  instagram: instagramProvider,
-  facebook: facebookProvider,
-}
 
 export async function GET(
   request: NextRequest,
@@ -30,11 +23,12 @@ export async function GET(
     }
     
     const { platform } = await params
-    const provider = PROVIDERS[platform.toLowerCase()]
+    const platformKey = platform.toUpperCase()
+    const provider = SOCIAL_PROVIDERS[platformKey]
     
     if (!provider) {
       return NextResponse.json(
-        { error: `Plattform "${platform}" wird nicht unterstützt` },
+        { error: `Plattform "${platform}" wird nicht unterstützt. Verfügbar: ${Object.keys(SOCIAL_PROVIDERS).join(', ')}` },
         { status: 400 }
       )
     }
@@ -42,7 +36,7 @@ export async function GET(
     // State generieren (enthält User-ID und Platform für Callback)
     const stateData = {
       userId: session.user.id,
-      platform: platform.toLowerCase(),
+      platform: platformKey,
       timestamp: Date.now(),
     }
     
@@ -78,4 +72,3 @@ export async function GET(
     )
   }
 }
-

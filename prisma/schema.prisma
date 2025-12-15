@@ -3416,6 +3416,7 @@ model SocialMediaPost {
   content         String           @db.Text
   mediaUrls       String[]         @default([]) @map("media_urls")
   mediaTypes      String[]         @default([]) @map("media_types")  // image, video, carousel
+  croppedMedia    Json?            @map("cropped_media")  // { platform: { format: url } }
   
   // Hashtags & Mentions
   hashtags        String[]         @default([])
