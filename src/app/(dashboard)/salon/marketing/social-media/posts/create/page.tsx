@@ -101,11 +101,11 @@ const imageStyles = [
   { id: 'artistic', name: 'Künstlerisch', description: 'Kreative Interpretation' },
 ]
 
-// AI-Bild-Modelle (nur Gemini - funktioniert zuverlässig für Bildgenerierung)
+// AI-Bild-Modelle (basierend auf OpenRouter Dokumentation)
 const imageModels = [
-  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: 'Schnell & kostenlos (kann Rate Limits haben)', free: true },
-  { id: 'gemini-2.0-flash-thinking', name: 'Gemini 2.0 Thinking', description: 'Alternative kostenlose Version', free: true },
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Beste Qualität, zuverlässiger', free: false },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Beste Qualität, zuverlässig', free: false },
+  { id: 'flux-2-pro', name: 'Flux 2 Pro', description: 'Hochwertige Bildgenerierung', free: false },
+  { id: 'flux-2-flex', name: 'Flux 2 Flex', description: 'Flexible Bildgenerierung', free: false },
 ]
 
 interface MediaItem {
@@ -152,7 +152,7 @@ export default function CreatePostPage() {
   // AI Image State - verbessert
   const [aiImagePrompt, setAiImagePrompt] = useState('')
   const [aiImageStyle, setAiImageStyle] = useState('vivid')
-  const [aiImageModel, setAiImageModel] = useState('gemini-2.0-flash')
+  const [aiImageModel, setAiImageModel] = useState('gemini-2.5-flash')
   const [useContentAsPrompt, setUseContentAsPrompt] = useState(true)
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const [aiImageDialogOpen, setAiImageDialogOpen] = useState(false)

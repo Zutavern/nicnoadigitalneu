@@ -67,39 +67,42 @@ const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
 /**
  * Verfügbare Bildgenerierungs-Modelle
  * 
- * Nur Modelle die tatsächlich Bildgenerierung über modalities: ["image", "text"] unterstützen
- * Gemini-Modelle sind die zuverlässigsten für Bildgenerierung über OpenRouter
+ * Basierend auf OpenRouter Dokumentation:
+ * https://openrouter.ai/docs/features/multimodal/image-generation
+ * 
+ * Modelle mit output_modalities: ["image", "text"]
  */
 const IMAGE_MODELS = {
-  // Google Gemini Modelle - funktionieren zuverlässig für Bildgenerierung
-  'gemini-2.0-flash': {
-    id: 'google/gemini-2.0-flash-exp:free',
-    name: 'Gemini 2.0 Flash (Kostenlos)',
-    description: 'Schnell & kostenlos - kann bei hoher Nutzung Rate Limits haben',
-    free: true,
-    supportsAspectRatio: true,
-  },
+  // Google Gemini - offiziell unterstützt für Bildgenerierung
   'gemini-2.5-flash': {
-    id: 'google/gemini-2.5-flash-preview-05-20',
-    name: 'Gemini 2.5 Flash',
-    description: 'Neueste Version, beste Qualität, zuverlässiger',
+    id: 'google/gemini-2.5-flash-image-preview',
+    name: 'Gemini 2.5 Flash Image',
+    description: 'Offizielle Bildgenerierung, beste Qualität',
     free: false,
     supportsAspectRatio: true,
   },
-  'gemini-2.0-flash-thinking': {
-    id: 'google/gemini-2.0-flash-thinking-exp:free',
-    name: 'Gemini 2.0 Thinking (Kostenlos)',
-    description: 'Alternative kostenlose Version',
-    free: true,
-    supportsAspectRatio: true,
+  // Flux 2 Modelle - ebenfalls offiziell unterstützt
+  'flux-2-pro': {
+    id: 'black-forest-labs/flux.2-pro',
+    name: 'Flux 2 Pro',
+    description: 'Hochwertige Bildgenerierung',
+    free: false,
+    supportsAspectRatio: false,
+  },
+  'flux-2-flex': {
+    id: 'black-forest-labs/flux.2-flex',
+    name: 'Flux 2 Flex',
+    description: 'Flexible Bildgenerierung',
+    free: false,
+    supportsAspectRatio: false,
   },
 } as const
 
-// Fallback-Reihenfolge bei Rate Limits
+// Fallback-Reihenfolge bei Fehlern
 const MODEL_FALLBACK_ORDER = [
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-thinking',
   'gemini-2.5-flash',
+  'flux-2-pro',
+  'flux-2-flex',
 ]
 
 type ModelKey = keyof typeof IMAGE_MODELS
