@@ -110,6 +110,12 @@ model User {
   facebook          String?   @db.VarChar(100)
   tiktok            String?   @db.VarChar(100)
 
+  // Social Media Management
+  socialMediaAccounts   SocialMediaAccount[]
+  socialMediaPosts      SocialMediaPost[]
+  contentTemplates      ContentTemplate[]
+  hashtagCollections    HashtagCollection[]
+
   @@map("users")
 }
 
@@ -3333,4 +3339,235 @@ model PricelistBackground {
   @@index([type, isActive])
   @@index([salonId, isActive])
   @@map("pricelist_backgrounds")
+}
+
+// ============================================
+// Social Media Management
+// ============================================
+
+enum SocialPlatform {
+  INSTAGRAM
+  FACEBOOK
+  LINKEDIN
+  TIKTOK
+  PINTEREST
+  TWITTER
+  YOUTUBE
+  THREADS
+}
+
+enum SocialPostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+  CANCELLED
+}
+
+// Verbundene Social Media Accounts (OAuth)
+model SocialMediaAccount {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String         @map("user_id") @db.Uuid
+  platform        SocialPlatform
+  
+  // Plattform-spezifische Daten
+  platformAccountId   String     @map("platform_account_id") @db.VarChar(255)
+  accountName         String     @map("account_name") @db.VarChar(255)
+  accountHandle       String?    @map("account_handle") @db.VarChar(100)  // @username
+  profileImageUrl     String?    @map("profile_image_url") @db.VarChar(500)
+  
+  // OAuth Tokens (verschlüsselt speichern!)
+  accessToken         String     @map("access_token") @db.Text
+  refreshToken        String?    @map("refresh_token") @db.Text
+  tokenExpiresAt      DateTime?  @map("token_expires_at") @db.Timestamptz
+  tokenScope          String?    @map("token_scope") @db.VarChar(500)
+  
+  // Account-Metriken (gecached)
+  followersCount      Int?       @map("followers_count")
+  followingCount      Int?       @map("following_count")
+  postsCount          Int?       @map("posts_count")
+  metricsUpdatedAt    DateTime?  @map("metrics_updated_at") @db.Timestamptz
+  
+  // Status
+  isActive            Boolean    @default(true) @map("is_active")
+  lastSyncAt          DateTime?  @map("last_sync_at") @db.Timestamptz
+  lastError           String?    @map("last_error") @db.Text
+  
+  createdAt           DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  user                User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postAccounts        SocialMediaPostAccount[]
+
+  @@unique([userId, platform, platformAccountId])
+  @@index([userId, platform])
+  @@index([isActive])
+  @@map("social_media_accounts")
+}
+
+// Social Media Posts (geplant oder veröffentlicht)
+model SocialMediaPost {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String           @map("user_id") @db.Uuid
+  
+  // Content
+  content         String           @db.Text
+  mediaUrls       String[]         @default([]) @map("media_urls")
+  mediaTypes      String[]         @default([]) @map("media_types")  // image, video, carousel
+  
+  // Hashtags & Mentions
+  hashtags        String[]         @default([])
+  mentions        String[]         @default([])
+  
+  // Link Preview (optional)
+  linkUrl         String?          @map("link_url") @db.VarChar(500)
+  linkTitle       String?          @map("link_title") @db.VarChar(255)
+  linkDescription String?          @map("link_description") @db.Text
+  linkImageUrl    String?          @map("link_image_url") @db.VarChar(500)
+  
+  // Scheduling
+  status          SocialPostStatus @default(DRAFT)
+  scheduledFor    DateTime?        @map("scheduled_for") @db.Timestamptz
+  publishedAt     DateTime?        @map("published_at") @db.Timestamptz
+  
+  // Platform-spezifische Einstellungen
+  platforms       SocialPlatform[] @default([])
+  platformSettings Json?           @map("platform_settings")  // z.B. Instagram: first_comment
+  
+  // AI Generation Info
+  aiGenerated     Boolean          @default(false) @map("ai_generated")
+  aiPrompt        String?          @map("ai_prompt") @db.Text
+  aiModel         String?          @map("ai_model") @db.VarChar(100)
+  
+  // Analytics (nach Veröffentlichung, per Platform aggregiert)
+  totalLikes      Int?             @map("total_likes")
+  totalComments   Int?             @map("total_comments")
+  totalShares     Int?             @map("total_shares")
+  totalImpressions Int?            @map("total_impressions")
+  totalReach      Int?             @map("total_reach")
+  engagementRate  Float?           @map("engagement_rate")
+  analyticsUpdatedAt DateTime?     @map("analytics_updated_at") @db.Timestamptz
+  
+  // Error Handling
+  lastError       String?          @map("last_error") @db.Text
+  retryCount      Int              @default(0) @map("retry_count")
+  
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postAccounts    SocialMediaPostAccount[]
+
+  @@index([userId, status])
+  @@index([scheduledFor])
+  @@index([status, scheduledFor])
+  @@index([createdAt])
+  @@map("social_media_posts")
+}
+
+// Verknüpfung Post <-> Account (für Multi-Platform Publishing)
+model SocialMediaPostAccount {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  postId          String           @map("post_id") @db.Uuid
+  accountId       String           @map("account_id") @db.Uuid
+  
+  // Plattform-spezifischer Status
+  status          SocialPostStatus @default(DRAFT)
+  publishedAt     DateTime?        @map("published_at") @db.Timestamptz
+  platformPostId  String?          @map("platform_post_id") @db.VarChar(255)  // ID auf der Plattform
+  platformPostUrl String?          @map("platform_post_url") @db.VarChar(500)
+  
+  // Plattform-spezifische Analytics
+  likes           Int?
+  comments        Int?
+  shares          Int?
+  impressions     Int?
+  reach           Int?
+  saves           Int?  // Instagram
+  clicks          Int?
+  videoViews      Int?             @map("video_views")
+  
+  // Error Handling
+  lastError       String?          @map("last_error") @db.Text
+  
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  post            SocialMediaPost     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  account         SocialMediaAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, accountId])
+  @@index([postId])
+  @@index([accountId])
+  @@index([status])
+  @@map("social_media_post_accounts")
+}
+
+// Content-Vorlagen für wiederkehrende Posts
+model ContentTemplate {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  
+  name        String   @db.VarChar(100)
+  description String?  @db.VarChar(500)
+  content     String   @db.Text
+  
+  // Vorlagen-Kategorisierung
+  category    String?  @db.VarChar(50)  // z.B. "Angebot", "Event", "Tipp"
+  
+  // Vordefinierte Elemente
+  hashtags    String[] @default([])
+  mediaUrls   String[] @default([]) @map("media_urls")
+  
+  // Plattform-Empfehlungen
+  recommendedPlatforms SocialPlatform[] @default([]) @map("recommended_platforms")
+  
+  // Global = für alle Nutzer sichtbar (Admin-erstellt)
+  isGlobal    Boolean  @default(false) @map("is_global")
+  
+  // Nutzungs-Stats
+  usageCount  Int      @default(0) @map("usage_count")
+  
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, category])
+  @@index([isGlobal])
+  @@map("content_templates")
+}
+
+// Hashtag-Sammlungen für schnelles Einfügen
+model HashtagCollection {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  
+  name        String   @db.VarChar(100)
+  description String?  @db.VarChar(500)
+  hashtags    String[] @default([])
+  
+  // Kategorisierung
+  category    String?  @db.VarChar(50)  // z.B. "Friseur", "Beauty", "Lokal"
+  
+  // Global = für alle Nutzer sichtbar
+  isGlobal    Boolean  @default(false) @map("is_global")
+  
+  // Nutzungs-Stats
+  usageCount  Int      @default(0) @map("usage_count")
+  
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, category])
+  @@index([isGlobal])
+  @@map("hashtag_collections")
 }
