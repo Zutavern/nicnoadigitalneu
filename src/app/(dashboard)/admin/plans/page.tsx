@@ -26,9 +26,12 @@ import {
   Settings2,
   Users,
   Bot,
-  Gift
+  Gift,
+  Eye,
+  ExternalLink,
 } from 'lucide-react'
 import { PriceCalculator } from '@/components/admin/price-calculator'
+import { PlanPreviewCard, type Plan } from '@/components/admin/plan-preview'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -157,6 +160,10 @@ export default function PlansPage() {
   const [activeTab, setActiveTab] = useState<'stylist' | 'salon'>('stylist')
   const [isSyncing, setIsSyncing] = useState(false)
   const [billingSettings, setBillingSettings] = useState<BillingSettings>(defaultBillingSettings)
+  const [previewPlan, setPreviewPlan] = useState<SubscriptionPlan | null>(null)
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
+  const [fullPagePreviewOpen, setFullPagePreviewOpen] = useState(false)
+  const [previewInterval, setPreviewInterval] = useState<'monthly' | 'quarterly' | 'sixMonths' | 'yearly'>('monthly')
   const [planDiscounts, setPlanDiscounts] = useState({
     monthly: 0,
     quarterly: 10,
@@ -368,6 +375,10 @@ export default function PlansPage() {
             </p>
           </div>
           <div className="flex gap-3">
+            <Button variant="outline" onClick={() => setFullPagePreviewOpen(true)}>
+              <Eye className="mr-2 h-4 w-4" />
+              Preisseite Vorschau
+            </Button>
             <Button variant="outline" onClick={fetchPlans} disabled={isLoading}>
               <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
               Aktualisieren
@@ -449,6 +460,7 @@ export default function PlansPage() {
             onEdit={openEditDialog}
             onDelete={handleDeletePlan}
             onSync={handleSyncToStripe}
+            onPreview={(plan) => { setPreviewPlan(plan); setPreviewDialogOpen(true) }}
             isSyncing={isSyncing}
             formatPrice={formatPrice}
             calculateSavings={calculateSavings}
@@ -461,6 +473,7 @@ export default function PlansPage() {
             onEdit={openEditDialog}
             onDelete={handleDeletePlan}
             onSync={handleSyncToStripe}
+            onPreview={(plan) => { setPreviewPlan(plan); setPreviewDialogOpen(true) }}
             isSyncing={isSyncing}
             formatPrice={formatPrice}
             calculateSavings={calculateSavings}
@@ -836,6 +849,155 @@ export default function PlansPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Plan Preview Dialog */}
+      <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-primary" />
+              Plan-Vorschau
+            </DialogTitle>
+            <DialogDescription>
+              So sieht der Plan auf der öffentlichen Preisseite aus
+            </DialogDescription>
+          </DialogHeader>
+          
+          {previewPlan && (
+            <div className="space-y-4">
+              {/* Interval Selector */}
+              <div className="flex gap-2 justify-center p-2 bg-muted rounded-lg">
+                {(['monthly', 'quarterly', 'sixMonths', 'yearly'] as const).map((interval) => (
+                  <Button
+                    key={interval}
+                    variant={previewInterval === interval ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setPreviewInterval(interval)}
+                    className={previewInterval === interval ? 'bg-primary' : ''}
+                  >
+                    {interval === 'monthly' ? '1M' : interval === 'quarterly' ? '3M' : interval === 'sixMonths' ? '6M' : '12M'}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Preview Card */}
+              <div className="max-h-[60vh] overflow-y-auto">
+                <PlanPreviewCard 
+                  plan={previewPlan as Plan}
+                  interval={previewInterval}
+                  showCTA={true}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setPreviewDialogOpen(false)}>
+              Schließen
+            </Button>
+            <Button variant="outline" onClick={() => { setPreviewDialogOpen(false); setFullPagePreviewOpen(true) }}>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Komplette Preisseite
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Full Pricing Page Preview Dialog */}
+      <Dialog open={fullPagePreviewOpen} onOpenChange={setFullPagePreviewOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ExternalLink className="h-5 w-5 text-primary" />
+              Preisseite Vorschau
+            </DialogTitle>
+            <DialogDescription>
+              Vorschau aller Pläne wie sie auf /preise erscheinen
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Interval Selector */}
+            <div className="flex gap-2 justify-center p-2 bg-muted rounded-lg">
+              {(['monthly', 'quarterly', 'sixMonths', 'yearly'] as const).map((interval) => (
+                <Button
+                  key={interval}
+                  variant={previewInterval === interval ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setPreviewInterval(interval)}
+                  className={previewInterval === interval ? 'bg-primary' : ''}
+                >
+                  {interval === 'monthly' ? '1 Monat' : interval === 'quarterly' ? '3 Monate' : interval === 'sixMonths' ? '6 Monate' : '12 Monate'}
+                </Button>
+              ))}
+            </div>
+
+            {/* Tabs für Stylist/Salon */}
+            <Tabs defaultValue="stylist" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="stylist" className="flex items-center gap-2">
+                  <Scissors className="h-4 w-4" />
+                  Stuhlmieter
+                </TabsTrigger>
+                <TabsTrigger value="salon" className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Salonbesitzer
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="stylist">
+                <div className="grid gap-6 md:grid-cols-2">
+                  {groupedPlans.STYLIST.map((plan) => (
+                    <PlanPreviewCard 
+                      key={plan.id}
+                      plan={plan as Plan}
+                      interval={previewInterval}
+                      showCTA={true}
+                      compact={false}
+                    />
+                  ))}
+                  {groupedPlans.STYLIST.length === 0 && (
+                    <p className="col-span-2 text-center text-muted-foreground py-8">
+                      Keine Stuhlmieter-Pläne vorhanden
+                    </p>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="salon">
+                <div className="grid gap-6 md:grid-cols-2">
+                  {groupedPlans.SALON_OWNER.map((plan) => (
+                    <PlanPreviewCard 
+                      key={plan.id}
+                      plan={plan as Plan}
+                      interval={previewInterval}
+                      showCTA={true}
+                      compact={false}
+                    />
+                  ))}
+                  {groupedPlans.SALON_OWNER.length === 0 && (
+                    <p className="col-span-2 text-center text-muted-foreground py-8">
+                      Keine Salonbesitzer-Pläne vorhanden
+                    </p>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFullPagePreviewOpen(false)}>
+              Schließen
+            </Button>
+            <Button asChild>
+              <a href="/preise" target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Echte Seite öffnen
+              </a>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -846,6 +1008,7 @@ function PlanGrid({
   onEdit,
   onDelete,
   onSync,
+  onPreview,
   isSyncing,
   formatPrice,
   calculateSavings
@@ -854,6 +1017,7 @@ function PlanGrid({
   onEdit: (plan: SubscriptionPlan) => void
   onDelete: (id: string) => void
   onSync: (id: string) => void
+  onPreview: (plan: SubscriptionPlan) => void
   isSyncing: boolean
   formatPrice: (price: number) => string
   calculateSavings: (monthly: number, total: number, months: number) => number
@@ -1067,6 +1231,22 @@ function PlanGrid({
                   <Edit2 className="h-4 w-4 mr-1" />
                   Bearbeiten
                 </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onPreview(plan)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Vorschau anzeigen</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 {!plan.stripeProductId && (
                   <TooltipProvider>
                     <Tooltip>
