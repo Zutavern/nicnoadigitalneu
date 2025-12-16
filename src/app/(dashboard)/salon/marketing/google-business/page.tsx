@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import {
@@ -8,15 +7,16 @@ import {
   ChecklistCard,
   QuickActions,
   ReviewsList,
-  DevelopmentBadge,
   GooglePreview,
 } from '@/components/google-business'
+import { DemoBanner, DemoIndicator } from '@/components/google-business/demo-banner'
 import {
   MOCK_GOOGLE_BUSINESS_DATA,
   AI_REPLY_SUGGESTIONS,
 } from '@/lib/google-business/mock-data'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { useGoogleBusinessStatus } from '@/hooks/use-google-business-status'
 import { 
   Monitor, 
   Eye, 
@@ -28,34 +28,25 @@ import {
   Phone,
   Navigation,
   Calendar,
+  Loader2,
 } from 'lucide-react'
 
 export default function GoogleBusinessPage() {
-  const [isConnected, setIsConnected] = useState(true)
+  const { showDemo, reason, isLoading, isPremium, isConnected } = useGoogleBusinessStatus()
   
   const data = MOCK_GOOGLE_BUSINESS_DATA
 
   const handleReplyToReview = (reviewId: string, text: string) => {
     toast.success('Antwort gesendet!', {
-      description: 'Die Antwort wurde erfolgreich veröffentlicht. (Demo)',
+      description: showDemo ? 'Die Antwort wurde erfolgreich veröffentlicht. (Demo)' : 'Die Antwort wurde erfolgreich veröffentlicht.',
     })
   }
 
-  if (!isConnected) {
+  // Ladescreen
+  if (isLoading) {
     return (
-      <div className="p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold">Google Business Profil</h1>
-              <DevelopmentBadge variant="badge" />
-            </div>
-            <p className="text-muted-foreground mt-1">
-              Verwalte dein Google-Profil und erreiche mehr Kunden
-            </p>
-          </div>
-        </div>
-        <NotConnectedBanner />
+      <div className="p-6 flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     )
   }
@@ -83,7 +74,7 @@ export default function GoogleBusinessPage() {
             <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-500 via-red-500 to-yellow-500 bg-clip-text text-transparent">
               Google Business
             </h1>
-            <DevelopmentBadge variant="badge" />
+            {showDemo && <DemoIndicator />}
           </div>
           <p className="text-muted-foreground mt-1 text-sm">
             {data.profile?.name}
@@ -91,7 +82,10 @@ export default function GoogleBusinessPage() {
         </div>
       </div>
 
-      <DevelopmentBadge variant="banner" />
+      {/* Demo Banner - shows for non-premium or non-connected users */}
+      {showDemo && reason !== 'connected' && (
+        <DemoBanner type={reason} basePath="/salon" />
+      )}
 
       {/* KPI Hero Section - Score + Metriken - Immer dunkler Hintergrund */}
       <motion.div

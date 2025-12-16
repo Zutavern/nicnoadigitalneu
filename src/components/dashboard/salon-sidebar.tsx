@@ -92,7 +92,7 @@ const menuItems = [
     items: [
       { label: 'Salon Branding', href: '/salon/marketing', icon: Palette },
       { label: 'Social Media', href: '/salon/marketing/social-media', icon: Share2 },
-      { label: 'Google Business', href: '/salon/marketing/google-business', icon: Store, badge: 'dev' },
+      { label: 'Google Business', href: '/salon/marketing/google-business', icon: Store },
       { label: 'Preislisten', href: '/salon/marketing/pricelist', icon: FileText },
     ],
   },

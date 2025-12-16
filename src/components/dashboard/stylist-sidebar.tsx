@@ -88,7 +88,7 @@ const menuItems = [
     items: [
       { label: 'Mein Branding', href: '/stylist/marketing', icon: Palette },
       { label: 'Social Media', href: '/stylist/marketing/social-media', icon: Share2 },
-      { label: 'Google Business', href: '/stylist/marketing/google-business', icon: Store, badge: 'dev' },
+      { label: 'Google Business', href: '/stylist/marketing/google-business', icon: Store },
       { label: 'Preislisten', href: '/stylist/pricelist', icon: FileText },
     ],
   },

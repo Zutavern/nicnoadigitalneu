@@ -151,6 +151,7 @@ const menuItems: MenuSection[] = [
         children: [
           { label: 'Branding', href: '/admin/marketing/branding', icon: Palette },
           { label: 'Social Media', href: '/admin/marketing/social-media', icon: Share2 },
+          { label: 'Google Business', href: '/admin/google-business', icon: MapIcon },
           { label: 'Preislisten-Hintergründe', href: '/admin/marketing/branding/pricelist-backgrounds', icon: FileText },
           { label: 'Referral-Programm', href: '/admin/referrals', icon: Gift },
         ],
