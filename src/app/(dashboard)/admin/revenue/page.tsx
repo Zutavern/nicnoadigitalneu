@@ -204,7 +204,7 @@ export default function RevenuePage() {
                   >
                     <div className="absolute inset-0 bg-gradient-to-t from-green-500 to-emerald-400 rounded-t-sm hover:from-green-400 hover:to-emerald-300 transition-colors" />
                     <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-popover border rounded px-2 py-1 text-xs whitespace-nowrap z-10">
-                      €{data.revenue.toLocaleString()}
+                      €{data.revenue.toLocaleString('de-DE')}
                     </div>
                   </motion.div>
                   <span className="text-xs text-muted-foreground">{data.month}</span>
@@ -264,7 +264,7 @@ export default function RevenuePage() {
                       <span className="text-sm">{plan.plan}</span>
                     </div>
                     <div className="text-right">
-                      <span className="font-medium">€{plan.revenue.toLocaleString()}</span>
+                      <span className="font-medium">€{plan.revenue.toLocaleString('de-DE')}</span>
                       <span className="text-xs text-muted-foreground ml-1">({plan.percentage}%)</span>
                     </div>
                   </div>
