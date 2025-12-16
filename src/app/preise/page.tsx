@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MainNav } from '@/components/layout/main-nav'
 import { Footer } from '@/components/layout/footer'
@@ -250,12 +250,15 @@ export default function PricingPage() {
   }
 
   // Filtere Intervalle: nur anzeigen wenn enabled UND mindestens ein Plan einen Preis > 0 hat
-  const activeIntervals = config.intervals.filter(interval => {
-    if (interval.enabled === false) return false
-    // Prüfe ob mindestens ein Plan einen Preis > 0 für dieses Intervall hat
-    const hasPlansWithPrice = plans.some(plan => getPriceForIntervalStatic(plan, interval.id) > 0)
-    return hasPlansWithPrice
-  })
+  // useMemo verhindert infinite loops durch stabile Referenz
+  const activeIntervals = useMemo(() => {
+    return config.intervals.filter(interval => {
+      if (interval.enabled === false) return false
+      // Prüfe ob mindestens ein Plan einen Preis > 0 für dieses Intervall hat
+      const hasPlansWithPrice = plans.some(plan => getPriceForIntervalStatic(plan, interval.id) > 0)
+      return hasPlansWithPrice
+    })
+  }, [config.intervals, plans])
   
   const currentInterval = activeIntervals.find(i => i.id === selectedInterval) || activeIntervals[0]
 
