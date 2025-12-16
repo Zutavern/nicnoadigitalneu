@@ -77,6 +77,14 @@ export function PaywallModal({ isOpen, onClose, userType, trigger }: PaywallModa
 
       if (!response.ok) {
         const error = await response.json()
+        // Demo-Modus: Stripe nicht konfiguriert
+        if (error.error?.includes('nicht konfiguriert') || error.error?.includes('not configured')) {
+          toast.info('Demo-Modus: Stripe ist nicht konfiguriert. In der Live-Version würdest du jetzt zum Checkout weitergeleitet werden.', {
+            duration: 5000
+          })
+          onClose()
+          return
+        }
         throw new Error(error.error || 'Checkout konnte nicht gestartet werden')
       }
 
@@ -90,7 +98,15 @@ export function PaywallModal({ isOpen, onClose, userType, trigger }: PaywallModa
       }
     } catch (error) {
       console.error('Checkout error:', error)
-      toast.error(error instanceof Error ? error.message : 'Fehler beim Checkout')
+      const errorMessage = error instanceof Error ? error.message : 'Fehler beim Checkout'
+      // Demo-Modus Fallback
+      if (errorMessage.includes('nicht konfiguriert') || errorMessage.includes('not configured')) {
+        toast.info('Demo-Modus: Stripe ist nicht konfiguriert', { duration: 3000 })
+        onClose()
+      } else {
+        toast.error(errorMessage)
+      }
+    } finally {
       setIsCheckingOut(false)
     }
   }
