@@ -446,7 +446,7 @@ export default function PricingPage() {
               exit={{ opacity: 0, y: -30 }}
               transition={{ duration: 0.5 }}
               className={cn(
-                "grid gap-8 lg:gap-6 mx-auto px-4 items-start",
+                "grid gap-8 lg:gap-6 mx-auto px-4 items-stretch",
                 // Dynamisches Grid basierend auf Plananzahl - extra breit
                 visiblePlans.length === 1 && "max-w-xl",
                 visiblePlans.length === 2 && "max-w-5xl grid-cols-1 md:grid-cols-2",
@@ -466,9 +466,9 @@ export default function PricingPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.15 }}
                     className={cn(
-                      "relative group",
+                      "relative group h-full flex",
                       // Populärer Plan: größer und hervorgehoben
-                      plan.isPopular && "md:-mt-6 md:mb-6 lg:scale-105 z-10"
+                      plan.isPopular && "md:-mt-8 md:-mb-2 lg:scale-[1.03] z-10"
                     )}
                   >
                     {/* Glow Effect for Popular */}
@@ -477,7 +477,7 @@ export default function PricingPage() {
                     )}
                     
                     <div className={cn(
-                      "relative h-full rounded-2xl border-2 bg-card transition-all duration-500",
+                      "relative w-full flex flex-col rounded-2xl border-2 bg-card transition-all duration-500",
                       plan.isPopular 
                         ? "border-primary shadow-2xl" 
                         : "border-border hover:border-primary/50 hover:shadow-xl"
@@ -492,7 +492,11 @@ export default function PricingPage() {
                         </div>
                       )}
 
-                      <div className="p-6 sm:p-8 md:p-10 lg:p-12">
+                      <div className={cn(
+                        "p-6 sm:p-8 md:p-10 lg:p-12 flex-1 flex flex-col",
+                        // Populärer Plan: etwas mehr Padding für extra Höhe
+                        plan.isPopular && "md:pt-12 md:pb-14"
+                      )}>
                         {/* Header */}
                         <div className="mb-8">
                           <div className={cn(
@@ -574,7 +578,7 @@ export default function PricingPage() {
                         )}
 
                         {/* Features */}
-                        <div className="space-y-4 mb-10">
+                        <div className="space-y-4 mb-10 flex-1">
                           {plan.features.map((feature, i) => (
                             <motion.div 
                               key={i} 
@@ -596,26 +600,27 @@ export default function PricingPage() {
                           ))}
                         </div>
 
-                        {/* Limits Badge */}
-                        {(plan.maxChairs || plan.maxCustomers) && (
-                          <div className="flex flex-wrap gap-2 mb-8">
-                            {plan.maxChairs && (
-                              <Badge variant="secondary" className="text-xs">
-                                <Users className="w-3 h-3 mr-1" />
-                                Max. {plan.maxChairs} Stühle
-                              </Badge>
-                            )}
-                            {plan.maxCustomers && (
-                              <Badge variant="secondary" className="text-xs">
-                                <Users className="w-3 h-3 mr-1" />
-                                Bis {plan.maxCustomers} Kunden
-                              </Badge>
-                            )}
-                          </div>
-                        )}
+                        {/* Limits Badge + CTA am Ende */}
+                        <div className="mt-auto">
+                          {(plan.maxChairs || plan.maxCustomers) && (
+                            <div className="flex flex-wrap gap-2 mb-6">
+                              {plan.maxChairs && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <Users className="w-3 h-3 mr-1" />
+                                  Max. {plan.maxChairs} Stühle
+                                </Badge>
+                              )}
+                              {plan.maxCustomers && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <Users className="w-3 h-3 mr-1" />
+                                  Bis {plan.maxCustomers} Kunden
+                                </Badge>
+                              )}
+                            </div>
+                          )}
 
-                        {/* CTA */}
-                        <Button 
+                          {/* CTA */}
+                          <Button 
                           className={cn(
                             "w-full h-14 text-lg font-semibold rounded-xl transition-all duration-300",
                             plan.isPopular
@@ -632,9 +637,10 @@ export default function PricingPage() {
                           </Link>
                         </Button>
 
-                        <p className="text-center text-sm text-muted-foreground mt-4">
-                          Keine Kreditkarte erforderlich • Jederzeit kündbar
-                        </p>
+                          <p className="text-center text-sm text-muted-foreground mt-4">
+                            Keine Kreditkarte erforderlich • Jederzeit kündbar
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
