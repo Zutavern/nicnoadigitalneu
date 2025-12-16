@@ -124,43 +124,78 @@ export function PriceCalculator({
 }: PriceCalculatorProps) {
   const [autoCalculate, setAutoCalculate] = useState(true)
   const [localDiscounts, setLocalDiscounts] = useState(discounts)
+  const [hasUserInteracted, setHasUserInteracted] = useState(false)
 
-  // Sync local discounts with props
+  // Sync local discounts with props (only on initial load)
   useEffect(() => {
-    setLocalDiscounts(discounts)
-  }, [discounts])
-
-  // Auto-calculate prices when basePrice or discounts change
-  const recalculatePrices = useCallback(() => {
-    if (!autoCalculate || basePrice <= 0) return
-
-    const newPrices = {
-      priceMonthly: roundingEnabled 
-        ? roundToMarketing(basePrice, roundingTarget) 
-        : basePrice,
-      priceQuarterly: calculateDiscountedPrice(basePrice, 3, localDiscounts.quarterly, roundingEnabled, roundingTarget),
-      priceSixMonths: calculateDiscountedPrice(basePrice, 6, localDiscounts.sixMonths, roundingEnabled, roundingTarget),
-      priceYearly: calculateDiscountedPrice(basePrice, 12, localDiscounts.yearly, roundingEnabled, roundingTarget),
+    if (!hasUserInteracted) {
+      setLocalDiscounts(discounts)
     }
+  }, [discounts, hasUserInteracted])
 
+  // Funktion zur Preisberechnung (ohne automatisches Aufrufen von onPricesChange)
+  const calculateAllPrices = useCallback((
+    base: number, 
+    disc: typeof localDiscounts,
+    rounding: boolean,
+    target: number
+  ) => {
+    return {
+      priceMonthly: rounding ? roundToMarketing(base, target) : base,
+      priceQuarterly: calculateDiscountedPrice(base, 3, disc.quarterly, rounding, target),
+      priceSixMonths: calculateDiscountedPrice(base, 6, disc.sixMonths, rounding, target),
+      priceYearly: calculateDiscountedPrice(base, 12, disc.yearly, rounding, target),
+    }
+  }, [])
+
+  // Manuelle Neuberechnung (nur wenn User den Button drückt oder Wert ändert)
+  const triggerRecalculate = useCallback(() => {
+    if (!autoCalculate || basePrice <= 0) return
+    const newPrices = calculateAllPrices(basePrice, localDiscounts, roundingEnabled, roundingTarget)
     onPricesChange(newPrices)
-  }, [basePrice, localDiscounts, roundingEnabled, roundingTarget, autoCalculate, onPricesChange])
-
-  useEffect(() => {
-    recalculatePrices()
-  }, [recalculatePrices])
+  }, [basePrice, localDiscounts, roundingEnabled, roundingTarget, autoCalculate, calculateAllPrices, onPricesChange])
 
   const handleDiscountChange = (key: keyof typeof localDiscounts, value: number) => {
+    setHasUserInteracted(true)
     const newDiscounts = { ...localDiscounts, [key]: value }
     setLocalDiscounts(newDiscounts)
     onDiscountsChange(newDiscounts)
+    
+    // Wenn Auto-Berechnung aktiv ist, Preise neu berechnen
+    if (autoCalculate && basePrice > 0) {
+      const newPrices = calculateAllPrices(basePrice, newDiscounts, roundingEnabled, roundingTarget)
+      onPricesChange(newPrices)
+    }
   }
 
   const handlePriceChange = (field: string, value: number) => {
+    setHasUserInteracted(true)
     onPricesChange({
       ...prices,
       [field]: value
     })
+  }
+  
+  const handleBasePriceChange = (value: number) => {
+    setHasUserInteracted(true)
+    onBasePriceChange(value)
+    
+    // Wenn Auto-Berechnung aktiv ist, Preise neu berechnen
+    if (autoCalculate && value > 0) {
+      const newPrices = calculateAllPrices(value, localDiscounts, roundingEnabled, roundingTarget)
+      onPricesChange(newPrices)
+    }
+  }
+  
+  const handleRoundingChange = (enabled: boolean) => {
+    setHasUserInteracted(true)
+    onRoundingChange(enabled)
+    
+    // Preise neu berechnen mit neuer Rundungseinstellung
+    if (autoCalculate && basePrice > 0) {
+      const newPrices = calculateAllPrices(basePrice, localDiscounts, enabled, roundingTarget)
+      onPricesChange(newPrices)
+    }
   }
 
   const formatPrice = (price: number) => {
@@ -254,7 +289,7 @@ export function PriceCalculator({
           </div>
           <Switch
             checked={roundingEnabled}
-            onCheckedChange={onRoundingChange}
+            onCheckedChange={handleRoundingChange}
           />
         </div>
 
@@ -277,7 +312,7 @@ export function PriceCalculator({
               min="0"
               step="0.01"
               value={basePrice || ''}
-              onChange={(e) => onBasePriceChange(parseFloat(e.target.value) || 0)}
+              onChange={(e) => handleBasePriceChange(parseFloat(e.target.value) || 0)}
               className="h-14 text-2xl font-bold pr-12 bg-gradient-to-r from-violet-500/5 to-pink-500/5"
               placeholder="0.00"
             />
