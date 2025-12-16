@@ -102,7 +102,7 @@ const testimonials = [
   {
     quote: "Seit ich NICNOA nutze, habe ich 40% mehr Buchungen und viel weniger Verwaltungsaufwand. Die Analytics helfen mir, mein Business zu optimieren.",
     author: "Sarah M.",
-    role: "Stylistin, München",
+    role: "Stuhlmieterin, München",
     rating: 5
   },
   {
@@ -112,9 +112,9 @@ const testimonials = [
     rating: 5
   },
   {
-    quote: "Endlich eine Software, die versteht, was wir brauchen. Der Support ist fantastisch und die Marketing-Tools sind ein Game-Changer!",
+    quote: "Endlich eine Software, die versteht, was wir Stuhlmieter brauchen. Der Support ist fantastisch und die Marketing-Tools sind ein Game-Changer!",
     author: "Lisa T.",
-    role: "Stylistin, Hamburg",
+    role: "Stuhlmieterin, Hamburg",
     rating: 5
   },
 ]
@@ -123,19 +123,19 @@ const testimonials = [
 const faqs = [
   {
     question: "Kann ich jederzeit kündigen?",
-    answer: "Ja, Sie können Ihr Abonnement jederzeit zum Ende des Abrechnungszeitraums kündigen. Es gibt keine versteckten Gebühren oder lange Kündigungsfristen."
+    answer: "Ja, du kannst dein Abo jederzeit zum Ende des Abrechnungszeitraums kündigen. Keine versteckten Gebühren, keine langen Kündigungsfristen."
   },
   {
     question: "Was passiert nach der Testphase?",
-    answer: "Nach 14 Tagen werden Sie automatisch in den gewählten Plan überführt. Sie können vorher jederzeit kündigen oder den Plan wechseln. Ihre Daten bleiben erhalten."
+    answer: "Nach 14 Tagen wirst du automatisch in den gewählten Plan überführt. Du kannst vorher jederzeit kündigen oder den Plan wechseln. Deine Daten bleiben erhalten."
   },
   {
     question: "Gibt es Rabatte für längere Laufzeiten?",
-    answer: "Ja! Bei 6 Monaten sparen Sie 15%, bei 12 Monaten sogar 25% gegenüber der monatlichen Zahlung."
+    answer: "Ja! Bei 6 Monaten sparst du 15%, bei 12 Monaten sogar 25% gegenüber der monatlichen Zahlung."
   },
   {
     question: "Kann ich den Plan später wechseln?",
-    answer: "Selbstverständlich. Sie können jederzeit upgraden. Bei einem Downgrade wird die Differenz als Guthaben für die nächste Zahlung angerechnet."
+    answer: "Klar! Du kannst jederzeit upgraden. Bei einem Downgrade wird die Differenz als Guthaben für deine nächste Zahlung angerechnet."
   },
   {
     question: "Welche Zahlungsmethoden werden akzeptiert?",
@@ -304,7 +304,7 @@ export default function PricingPage() {
             </motion.div>
             
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-              <span className="block">Ihr Erfolg beginnt</span>
+              <span className="block">Dein Erfolg beginnt</span>
               <span className="relative">
                 <span className="bg-gradient-to-r from-violet-500 via-pink-500 to-orange-500 bg-clip-text text-transparent">
                   mit dem richtigen Plan
@@ -319,7 +319,7 @@ export default function PricingPage() {
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-12">
-              Wählen Sie den perfekten Plan für Ihre Bedürfnisse. 
+              Wähl den perfekten Plan für deine Bedürfnisse. 
               Transparent, fair und ohne versteckte Kosten.
             </p>
 
@@ -394,7 +394,7 @@ export default function PricingPage() {
                 className="mt-12 mb-4 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-500/10 text-emerald-500 font-semibold border border-emerald-500/20"
               >
                 <Gift className="h-4 w-4" />
-                Sie sparen {currentInterval.discount}% bei {currentInterval.months} Monaten Laufzeit
+                Du sparst {currentInterval.discount}% bei {currentInterval.months} Monaten Laufzeit
               </motion.div>
             )}
           </motion.div>
@@ -529,7 +529,7 @@ export default function PricingPage() {
                             {savings > 0 && (
                               <p className="text-emerald-500 font-semibold flex items-center gap-1.5">
                                 <Zap className="w-4 h-4" />
-                                Sie sparen {config.currencySign}{savings}
+                                Du sparst {config.currencySign}{savings}
                               </p>
                             )}
                           </div>
@@ -690,13 +690,13 @@ export default function PricingPage() {
         >
           <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
             <Heart className="w-4 h-4 mr-2 fill-current" />
-            Das sagen unsere Kunden
+            Das sagen unsere Stuhlmieter
           </Badge>
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Über 500+ zufriedene Nutzer
+            Über 500+ zufriedene Stuhlmieter
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Schließen Sie sich der wachsenden Community von Stylisten und Salonbesitzern an
+            Schließ dich der wachsenden Community von Stuhlmietern und Salonbesitzern an
           </p>
         </motion.div>
 
@@ -756,7 +756,7 @@ export default function PricingPage() {
               Noch Fragen?
             </h2>
             <p className="text-xl text-muted-foreground">
-              Hier finden Sie Antworten auf die wichtigsten Fragen
+              Hier findest du Antworten auf die wichtigsten Fragen
             </p>
           </motion.div>
 
@@ -840,7 +840,7 @@ export default function PricingPage() {
             </h2>
             
             <p className="text-xl md:text-2xl text-white/80 max-w-2xl mx-auto mb-10">
-              Starten Sie noch heute Ihre 14-tägige kostenlose Testphase. 
+              Starte noch heute deine 14-tägige kostenlose Testphase. 
               Voller Zugriff auf alle Features – keine Kreditkarte erforderlich.
             </p>
 
@@ -896,7 +896,7 @@ export default function PricingPage() {
               <div>
                 <h4 className="text-xl font-bold mb-1">{config.moneyBackDays}-Tage Geld-zurück-Garantie</h4>
                 <p className="text-muted-foreground">
-                  Nicht zufrieden? Wir erstatten Ihnen den vollen Betrag – ohne Fragen zu stellen.
+                  Nicht zufrieden? Wir erstatten dir den vollen Betrag – ohne Fragen zu stellen.
                 </p>
               </div>
             </div>
