@@ -14,8 +14,19 @@ export async function GET() {
   try {
     const session = await auth()
     
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!session?.user?.id) {
+      // Demo-Modus: Leere Daten zurückgeben
+      return NextResponse.json({
+        limit: {
+          monthlyLimitEur: 50,
+          alertThreshold: 80,
+          hardLimit: false,
+        },
+        usage: null,
+        includedCredits: null,
+        extraUsage: null,
+        isDemo: true,
+      })
     }
 
     // Hole oder erstelle SpendingLimit
@@ -143,8 +154,17 @@ export async function PATCH(req: NextRequest) {
   try {
     const session = await auth()
     
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!session?.user?.id) {
+      // Demo-Modus: Erfolg simulieren
+      return NextResponse.json({
+        success: true,
+        limit: {
+          monthlyLimitEur: 50,
+          alertThreshold: 80,
+          hardLimit: false,
+        },
+        isDemo: true,
+      })
     }
 
     const body = await req.json()

@@ -12,8 +12,27 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth()
     
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!session?.user?.id) {
+      // Demo-Modus: Leere Daten zurückgeben
+      return NextResponse.json({
+        summary: {
+          totalRequests: 0,
+          totalTokens: 0,
+          totalCostEur: 0,
+          currentMonthCostEur: 0,
+          period: {
+            start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+            end: new Date().toISOString(),
+            days: 30,
+          },
+        },
+        spendingLimit: null,
+        byFeature: [],
+        byModel: [],
+        dailyUsage: [],
+        recentActivity: [],
+        isDemo: true,
+      })
     }
 
     const { searchParams } = new URL(req.url)

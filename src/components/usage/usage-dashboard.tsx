@@ -150,19 +150,24 @@ export function UsageDashboard({ onOpenOnboarding, showOnboarding }: UsageDashbo
       
       const usageData = await usageRes.json()
       
+      // Prüfe ob Demo-Modus
+      if (usageData.isDemo) {
+        throw new Error('Demo-Modus')
+      }
+      
       if (limitRes.ok) {
         const limitData = await limitRes.json()
         usageData.spendingLimit = limitData.usage
         usageData.includedCredits = limitData.includedCredits
         usageData.extraUsage = limitData.extraUsage
-        setMonthlyLimit(limitData.limit.monthlyLimitEur)
-        setAlertThreshold(limitData.limit.alertThreshold)
-        setHardLimit(limitData.limit.hardLimit)
+        setMonthlyLimit(limitData.limit?.monthlyLimitEur || 50)
+        setAlertThreshold(limitData.limit?.alertThreshold || 80)
+        setHardLimit(limitData.limit?.hardLimit || false)
       }
 
       setData(usageData)
-    } catch (error) {
-      console.error('Error fetching usage data:', error)
+    } catch {
+      // Demo-Modus: Mock-Daten anzeigen (kein console.error für erwarteten Fall)
       // Demo-Modus: Mock-Daten anzeigen
       const mockData: UsageData = {
         summary: {
