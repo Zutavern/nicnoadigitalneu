@@ -15,24 +15,20 @@ import {
   Loader2,
   Save,
   RefreshCw,
-  ExternalLink,
   Zap,
   Crown,
   Sparkles,
   Clock,
-  TrendingUp,
   Package,
   AlertCircle,
   Cloud,
   CloudOff,
   Settings2,
-  ArrowRight,
-  Percent,
-  Calendar,
   Users,
   Bot,
   Gift
 } from 'lucide-react'
+import { PriceCalculator } from '@/components/admin/price-calculator'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -126,6 +122,24 @@ const INTERVALS = [
   { key: 'yearly', label: '12 Monate', field: 'priceYearly', stripePriceField: 'stripePriceYearly', months: 12, discount: 25 },
 ] as const
 
+interface BillingSettings {
+  monthlyDiscount: number
+  quarterlyDiscount: number
+  sixMonthsDiscount: number
+  yearlyDiscount: number
+  priceRoundingEnabled: boolean
+  priceRoundingTarget: number
+}
+
+const defaultBillingSettings: BillingSettings = {
+  monthlyDiscount: 0,
+  quarterlyDiscount: 10,
+  sixMonthsDiscount: 15,
+  yearlyDiscount: 25,
+  priceRoundingEnabled: true,
+  priceRoundingTarget: 9
+}
+
 export default function PlansPage() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([])
   const [groupedPlans, setGroupedPlans] = useState<{
@@ -142,6 +156,42 @@ export default function PlansPage() {
   const [syncToStripe, setSyncToStripe] = useState(false)
   const [activeTab, setActiveTab] = useState<'stylist' | 'salon'>('stylist')
   const [isSyncing, setIsSyncing] = useState(false)
+  const [billingSettings, setBillingSettings] = useState<BillingSettings>(defaultBillingSettings)
+  const [planDiscounts, setPlanDiscounts] = useState({
+    monthly: 0,
+    quarterly: 10,
+    sixMonths: 15,
+    yearly: 25
+  })
+  const [priceRoundingEnabled, setPriceRoundingEnabled] = useState(true)
+
+  const fetchBillingSettings = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/billing-settings')
+      if (res.ok) {
+        const data = await res.json()
+        if (data.settings) {
+          setBillingSettings({
+            monthlyDiscount: data.settings.monthlyDiscount ?? 0,
+            quarterlyDiscount: data.settings.quarterlyDiscount ?? 10,
+            sixMonthsDiscount: data.settings.sixMonthsDiscount ?? 15,
+            yearlyDiscount: data.settings.yearlyDiscount ?? 25,
+            priceRoundingEnabled: data.settings.priceRoundingEnabled ?? true,
+            priceRoundingTarget: data.settings.priceRoundingTarget ?? 9
+          })
+          setPlanDiscounts({
+            monthly: data.settings.monthlyDiscount ?? 0,
+            quarterly: data.settings.quarterlyDiscount ?? 10,
+            sixMonths: data.settings.sixMonthsDiscount ?? 15,
+            yearly: data.settings.yearlyDiscount ?? 25
+          })
+          setPriceRoundingEnabled(data.settings.priceRoundingEnabled ?? true)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching billing settings:', error)
+    }
+  }, [])
 
   const fetchPlans = useCallback(async () => {
     setIsLoading(true)
@@ -162,7 +212,8 @@ export default function PlansPage() {
 
   useEffect(() => {
     fetchPlans()
-  }, [fetchPlans])
+    fetchBillingSettings()
+  }, [fetchPlans, fetchBillingSettings])
 
   const handleSavePlan = async () => {
     if (!currentPlan.name || !currentPlan.slug || !currentPlan.planType) {
@@ -532,65 +583,23 @@ export default function PlansPage() {
 
             <Separator />
 
-            {/* Preise */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-                <CreditCard className="h-4 w-4" />
-                Preise (4 Laufzeiten)
-              </h3>
-              <div className="grid gap-4 md:grid-cols-4">
-                {INTERVALS.map((interval) => (
-                  <div key={interval.key} className="space-y-2">
-                    <Label htmlFor={interval.field} className="flex items-center justify-between">
-                      <span>{interval.label}</span>
-                      {interval.discount > 0 && (
-                        <Badge variant="secondary" className="text-xs">
-                          -{interval.discount}%
-                        </Badge>
-                      )}
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id={interval.field}
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={(currentPlan as Record<string, unknown>)[interval.field] as number || ''}
-                        onChange={(e) => {
-                          const value = parseFloat(e.target.value) || 0
-                          if (interval.key === 'monthly') {
-                            // Auto-calculate other prices based on monthly
-                            setCurrentPlan({
-                              ...currentPlan,
-                              priceMonthly: value,
-                              priceQuarterly: Math.round(value * 3 * 0.9 * 100) / 100,
-                              priceSixMonths: Math.round(value * 6 * 0.85 * 100) / 100,
-                              priceYearly: Math.round(value * 12 * 0.75 * 100) / 100
-                            })
-                          } else {
-                            setCurrentPlan({
-                              ...currentPlan,
-                              [interval.field]: value
-                            })
-                          }
-                        }}
-                        className="h-11 pr-8"
-                        placeholder="0.00"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">€</span>
-                    </div>
-                    {interval.months > 1 && currentPlan.priceMonthly && (
-                      <p className="text-xs text-muted-foreground">
-                        = {formatPrice((((currentPlan as Record<string, unknown>)[interval.field] as number) || 0) / interval.months)}/Monat
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                💡 Tipp: Geben Sie den monatlichen Preis ein - die anderen werden automatisch berechnet (anpassbar).
-              </p>
-            </div>
+            {/* Preis-Kalkulator */}
+            <PriceCalculator
+              basePrice={currentPlan.priceMonthly || 0}
+              onBasePriceChange={(price) => setCurrentPlan({ ...currentPlan, priceMonthly: price })}
+              prices={{
+                priceMonthly: currentPlan.priceMonthly || 0,
+                priceQuarterly: currentPlan.priceQuarterly || 0,
+                priceSixMonths: currentPlan.priceSixMonths || 0,
+                priceYearly: currentPlan.priceYearly || 0
+              }}
+              onPricesChange={(prices) => setCurrentPlan({ ...currentPlan, ...prices })}
+              discounts={planDiscounts}
+              onDiscountsChange={setPlanDiscounts}
+              roundingEnabled={priceRoundingEnabled}
+              onRoundingChange={setPriceRoundingEnabled}
+              roundingTarget={billingSettings.priceRoundingTarget}
+            />
 
             <Separator />
 

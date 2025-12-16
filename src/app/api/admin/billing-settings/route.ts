@@ -70,7 +70,8 @@ export async function PATCH(req: NextRequest) {
       'monthlyDiscount', 'quarterlyDiscount', 'sixMonthsDiscount', 'yearlyDiscount',
       'defaultInterval', 'defaultTrialDays', 'trialEnabled', 'trialRequiresCard',
       'currency', 'currencySign', 'couponsEnabled', 'showCouponOnPricing',
-      'moneyBackEnabled', 'moneyBackDays'
+      'moneyBackEnabled', 'moneyBackDays',
+      'priceRoundingEnabled', 'priceRoundingTarget'
     ]
 
     const updateData: Record<string, unknown> = {}

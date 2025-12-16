@@ -3744,6 +3744,10 @@ model BillingSetting {
   sixMonthsDiscount Int @default(15) @map("six_months_discount")
   yearlyDiscount    Int @default(25) @map("yearly_discount")
 
+  // Marketing-Preis-Rundung (z.B. 147€ → 149€)
+  priceRoundingEnabled Boolean @default(true) @map("price_rounding_enabled")
+  priceRoundingTarget  Int     @default(9) @map("price_rounding_target") // Endet auf diese Ziffer (0-9)
+
   // Standard Intervall für Anzeige
   defaultInterval String @default("sixMonths") @map("default_interval") @db.VarChar(20)
 
