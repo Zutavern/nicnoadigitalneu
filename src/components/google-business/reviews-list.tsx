@@ -69,15 +69,17 @@ export function ReviewsList({
   )
 
   return (
-    <Card className={cn('overflow-hidden flex flex-col', className)}>
+    <Card className={cn('overflow-hidden flex flex-col border-slate-200 dark:border-border', className)}>
       {showHeader && (
-        <CardHeader className="pb-3 shrink-0">
-          <CardTitle className="flex items-center justify-between">
+        <CardHeader className="pb-3 shrink-0 bg-slate-50 dark:bg-transparent border-b border-slate-100 dark:border-transparent">
+          <CardTitle className="flex items-center justify-between text-slate-900 dark:text-foreground">
             <div className="flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-500" />
+              <div className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-500/20">
+                <Star className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              </div>
               <span>Bewertungen</span>
               {stats && (
-                <Badge variant="secondary" className="ml-2">
+                <Badge variant="secondary" className="ml-2 bg-slate-100 dark:bg-muted text-slate-700 dark:text-foreground">
                   {stats.average.toFixed(1)} ⭐ ({stats.total})
                 </Badge>
               )}

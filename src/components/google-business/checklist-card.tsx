@@ -26,15 +26,17 @@ export function ChecklistCard({ items, className, maxItems = 6 }: ChecklistCardP
   const totalCount = items.length
 
   return (
-    <Card className={cn('overflow-hidden', className)}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between">
+    <Card className={cn('overflow-hidden border-slate-200 dark:border-border', className)}>
+      <CardHeader className="pb-3 bg-slate-50 dark:bg-transparent border-b border-slate-100 dark:border-transparent">
+        <CardTitle className="flex items-center justify-between text-slate-900 dark:text-foreground">
           <div className="flex items-center gap-2">
-            <ListChecks className="h-5 w-5 text-blue-500" />
+            <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-500/20">
+              <ListChecks className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            </div>
             <span>Nächste Schritte</span>
           </div>
-          <span className="text-sm font-normal text-muted-foreground">
-            {completedCount}/{totalCount} erledigt
+          <span className="text-sm font-medium text-slate-600 dark:text-muted-foreground bg-slate-100 dark:bg-muted px-2 py-0.5 rounded-full">
+            {completedCount}/{totalCount}
           </span>
         </CardTitle>
       </CardHeader>
@@ -68,13 +70,13 @@ export function ChecklistCard({ items, className, maxItems = 6 }: ChecklistCardP
               <div className="flex-1 min-w-0">
                 <p
                   className={cn(
-                    'text-sm font-medium',
-                    item.status === 'complete' && 'text-muted-foreground line-through'
+                    'text-sm font-medium text-slate-900 dark:text-foreground',
+                    item.status === 'complete' && 'text-slate-500 dark:text-muted-foreground line-through'
                   )}
                 >
                   {item.title}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                <p className="text-xs text-slate-600 dark:text-muted-foreground mt-0.5 line-clamp-2">
                   {item.description}
                 </p>
               </div>

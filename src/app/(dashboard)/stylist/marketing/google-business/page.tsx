@@ -65,18 +65,19 @@ export default function GoogleBusinessPage() {
     )
   }
 
-  // Score Ampel Farbe
+  // Score Ampel Farbe - immer gut sichtbar auf dunklem Hintergrund
   const scoreColor = data.score && data.score.total >= 80 
-    ? 'text-green-500' 
+    ? 'text-emerald-400' 
     : data.score && data.score.total >= 50 
-      ? 'text-yellow-500' 
-      : 'text-red-500'
+      ? 'text-amber-400' 
+      : 'text-red-400'
   
-  const scoreBgColor = data.score && data.score.total >= 80 
-    ? 'from-green-500/20 to-green-500/5 border-green-500/30' 
+  // Akzent-Border basierend auf Score
+  const scoreBorderColor = data.score && data.score.total >= 80 
+    ? 'border-emerald-500/50' 
     : data.score && data.score.total >= 50 
-      ? 'from-yellow-500/20 to-yellow-500/5 border-yellow-500/30' 
-      : 'from-red-500/20 to-red-500/5 border-red-500/30'
+      ? 'border-amber-500/50' 
+      : 'border-red-500/50'
 
   return (
     <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
@@ -98,17 +99,23 @@ export default function GoogleBusinessPage() {
       {/* Development Banner */}
       <DevelopmentBadge variant="banner" />
 
-      {/* KPI Hero Section - Score + Metriken */}
+      {/* KPI Hero Section - Score + Metriken - Immer dunkler Hintergrund */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <Card className={cn("border bg-gradient-to-br", scoreBgColor)}>
-          <CardContent className="p-4 lg:p-6">
+        <Card className={cn(
+          "relative overflow-hidden border-2 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900",
+          scoreBorderColor
+        )}>
+          {/* Subtle glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5" />
+          
+          <CardContent className="relative p-4 lg:p-6">
             <div className="flex flex-col lg:flex-row items-center gap-6">
               {/* Score Circle */}
-              <div className="flex items-center gap-4 lg:gap-6 lg:border-r lg:pr-6 border-border/50">
+              <div className="flex items-center gap-4 lg:gap-6 lg:border-r lg:pr-6 border-white/10">
                 <div className="relative">
                   <svg className="w-24 h-24 lg:w-28 lg:h-28 -rotate-90" viewBox="0 0 100 100">
                     <circle
@@ -118,7 +125,7 @@ export default function GoogleBusinessPage() {
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="8"
-                      className="text-muted/20"
+                      className="text-white/10"
                     />
                     <circle
                       cx="50"
@@ -136,11 +143,11 @@ export default function GoogleBusinessPage() {
                     <span className={cn("text-3xl lg:text-4xl font-bold", scoreColor)}>
                       {data.score?.total || 0}
                     </span>
-                    <span className="text-xs text-muted-foreground">von 100</span>
+                    <span className="text-xs text-slate-400">von 100</span>
                   </div>
                 </div>
                 <div className="text-center lg:text-left">
-                  <p className="text-sm font-medium text-muted-foreground">Profil-Score</p>
+                  <p className="text-sm font-medium text-slate-400">Profil-Score</p>
                   <p className={cn("text-lg font-semibold", scoreColor)}>
                     {data.score && data.score.total >= 80 ? 'Ausgezeichnet' : 
                      data.score && data.score.total >= 50 ? 'Verbesserungswürdig' : 'Kritisch'}
@@ -152,28 +159,28 @@ export default function GoogleBusinessPage() {
               <div className="flex-1 w-full">
                 <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
                   {/* Rating */}
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50">
-                    <div className="p-2 rounded-full bg-yellow-500/10">
-                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+                    <div className="p-2 rounded-full bg-amber-500/20">
+                      <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
                     </div>
                     <div>
-                      <p className="text-lg font-bold">{data.reviewStats?.average.toFixed(1)}</p>
-                      <p className="text-xs text-muted-foreground">{data.reviewStats?.total} Bewertungen</p>
+                      <p className="text-lg font-bold text-white">{data.reviewStats?.average.toFixed(1)}</p>
+                      <p className="text-xs text-slate-400">{data.reviewStats?.total} Bewertungen</p>
                     </div>
                   </div>
 
                   {/* Views */}
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50">
-                    <div className="p-2 rounded-full bg-blue-500/10">
-                      <Eye className="h-4 w-4 text-blue-500" />
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+                    <div className="p-2 rounded-full bg-blue-500/20">
+                      <Eye className="h-4 w-4 text-blue-400" />
                     </div>
                     <div>
-                      <p className="text-lg font-bold">{data.insights?.views.current.toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <p className="text-lg font-bold text-white">{data.insights?.views.current.toLocaleString()}</p>
+                      <p className="text-xs text-slate-400 flex items-center gap-1">
                         {data.insights && data.insights.views.change > 0 ? (
-                          <TrendingUp className="h-3 w-3 text-green-500" />
+                          <TrendingUp className="h-3 w-3 text-emerald-400" />
                         ) : (
-                          <TrendingDown className="h-3 w-3 text-red-500" />
+                          <TrendingDown className="h-3 w-3 text-red-400" />
                         )}
                         {data.insights?.views.change}%
                       </p>
@@ -182,39 +189,39 @@ export default function GoogleBusinessPage() {
 
                   {/* Unanswered */}
                   <div className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg",
+                    "flex items-center gap-3 p-3 rounded-lg backdrop-blur-sm",
                     data.reviewStats && data.reviewStats.unanswered > 0 
-                      ? "bg-yellow-500/10 border border-yellow-500/30" 
-                      : "bg-background/50"
+                      ? "bg-amber-500/20 border-2 border-amber-500/50" 
+                      : "bg-white/5 border border-white/10"
                   )}>
-                    <div className="p-2 rounded-full bg-yellow-500/10">
-                      <MessageSquare className="h-4 w-4 text-yellow-500" />
+                    <div className="p-2 rounded-full bg-amber-500/20">
+                      <MessageSquare className="h-4 w-4 text-amber-400" />
                     </div>
                     <div>
-                      <p className="text-lg font-bold">{data.reviewStats?.unanswered}</p>
-                      <p className="text-xs text-muted-foreground">Unbeantwortet</p>
+                      <p className="text-lg font-bold text-white">{data.reviewStats?.unanswered}</p>
+                      <p className="text-xs text-slate-400">Unbeantwortet</p>
                     </div>
                   </div>
 
                   {/* Clicks */}
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50">
-                    <div className="p-2 rounded-full bg-purple-500/10">
-                      <MousePointerClick className="h-4 w-4 text-purple-500" />
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+                    <div className="p-2 rounded-full bg-purple-500/20">
+                      <MousePointerClick className="h-4 w-4 text-purple-400" />
                     </div>
                     <div>
-                      <p className="text-lg font-bold">{data.insights?.websiteClicks.current}</p>
-                      <p className="text-xs text-muted-foreground">Website-Klicks</p>
+                      <p className="text-lg font-bold text-white">{data.insights?.websiteClicks.current}</p>
+                      <p className="text-xs text-slate-400">Website-Klicks</p>
                     </div>
                   </div>
 
                   {/* Buchungen */}
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50">
-                    <div className="p-2 rounded-full bg-green-500/10">
-                      <Calendar className="h-4 w-4 text-green-500" />
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+                    <div className="p-2 rounded-full bg-emerald-500/20">
+                      <Calendar className="h-4 w-4 text-emerald-400" />
                     </div>
                     <div>
-                      <p className="text-lg font-bold">{data.insights?.bookingClicks?.current || 0}</p>
-                      <p className="text-xs text-muted-foreground">Buchungs-Klicks</p>
+                      <p className="text-lg font-bold text-white">{data.insights?.bookingClicks?.current || 0}</p>
+                      <p className="text-xs text-slate-400">Buchungs-Klicks</p>
                     </div>
                   </div>
                 </div>
@@ -273,31 +280,39 @@ export default function GoogleBusinessPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
           >
-            <Card>
+            <Card className="border-slate-200 dark:border-border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Weitere Interaktionen (letzte 28 Tage)</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div className="text-center p-3 rounded-lg bg-muted/50">
-                    <Phone className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-xl font-bold">{data.insights?.phoneClicks.current}</p>
-                    <p className="text-xs text-muted-foreground">Anrufe</p>
+                  <div className="text-center p-4 rounded-xl bg-slate-100 dark:bg-muted/50 border border-slate-200 dark:border-transparent">
+                    <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
+                      <Phone className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-foreground">{data.insights?.phoneClicks.current}</p>
+                    <p className="text-xs text-slate-600 dark:text-muted-foreground font-medium">Anrufe</p>
                   </div>
-                  <div className="text-center p-3 rounded-lg bg-muted/50">
-                    <Navigation className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-xl font-bold">{data.insights?.directionRequests.current}</p>
-                    <p className="text-xs text-muted-foreground">Routen</p>
+                  <div className="text-center p-4 rounded-xl bg-slate-100 dark:bg-muted/50 border border-slate-200 dark:border-transparent">
+                    <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center">
+                      <Navigation className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-foreground">{data.insights?.directionRequests.current}</p>
+                    <p className="text-xs text-slate-600 dark:text-muted-foreground font-medium">Routen</p>
                   </div>
-                  <div className="text-center p-3 rounded-lg bg-muted/50">
-                    <Eye className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-xl font-bold">{data.insights?.searches.current}</p>
-                    <p className="text-xs text-muted-foreground">Suchanfragen</p>
+                  <div className="text-center p-4 rounded-xl bg-slate-100 dark:bg-muted/50 border border-slate-200 dark:border-transparent">
+                    <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center">
+                      <Eye className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-foreground">{data.insights?.searches.current}</p>
+                    <p className="text-xs text-slate-600 dark:text-muted-foreground font-medium">Suchanfragen</p>
                   </div>
-                  <div className="text-center p-3 rounded-lg bg-muted/50">
-                    <MousePointerClick className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-xl font-bold">{data.insights?.websiteClicks.current}</p>
-                    <p className="text-xs text-muted-foreground">Website-Klicks</p>
+                  <div className="text-center p-4 rounded-xl bg-slate-100 dark:bg-muted/50 border border-slate-200 dark:border-transparent">
+                    <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
+                      <MousePointerClick className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-foreground">{data.insights?.websiteClicks.current}</p>
+                    <p className="text-xs text-slate-600 dark:text-muted-foreground font-medium">Website-Klicks</p>
                   </div>
                 </div>
               </CardContent>
@@ -313,10 +328,10 @@ export default function GoogleBusinessPage() {
           className="order-1 xl:order-2"
         >
           <div className="sticky top-6">
-            <Card className="overflow-hidden">
-              <CardHeader className="pb-2 bg-gradient-to-r from-blue-500/10 via-red-500/10 to-yellow-500/10">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Monitor className="h-4 w-4" />
+            <Card className="overflow-hidden border-slate-200 dark:border-border">
+              <CardHeader className="pb-2 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 dark:from-slate-800/50 dark:via-slate-700/50 dark:to-slate-800/50">
+                <CardTitle className="flex items-center gap-2 text-base text-white">
+                  <Monitor className="h-4 w-4 text-blue-400" />
                   So sehen Kunden dich auf Google
                 </CardTitle>
               </CardHeader>

@@ -84,10 +84,12 @@ export function QuickActions({ unansweredReviews = 0, className }: QuickActionsP
   }
 
   return (
-    <Card className={cn('overflow-hidden', className)}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          <Zap className="h-5 w-5 text-yellow-500" />
+    <Card className={cn('overflow-hidden border-slate-200 dark:border-border', className)}>
+      <CardHeader className="pb-3 bg-slate-50 dark:bg-transparent border-b border-slate-100 dark:border-transparent">
+        <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-foreground">
+          <div className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-500/20">
+            <Zap className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          </div>
           <span>Schnellaktionen</span>
         </CardTitle>
       </CardHeader>
@@ -113,14 +115,14 @@ export function QuickActions({ unansweredReviews = 0, className }: QuickActionsP
                     <div className={cn('flex-shrink-0', styles.icon)}>{action.icon}</div>
                     <div className="flex-1 text-left">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{action.label}</span>
+                        <span className="font-medium text-slate-900 dark:text-foreground">{action.label}</span>
                         {action.badge && (
                           <Badge className={cn('h-5 min-w-[20px] px-1.5', styles.badge)}>
                             {action.badge}
                           </Badge>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      <p className="text-xs text-slate-600 dark:text-muted-foreground mt-0.5">
                         {action.description}
                       </p>
                     </div>
