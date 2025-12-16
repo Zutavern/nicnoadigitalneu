@@ -398,7 +398,14 @@ export default function PricingPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -30 }}
               transition={{ duration: 0.5 }}
-              className="grid gap-8 md:grid-cols-2 max-w-5xl mx-auto"
+              className={cn(
+                "grid gap-8 mx-auto",
+                // Dynamisches Grid basierend auf Plananzahl
+                plans.length === 1 && "max-w-md",
+                plans.length === 2 && "max-w-3xl grid-cols-1 md:grid-cols-2",
+                plans.length === 3 && "max-w-5xl grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
+                plans.length >= 4 && "max-w-6xl grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+              )}
             >
               {plans.map((plan, index) => {
                 const monthlyEquivalent = calculateMonthlyEquivalent(plan, selectedInterval)

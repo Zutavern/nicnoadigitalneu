@@ -946,7 +946,13 @@ export default function PlansPage() {
               </TabsList>
 
               <TabsContent value="stylist">
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className={cn(
+                  "grid gap-6",
+                  groupedPlans.STYLIST.length === 1 && "max-w-md mx-auto",
+                  groupedPlans.STYLIST.length === 2 && "grid-cols-1 md:grid-cols-2",
+                  groupedPlans.STYLIST.length === 3 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
+                  groupedPlans.STYLIST.length >= 4 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+                )}>
                   {groupedPlans.STYLIST.map((plan) => (
                     <PlanPreviewCard 
                       key={plan.id}
@@ -957,7 +963,7 @@ export default function PlansPage() {
                     />
                   ))}
                   {groupedPlans.STYLIST.length === 0 && (
-                    <p className="col-span-2 text-center text-muted-foreground py-8">
+                    <p className="col-span-full text-center text-muted-foreground py-8">
                       Keine Stuhlmieter-Pläne vorhanden
                     </p>
                   )}
@@ -965,7 +971,13 @@ export default function PlansPage() {
               </TabsContent>
 
               <TabsContent value="salon">
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className={cn(
+                  "grid gap-6",
+                  groupedPlans.SALON_OWNER.length === 1 && "max-w-md mx-auto",
+                  groupedPlans.SALON_OWNER.length === 2 && "grid-cols-1 md:grid-cols-2",
+                  groupedPlans.SALON_OWNER.length === 3 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
+                  groupedPlans.SALON_OWNER.length >= 4 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+                )}>
                   {groupedPlans.SALON_OWNER.map((plan) => (
                     <PlanPreviewCard 
                       key={plan.id}
@@ -976,7 +988,7 @@ export default function PlansPage() {
                     />
                   ))}
                   {groupedPlans.SALON_OWNER.length === 0 && (
-                    <p className="col-span-2 text-center text-muted-foreground py-8">
+                    <p className="col-span-full text-center text-muted-foreground py-8">
                       Keine Salonbesitzer-Pläne vorhanden
                     </p>
                   )}
@@ -1041,7 +1053,13 @@ function PlanGrid({
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className={cn(
+      "grid gap-6",
+      plans.length === 1 && "max-w-md mx-auto",
+      plans.length === 2 && "grid-cols-1 md:grid-cols-2",
+      plans.length === 3 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
+      plans.length >= 4 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+    )}>
       {plans.map((plan, index) => (
         <motion.div
           key={plan.id}
