@@ -97,27 +97,49 @@ const getTrustElements = (trialDays: number) => [
   { icon: Headphones, text: 'Deutscher Support', description: 'Mo-Fr 9-18 Uhr' },
 ]
 
-// Testimonials
-const testimonials = [
-  {
-    quote: "Seit ich NICNOA nutze, habe ich 40% mehr Buchungen und viel weniger Verwaltungsaufwand. Die Analytics helfen mir, mein Business zu optimieren.",
-    author: "Sarah M.",
-    role: "Stuhlmieterin, München",
-    rating: 5
-  },
-  {
-    quote: "Die beste Investition für meinen Salon-Space. Die Belvo-Integration und automatisierte Buchhaltung sparen mir Stunden pro Woche.",
-    author: "Michael K.",
-    role: "Salonbesitzer, Berlin",
-    rating: 5
-  },
-  {
-    quote: "Endlich eine Software, die versteht, was wir Stuhlmieter brauchen. Der Support ist fantastisch und die Marketing-Tools sind ein Game-Changer!",
-    author: "Lisa T.",
-    role: "Stuhlmieterin, Hamburg",
-    rating: 5
-  },
-]
+// Testimonials nach Rolle getrennt
+const testimonialsByRole = {
+  stylist: [
+    {
+      quote: "Seit ich NICNOA nutze, habe ich 40% mehr Buchungen und viel weniger Verwaltungsaufwand. Die Analytics helfen mir, mein Business zu optimieren.",
+      author: "Sarah M.",
+      role: "Stuhlmieterin, München",
+      rating: 5
+    },
+    {
+      quote: "Endlich eine Software, die versteht, was wir Stuhlmieter brauchen. Der Support ist fantastisch und die Marketing-Tools sind ein Game-Changer!",
+      author: "Lisa T.",
+      role: "Stuhlmieterin, Hamburg",
+      rating: 5
+    },
+    {
+      quote: "Als Teilzeit-Stylistin ist Flexibilität für mich das A und O. NICNOA gibt mir genau das – plus einen professionellen Auftritt gegenüber meinen Kunden.",
+      author: "Maria K.",
+      role: "Stuhlmieterin, Köln",
+      rating: 5
+    },
+  ],
+  salon: [
+    {
+      quote: "Die beste Investition für meinen Salon-Space. Die Belvo-Integration und automatisierte Buchhaltung sparen mir Stunden pro Woche.",
+      author: "Michael K.",
+      role: "Salonbesitzer, Berlin",
+      rating: 5
+    },
+    {
+      quote: "Mit NICNOA verwalte ich 12 Stuhlmieter problemlos. Die Abrechnungen laufen automatisch und meine Auslastung ist auf 95% gestiegen!",
+      author: "Sandra W.",
+      role: "Salonbesitzerin, Frankfurt",
+      rating: 5
+    },
+    {
+      quote: "Das ERP-System hat unseren gesamten Workflow revolutioniert. Endlich alles an einem Ort – von der Buchung bis zur Buchhaltung.",
+      author: "Thomas R.",
+      role: "Salonbesitzer, Stuttgart",
+      rating: 5
+    },
+  ]
+}
 
 // FAQs
 const faqs = [
@@ -687,55 +709,73 @@ export default function PricingPage() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="text-center mb-16"
+          key={`testimonials-header-${selectedRole}`}
         >
           <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
             <Heart className="w-4 h-4 mr-2 fill-current" />
-            Das sagen unsere Stuhlmieter
+            {selectedRole === 'stylist' ? 'Das sagen unsere Stuhlmieter' : 'Das sagen unsere Salonbesitzer'}
           </Badge>
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Über 500+ zufriedene Stuhlmieter
+            {selectedRole === 'stylist' 
+              ? 'Über 500+ zufriedene Stuhlmieter' 
+              : 'Vertrauen von 200+ Salonbesitzern'}
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Schließ dich der wachsenden Community von Stuhlmietern und Salonbesitzern an
+            {selectedRole === 'stylist'
+              ? 'Schließ dich der wachsenden Community von Stuhlmietern an'
+              : 'Entdecke, wie Salonbesitzer ihre Spaces erfolgreicher verwalten'}
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {testimonials.map((testimonial, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="relative group"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative h-full p-8 rounded-2xl bg-card border hover:border-primary/30 transition-all duration-300">
-                {/* Rating Stars */}
-                <div className="flex gap-1 mb-5">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                
-                <blockquote className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                  &ldquo;{testimonial.quote}&rdquo;
-                </blockquote>
-                
-                <div className="flex items-center gap-4 pt-5 border-t border-border">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
-                    {testimonial.author.charAt(0)}
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={`testimonials-${selectedRole}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto"
+          >
+            {testimonialsByRole[selectedRole].map((testimonial, index) => (
+              <motion.div
+                key={`${selectedRole}-${index}`}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="relative group"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative h-full p-8 rounded-2xl bg-card border hover:border-primary/30 transition-all duration-300">
+                  {/* Rating Stars */}
+                  <div className="flex gap-1 mb-5">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
+                    ))}
                   </div>
-                  <div>
-                    <p className="font-semibold">{testimonial.author}</p>
-                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                  
+                  <blockquote className="text-lg text-muted-foreground mb-6 leading-relaxed">
+                    &ldquo;{testimonial.quote}&rdquo;
+                  </blockquote>
+                  
+                  <div className="flex items-center gap-4 pt-5 border-t border-border">
+                    <div className={cn(
+                      "w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg",
+                      selectedRole === 'stylist' 
+                        ? "bg-gradient-to-br from-violet-500 to-purple-600"
+                        : "bg-gradient-to-br from-blue-500 to-cyan-500"
+                    )}>
+                      {testimonial.author.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-semibold">{testimonial.author}</p>
+                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
       </section>
 
       {/* FAQ Section */}

@@ -9,6 +9,7 @@ interface DotNavigationProps {
   autoPlayProgress?: number // 0-100
   primaryColor?: string
   labels?: string[]
+  showNumbers?: boolean
 }
 
 export function DotNavigation({
@@ -18,9 +19,10 @@ export function DotNavigation({
   autoPlayProgress = 0,
   primaryColor = 'hsl(var(--primary))',
   labels = [],
+  showNumbers = true,
 }: DotNavigationProps) {
   return (
-    <div className="flex items-center justify-center gap-3">
+    <div className="flex items-center justify-center gap-4">
       {Array.from({ length: totalSlides }).map((_, index) => {
         const isActive = index === activeIndex
         const label = labels[index]
@@ -34,53 +36,71 @@ export function DotNavigation({
           >
             {/* Tooltip */}
             {label && (
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                 <div className="bg-card border border-border rounded-md px-2 py-1 text-xs whitespace-nowrap shadow-lg">
                   {label}
                 </div>
               </div>
             )}
             
-            {/* Dot Container */}
+            {/* Number/Dot Container */}
             <div className="relative">
               {/* Progress Ring (für aktiven Dot) */}
               {isActive && autoPlayProgress > 0 && (
                 <svg
-                  className="absolute -inset-1 w-6 h-6 -rotate-90"
-                  viewBox="0 0 24 24"
+                  className="absolute -inset-1.5 w-10 h-10 -rotate-90"
+                  viewBox="0 0 40 40"
                 >
                   <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
+                    cx="20"
+                    cy="20"
+                    r="17"
                     fill="none"
-                    stroke={`${primaryColor}30`}
+                    stroke={`${primaryColor}20`}
                     strokeWidth="2"
                   />
                   <motion.circle
-                    cx="12"
-                    cy="12"
-                    r="10"
+                    cx="20"
+                    cy="20"
+                    r="17"
                     fill="none"
                     stroke={primaryColor}
                     strokeWidth="2"
                     strokeLinecap="round"
-                    strokeDasharray={62.83}
-                    strokeDashoffset={62.83 * (1 - autoPlayProgress / 100)}
+                    strokeDasharray={106.81}
+                    strokeDashoffset={106.81 * (1 - autoPlayProgress / 100)}
                   />
                 </svg>
               )}
               
-              {/* Dot */}
-              <motion.div
-                className="w-3 h-3 rounded-full transition-all duration-300"
-                style={{
-                  backgroundColor: isActive ? primaryColor : `${primaryColor}30`,
-                  scale: isActive ? 1.2 : 1,
-                }}
-                whileHover={{ scale: 1.3 }}
-                whileTap={{ scale: 0.9 }}
-              />
+              {/* Number Button */}
+              {showNumbers ? (
+                <motion.div
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300"
+                  style={{
+                    backgroundColor: isActive ? primaryColor : 'transparent',
+                    color: isActive ? 'white' : 'hsl(var(--muted-foreground))',
+                    border: isActive ? 'none' : '2px solid hsl(var(--border))',
+                  }}
+                  whileHover={{ 
+                    scale: 1.15,
+                    backgroundColor: isActive ? primaryColor : 'hsl(var(--muted))',
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {index + 1}
+                </motion.div>
+              ) : (
+                <motion.div
+                  className="w-3 h-3 rounded-full transition-all duration-300"
+                  style={{
+                    backgroundColor: isActive ? primaryColor : `${primaryColor}30`,
+                    scale: isActive ? 1.2 : 1,
+                  }}
+                  whileHover={{ scale: 1.3 }}
+                  whileTap={{ scale: 0.9 }}
+                />
+              )}
             </div>
           </button>
         )
