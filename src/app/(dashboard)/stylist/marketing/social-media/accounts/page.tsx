@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
@@ -125,7 +125,7 @@ const platformConfig: Record<string, PlatformConfig> = {
   },
 }
 
-export default function SocialMediaAccounts() {
+function SocialMediaAccountsContent() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null)
@@ -520,5 +520,18 @@ export default function SocialMediaAccounts() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+// Wrapper mit Suspense für useSearchParams
+export default function SocialMediaAccounts() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <SocialMediaAccountsContent />
+    </Suspense>
   )
 }

@@ -3,6 +3,7 @@
 import { StylistSidebar } from '@/components/dashboard/stylist-sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { VideoCallProvider } from '@/components/providers/video-call-provider'
+import { PaywallProvider } from '@/components/providers/paywall-provider'
 import { SidebarProvider, useSidebar } from '@/hooks/use-sidebar'
 import { cn } from '@/lib/utils'
 
@@ -43,7 +44,9 @@ export default function StylistLayout({
   return (
     <SidebarProvider>
       <VideoCallProvider>
-        <StylistLayoutContent>{children}</StylistLayoutContent>
+        <PaywallProvider userType="STYLIST">
+          <StylistLayoutContent>{children}</StylistLayoutContent>
+        </PaywallProvider>
       </VideoCallProvider>
     </SidebarProvider>
   )

@@ -72,6 +72,9 @@ export function generateOAuthState(): string {
   return randomBytes(32).toString('hex')
 }
 
+// Alias für Kompatibilität
+export const generateState = generateOAuthState
+
 /**
  * Prüft ob ein Token bald abläuft (innerhalb von 5 Minuten)
  */

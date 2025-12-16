@@ -96,6 +96,7 @@ export async function POST(request: Request) {
       planType,
       priceMonthly,
       priceQuarterly,
+      priceSixMonths,
       priceYearly,
       features = [],
       maxChairs,
@@ -105,6 +106,7 @@ export async function POST(request: Request) {
       isPopular = false,
       sortOrder = 0,
       trialDays = 14,
+      includedAiCreditsEur = 0,
       syncToStripe = false
     } = body
 
@@ -194,6 +196,7 @@ export async function POST(request: Request) {
         planType,
         priceMonthly,
         priceQuarterly: priceQuarterly || priceMonthly * 3 * 0.9, // 10% Rabatt
+        priceSixMonths: priceSixMonths || priceMonthly * 6 * 0.85, // 15% Rabatt
         priceYearly: priceYearly || priceMonthly * 12 * 0.8, // 20% Rabatt
         features,
         maxChairs,
@@ -203,6 +206,7 @@ export async function POST(request: Request) {
         isPopular,
         sortOrder,
         trialDays,
+        includedAiCreditsEur,
         stripeProductId,
         stripePriceMonthly,
         stripePriceQuarterly,

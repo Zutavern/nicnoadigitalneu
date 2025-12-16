@@ -18,7 +18,15 @@ import {
   RefreshCw,
   ExternalLink,
   Zap,
-  Shield
+  Shield,
+  FileText,
+  Download,
+  Receipt,
+  Pause,
+  Play,
+  ArrowUpRight,
+  ArrowDownRight,
+  TrendingUp
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -69,6 +77,21 @@ interface SubscriptionData {
   hasActiveSubscription: boolean
 }
 
+interface Invoice {
+  id: string
+  number: string | null
+  status: string | null
+  amount: number
+  currency: string
+  created: number
+  periodStart: number
+  periodEnd: number
+  hostedInvoiceUrl: string | null
+  invoicePdf: string | null
+  paid: boolean
+  description: string
+}
+
 function BillingContent() {
   const searchParams = useSearchParams()
   const [data, setData] = useState<SubscriptionData | null>(null)
@@ -77,6 +100,18 @@ function BillingContent() {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [isCanceling, setIsCanceling] = useState(false)
   const [isSubscribing, setIsSubscribing] = useState<string | null>(null)
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [isLoadingInvoices, setIsLoadingInvoices] = useState(false)
+  const [isPausing, setIsPausing] = useState(false)
+  const [changePlanDialogOpen, setChangePlanDialogOpen] = useState(false)
+  const [selectedNewPlan, setSelectedNewPlan] = useState<string | null>(null)
+  const [prorationPreview, setProrationPreview] = useState<{
+    immediateCharge: number
+    nextInvoice: number
+    isUpgrade: boolean
+  } | null>(null)
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false)
+  const [isChangingPlan, setIsChangingPlan] = useState(false)
 
   // Handle success/cancel from Stripe
   useEffect(() => {
@@ -92,7 +127,22 @@ function BillingContent() {
 
   useEffect(() => {
     fetchSubscription()
+    fetchInvoices()
   }, [])
+
+  const fetchInvoices = async () => {
+    setIsLoadingInvoices(true)
+    try {
+      const res = await fetch('/api/stripe/invoices')
+      if (!res.ok) throw new Error('Failed to fetch invoices')
+      const { invoices: invoiceData } = await res.json()
+      setInvoices(invoiceData || [])
+    } catch (error) {
+      console.error('Error fetching invoices:', error)
+    } finally {
+      setIsLoadingInvoices(false)
+    }
+  }
 
   const fetchSubscription = async () => {
     setIsLoading(true)
@@ -132,6 +182,74 @@ function BillingContent() {
       toast.error(err.message || 'Fehler beim Abonnieren')
     } finally {
       setIsSubscribing(null)
+    }
+  }
+
+  const handlePauseSubscription = async () => {
+    setIsPausing(true)
+    try {
+      const res = await fetch('/api/stripe/subscription/pause', {
+        method: data?.subscription?.status === 'paused' ? 'DELETE' : 'POST'
+      })
+
+      if (!res.ok) throw new Error('Failed to pause/resume subscription')
+
+      const result = await res.json()
+      toast.success(result.message)
+      fetchSubscription()
+    } catch (error) {
+      toast.error('Fehler beim Ändern des Abonnement-Status')
+      console.error(error)
+    } finally {
+      setIsPausing(false)
+    }
+  }
+
+  const handleLoadProrationPreview = async (planId: string) => {
+    setSelectedNewPlan(planId)
+    setIsLoadingPreview(true)
+    try {
+      const res = await fetch(`/api/stripe/subscription/change?planId=${planId}&interval=${selectedInterval.toUpperCase()}`)
+      if (!res.ok) throw new Error('Failed to load preview')
+      
+      const result = await res.json()
+      setProrationPreview(result.preview)
+      setChangePlanDialogOpen(true)
+    } catch (error) {
+      toast.error('Fehler beim Laden der Vorschau')
+      console.error(error)
+    } finally {
+      setIsLoadingPreview(false)
+    }
+  }
+
+  const handleChangePlan = async () => {
+    if (!selectedNewPlan) return
+    
+    setIsChangingPlan(true)
+    try {
+      const res = await fetch('/api/stripe/subscription/change', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          planId: selectedNewPlan,
+          interval: selectedInterval.toUpperCase()
+        })
+      })
+
+      if (!res.ok) throw new Error('Failed to change plan')
+
+      const result = await res.json()
+      toast.success(result.message)
+      setChangePlanDialogOpen(false)
+      setProrationPreview(null)
+      setSelectedNewPlan(null)
+      fetchSubscription()
+    } catch (error) {
+      toast.error('Fehler beim Plan-Wechsel')
+      console.error(error)
+    } finally {
+      setIsChangingPlan(false)
     }
   }
 
@@ -315,12 +433,47 @@ function BillingContent() {
                 </div>
               )}
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={fetchSubscription}>
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Aktualisieren
                 </Button>
-                {!data.subscription.cancelAtPeriodEnd && (
+                
+                {/* Pause/Resume Button */}
+                {data.subscription.status === 'active' && !data.subscription.cancelAtPeriodEnd && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handlePauseSubscription}
+                    disabled={isPausing}
+                  >
+                    {isPausing ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Pause className="mr-2 h-4 w-4" />
+                    )}
+                    Pausieren
+                  </Button>
+                )}
+                
+                {data.subscription.status === 'paused' && (
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    onClick={handlePauseSubscription}
+                    disabled={isPausing}
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    {isPausing ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Play className="mr-2 h-4 w-4" />
+                    )}
+                    Fortsetzen
+                  </Button>
+                )}
+                
+                {!data.subscription.cancelAtPeriodEnd && data.subscription.status !== 'paused' && (
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -485,7 +638,27 @@ function BillingContent() {
                       <Check className="mr-2 h-4 w-4" />
                       Aktiver Plan
                     </Button>
-                  ) : (
+                  ) : data.hasActiveSubscription && data.currentPlan?.id !== plan.id ? (
+                    // Plan-Wechsel Button mit Proration-Vorschau
+                    <Button
+                      className="w-full"
+                      variant={plan.isPopular ? 'default' : 'outline'}
+                      onClick={() => handleLoadProrationPreview(plan.id)}
+                      disabled={isLoadingPreview || isSubscribing !== null}
+                    >
+                      {isLoadingPreview && selectedNewPlan === plan.id ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : Number(plan.priceMonthly) > Number(data.currentPlan?.priceMonthly || 0) ? (
+                        <ArrowUpRight className="mr-2 h-4 w-4" />
+                      ) : (
+                        <ArrowDownRight className="mr-2 h-4 w-4" />
+                      )}
+                      {Number(plan.priceMonthly) > Number(data.currentPlan?.priceMonthly || 0) 
+                        ? 'Upgrade' 
+                        : 'Downgrade'}
+                    </Button>
+                  ) : !data.hasActiveSubscription ? (
+                    // Neu-Abo Button
                     <Button
                       className="w-full"
                       variant={plan.isPopular ? 'default' : 'outline'}
@@ -497,8 +670,13 @@ function BillingContent() {
                       ) : (
                         <ArrowRight className="mr-2 h-4 w-4" />
                       )}
-                      {data.hasActiveSubscription ? 'Wechseln' : 'Jetzt starten'}
+                      Jetzt starten
                     </Button>
+                  ) : (
+                    // Aktueller Plan
+                    <Badge variant="secondary" className="w-full justify-center py-2">
+                      Aktueller Plan
+                    </Badge>
                   )}
                 </CardFooter>
               </Card>
@@ -506,6 +684,131 @@ function BillingContent() {
           )
         })}
       </div>
+
+      {/* Invoices Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Receipt className="h-5 w-5 text-primary" />
+                  Rechnungen
+                </CardTitle>
+                <CardDescription>Ihre bisherigen Rechnungen und Zahlungen</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={fetchInvoices} disabled={isLoadingInvoices}>
+                {isLoadingInvoices ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoadingInvoices ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : invoices.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p>Noch keine Rechnungen vorhanden</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {invoices.slice(0, 6).map((invoice) => (
+                  <div
+                    key={invoice.id}
+                    className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                        invoice.paid 
+                          ? 'bg-green-500/10 text-green-500' 
+                          : 'bg-yellow-500/10 text-yellow-500'
+                      }`}>
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-medium">
+                          Rechnung {invoice.number || invoice.id.slice(0, 8)}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(invoice.created).toLocaleDateString('de-DE', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="font-semibold">
+                          {formatPrice(invoice.amount)}
+                        </p>
+                        <Badge 
+                          variant={invoice.paid ? 'default' : 'secondary'}
+                          className={invoice.paid ? 'bg-green-500/10 text-green-500 border-green-500/20' : ''}
+                        >
+                          {invoice.paid ? 'Bezahlt' : invoice.status}
+                        </Badge>
+                      </div>
+                      <div className="flex gap-2">
+                        {invoice.hostedInvoiceUrl && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            asChild
+                            title="Rechnung ansehen"
+                          >
+                            <a href={invoice.hostedInvoiceUrl} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
+                        {invoice.invoicePdf && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            asChild
+                            title="PDF herunterladen"
+                          >
+                            <a href={invoice.invoicePdf} target="_blank" rel="noopener noreferrer">
+                              <Download className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {invoices.length > 6 && (
+                  <div className="text-center pt-4">
+                    <Button variant="outline" size="sm" asChild>
+                      <a href="#" onClick={async (e) => {
+                        e.preventDefault()
+                        const res = await fetch('/api/stripe/portal', { method: 'POST' })
+                        const { url } = await res.json()
+                        if (url) window.location.href = url
+                      }}>
+                        Alle Rechnungen anzeigen
+                        <ExternalLink className="ml-2 h-4 w-4" />
+                      </a>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Security Notice */}
       <Card className="bg-muted/50">
@@ -554,6 +857,92 @@ function BillingContent() {
             >
               {isCanceling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Ja, kündigen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Plan-Wechsel Dialog */}
+      <Dialog open={changePlanDialogOpen} onOpenChange={setChangePlanDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {prorationPreview?.isUpgrade ? (
+                <>
+                  <ArrowUpRight className="h-5 w-5 text-emerald-500" />
+                  Upgrade bestätigen
+                </>
+              ) : (
+                <>
+                  <ArrowDownRight className="h-5 w-5 text-amber-500" />
+                  Downgrade bestätigen
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              {prorationPreview?.isUpgrade 
+                ? 'Sie wechseln zu einem höheren Plan mit mehr Funktionen.'
+                : 'Sie wechseln zu einem niedrigeren Plan mit weniger Funktionen.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {prorationPreview && (
+            <div className="py-4 space-y-4">
+              <div className="p-4 rounded-lg bg-muted/50 border space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Sofort fällig:</span>
+                  <span className="font-semibold text-lg">
+                    {prorationPreview.immediateCharge > 0 
+                      ? `€${prorationPreview.immediateCharge.toFixed(2)}`
+                      : '€0,00 (Gutschrift)'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Nächste Rechnung:</span>
+                  <span>€{prorationPreview.nextInvoice.toFixed(2)}</span>
+                </div>
+              </div>
+              
+              {prorationPreview.immediateCharge > 0 && (
+                <Alert className="bg-blue-500/10 border-blue-500/20">
+                  <TrendingUp className="h-4 w-4 text-blue-500" />
+                  <AlertDescription className="text-sm">
+                    Der Betrag wird anteilig berechnet und sofort von Ihrer Zahlungsmethode abgebucht.
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              {prorationPreview.immediateCharge <= 0 && (
+                <Alert className="bg-emerald-500/10 border-emerald-500/20">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  <AlertDescription className="text-sm">
+                    Die Differenz wird Ihrem Guthaben gutgeschrieben und bei der nächsten Rechnung verrechnet.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setChangePlanDialogOpen(false)
+                setProrationPreview(null)
+                setSelectedNewPlan(null)
+              }}
+            >
+              Abbrechen
+            </Button>
+            <Button 
+              onClick={handleChangePlan}
+              disabled={isChangingPlan}
+              className={prorationPreview?.isUpgrade 
+                ? 'bg-emerald-600 hover:bg-emerald-700'
+                : 'bg-amber-600 hover:bg-amber-700'}
+            >
+              {isChangingPlan && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Plan wechseln
             </Button>
           </DialogFooter>
         </DialogContent>

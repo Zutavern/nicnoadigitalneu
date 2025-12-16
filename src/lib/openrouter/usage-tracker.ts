@@ -1,6 +1,11 @@
 import { prisma } from '@/lib/prisma'
 import { UsageLogEntry } from './types'
-import { calculateCreditsFromUsd } from '@/lib/credits/pricing'
+import { calculateCreditsFromUsd, CREDIT_VALUE_EUR } from '@/lib/credits/pricing'
+import { 
+  calculateAIPricing, 
+  trackAndReportAIUsage,
+  checkSpendingLimit 
+} from '@/lib/stripe/metered-billing'
 
 // Feature-Labels für lesbare Beschreibungen
 const FEATURE_LABELS: Record<string, string> = {
@@ -13,13 +18,38 @@ const FEATURE_LABELS: Record<string, string> = {
   ai_usage: 'AI-Nutzung',
 }
 
+// Category mapping for model types
+const IMAGE_VIDEO_CATEGORIES = ['images', 'image', 'video', 'videos']
+
 /**
- * Loggt einen AI-Request in die Datenbank UND zieht Credits ab
+ * Loggt einen AI-Request in die Datenbank UND berechnet Kosten aus DB-Preisen
+ * METERED BILLING VERSION - Nutzt AIModelConfig für dynamische Preise
  */
 export async function logAIUsage(entry: UsageLogEntry): Promise<string | null> {
   try {
-    // Berechne Credits falls nicht angegeben
-    const creditsUsed = entry.creditsUsed ?? calculateCreditsFromUsd(entry.costUsd)
+    // Ermittle modelKey für DB-Lookup
+    const modelKey = entry.model.includes('/') 
+      ? entry.model 
+      : `${entry.provider}/${entry.model}`
+    
+    // Prüfe ob Image/Video Modell
+    const isImageOrVideo = ['image_generation', 'video_generation'].includes(entry.feature || '') ||
+      IMAGE_VIDEO_CATEGORIES.some(cat => entry.requestType?.includes(cat))
+
+    // Berechne Preise aus der Datenbank
+    const pricing = await calculateAIPricing({
+      modelKey,
+      inputTokens: entry.inputTokens,
+      outputTokens: entry.outputTokens,
+      isImageOrVideo,
+    })
+
+    // Nutze DB-Preis oder Fallback auf übergebene Kosten
+    const costUsd = pricing.costUsd > 0 ? pricing.costUsd : entry.costUsd
+    const priceUsd = pricing.priceUsd > 0 ? pricing.priceUsd : (entry.costUsd * 1.4) // 40% default margin
+    
+    // Konvertiere zu Credits (für Legacy-Kompatibilität)
+    const creditsUsed = entry.creditsUsed ?? calculateCreditsFromUsd(priceUsd)
     
     // Verwende Prisma.$executeRaw für neue Felder bis TypeScript-Server aktualisiert
     const log = await prisma.aIUsageLog.create({
@@ -33,7 +63,7 @@ export async function logAIUsage(entry: UsageLogEntry): Promise<string | null> {
         inputTokens: entry.inputTokens,
         outputTokens: entry.outputTokens,
         totalTokens: entry.totalTokens,
-        costUsd: entry.costUsd,
+        costUsd: costUsd,
         responseTimeMs: entry.responseTimeMs,
         success: entry.success,
         errorMessage: entry.errorMessage,
@@ -42,6 +72,11 @@ export async function logAIUsage(entry: UsageLogEntry): Promise<string | null> {
           feature: entry.feature,
           creditsUsed,
           creditsPaid: entry.creditsPaid ?? false,
+          // Neue Metered-Billing-Felder
+          baseCostUsd: costUsd,
+          priceUsd,
+          marginPercent: pricing.marginPercent,
+          modelKey,
         },
       },
     })
@@ -57,7 +92,25 @@ export async function logAIUsage(entry: UsageLogEntry): Promise<string | null> {
       `
     }
     
-    // Ziehe Credits ab, wenn erfolgreich und userId vorhanden
+    // METERED BILLING: Melde Nutzung an Stripe und update SpendingLimit
+    if (entry.success && entry.userId && priceUsd > 0) {
+      try {
+        await trackAndReportAIUsage({
+          userId: entry.userId,
+          modelKey,
+          feature: entry.feature || entry.requestType || 'ai_usage',
+          inputTokens: entry.inputTokens,
+          outputTokens: entry.outputTokens,
+          isImageOrVideo,
+          metadata: entry.metadata as Record<string, unknown>,
+        })
+      } catch (stripeError) {
+        // Stripe-Fehler sollten den Hauptprozess nicht blockieren
+        console.error('Error reporting to Stripe:', stripeError)
+      }
+    }
+    
+    // Legacy Credit-Abzug (optional, für Transition)
     if (entry.success && entry.userId && creditsUsed > 0) {
       await deductCreditsForUsage(entry.userId, creditsUsed, entry.requestType || 'ai_usage', log.id)
     }
@@ -67,6 +120,24 @@ export async function logAIUsage(entry: UsageLogEntry): Promise<string | null> {
     // Logging sollte nie den Hauptprozess blockieren
     console.error('Error logging AI usage:', error)
     return null
+  }
+}
+
+/**
+ * Prüft vor einer AI-Anfrage ob der User sein Limit erreicht hat
+ */
+export async function canUserUseAI(userId: string): Promise<{
+  allowed: boolean
+  message?: string
+  percentageUsed: number
+  remainingEur: number
+}> {
+  const limit = await checkSpendingLimit(userId)
+  return {
+    allowed: limit.canUseAI,
+    message: limit.message,
+    percentageUsed: limit.percentageUsed,
+    remainingEur: limit.remainingEur,
   }
 }
 

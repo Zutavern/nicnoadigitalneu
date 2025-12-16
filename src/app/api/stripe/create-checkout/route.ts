@@ -1,97 +1,88 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { stripe, isStripeConfigured } from '@/lib/stripe-server'
-import { PRICING_PLANS, PlanId } from '@/lib/stripe'
-import { prisma } from '@/lib/prisma'
+import { isStripeConfigured } from '@/lib/stripe-server'
+import { stripeService } from '@/lib/stripe/stripe-service'
+import { BillingInterval } from '@prisma/client'
+
+interface CheckoutRequest {
+  planId: string
+  interval: string
+}
 
 export async function POST(req: NextRequest) {
   try {
-    if (!isStripeConfigured || !stripe) {
-      return NextResponse.json({ error: 'Stripe ist nicht konfiguriert' }, { status: 503 })
+    if (!isStripeConfigured) {
+      return NextResponse.json(
+        { error: 'Stripe ist nicht konfiguriert' }, 
+        { status: 503 }
+      )
     }
 
     const session = await auth()
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
+    if (!session?.user?.id || !session?.user?.email) {
+      return NextResponse.json(
+        { error: 'Nicht autorisiert' }, 
+        { status: 401 }
+      )
     }
 
-    const { planId } = await req.json() as { planId: PlanId }
+    const body = await req.json() as CheckoutRequest
+    const { planId, interval } = body
 
-    if (!planId || !PRICING_PLANS[planId]) {
-      return NextResponse.json({ error: 'Ungültiger Plan' }, { status: 400 })
+    // Validierung
+    if (!planId) {
+      return NextResponse.json(
+        { error: 'Plan ID ist erforderlich' }, 
+        { status: 400 }
+      )
     }
 
-    const plan = PRICING_PLANS[planId]
+    // Interval validieren (Standard: MONTHLY)
+    const validIntervals: BillingInterval[] = ['MONTHLY', 'QUARTERLY', 'SIX_MONTHS', 'YEARLY']
+    const selectedInterval: BillingInterval = validIntervals.includes(interval as BillingInterval) 
+      ? (interval as BillingInterval) 
+      : 'MONTHLY'
 
-    if (!plan.priceId) {
-      return NextResponse.json({ error: 'Dieser Plan hat keinen Preis' }, { status: 400 })
-    }
+    // Customer erstellen oder abrufen
+    const customerId = await stripeService.getOrCreateCustomer(
+      session.user.id,
+      session.user.email,
+      session.user.name || undefined
+    )
 
-    // Get or create Stripe customer
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+    // URLs für Redirect
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    
+    // Bestimme die Rückleitung basierend auf der User-Rolle
+    const userRole = session.user.role || 'STYLIST'
+    const dashboardPath = userRole === 'SALON_OWNER' ? '/salon' : '/stylist'
+
+    // Checkout Session erstellen
+    const checkoutSession = await stripeService.createSubscriptionCheckout({
+      customerId,
+      planId,
+      interval: selectedInterval,
+      userId: session.user.id,
+      successUrl: `${baseUrl}${dashboardPath}?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${baseUrl}/preise?canceled=true`
     })
 
-    if (!user) {
-      return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
-    }
-
-    let customerId = user.stripeCustomerId
-
-    if (!customerId) {
-      // Create Stripe customer
-      const customer = await stripe.customers.create({
-        email: user.email!,
-        name: user.name || undefined,
-        metadata: {
-          userId: user.id,
-        },
-      })
-
-      customerId = customer.id
-
-      // Save customer ID to user
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { stripeCustomerId: customerId },
-      })
-    }
-
-    // Create checkout session
-    const checkoutSession = await stripe.checkout.sessions.create({
-      customer: customerId,
-      line_items: [
-        {
-          price: plan.priceId,
-          quantity: 1,
-        },
-      ],
-      mode: 'subscription',
-      success_url: `${process.env.NEXTAUTH_URL}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXTAUTH_URL}/preise?canceled=true`,
-      subscription_data: {
-        trial_period_days: 14,
-        metadata: {
-          userId: user.id,
-          planId: plan.id,
-        },
-      },
-      allow_promotion_codes: true,
-      billing_address_collection: 'required',
-      metadata: {
-        userId: user.id,
-        planId: plan.id,
-      },
+    return NextResponse.json({ 
+      url: checkoutSession.url,
+      sessionId: checkoutSession.id
     })
 
-    return NextResponse.json({ url: checkoutSession.url })
   } catch (error) {
     console.error('Checkout error:', error)
+    
+    const message = error instanceof Error 
+      ? error.message 
+      : 'Fehler beim Erstellen der Checkout-Session'
+    
     return NextResponse.json(
-      { error: 'Fehler beim Erstellen der Checkout-Session' },
+      { error: message },
       { status: 500 }
     )
   }
 }
-

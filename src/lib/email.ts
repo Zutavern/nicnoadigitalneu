@@ -656,6 +656,93 @@ export const emails = {
       data: { userName, verifyLink },
     })
   },
+
+  /**
+   * Send payment failed notification email
+   */
+  sendPaymentFailed: async (
+    email: string,
+    userName: string,
+    amount?: string,
+    invoiceUrl?: string
+  ) => {
+    return sendEmail({
+      to: email,
+      templateSlug: 'payment-failed',
+      subject: 'Zahlungsproblem - Bitte aktualisieren Sie Ihre Zahlungsmethode',
+      data: {
+        userName,
+        amount: amount || 'Nicht verfügbar',
+        invoiceUrl: invoiceUrl || '',
+        portalUrl: `${process.env.NEXTAUTH_URL}/dashboard/settings/billing`,
+      },
+    })
+  },
+
+  /**
+   * Send trial ending soon notification email
+   */
+  sendTrialEndingSoon: async (
+    email: string,
+    userName: string,
+    trialEndDate: string,
+    daysRemaining: number,
+    planName?: string
+  ) => {
+    return sendEmail({
+      to: email,
+      templateSlug: 'trial-ending',
+      subject: `Ihre Testphase endet in ${daysRemaining} Tagen`,
+      data: {
+        userName,
+        trialEndDate,
+        daysRemaining: daysRemaining.toString(),
+        planName: planName || 'Premium',
+        upgradeUrl: `${process.env.NEXTAUTH_URL}/preise`,
+      },
+    })
+  },
+
+  /**
+   * Send subscription renewed notification email
+   */
+  sendSubscriptionRenewed: async (
+    email: string,
+    userName: string,
+    planName: string,
+    amount: string,
+    nextBillingDate: string
+  ) => {
+    return sendEmail({
+      to: email,
+      templateSlug: 'subscription-renewed',
+      data: {
+        userName,
+        planName,
+        amount,
+        nextBillingDate,
+      },
+    })
+  },
+
+  /**
+   * Send subscription cancelled notification email
+   */
+  sendSubscriptionCancelled: async (
+    email: string,
+    userName: string,
+    endDate: string
+  ) => {
+    return sendEmail({
+      to: email,
+      templateSlug: 'subscription-cancelled',
+      data: {
+        userName,
+        endDate,
+        reactivateUrl: `${process.env.NEXTAUTH_URL}/preise`,
+      },
+    })
+  },
 }
 
 // Default export for backwards compatibility with `import emails from '@/lib/email'`

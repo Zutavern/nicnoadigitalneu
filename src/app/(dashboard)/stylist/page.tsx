@@ -36,6 +36,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { format, formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { useWidgetConfig, WidgetSettingsPanel, type WidgetConfig } from '@/components/dashboard/widget-settings'
+import { usePaywall } from '@/components/providers/paywall-provider'
 
 // ============== WIDGET CONFIG ==============
 
@@ -168,6 +169,7 @@ function ErrorState({ error }: { error: string }) {
 
 export default function StylistDashboardPage() {
   const { data: session, status } = useSession()
+  const { openPaywall } = usePaywall()
   const [stats, setStats] = useState<StylistStats | null>(null)
   const [complianceStatus, setComplianceStatus] = useState<OnboardingStatus | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -293,15 +295,26 @@ export default function StylistDashboardPage() {
                   </div>
                 </div>
                 
-                {/* CTA Button */}
-                <Button 
-                  size="lg"
-                  className="bg-gradient-to-r from-pink-500 to-rose-600 dark:from-amber-500 dark:to-orange-500 hover:from-pink-600 hover:to-rose-700 dark:hover:from-amber-600 dark:hover:to-orange-600 text-white shadow-lg shadow-pink-500/30 dark:shadow-amber-500/25 w-full md:w-auto"
-                  onClick={() => setOnboardingDialogOpen(true)}
-                >
-                  Onboarding starten
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                {/* CTA Buttons */}
+                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                  <Button 
+                    size="lg"
+                    className="bg-gradient-to-r from-pink-500 to-rose-600 dark:from-amber-500 dark:to-orange-500 hover:from-pink-600 hover:to-rose-700 dark:hover:from-amber-600 dark:hover:to-orange-600 text-white shadow-lg shadow-pink-500/30 dark:shadow-amber-500/25"
+                    onClick={() => openPaywall({ trigger: 'demo-banner' })}
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Jetzt upgraden
+                  </Button>
+                  <Button 
+                    size="lg"
+                    variant="outline"
+                    className="border-slate-600 dark:border-amber-500/30 text-slate-200 dark:text-amber-300 hover:bg-slate-700/50 dark:hover:bg-amber-500/10"
+                    onClick={() => setOnboardingDialogOpen(true)}
+                  >
+                    Onboarding fortsetzen
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

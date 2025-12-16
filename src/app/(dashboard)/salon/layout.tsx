@@ -3,6 +3,7 @@
 import { SalonSidebar } from '@/components/dashboard/salon-sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { VideoCallProvider } from '@/components/providers/video-call-provider'
+import { PaywallProvider } from '@/components/providers/paywall-provider'
 import { SidebarProvider, useSidebar } from '@/hooks/use-sidebar'
 import { cn } from '@/lib/utils'
 
@@ -43,7 +44,9 @@ export default function SalonLayout({
   return (
     <SidebarProvider>
       <VideoCallProvider>
-        <SalonLayoutContent>{children}</SalonLayoutContent>
+        <PaywallProvider userType="SALON_OWNER">
+          <SalonLayoutContent>{children}</SalonLayoutContent>
+        </PaywallProvider>
       </VideoCallProvider>
     </SidebarProvider>
   )

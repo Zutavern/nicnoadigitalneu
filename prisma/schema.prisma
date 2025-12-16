@@ -119,6 +119,7 @@ model User {
   // Credits System
   credits            UserCredits?
   creditTransactions CreditTransaction[]
+  spendingLimit      SpendingLimit?
 
   // Pricelist System
   priceLists PriceList[]
@@ -1726,9 +1727,10 @@ enum PlanType {
 }
 
 enum BillingInterval {
-  MONTHLY // Monatlich
+  MONTHLY // Monatlich (1 Monat)
   QUARTERLY // Quartal (3 Monate)
-  YEARLY // Jährlich
+  SIX_MONTHS // Halbjährlich (6 Monate)
+  YEARLY // Jährlich (12 Monate)
 }
 
 model SubscriptionPlan {
@@ -1742,14 +1744,16 @@ model SubscriptionPlan {
   // Zielgruppe
   planType PlanType @map("plan_type")
 
-  // Preise nach Laufzeit
+  // Preise nach Laufzeit (4 Intervalle)
   priceMonthly   Decimal @map("price_monthly") @db.Decimal(10, 2)
   priceQuarterly Decimal @map("price_quarterly") @db.Decimal(10, 2)
+  priceSixMonths Decimal @default(0) @map("price_six_months") @db.Decimal(10, 2)
   priceYearly    Decimal @map("price_yearly") @db.Decimal(10, 2)
 
   // Stripe IDs für die verschiedenen Intervalle
   stripePriceMonthly   String? @map("stripe_price_monthly")
   stripePriceQuarterly String? @map("stripe_price_quarterly")
+  stripePriceSixMonths String? @map("stripe_price_six_months")
   stripePriceYearly    String? @map("stripe_price_yearly")
   stripeProductId      String? @map("stripe_product_id")
 
@@ -1768,6 +1772,10 @@ model SubscriptionPlan {
 
   // Trial
   trialDays Int @default(14) @map("trial_days")
+
+  // AI Credits inklusive (Metered Billing)
+  // Monatlich inkludierte AI-Credits in EUR (z.B. 10.00 = 10€ AI-Budget pro Monat)
+  includedAiCreditsEur Decimal @default(0) @map("included_ai_credits_eur") @db.Decimal(10, 2)
 
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -3718,6 +3726,139 @@ model CreditPackage {
 }
 
 // ============================================
+// Billing Settings (Globale Konfiguration)
+// ============================================
+
+model BillingSetting {
+  id String @id @default("default") @db.VarChar(50) // Singleton, immer "default"
+
+  // Aktive Billing-Intervalle
+  monthlyEnabled    Boolean @default(true) @map("monthly_enabled")
+  quarterlyEnabled  Boolean @default(true) @map("quarterly_enabled")
+  sixMonthsEnabled  Boolean @default(true) @map("six_months_enabled")
+  yearlyEnabled     Boolean @default(true) @map("yearly_enabled")
+
+  // Rabatte pro Intervall (in Prozent)
+  monthlyDiscount   Int @default(0) @map("monthly_discount")
+  quarterlyDiscount Int @default(10) @map("quarterly_discount")
+  sixMonthsDiscount Int @default(15) @map("six_months_discount")
+  yearlyDiscount    Int @default(25) @map("yearly_discount")
+
+  // Standard Intervall für Anzeige
+  defaultInterval String @default("sixMonths") @map("default_interval") @db.VarChar(20)
+
+  // Trial-Einstellungen
+  defaultTrialDays  Int     @default(14) @map("default_trial_days")
+  trialEnabled      Boolean @default(true) @map("trial_enabled")
+  trialRequiresCard Boolean @default(false) @map("trial_requires_card")
+
+  // Währung
+  currency     String @default("EUR") @db.VarChar(3)
+  currencySign String @default("€") @map("currency_sign") @db.VarChar(5)
+
+  // Coupon/Promo-Code Einstellungen
+  couponsEnabled    Boolean @default(true) @map("coupons_enabled")
+  showCouponOnPricing Boolean @default(false) @map("show_coupon_on_pricing")
+
+  // Geld-zurück-Garantie
+  moneyBackEnabled Boolean @default(true) @map("money_back_enabled")
+  moneyBackDays    Int     @default(30) @map("money_back_days")
+
+  // Stripe Webhook Status
+  webhookSecret     String?   @map("webhook_secret") @db.VarChar(255)
+  webhookLastPing   DateTime? @map("webhook_last_ping") @db.Timestamptz
+  webhookStatus     String    @default("unknown") @map("webhook_status") @db.VarChar(20)
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("billing_settings")
+}
+
+// ============================================
+// Coupons / Promo-Codes
+// ============================================
+
+enum CouponType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum CouponDuration {
+  ONCE
+  REPEATING
+  FOREVER
+}
+
+model Coupon {
+  id String @id @default(cuid())
+
+  // Code & Name
+  code        String  @unique @db.VarChar(50)
+  name        String  @db.VarChar(100)
+  description String? @db.VarChar(500)
+
+  // Rabatt-Typ
+  type            CouponType     @default(PERCENTAGE)
+  discountPercent Int?           @map("discount_percent") // Für PERCENTAGE
+  discountAmount  Decimal?       @map("discount_amount") @db.Decimal(10, 2) // Für FIXED_AMOUNT
+  currency        String         @default("EUR") @db.VarChar(3) // Für FIXED_AMOUNT
+
+  // Dauer
+  duration       CouponDuration @default(ONCE)
+  durationMonths Int?           @map("duration_months") // Für REPEATING
+
+  // Limits
+  maxRedemptions Int?      @map("max_redemptions")
+  timesRedeemed  Int       @default(0) @map("times_redeemed")
+  expiresAt      DateTime? @map("expires_at") @db.Timestamptz
+
+  // Einschränkungen
+  minAmount         Decimal? @map("min_amount") @db.Decimal(10, 2) // Mindestbestellwert
+  firstTimeOnly     Boolean  @default(false) @map("first_time_only")
+  applicablePlanIds String[] @default([]) @map("applicable_plan_ids") // Leeres Array = alle Pläne
+
+  // Status
+  isActive Boolean @default(true) @map("is_active")
+
+  // Stripe
+  stripeCouponId String? @unique @map("stripe_coupon_id") @db.VarChar(255)
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  redemptions CouponRedemption[]
+
+  @@index([code])
+  @@index([isActive, expiresAt])
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id String @id @default(cuid())
+
+  couponId String @map("coupon_id")
+  coupon   Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+
+  userId String @map("user_id") @db.Uuid
+
+  // Stripe Referenz
+  stripeSubscriptionId String? @map("stripe_subscription_id")
+
+  // Betrag des Rabatts
+  discountApplied Decimal @map("discount_applied") @db.Decimal(10, 2)
+
+  redeemedAt DateTime @default(now()) @map("redeemed_at") @db.Timestamptz
+
+  @@index([couponId])
+  @@index([userId])
+  @@map("coupon_redemptions")
+}
+
+// ============================================
 // Pricelist System (Block-basiert)
 // ============================================
 
@@ -3938,4 +4079,90 @@ model GoogleBusinessConnection {
   @@index([userId])
   @@index([status])
   @@map("google_business_connections")
+}
+
+// ============================================
+// AI Model Configuration & Metered Billing
+// ============================================
+
+enum AIModelCategory {
+  TEXT
+  IMAGE
+  VIDEO
+}
+
+enum AIModelProvider {
+  OPENROUTER
+  REPLICATE
+}
+
+model AIModelConfig {
+  id String @id @default(cuid())
+
+  // Identifikation
+  provider AIModelProvider
+  modelId  String          @map("model_id") // z.B. 'openai/gpt-4o' oder 'black-forest-labs/flux-schnell'
+  modelKey String          @unique @map("model_key") // Interner Key z.B. 'gpt-4o' oder 'flux-schnell'
+
+  // Anzeige
+  name        String
+  description String?       @db.Text
+  category    AIModelCategory
+  subcategory String?       @db.VarChar(50) // 'recommended' | 'pro' | 'fast' | 'coding'
+
+  // Kosten (Einkauf) - USD
+  costPerInputToken  Decimal? @map("cost_per_input_token") @db.Decimal(12, 8) // Pro 1M Tokens
+  costPerOutputToken Decimal? @map("cost_per_output_token") @db.Decimal(12, 8)
+  costPerRun         Decimal? @map("cost_per_run") @db.Decimal(8, 4) // Für Bild/Video
+
+  // Verkauf (mit Marge)
+  marginPercent       Int      @default(40) @map("margin_percent") // Aufschlag in %
+  pricePerInputToken  Decimal? @map("price_per_input_token") @db.Decimal(12, 8)
+  pricePerOutputToken Decimal? @map("price_per_output_token") @db.Decimal(12, 8)
+  pricePerRun         Decimal? @map("price_per_run") @db.Decimal(8, 4)
+
+  // Metadata
+  avgDurationMs     Int?    @map("avg_duration_ms")
+  maxTokens         Int?    @map("max_tokens")
+  supportsStreaming Boolean @default(false) @map("supports_streaming")
+  isFree            Boolean @default(false) @map("is_free")
+  isActive          Boolean @default(true) @map("is_active")
+  sortOrder         Int     @default(0) @map("sort_order")
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([provider, modelId])
+  @@index([provider])
+  @@index([category])
+  @@index([isActive])
+  @@map("ai_model_configs")
+}
+
+model SpendingLimit {
+  id     String @id @default(cuid())
+  userId String @unique @map("user_id") @db.Uuid
+
+  // Limits
+  monthlyLimitEur Decimal @default(50.00) @map("monthly_limit_eur") @db.Decimal(10, 2)
+  alertThreshold  Int     @default(80) @map("alert_threshold") // Prozent
+  hardLimit       Boolean @default(false) @map("hard_limit") // Blockiert bei Erreichen
+
+  // Aktueller Stand
+  currentMonthSpent Decimal  @default(0) @map("current_month_spent") @db.Decimal(10, 2)
+  lastResetAt       DateTime @default(now()) @map("last_reset_at") @db.Timestamptz
+
+  // Alert Status
+  alertSentAt DateTime? @map("alert_sent_at") @db.Timestamptz
+  limitHitAt  DateTime? @map("limit_hit_at") @db.Timestamptz
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("spending_limits")
 }

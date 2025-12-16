@@ -29,7 +29,8 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Progress } from '@/components/ui/progress'
 import { useWidgetConfig, WidgetSettingsPanel, type WidgetConfig } from '@/components/dashboard/widget-settings'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, ArrowRight } from 'lucide-react'
+import { usePaywall } from '@/components/providers/paywall-provider'
 
 // ============== WIDGET CONFIG ==============
 
@@ -170,6 +171,7 @@ function ErrorState({ error }: { error: string }) {
 
 export default function SalonDashboardPage() {
   const { data: session, status } = useSession()
+  const { openPaywall } = usePaywall()
   const [stats, setStats] = useState<SalonStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -291,14 +293,22 @@ export default function SalonDashboardPage() {
                   <Button 
                     size="lg" 
                     className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg shadow-blue-500/25 font-semibold"
+                    onClick={() => openPaywall({ trigger: 'demo-banner' })}
+                  >
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    Jetzt upgraden
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-slate-400 hover:text-slate-200"
                     asChild
                   >
                     <Link href="/salon/onboarding">
-                      <Armchair className="mr-2 h-5 w-5" />
-                      Jetzt Stühle vermieten
+                      Salon einrichten
+                      <ArrowRight className="ml-1 h-4 w-4" />
                     </Link>
                   </Button>
-                  <p className="text-xs text-slate-500">Keine Kreditkarte erforderlich</p>
                 </div>
               </div>
             </CardContent>
