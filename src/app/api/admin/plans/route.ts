@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { PlanType } from '@prisma/client'
 import { getStripe, isStripeConfigured } from '@/lib/stripe-server'
 import { isDemoModeActive, getMockAdminPlans } from '@/lib/mock-data'
+import { ServerAdminEvents } from '@/lib/analytics-server'
 
 // GET /api/admin/plans - Alle Pläne abrufen
 export async function GET(request: Request) {
@@ -215,6 +216,15 @@ export async function POST(request: Request) {
       }
     })
 
+    // Track plan created event in PostHog
+    await ServerAdminEvents.planCreated(
+      session.user.id,
+      plan.id,
+      plan.name,
+      planType,
+      priceMonthly
+    )
+
     return NextResponse.json(plan, { status: 201 })
   } catch (error) {
     console.error('Error creating plan:', error)
@@ -377,6 +387,14 @@ export async function PUT(request: Request) {
       data: updateData
     })
 
+    // Track plan updated event in PostHog
+    await ServerAdminEvents.planUpdated(
+      session.user.id,
+      plan.id,
+      plan.name,
+      updateData
+    )
+
     return NextResponse.json(plan)
   } catch (error) {
     console.error('Error updating plan:', error)
@@ -420,6 +438,13 @@ export async function DELETE(request: Request) {
         active: false
       })
     }
+
+    // Track plan deleted event in PostHog
+    await ServerAdminEvents.planDeleted(
+      session.user.id,
+      plan.id,
+      plan.name
+    )
 
     return NextResponse.json({
       success: true,

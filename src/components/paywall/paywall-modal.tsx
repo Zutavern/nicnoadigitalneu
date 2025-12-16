@@ -16,6 +16,7 @@ import { IntervalSelector } from './interval-selector'
 import { PlanCard, type Plan } from './plan-card'
 import { BillingInterval } from '@prisma/client'
 import { toast } from 'sonner'
+import { posthog } from '@/components/providers/posthog-provider'
 
 interface PaywallModalProps {
   isOpen: boolean
@@ -35,6 +36,12 @@ export function PaywallModal({ isOpen, onClose, userType, trigger }: PaywallModa
   // Pläne laden wenn Modal geöffnet wird
   useEffect(() => {
     if (isOpen) {
+      // Track paywall shown event
+      posthog?.capture('paywall_shown', {
+        trigger,
+        user_type: userType,
+      })
+
       setIsLoading(true)
       fetch(`/api/plans?type=${userType}`)
         .then(res => res.json())
@@ -54,7 +61,7 @@ export function PaywallModal({ isOpen, onClose, userType, trigger }: PaywallModa
         })
         .finally(() => setIsLoading(false))
     }
-  }, [isOpen, userType])
+  }, [isOpen, userType, trigger])
 
   // Checkout starten
   const handleCheckout = async () => {
@@ -62,6 +69,14 @@ export function PaywallModal({ isOpen, onClose, userType, trigger }: PaywallModa
       toast.error('Bitte wähle einen Plan aus')
       return
     }
+
+    // Track CTA clicked event
+    const selectedPlanData = plans.find(p => p.id === selectedPlan)
+    posthog?.capture('paywall_cta_clicked', {
+      plan_id: selectedPlan,
+      plan_name: selectedPlanData?.name,
+      interval: selectedInterval,
+    })
 
     setIsCheckingOut(true)
 

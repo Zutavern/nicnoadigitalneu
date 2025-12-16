@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth'
 import { isStripeConfigured } from '@/lib/stripe-server'
 import { stripeService } from '@/lib/stripe/stripe-service'
 import { BillingInterval } from '@prisma/client'
+import { ServerPricingEvents } from '@/lib/analytics-server'
+import { prisma } from '@/lib/prisma'
 
 interface CheckoutRequest {
   planId: string
@@ -58,6 +60,12 @@ export async function POST(req: NextRequest) {
     const userRole = session.user.role || 'STYLIST'
     const dashboardPath = userRole === 'SALON_OWNER' ? '/salon' : '/stylist'
 
+    // Hole Plan-Informationen für Tracking
+    const plan = await prisma.subscriptionPlan.findUnique({
+      where: { id: planId },
+      select: { name: true }
+    })
+
     // Checkout Session erstellen
     const checkoutSession = await stripeService.createSubscriptionCheckout({
       customerId,
@@ -67,6 +75,15 @@ export async function POST(req: NextRequest) {
       successUrl: `${baseUrl}${dashboardPath}?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${baseUrl}/preise?canceled=true`
     })
+
+    // Track checkout started event in PostHog
+    await ServerPricingEvents.checkoutStarted(
+      session.user.id,
+      planId,
+      plan?.name || 'Unknown Plan',
+      0, // Preis wird im Webhook getrackt
+      selectedInterval.toLowerCase()
+    )
 
     return NextResponse.json({ 
       url: checkoutSession.url,

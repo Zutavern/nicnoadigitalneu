@@ -762,6 +762,386 @@ export const ServerOnboardingEvents = {
   },
 }
 
+// ============================================
+// AI / Credits / Metered Billing Events
+// ============================================
+
+/**
+ * AI Usage and Credits Events
+ */
+export const ServerAIEvents = {
+  /** Logs when AI is used (text generation, image creation, etc.) */
+  aiUsageLogged: async (
+    userId: string,
+    modelKey: string,
+    feature: string,
+    costUsd: number,
+    priceUsd: number,
+    tokens?: { input: number; output: number }
+  ) => {
+    await trackServerEvent('ai_usage_logged', userId, {
+      model_key: modelKey,
+      feature,
+      cost_usd: costUsd,
+      price_usd: priceUsd,
+      margin_usd: priceUsd - costUsd,
+      input_tokens: tokens?.input,
+      output_tokens: tokens?.output,
+    })
+  },
+
+  /** When user purchases a credit package */
+  creditsPurchased: async (
+    userId: string,
+    packageId: string,
+    packageName: string,
+    credits: number,
+    bonusCredits: number,
+    amountPaid: number,
+    currency: string
+  ) => {
+    await trackServerEvent('credits_purchased', userId, {
+      package_id: packageId,
+      package_name: packageName,
+      credits,
+      bonus_credits: bonusCredits,
+      total_credits: credits + bonusCredits,
+      amount_paid: amountPaid,
+      currency,
+    })
+    await identifyServerUser(userId, {
+      has_purchased_credits: true,
+      last_credit_purchase: new Date().toISOString(),
+    })
+  },
+
+  /** When credits are consumed */
+  creditsUsed: async (
+    userId: string,
+    amount: number,
+    feature: string,
+    balanceAfter: number
+  ) => {
+    await trackServerEvent('credits_used', userId, {
+      amount,
+      feature,
+      balance_after: balanceAfter,
+    })
+  },
+
+  /** When user hits their spending limit */
+  spendingLimitReached: async (
+    userId: string,
+    limitAmount: number,
+    currentSpent: number
+  ) => {
+    await trackServerEvent('spending_limit_reached', userId, {
+      limit_amount: limitAmount,
+      current_spent: currentSpent,
+      overage: currentSpent - limitAmount,
+    })
+  },
+
+  /** When included AI credits from subscription are depleted */
+  includedCreditsDepleted: async (
+    userId: string,
+    planName: string,
+    includedAmount: number
+  ) => {
+    await trackServerEvent('included_credits_depleted', userId, {
+      plan_name: planName,
+      included_amount: includedAmount,
+    })
+  },
+
+  /** When user updates their spending limit */
+  spendingLimitUpdated: async (
+    userId: string,
+    oldLimit: number,
+    newLimit: number
+  ) => {
+    await trackServerEvent('spending_limit_updated', userId, {
+      old_limit: oldLimit,
+      new_limit: newLimit,
+    })
+  },
+
+  /** When metered usage is reported to Stripe */
+  meteredUsageReported: async (
+    userId: string,
+    amountUsd: number,
+    periodStart: Date,
+    periodEnd: Date
+  ) => {
+    await trackServerEvent('metered_usage_reported', userId, {
+      amount_usd: amountUsd,
+      period_start: periodStart.toISOString(),
+      period_end: periodEnd.toISOString(),
+    })
+  },
+}
+
+// ============================================
+// Pricing / Checkout Events
+// ============================================
+
+/**
+ * Pricing Page and Checkout Events
+ */
+export const ServerPricingEvents = {
+  /** When user views the pricing page */
+  pricingPageVisited: async (
+    userId: string,
+    role: 'stylist' | 'salon_owner' | 'unknown',
+    selectedInterval?: string
+  ) => {
+    await trackServerEvent('pricing_page_visited', userId, {
+      role,
+      selected_interval: selectedInterval,
+    })
+  },
+
+  /** When user views a specific plan */
+  planViewed: async (
+    userId: string,
+    planId: string,
+    planName: string,
+    price: number,
+    interval: string
+  ) => {
+    await trackServerEvent('plan_viewed', userId, {
+      plan_id: planId,
+      plan_name: planName,
+      price,
+      interval,
+    })
+  },
+
+  /** When user starts checkout process */
+  checkoutStarted: async (
+    userId: string,
+    planId: string,
+    planName: string,
+    price: number,
+    interval: string,
+    couponCode?: string
+  ) => {
+    await trackServerEvent('checkout_started', userId, {
+      plan_id: planId,
+      plan_name: planName,
+      price,
+      interval,
+      coupon_code: couponCode,
+      has_coupon: !!couponCode,
+    })
+  },
+
+  /** When checkout is completed successfully */
+  checkoutCompleted: async (
+    userId: string,
+    planId: string,
+    planName: string,
+    amount: number,
+    interval: string,
+    couponCode?: string,
+    discountAmount?: number
+  ) => {
+    await trackServerEvent('checkout_completed', userId, {
+      plan_id: planId,
+      plan_name: planName,
+      amount,
+      interval,
+      coupon_code: couponCode,
+      discount_amount: discountAmount,
+      revenue: amount / 100,
+    })
+    await identifyServerUser(userId, {
+      subscription_plan: planName,
+      subscription_interval: interval,
+      is_paying_customer: true,
+      first_payment_date: new Date().toISOString(),
+    })
+  },
+
+  /** When user abandons checkout */
+  checkoutAbandoned: async (
+    userId: string,
+    planId: string,
+    planName: string,
+    stage: 'plan_selection' | 'payment_form' | 'stripe_redirect' | 'unknown',
+    reason?: string
+  ) => {
+    await trackServerEvent('checkout_abandoned', userId, {
+      plan_id: planId,
+      plan_name: planName,
+      stage,
+      reason,
+    })
+  },
+
+  /** When paywall is shown to user */
+  paywallShown: async (
+    userId: string,
+    trigger: string,
+    feature?: string
+  ) => {
+    await trackServerEvent('paywall_shown', userId, {
+      trigger,
+      feature,
+    })
+  },
+
+  /** When user clicks CTA on paywall */
+  paywallCtaClicked: async (
+    userId: string,
+    planId: string,
+    planName: string
+  ) => {
+    await trackServerEvent('paywall_cta_clicked', userId, {
+      plan_id: planId,
+      plan_name: planName,
+    })
+  },
+}
+
+// ============================================
+// Admin Events
+// ============================================
+
+/**
+ * Admin Dashboard Events
+ */
+export const ServerAdminEvents = {
+  /** When admin creates a new subscription plan */
+  planCreated: async (
+    adminId: string,
+    planId: string,
+    planName: string,
+    targetRole: 'stylist' | 'salon_owner',
+    priceMonthly?: number
+  ) => {
+    await trackServerEvent('admin_plan_created', adminId, {
+      plan_id: planId,
+      plan_name: planName,
+      target_role: targetRole,
+      price_monthly: priceMonthly,
+    })
+  },
+
+  /** When admin updates a subscription plan */
+  planUpdated: async (
+    adminId: string,
+    planId: string,
+    planName: string,
+    changes: Record<string, unknown>
+  ) => {
+    await trackServerEvent('admin_plan_updated', adminId, {
+      plan_id: planId,
+      plan_name: planName,
+      changes,
+    })
+  },
+
+  /** When admin deletes/archives a subscription plan */
+  planDeleted: async (
+    adminId: string,
+    planId: string,
+    planName: string
+  ) => {
+    await trackServerEvent('admin_plan_deleted', adminId, {
+      plan_id: planId,
+      plan_name: planName,
+    })
+  },
+
+  /** When admin creates a coupon */
+  couponCreated: async (
+    adminId: string,
+    couponId: string,
+    couponCode: string,
+    discountType: 'percent' | 'fixed',
+    discountValue: number,
+    maxRedemptions?: number
+  ) => {
+    await trackServerEvent('admin_coupon_created', adminId, {
+      coupon_id: couponId,
+      coupon_code: couponCode,
+      discount_type: discountType,
+      discount_value: discountValue,
+      max_redemptions: maxRedemptions,
+    })
+  },
+
+  /** When a coupon is redeemed by a user */
+  couponRedeemed: async (
+    userId: string,
+    couponCode: string,
+    discountAmount: number,
+    planId: string
+  ) => {
+    await trackServerEvent('coupon_redeemed', userId, {
+      coupon_code: couponCode,
+      discount_amount: discountAmount,
+      plan_id: planId,
+    })
+  },
+
+  /** When admin updates billing settings */
+  billingSettingsUpdated: async (
+    adminId: string,
+    changes: Record<string, unknown>
+  ) => {
+    await trackServerEvent('admin_billing_settings_updated', adminId, {
+      changes,
+    })
+  },
+
+  /** When admin syncs plans with Stripe */
+  stripeSyncCompleted: async (
+    adminId: string,
+    plansCreated: number,
+    plansUpdated: number,
+    errors: number
+  ) => {
+    await trackServerEvent('admin_stripe_sync_completed', adminId, {
+      plans_created: plansCreated,
+      plans_updated: plansUpdated,
+      errors,
+      success: errors === 0,
+    })
+  },
+
+  /** When admin manages AI model settings */
+  aiModelUpdated: async (
+    adminId: string,
+    modelId: string,
+    modelKey: string,
+    changes: Record<string, unknown>
+  ) => {
+    await trackServerEvent('admin_ai_model_updated', adminId, {
+      model_id: modelId,
+      model_key: modelKey,
+      changes,
+    })
+  },
+
+  /** When admin creates a referral campaign */
+  referralCampaignCreated: async (
+    adminId: string,
+    campaignId: string,
+    campaignName: string,
+    referrerReward: number,
+    friendReward: number
+  ) => {
+    await trackServerEvent('admin_referral_campaign_created', adminId, {
+      campaign_id: campaignId,
+      campaign_name: campaignName,
+      referrer_reward_months: referrerReward,
+      friend_reward_months: friendReward,
+    })
+  },
+}
+
 // Helper function
 function formatDuration(seconds: number): string {
   if (seconds < 60) {

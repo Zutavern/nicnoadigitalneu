@@ -3,6 +3,12 @@ import Stripe from 'stripe'
 import { getStripe, isStripeConfigured } from '@/lib/stripe-server'
 import { prisma } from '@/lib/prisma'
 import { emails } from '@/lib/email'
+import { 
+  ServerSubscriptionEvents, 
+  ServerAIEvents,
+  ServerPricingEvents,
+  ServerSystemEvents
+} from '@/lib/analytics-server'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
@@ -182,6 +188,17 @@ async function handleCreditPurchase(session: Stripe.Checkout.Session) {
       }
     })
 
+    // Track credit purchase event in PostHog
+    await ServerAIEvents.creditsPurchased(
+      userId,
+      packageId,
+      creditPackage?.name || 'Credit-Paket',
+      creditPackage?.credits || creditsToAdd,
+      creditPackage?.bonusCredits || 0,
+      session.amount_total || 0,
+      session.currency || 'eur'
+    )
+
     console.log(`Credit purchase completed: ${creditsToAdd} credits added for user ${userId}`)
 
   } catch (error) {
@@ -196,6 +213,8 @@ async function handleCreditPurchase(session: Stripe.Checkout.Session) {
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const userId = session.metadata?.userId
   const planId = session.metadata?.planId
+  const planName = session.metadata?.planName
+  const interval = session.metadata?.interval as string
   const subscriptionId = session.subscription as string
 
   if (!userId || !subscriptionId) {
@@ -212,11 +231,25 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     },
   })
 
+  // Track checkout completed event in PostHog
+  const couponCode = session.metadata?.couponCode
+  await ServerPricingEvents.checkoutCompleted(
+    userId,
+    planId || 'unknown',
+    planName || 'Subscription',
+    session.amount_total || 0,
+    interval || 'monthly',
+    couponCode,
+    session.total_details?.amount_discount
+  )
+
   console.log(`Checkout completed for user ${userId}, plan: ${planId}`)
 }
 
 async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.userId
+  const planId = subscription.metadata?.planId
+  const planName = subscription.metadata?.planName
 
   if (!userId) return
 
@@ -232,6 +265,26 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
       stripeCurrentPeriodEnd: currentPeriodEnd ? new Date(currentPeriodEnd * 1000) : null,
     },
   })
+
+  // Track subscription created event in PostHog
+  const priceData = subscription.items.data[0]?.price
+  const amount = priceData?.unit_amount || 0
+  const interval = priceData?.recurring?.interval === 'year' ? 'year' : 'month'
+  
+  await ServerSubscriptionEvents.subscriptionCreated(
+    userId,
+    planId || subscription.items.data[0]?.price.id || 'unknown',
+    planName || 'Subscription',
+    amount,
+    interval
+  )
+
+  // Check if this is a trial
+  const trialEnd = (subscription as Stripe.Subscription & { trial_end?: number }).trial_end
+  if (trialEnd && subscription.status === 'trialing') {
+    const trialDays = Math.ceil((trialEnd * 1000 - Date.now()) / (1000 * 60 * 60 * 24))
+    await ServerSubscriptionEvents.trialStarted(userId, planId || 'unknown', trialDays)
+  }
 
   console.log(`Subscription created for user ${userId}`)
 }
@@ -276,6 +329,10 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
   if (!user) return
 
+  // Get plan info before clearing
+  const priceId = subscription.items.data[0]?.price.id
+  const cancelReason = subscription.cancellation_details?.reason
+
   await prisma.user.update({
     where: { id: user.id },
     data: {
@@ -284,6 +341,13 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       stripePriceId: null,
     },
   })
+
+  // Track subscription cancelled event in PostHog
+  await ServerSubscriptionEvents.subscriptionCancelled(
+    user.id,
+    priceId || 'unknown',
+    cancelReason || undefined
+  )
 
   console.log(`Subscription canceled for user ${user.id}`)
 }
@@ -311,6 +375,24 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     },
   })
 
+  // Track payment succeeded event in PostHog
+  await ServerSubscriptionEvents.paymentSucceeded(
+    user.id,
+    invoice.amount_paid || 0,
+    invoice.currency || 'eur',
+    invoice.id
+  )
+
+  // Track subscription renewed if this is a recurring payment (not the first one)
+  if (invoice.billing_reason === 'subscription_cycle') {
+    const priceId = subscription.items.data[0]?.price.id
+    await ServerSubscriptionEvents.subscriptionRenewed(
+      user.id,
+      priceId || 'unknown',
+      invoice.amount_paid || 0
+    )
+  }
+
   console.log(`Invoice paid for user ${user.id}`)
 }
 
@@ -332,6 +414,15 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     },
   })
 
+  // Track payment failed event in PostHog
+  const failureReason = invoice.last_finalization_error?.message || 'Unknown error'
+  await ServerSubscriptionEvents.paymentFailed(
+    user.id,
+    invoice.amount_due || 0,
+    failureReason,
+    invoice.id
+  )
+
   // E-Mail-Benachrichtigung senden
   try {
     const amount = invoice.amount_due 
@@ -345,9 +436,14 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
       amount,
       invoiceUrl
     )
+    
+    // Track email sent event
+    await ServerSystemEvents.emailSent(user.id, 'payment_failed', true)
+    
     console.log(`Payment failed email sent to ${user.email}`)
   } catch (emailError) {
     console.error('Error sending payment failed email:', emailError)
+    await ServerSystemEvents.emailSent(user.id, 'payment_failed', false)
   }
 
   console.log(`Payment failed for user ${user.id}`)
@@ -394,6 +490,9 @@ async function handleTrialWillEnd(subscription: Stripe.Subscription) {
     if (plans.length > 0) planName = plans[0].name
   }
 
+  // Track trial ending warning in PostHog
+  await ServerSystemEvents.subscriptionWarning(user.id, 'trial_ending', daysRemaining)
+
   // E-Mail senden
   try {
     await emails.sendTrialEndingSoon(
@@ -407,9 +506,11 @@ async function handleTrialWillEnd(subscription: Stripe.Subscription) {
       daysRemaining,
       planName
     )
+    await ServerSystemEvents.emailSent(user.id, 'trial_ending_soon', true)
     console.log(`Trial ending email sent to ${user.email} (${daysRemaining} days remaining)`)
   } catch (emailError) {
     console.error('Error sending trial ending email:', emailError)
+    await ServerSystemEvents.emailSent(user.id, 'trial_ending_soon', false)
   }
 }
 
@@ -455,6 +556,16 @@ async function handleInvoiceFinalized(invoice: Stripe.Invoice) {
       ?.reduce((sum, line) => sum + (line?.amount || 0), 0) || 0
     
     console.log(`  - Metered amount: ${(meteredAmount / 100).toFixed(2)} ${invoice.currency?.toUpperCase()}`)
+
+    // Track metered usage reported event in PostHog
+    const periodStart = invoice.period_start ? new Date(invoice.period_start * 1000) : new Date()
+    const periodEnd = invoice.period_end ? new Date(invoice.period_end * 1000) : new Date()
+    await ServerAIEvents.meteredUsageReported(
+      user.id,
+      meteredAmount / 100, // Convert to USD/EUR
+      periodStart,
+      periodEnd
+    )
 
     // Reset SpendingLimit für neuen Monat (wenn Rechnung bezahlt wird)
     // Dieser Reset passiert in handleInvoicePaid, hier nur logging

@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { AIModelCategory, AIModelProvider } from '@prisma/client'
+import { ServerAdminEvents } from '@/lib/analytics-server'
 
 interface ModelStats {
   totalRequests: number
@@ -267,6 +268,14 @@ export async function PATCH(req: NextRequest) {
         })
         updated++
       }
+
+      // Track bulk update event in PostHog
+      await ServerAdminEvents.aiModelUpdated(
+        session.user.id,
+        'bulk',
+        category || 'all',
+        { action: 'bulk-margin', marginPercent, modelsUpdated: updated }
+      )
 
       return NextResponse.json({
         message: `${updated} Modelle auf ${marginPercent}% Marge aktualisiert`,

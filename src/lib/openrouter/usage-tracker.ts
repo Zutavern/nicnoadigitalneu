@@ -6,6 +6,7 @@ import {
   trackAndReportAIUsage,
   checkSpendingLimit 
 } from '@/lib/stripe/metered-billing'
+import { ServerAIEvents } from '@/lib/analytics-server'
 
 // Feature-Labels für lesbare Beschreibungen
 const FEATURE_LABELS: Record<string, string> = {
@@ -104,6 +105,16 @@ export async function logAIUsage(entry: UsageLogEntry): Promise<string | null> {
           isImageOrVideo,
           metadata: entry.metadata as Record<string, unknown>,
         })
+        
+        // Track AI usage event in PostHog
+        await ServerAIEvents.aiUsageLogged(
+          entry.userId,
+          modelKey,
+          entry.feature || entry.requestType || 'ai_usage',
+          costUsd,
+          priceUsd,
+          { input: entry.inputTokens, output: entry.outputTokens }
+        )
       } catch (stripeError) {
         // Stripe-Fehler sollten den Hauptprozess nicht blockieren
         console.error('Error reporting to Stripe:', stripeError)
@@ -133,6 +144,16 @@ export async function canUserUseAI(userId: string): Promise<{
   remainingEur: number
 }> {
   const limit = await checkSpendingLimit(userId)
+  
+  // Track spending limit reached event in PostHog
+  if (!limit.canUseAI && limit.percentageUsed >= 100) {
+    await ServerAIEvents.spendingLimitReached(
+      userId,
+      limit.remainingEur + limit.currentMonthSpent, // Total limit
+      limit.currentMonthSpent
+    )
+  }
+  
   return {
     allowed: limit.canUseAI,
     message: limit.message,

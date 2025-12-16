@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { isStripeConfigured } from '@/lib/stripe-server'
+import { ServerAdminEvents } from '@/lib/analytics-server'
 
 /**
  * GET /api/admin/billing-settings
@@ -103,6 +104,9 @@ export async function PATCH(req: NextRequest) {
       create: { id: 'default', ...updateData },
       update: updateData
     })
+
+    // Track billing settings updated event in PostHog
+    await ServerAdminEvents.billingSettingsUpdated(session.user.id, updateData)
 
     return NextResponse.json({
       settings,

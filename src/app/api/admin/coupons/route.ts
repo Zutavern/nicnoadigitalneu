@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { isStripeConfigured, stripe } from '@/lib/stripe-server'
 import { CouponType, CouponDuration } from '@prisma/client'
+import { ServerAdminEvents } from '@/lib/analytics-server'
 
 /**
  * GET /api/admin/coupons
@@ -166,6 +167,16 @@ export async function POST(req: NextRequest) {
         isActive: true
       }
     })
+
+    // Track coupon created event in PostHog
+    await ServerAdminEvents.couponCreated(
+      session.user.id,
+      coupon.id,
+      cleanCode,
+      type === 'PERCENTAGE' ? 'percent' : 'fixed',
+      type === 'PERCENTAGE' ? discountPercent : discountAmount,
+      maxRedemptions
+    )
 
     return NextResponse.json({
       coupon,

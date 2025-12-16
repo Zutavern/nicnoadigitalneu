@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { ServerAdminEvents } from '@/lib/analytics-server'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -166,6 +167,14 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       where: { id },
       data: updateData,
     })
+
+    // Track AI model updated event in PostHog
+    await ServerAdminEvents.aiModelUpdated(
+      session.user.id,
+      model.id,
+      model.modelKey,
+      updateData
+    )
 
     return NextResponse.json({
       model: {
