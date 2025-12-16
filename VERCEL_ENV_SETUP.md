@@ -1,27 +1,56 @@
 # Vercel Environment Variables Setup
 
-## 🚨 KRITISCHES PROBLEM
-
-Die Datenbank funktioniert lokal, aber nicht auf Vercel, weil die Environment-Variablen **nicht für 'Build' aktiviert** sind!
-
-## 📋 Benötigte Environment-Variablen
+## 📋 Alle Environment-Variablen
 
 ### ✅ Database (KRITISCH für Build!)
 - `DATABASE_URL` - **MUSS für Build aktiviert sein!**
 - `DIRECT_DATABASE_URL` - **MUSS für Build aktiviert sein!**
 
-### ✅ NextAuth
+### ✅ NextAuth (KRITISCH für Build!)
 - `AUTH_SECRET` oder `NEXTAUTH_SECRET` - **MUSS für Build aktiviert sein!**
 - `NEXTAUTH_URL` - **MUSS für Build aktiviert sein!**
 
-### ✅ OAuth (Optional, aber empfohlen)
-- `GOOGLE_CLIENT_ID` - **FEHLT auf Vercel!**
-- `GOOGLE_CLIENT_SECRET` - **FEHLT auf Vercel!**
-- `LINKEDIN_CLIENT_ID` - **FEHLT auf Vercel!**
-- `LINKEDIN_CLIENT_SECRET` - **FEHLT auf Vercel!**
+### ✅ OAuth - Social Login (Optional)
+- `GOOGLE_CLIENT_ID` - Google Social Login
+- `GOOGLE_CLIENT_SECRET` - Google Social Login
+- `LINKEDIN_CLIENT_ID` - LinkedIn Social Login
+- `LINKEDIN_CLIENT_SECRET` - LinkedIn Social Login
+
+### ✅ Google Business Profile API (Optional)
+Diese Variablen ermöglichen die Google Business Profile Integration.
+Das System funktioniert auch ohne diese Variablen - die Feature-Seiten zeigen dann eine "wird vorbereitet" Meldung.
+
+- `GOOGLE_BUSINESS_CLIENT_ID` - OAuth Client ID aus Google Cloud Console
+- `GOOGLE_BUSINESS_CLIENT_SECRET` - OAuth Client Secret
+- `GOOGLE_BUSINESS_REDIRECT_URI` - z.B. `https://nicnoa.com/api/auth/google-business/callback`
+- `ENCRYPTION_KEY` - 64-Zeichen Hex-String für Token-Verschlüsselung
+  - Generieren mit: `openssl rand -hex 32`
 
 ### ✅ Vercel Blob
-- `BLOB_READ_WRITE_TOKEN` - **FEHLT auf Vercel!** (aktuell: `blob_READ_WRITE_TOKEN` - falscher Name!)
+- `BLOB_READ_WRITE_TOKEN` - Für Datei-Uploads
+
+### ✅ Real-time Features (Optional)
+- `NEXT_PUBLIC_PUSHER_APP_KEY` - Pusher für Echtzeit-Benachrichtigungen
+- `PUSHER_APP_ID`
+- `PUSHER_SECRET`
+- `PUSHER_CLUSTER`
+
+### ✅ AI Features (Optional)
+- `OPENROUTER_API_KEY` - Für AI-gestützte Content-Generierung
+- `OPENROUTER_MODEL` - z.B. `google/gemini-flash-1.5-8b`
+
+### ✅ Email (Optional)
+- `RESEND_API_KEY` - Für transaktionale E-Mails
+- `EMAIL_FROM` - Absender-Adresse
+
+### ✅ Analytics (Optional)
+- `NEXT_PUBLIC_POSTHOG_KEY` - PostHog Analytics
+- `NEXT_PUBLIC_POSTHOG_HOST` - z.B. `https://eu.posthog.com`
+
+### ✅ Payments (Optional)
+- `STRIPE_SECRET_KEY` - Stripe Zahlungen
+- `STRIPE_PUBLISHABLE_KEY`
+- `STRIPE_WEBHOOK_SECRET`
 
 ## 🔧 Lösung: Environment-Variablen für 'Build' aktivieren
 

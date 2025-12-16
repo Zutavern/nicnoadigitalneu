@@ -19,17 +19,51 @@ fi
 source .env.local
 
 # Variablen, die gesetzt werden müssen
+# ⚠️ Variablen mit "# OPTIONAL" sind optional und das System funktioniert auch ohne sie
 VARS_TO_SET=(
+  # Core - ERFORDERLICH
   "DATABASE_URL"
   "DIRECT_DATABASE_URL"
   "AUTH_SECRET"
   "NEXTAUTH_SECRET"
   "NEXTAUTH_URL"
   "BLOB_READ_WRITE_TOKEN"
+  
+  # OAuth Social Login - OPTIONAL
   "GOOGLE_CLIENT_ID"
   "GOOGLE_CLIENT_SECRET"
   "LINKEDIN_CLIENT_ID"
   "LINKEDIN_CLIENT_SECRET"
+  
+  # Google Business Profile API - OPTIONAL
+  # System zeigt "wird vorbereitet" Meldung wenn nicht konfiguriert
+  "GOOGLE_BUSINESS_CLIENT_ID"
+  "GOOGLE_BUSINESS_CLIENT_SECRET"
+  "GOOGLE_BUSINESS_REDIRECT_URI"
+  "ENCRYPTION_KEY"
+  
+  # Real-time - OPTIONAL
+  "NEXT_PUBLIC_PUSHER_APP_KEY"
+  "PUSHER_APP_ID"
+  "PUSHER_SECRET"
+  "PUSHER_CLUSTER"
+  
+  # AI Features - OPTIONAL
+  "OPENROUTER_API_KEY"
+  "OPENROUTER_MODEL"
+  
+  # Email - OPTIONAL
+  "RESEND_API_KEY"
+  "EMAIL_FROM"
+  
+  # Analytics - OPTIONAL
+  "NEXT_PUBLIC_POSTHOG_KEY"
+  "NEXT_PUBLIC_POSTHOG_HOST"
+  
+  # Payments - OPTIONAL
+  "STRIPE_SECRET_KEY"
+  "STRIPE_PUBLISHABLE_KEY"
+  "STRIPE_WEBHOOK_SECRET"
 )
 
 echo "📋 Variablen, die gesetzt werden:"
