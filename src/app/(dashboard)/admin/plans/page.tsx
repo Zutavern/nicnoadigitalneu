@@ -165,34 +165,6 @@ export default function PlansPage() {
   })
   const [priceRoundingEnabled, setPriceRoundingEnabled] = useState(true)
 
-  const fetchBillingSettings = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/billing-settings')
-      if (res.ok) {
-        const data = await res.json()
-        if (data.settings) {
-          setBillingSettings({
-            monthlyDiscount: data.settings.monthlyDiscount ?? 0,
-            quarterlyDiscount: data.settings.quarterlyDiscount ?? 10,
-            sixMonthsDiscount: data.settings.sixMonthsDiscount ?? 15,
-            yearlyDiscount: data.settings.yearlyDiscount ?? 25,
-            priceRoundingEnabled: data.settings.priceRoundingEnabled ?? true,
-            priceRoundingTarget: data.settings.priceRoundingTarget ?? 9
-          })
-          setPlanDiscounts({
-            monthly: data.settings.monthlyDiscount ?? 0,
-            quarterly: data.settings.quarterlyDiscount ?? 10,
-            sixMonths: data.settings.sixMonthsDiscount ?? 15,
-            yearly: data.settings.yearlyDiscount ?? 25
-          })
-          setPriceRoundingEnabled(data.settings.priceRoundingEnabled ?? true)
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching billing settings:', error)
-    }
-  }, [])
-
   const fetchPlans = useCallback(async () => {
     setIsLoading(true)
     try {
@@ -210,10 +182,42 @@ export default function PlansPage() {
     }
   }, [])
 
+  // Fetch billing settings on mount
+  useEffect(() => {
+    const fetchBillingSettings = async () => {
+      try {
+        const res = await fetch('/api/admin/billing-settings')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.settings) {
+            setBillingSettings({
+              monthlyDiscount: data.settings.monthlyDiscount ?? 0,
+              quarterlyDiscount: data.settings.quarterlyDiscount ?? 10,
+              sixMonthsDiscount: data.settings.sixMonthsDiscount ?? 15,
+              yearlyDiscount: data.settings.yearlyDiscount ?? 25,
+              priceRoundingEnabled: data.settings.priceRoundingEnabled ?? true,
+              priceRoundingTarget: data.settings.priceRoundingTarget ?? 9
+            })
+            setPlanDiscounts({
+              monthly: data.settings.monthlyDiscount ?? 0,
+              quarterly: data.settings.quarterlyDiscount ?? 10,
+              sixMonths: data.settings.sixMonthsDiscount ?? 15,
+              yearly: data.settings.yearlyDiscount ?? 25
+            })
+            setPriceRoundingEnabled(data.settings.priceRoundingEnabled ?? true)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching billing settings:', error)
+      }
+    }
+    
+    fetchBillingSettings()
+  }, [])
+
   useEffect(() => {
     fetchPlans()
-    fetchBillingSettings()
-  }, [fetchPlans, fetchBillingSettings])
+  }, [fetchPlans])
 
   const handleSavePlan = async () => {
     if (!currentPlan.name || !currentPlan.slug || !currentPlan.planType) {
