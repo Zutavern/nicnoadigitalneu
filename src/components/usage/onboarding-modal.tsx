@@ -15,7 +15,10 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -203,6 +206,10 @@ export function OnboardingModal({ open, onOpenChange, onComplete }: OnboardingMo
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
+        <VisuallyHidden.Root>
+          <DialogTitle>Neues Abrechnungsmodell - Onboarding</DialogTitle>
+          <DialogDescription>Erfahre mehr über das neue AI-basierte Abrechnungssystem</DialogDescription>
+        </VisuallyHidden.Root>
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
