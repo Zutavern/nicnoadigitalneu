@@ -446,12 +446,12 @@ export default function PricingPage() {
               exit={{ opacity: 0, y: -30 }}
               transition={{ duration: 0.5 }}
               className={cn(
-                "grid gap-10 mx-auto px-4",
-                // Dynamisches Grid basierend auf Plananzahl - breitere max-widths
-                visiblePlans.length === 1 && "max-w-lg",
-                visiblePlans.length === 2 && "max-w-4xl grid-cols-1 md:grid-cols-2",
-                visiblePlans.length === 3 && "max-w-6xl grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
-                visiblePlans.length >= 4 && "max-w-[1400px] grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+                "grid gap-8 lg:gap-6 mx-auto px-4 items-start",
+                // Dynamisches Grid basierend auf Plananzahl - extra breit
+                visiblePlans.length === 1 && "max-w-xl",
+                visiblePlans.length === 2 && "max-w-5xl grid-cols-1 md:grid-cols-2",
+                visiblePlans.length === 3 && "max-w-[1200px] grid-cols-1 md:grid-cols-3",
+                visiblePlans.length >= 4 && "max-w-[1600px] grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
               )}
             >
               {visiblePlans.map((plan, index) => {
@@ -467,18 +467,19 @@ export default function PricingPage() {
                     transition={{ delay: index * 0.15 }}
                     className={cn(
                       "relative group",
-                      plan.isPopular && "md:-mt-4 md:mb-4"
+                      // Populärer Plan: größer und hervorgehoben
+                      plan.isPopular && "md:-mt-6 md:mb-6 lg:scale-105 z-10"
                     )}
                   >
                     {/* Glow Effect for Popular */}
                     {plan.isPopular && (
-                      <div className="absolute -inset-1 bg-gradient-to-r from-violet-500 via-pink-500 to-orange-500 rounded-3xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
+                      <div className="absolute -inset-2 bg-gradient-to-r from-violet-500 via-pink-500 to-orange-500 rounded-3xl blur-xl opacity-40 group-hover:opacity-60 transition-opacity" />
                     )}
                     
                     <div className={cn(
                       "relative h-full rounded-2xl border-2 bg-card transition-all duration-500",
                       plan.isPopular 
-                        ? "border-primary shadow-2xl scale-[1.02]" 
+                        ? "border-primary shadow-2xl" 
                         : "border-border hover:border-primary/50 hover:shadow-xl"
                     )}>
                       {/* Popular Badge */}
@@ -491,7 +492,7 @@ export default function PricingPage() {
                         </div>
                       )}
 
-                      <div className="p-8 md:p-10">
+                      <div className="p-6 sm:p-8 md:p-10 lg:p-12">
                         {/* Header */}
                         <div className="mb-8">
                           <div className={cn(
