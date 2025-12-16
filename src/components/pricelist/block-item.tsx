@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Button } from '@/components/ui/button'
-import { GripVertical, Trash2, Pencil, Check, X } from 'lucide-react'
+import { GripVertical, Trash2, Pencil, Check, X, Copy } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { PriceBlockClient, BlockType } from '@/lib/pricelist/types'
 import type { PricingModel } from '@prisma/client'
@@ -24,6 +24,7 @@ import {
   QrCodeBlock,
   LogoBlock,
   FooterBlock,
+  PageBreakBlock,
 } from './blocks'
 import { ColumnContainerBlock } from './blocks/column-container-block'
 
@@ -34,6 +35,7 @@ interface BlockItemProps {
   onUpdate: (blockId: string, updates: Partial<PriceBlockClient>) => void
   onDelete: (blockId: string) => void
   onSave: (blockId: string) => void
+  onDuplicate?: (blockId: string) => void
   // Funktionen für verschachtelte Blöcke in Spalten-Containern
   onAddChildBlock?: (parentBlockId: string, columnIndex: number, type: BlockType) => void
   onUpdateChildBlock?: (parentBlockId: string, childBlockId: string, updates: Partial<PriceBlockClient>) => void
@@ -50,6 +52,7 @@ export function BlockItem({
   onUpdate, 
   onDelete, 
   onSave,
+  onDuplicate,
   onAddChildBlock,
   onUpdateChildBlock,
   onDeleteChildBlock,
@@ -167,6 +170,8 @@ export function BlockItem({
         return <LogoBlock block={block} isEditing={isEditing} onChange={handleChange} />
       case 'FOOTER':
         return <FooterBlock block={block} isEditing={isEditing} onChange={handleChange} />
+      case 'PAGE_BREAK':
+        return <PageBreakBlock block={block} isEditing={isEditing} />
       default:
         return <div className="text-sm text-muted-foreground">Unbekannter Block-Typ</div>
     }
@@ -205,6 +210,11 @@ export function BlockItem({
               <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setIsEditing(true)}>
                 <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
               </Button>
+              {onDuplicate && (
+                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onDuplicate(block.id)}>
+                  <Copy className="h-2.5 w-2.5 text-muted-foreground" />
+                </Button>
+              )}
               <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onDelete(block.id)}>
                 <Trash2 className="h-2.5 w-2.5 text-destructive" />
               </Button>
@@ -275,14 +285,27 @@ export function BlockItem({
               size="icon"
               className="h-7 w-7"
               onClick={() => setIsEditing(true)}
+              title="Bearbeiten"
             >
               <Pencil className="h-3 w-3 text-muted-foreground" />
             </Button>
+            {onDuplicate && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => onDuplicate(block.id)}
+                title="Duplizieren"
+              >
+                <Copy className="h-3 w-3 text-muted-foreground" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
               className="h-7 w-7"
               onClick={() => onDelete(block.id)}
+              title="Löschen"
             >
               <Trash2 className="h-3 w-3 text-destructive" />
             </Button>

@@ -138,6 +138,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ...(body.showLogo !== undefined && { showLogo: body.showLogo }),
         ...(body.showContact !== undefined && { showContact: body.showContact }),
         ...(body.columns !== undefined && { columns: body.columns }),
+        ...(body.paddingTop !== undefined && { paddingTop: body.paddingTop }),
+        ...(body.paddingBottom !== undefined && { paddingBottom: body.paddingBottom }),
+        ...(body.paddingLeft !== undefined && { paddingLeft: body.paddingLeft }),
+        ...(body.paddingRight !== undefined && { paddingRight: body.paddingRight }),
+        ...(body.contentScale !== undefined && { contentScale: body.contentScale }),
+        ...(body.contentOffsetX !== undefined && { contentOffsetX: body.contentOffsetX }),
+        ...(body.contentOffsetY !== undefined && { contentOffsetY: body.contentOffsetY }),
         ...(body.isPublished !== undefined && { isPublished: body.isPublished }),
       },
       include: {
@@ -161,9 +168,20 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       },
     })
 
+    // Hintergrund-URL laden wenn vorhanden
+    let backgroundUrl = null
+    if (priceList.backgroundId) {
+      const background = await prisma.pricelistBackground.findUnique({
+        where: { id: priceList.backgroundId },
+        select: { url: true },
+      })
+      backgroundUrl = background?.url || null
+    }
+
     // Preise formatieren und JSON-Felder parsen
     const formattedPriceList = {
       ...priceList,
+      backgroundUrl,
       blocks: priceList.blocks.map(block => ({
         ...block,
         price: block.price ? Number(block.price) : null,

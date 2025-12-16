@@ -85,6 +85,7 @@ export interface PriceBlockClient {
   
   // Gemeinsame Styling-Optionen für alle Textblöcke
   textAlign?: 'left' | 'center' | 'right' | null
+  backgroundColor?: string | null // Hex-Farbe oder vordefinierte Farbe
   
   // Relations
   variants: PriceVariantClient[]
@@ -113,6 +114,16 @@ export interface PriceListClient {
   showLogo: boolean
   showContact: boolean
   columns: number
+  // Padding in mm
+  paddingTop: number
+  paddingBottom: number
+  paddingLeft: number
+  paddingRight: number
+  // Inhaltsskalierung (0.5 = 50%, 1.0 = 100%, 1.5 = 150%)
+  contentScale: number
+  // Inhaltsverschiebung in mm
+  contentOffsetX: number
+  contentOffsetY: number
   isPublished: boolean
   createdAt: Date
   updatedAt: Date
@@ -132,6 +143,13 @@ export interface CreatePriceListRequest {
   showLogo?: boolean
   showContact?: boolean
   columns?: number
+  paddingTop?: number
+  paddingBottom?: number
+  paddingLeft?: number
+  paddingRight?: number
+  contentScale?: number
+  contentOffsetX?: number
+  contentOffsetY?: number
 }
 
 export interface UpdatePriceListRequest {
@@ -143,6 +161,13 @@ export interface UpdatePriceListRequest {
   showLogo?: boolean
   showContact?: boolean
   columns?: number
+  paddingTop?: number
+  paddingBottom?: number
+  paddingLeft?: number
+  paddingRight?: number
+  contentScale?: number
+  contentOffsetX?: number
+  contentOffsetY?: number
   isPublished?: boolean
 }
 
@@ -177,6 +202,7 @@ export interface CreateBlockRequest {
   footerText?: string
   columnWidths?: number[]
   textAlign?: 'left' | 'center' | 'right'
+  backgroundColor?: string
   variants?: Omit<PriceVariantClient, 'id'>[]
 }
 
@@ -386,6 +412,14 @@ export const BLOCK_TYPE_CONFIGS: Record<BlockType, BlockTypeConfig> = {
     },
     canHaveVariants: false,
   },
+  PAGE_BREAK: {
+    type: 'PAGE_BREAK',
+    label: 'Seitenumbruch',
+    description: 'Erzwingt einen Seitenumbruch für mehrseitige PDFs',
+    icon: 'FileStack',
+    defaultData: {},
+    canHaveVariants: false,
+  },
 }
 
 // ============================================
@@ -401,12 +435,26 @@ export interface PricingModelConfig {
 }
 
 export const PRICING_MODEL_CONFIGS: Record<PricingModel, PricingModelConfig> = {
+  FIXED_PRICE: {
+    model: 'FIXED_PRICE',
+    label: 'Festpreise',
+    description: 'Ein fester Preis pro Dienstleistung',
+    icon: 'CircleDollarSign',
+    defaultVariantLabels: [],
+  },
   BY_HAIR_LENGTH: {
     model: 'BY_HAIR_LENGTH',
     label: 'Nach Haarlänge',
     description: 'Preise gestaffelt nach Kurz, Mittel, Lang',
     icon: 'Ruler',
     defaultVariantLabels: ['Kurz', 'Mittel', 'Lang'],
+  },
+  BY_CATEGORY: {
+    model: 'BY_CATEGORY',
+    label: 'Nach Kategorie',
+    description: 'Preise nach eigenen Kategorien',
+    icon: 'LayoutGrid',
+    defaultVariantLabels: [],
   },
   BY_GENDER: {
     model: 'BY_GENDER',

@@ -107,6 +107,13 @@ export async function POST(request: NextRequest) {
       showLogo = false, // Standard: Kein automatischer Titel, User kann eigenen Textblock nutzen
       showContact = false,
       columns = 1,
+      paddingTop = 20,
+      paddingBottom = 20,
+      paddingLeft = 15,
+      paddingRight = 15,
+      contentScale = 1.0,
+      contentOffsetX = 0,
+      contentOffsetY = 0,
     } = body
 
     if (!name || !pricingModel) {
@@ -127,6 +134,13 @@ export async function POST(request: NextRequest) {
         showLogo,
         showContact,
         columns,
+        paddingTop,
+        paddingBottom,
+        paddingLeft,
+        paddingRight,
+        contentScale,
+        contentOffsetX,
+        contentOffsetY,
       },
       include: {
         blocks: {

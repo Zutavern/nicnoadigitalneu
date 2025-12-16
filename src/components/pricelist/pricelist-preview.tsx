@@ -483,6 +483,23 @@ export function PriceListPreview({ priceList, blocks, scale = 0.5, className }: 
           </div>
         )
 
+      case 'PAGE_BREAK':
+        // Seitenumbruch in der Vorschau visuell anzeigen
+        return (
+          <div className="relative my-4 py-2">
+            <div className="flex items-center gap-2">
+              <div className="flex-1 border-t border-dashed" style={{ borderColor: 'var(--pl-muted)' }} />
+              <span 
+                className="text-[0.6rem] px-2 py-0.5 rounded bg-muted/50"
+                style={{ color: 'var(--pl-muted)' }}
+              >
+                ↓ Nächste Seite
+              </span>
+              <div className="flex-1 border-t border-dashed" style={{ borderColor: 'var(--pl-muted)' }} />
+            </div>
+          </div>
+        )
+
       default:
         return null
     }
@@ -519,33 +536,52 @@ export function PriceListPreview({ priceList, blocks, scale = 0.5, className }: 
           />
         )}
 
-        {/* Content Overlay */}
-        <div className="relative z-10 p-8 h-full">
-          {/* Header */}
-          {(priceList.showLogo || priceList.showContact) && (
-            <div className="mb-6 text-center">
-              {priceList.showLogo && (
-                <h1
-                  className="text-3xl font-bold mb-2"
-                  style={{
-                    fontFamily: 'var(--pl-header-font)',
-                    color: 'var(--pl-primary)',
-                    letterSpacing: 'var(--pl-letter-spacing)',
-                  }}
-                >
-                  {priceList.name}
-                </h1>
-              )}
-            </div>
-          )}
-
-          {/* Blocks */}
-          <div className={priceList.columns === 2 ? 'columns-2 gap-8' : ''}>
-            {blocks.map((block) => (
-              <div key={block.id} className={priceList.columns === 2 ? 'break-inside-avoid' : ''}>
-                {renderBlock(block)}
+        {/* Content Overlay - mit dynamischem Padding und Inhaltsskalierung */}
+        <div 
+          className="relative z-10 h-full overflow-hidden"
+          style={{
+            // Padding in mm umrechnen in Pixel (1mm ≈ 3.78px bei 96 DPI)
+            paddingTop: (priceList.paddingTop ?? 20) * 3.78,
+            paddingBottom: (priceList.paddingBottom ?? 20) * 3.78,
+            paddingLeft: (priceList.paddingLeft ?? 15) * 3.78,
+            paddingRight: (priceList.paddingRight ?? 15) * 3.78,
+          }}
+        >
+          {/* Skalierter & verschobener Content-Container */}
+          <div
+            style={{
+              // Verschiebung in mm → px (1mm ≈ 3.78px)
+              transform: `translate(${(priceList.contentOffsetX ?? 0) * 3.78}px, ${(priceList.contentOffsetY ?? 0) * 3.78}px) scale(${priceList.contentScale ?? 1})`,
+              transformOrigin: 'top left',
+              width: `${100 / (priceList.contentScale ?? 1)}%`,
+            }}
+          >
+            {/* Header */}
+            {(priceList.showLogo || priceList.showContact) && (
+              <div className="mb-6 text-center">
+                {priceList.showLogo && (
+                  <h1
+                    className="text-3xl font-bold mb-2"
+                    style={{
+                      fontFamily: 'var(--pl-header-font)',
+                      color: 'var(--pl-primary)',
+                      letterSpacing: 'var(--pl-letter-spacing)',
+                    }}
+                  >
+                    {priceList.name}
+                  </h1>
+                )}
               </div>
-            ))}
+            )}
+
+            {/* Blocks */}
+            <div className={priceList.columns === 2 ? 'columns-2 gap-8' : ''}>
+              {blocks.map((block, index) => (
+                <div key={block.id || `block-${index}`} className={priceList.columns === 2 ? 'break-inside-avoid' : ''}>
+                  {renderBlock(block)}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

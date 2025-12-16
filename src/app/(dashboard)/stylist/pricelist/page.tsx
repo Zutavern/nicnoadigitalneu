@@ -8,6 +8,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -48,6 +54,10 @@ export default function StylistPricelistPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [previewId, setPreviewId] = useState<string | null>(null)
+
+  // Finde die Preisliste für die Vorschau
+  const previewPriceList = previewId ? priceLists.find(p => p.id === previewId) : null
 
   const fetchPriceLists = useCallback(async () => {
     try {
@@ -183,7 +193,7 @@ export default function StylistPricelistPage() {
                                 Bearbeiten
                               </DropdownMenuItem>
                             </Link>
-                            <DropdownMenuItem disabled>
+                            <DropdownMenuItem onClick={() => setPreviewId(priceList.id)}>
                               <Eye className="h-4 w-4 mr-2" />
                               Vorschau
                             </DropdownMenuItem>
@@ -276,6 +286,50 @@ export default function StylistPricelistPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={!!previewId} onOpenChange={(open) => !open && setPreviewId(null)}>
+        <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg">
+                {previewPriceList?.name || 'Vorschau'}
+              </DialogTitle>
+              {/* Der X-Button wird automatisch von DialogContent gerendert */}
+            </div>
+          </DialogHeader>
+          
+          {/* Preview Content */}
+          <div className="flex-1 overflow-auto bg-muted/30 p-6 flex items-start justify-center">
+            {previewPriceList && (
+              <div
+                style={{
+                  filter: 'drop-shadow(0 25px 50px rgba(0,0,0,0.15)) drop-shadow(0 10px 20px rgba(0,0,0,0.1))',
+                }}
+              >
+                <PriceListPreview
+                  priceList={previewPriceList}
+                  blocks={previewPriceList.blocks || []}
+                  scale={0.7}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Footer mit Aktionen */}
+          <div className="px-6 py-4 border-t flex-shrink-0 flex items-center justify-between bg-background">
+            <div className="text-sm text-muted-foreground">
+              {previewPriceList?.blocks?.length || 0} Blöcke • {PRICING_MODEL_CONFIGS[previewPriceList?.pricingModel || 'FIXED_PRICE']?.label || 'Festpreise'}
+            </div>
+            <Link href={`/stylist/pricelist/${previewId}/edit`}>
+              <Button>
+                <Pencil className="h-4 w-4 mr-2" />
+                Bearbeiten
+              </Button>
+            </Link>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

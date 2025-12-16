@@ -30,6 +30,7 @@ import {
   QrCode,
   Hexagon,
   PanelBottom,
+  FileStack,
 } from 'lucide-react'
 import type { BlockType } from '@prisma/client'
 import { BLOCK_TYPE_CONFIGS } from '@/lib/pricelist/types'
@@ -56,11 +57,12 @@ const BLOCK_ICONS: Record<string, React.ReactNode> = {
   QrCode: <QrCode className="h-4 w-4" />,
   Hexagon: <Hexagon className="h-4 w-4" />,
   PanelBottom: <PanelBottom className="h-4 w-4" />,
+  FileStack: <FileStack className="h-4 w-4" />,
 }
 
 export function BlockToolbar({ onAddBlock }: BlockToolbarProps) {
   const contentBlocks: BlockType[] = ['SECTION_HEADER', 'PRICE_ITEM', 'TEXT', 'INFO_BOX']
-  const layoutBlocks: BlockType[] = ['TWO_COLUMN', 'THREE_COLUMN', 'DIVIDER', 'SPACER']
+  const layoutBlocks: BlockType[] = ['TWO_COLUMN', 'THREE_COLUMN', 'DIVIDER', 'SPACER', 'PAGE_BREAK']
   const mediaBlocks: BlockType[] = ['IMAGE', 'LOGO', 'QR_CODE']
   const extraBlocks: BlockType[] = ['BADGE', 'QUOTE', 'ICON_TEXT', 'CONTACT_INFO', 'SOCIAL_LINKS', 'FOOTER']
 

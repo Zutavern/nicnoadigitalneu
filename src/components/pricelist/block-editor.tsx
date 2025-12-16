@@ -35,6 +35,7 @@ interface BlockEditorProps {
   onBlockSave: (block: PriceBlockClient) => Promise<void>
   onBlockDelete: (blockId: string) => Promise<void>
   onBlocksReorder: (blocks: { id: string; sortOrder: number }[]) => Promise<void>
+  onBlockDuplicate?: (blockId: string) => Promise<void>
 }
 
 export function BlockEditor({
@@ -44,6 +45,7 @@ export function BlockEditor({
   onBlockSave,
   onBlockDelete,
   onBlocksReorder,
+  onBlockDuplicate,
 }: BlockEditorProps) {
   const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -245,6 +247,7 @@ export function BlockEditor({
                     onUpdate={handleUpdateBlock}
                     onDelete={handleDeleteBlock}
                     onSave={handleSaveBlock}
+                    onDuplicate={onBlockDuplicate}
                     onAddChildBlock={handleAddChildBlock}
                     onUpdateChildBlock={handleUpdateChildBlock}
                     onDeleteChildBlock={handleDeleteChildBlock}

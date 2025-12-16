@@ -3719,7 +3719,9 @@ model CreditPackage {
 // ============================================
 
 enum PricingModel {
+  FIXED_PRICE
   BY_HAIR_LENGTH
+  BY_CATEGORY
   BY_GENDER
 }
 
@@ -3743,6 +3745,8 @@ enum BlockType {
   QR_CODE
   LOGO
   FOOTER
+  // Seitenumbruch
+  PAGE_BREAK
 }
 
 enum PriceType {
@@ -3770,6 +3774,20 @@ model PriceList {
   showLogo      Boolean      @default(false) @map("show_logo")
   showContact   Boolean      @default(false) @map("show_contact")
   columns       Int          @default(1)
+  
+  // Padding/Ränder in mm
+  paddingTop    Int          @default(20) @map("padding_top")
+  paddingBottom Int          @default(20) @map("padding_bottom")
+  paddingLeft   Int          @default(15) @map("padding_left")
+  paddingRight  Int          @default(15) @map("padding_right")
+  
+  // Inhaltsskalierung (0.5 = 50%, 1.0 = 100%, 1.5 = 150%)
+  contentScale  Float        @default(1.0) @map("content_scale")
+  
+  // Inhaltsverschiebung in mm (horizontal/vertikal)
+  contentOffsetX Float       @default(0.0) @map("content_offset_x")
+  contentOffsetY Float       @default(0.0) @map("content_offset_y")
+  
   isPublished   Boolean      @default(false) @map("is_published")
   createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz
@@ -3842,7 +3860,8 @@ model PriceBlock {
   columnWidths Json?      @map("column_widths") // Array von Prozent-Werten [50, 50] oder [33, 33, 34]
   
   // Gemeinsame Styling-Optionen für alle Blöcke
-  textAlign   String?     @map("text_align") @db.VarChar(10) // left, center, right
+  textAlign       String?   @map("text_align") @db.VarChar(10) // left, center, right
+  backgroundColor String?   @map("background_color") @db.VarChar(20) // Hex-Farbe oder vordefinierte Farbe
   
   // Gemeinsam
   createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz

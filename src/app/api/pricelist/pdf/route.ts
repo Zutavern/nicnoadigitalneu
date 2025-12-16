@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
+import { put, head, del } from '@vercel/blob'
+import { createHash } from 'crypto'
+import { prisma } from '@/lib/prisma'
 import { getTheme, getThemeCSS } from '@/lib/pricelist/themes'
 import { getFont, FONTS } from '@/lib/pricelist/fonts'
 import { formatPrice, SPACER_SIZE_CONFIGS } from '@/lib/pricelist/types'
@@ -23,15 +26,55 @@ interface PDFRequest {
 }
 
 /**
+ * Generiert einen Hash aus den Preislisten-Daten für Caching
+ */
+function generatePDFHash(priceList: PriceListClient, blocks: PriceBlockClient[], backgroundBase64?: string): string {
+  const dataToHash = JSON.stringify({
+    priceList: {
+      id: priceList.id,
+      name: priceList.name,
+      theme: priceList.theme,
+      fontFamily: priceList.fontFamily,
+      showLogo: priceList.showLogo,
+      showContact: priceList.showContact,
+      columns: priceList.columns,
+      paddingTop: priceList.paddingTop,
+      paddingBottom: priceList.paddingBottom,
+      paddingLeft: priceList.paddingLeft,
+      paddingRight: priceList.paddingRight,
+      contentScale: priceList.contentScale,
+      contentOffsetX: priceList.contentOffsetX,
+      contentOffsetY: priceList.contentOffsetY,
+      backgroundUrl: priceList.backgroundUrl,
+    },
+    blocks: blocks.map(b => ({
+      id: b.id,
+      type: b.type,
+      sortOrder: b.sortOrder,
+      title: b.title,
+      subtitle: b.subtitle,
+      itemName: b.itemName,
+      description: b.description,
+      price: b.price,
+      priceMax: b.priceMax,
+      priceText: b.priceText,
+      content: b.content,
+      textAlign: b.textAlign,
+      variants: b.variants,
+    })),
+    hasBackground: !!backgroundBase64,
+  })
+  
+  return createHash('sha256').update(dataToHash).digest('hex').substring(0, 16)
+}
+
+/**
  * Startet Puppeteer basierend auf der Umgebung
- * - Lokal: Verwendet puppeteer mit eingebautem Chromium
- * - Vercel/Produktion: Verwendet puppeteer-core mit @sparticuz/chromium
  */
 async function getBrowser() {
   const isLocal = process.env.NODE_ENV === 'development' || !process.env.VERCEL
 
   if (isLocal) {
-    // Lokal: Normales puppeteer mit eingebautem Chromium
     const puppeteer = await import('puppeteer')
     return puppeteer.default.launch({
       headless: true,
@@ -43,7 +86,6 @@ async function getBrowser() {
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     })
   } else {
-    // Vercel/Produktion: puppeteer-core mit @sparticuz/chromium
     const puppeteerCore = await import('puppeteer-core')
     const chromium = await import('@sparticuz/chromium')
     
@@ -63,6 +105,7 @@ async function getBrowser() {
 /**
  * POST /api/pricelist/pdf
  * Generiert ein PDF aus der Preisliste mit selektierbarem Text
+ * Speichert das PDF in Vercel Blob für Caching
  */
 export async function POST(request: NextRequest) {
   try {
@@ -73,6 +116,7 @@ export async function POST(request: NextRequest) {
 
     const body: PDFRequest = await request.json()
     const { priceList, blocks, backgroundBase64 } = body
+    const forceRegenerate = request.nextUrl.searchParams.get('forceRegenerate') === 'true'
 
     if (!priceList || !blocks) {
       return NextResponse.json(
@@ -81,47 +125,194 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Hash für Caching generieren
+    const pdfHash = generatePDFHash(priceList, blocks, backgroundBase64)
+    const blobPath = `pricelists/${priceList.id}/${pdfHash}.pdf`
+
+    // Prüfen ob gecachtes PDF existiert (nur wenn nicht forceRegenerate)
+    if (!forceRegenerate) {
+      try {
+        const existingBlob = await head(blobPath)
+        if (existingBlob) {
+          console.log(`PDF cache hit: ${blobPath}`)
+          
+          // Gecachte URL zurückgeben
+          return NextResponse.json({
+            success: true,
+            cached: true,
+            url: existingBlob.url,
+            hash: pdfHash,
+          })
+        }
+      } catch {
+        // Blob existiert nicht, wir generieren ein neues PDF
+        console.log(`PDF cache miss: ${blobPath}`)
+      }
+    }
+
     // HTML generieren
     const html = generateHTML(priceList, blocks, backgroundBase64)
 
-    // Browser starten (lokal oder Vercel)
+    // Browser starten
     const browser = await getBrowser()
-
     const page = await browser.newPage()
     
-    // HTML setzen
     await page.setContent(html, {
-      waitUntil: 'networkidle0', // Warten bis alle Fonts geladen sind
+      waitUntil: 'networkidle0',
     })
 
     // PDF generieren
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
-      margin: {
-        top: 0,
-        right: 0,
-        bottom: 0,
-        left: 0,
-      },
+      margin: { top: 0, right: 0, bottom: 0, left: 0 },
       preferCSSPageSize: true,
     })
 
     await browser.close()
 
-    // PDF als Response zurückgeben
-    return new NextResponse(pdfBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${priceList.name || 'preisliste'}.pdf"`,
-        'Content-Length': pdfBuffer.length.toString(),
-      },
+    // PDF in Vercel Blob speichern
+    const blob = await put(blobPath, pdfBuffer, {
+      access: 'public',
+      contentType: 'application/pdf',
+      addRandomSuffix: false,
     })
+
+    console.log(`PDF saved to blob: ${blob.url}`)
+
+    // Optional: PDF-URL in der Datenbank speichern
+    try {
+      await prisma.priceList.update({
+        where: { id: priceList.id },
+        data: { 
+          // @ts-ignore - falls das Feld noch nicht im Schema ist
+          lastPdfUrl: blob.url,
+          // @ts-ignore
+          lastPdfHash: pdfHash,
+        },
+      })
+    } catch {
+      // Ignorieren falls Felder nicht existieren
+    }
+
+    // URL zurückgeben (und PDF auch als Download anbieten)
+    return NextResponse.json({
+      success: true,
+      cached: false,
+      url: blob.url,
+      hash: pdfHash,
+    })
+
   } catch (error) {
     console.error('PDF generation error:', error)
     return NextResponse.json(
       { error: 'Fehler bei der PDF-Generierung', details: String(error) },
+      { status: 500 }
+    )
+  }
+}
+
+/**
+ * GET /api/pricelist/pdf?id=xxx
+ * Lädt ein bereits generiertes PDF
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
+    }
+
+    const priceListId = request.nextUrl.searchParams.get('id')
+    if (!priceListId) {
+      return NextResponse.json({ error: 'id ist erforderlich' }, { status: 400 })
+    }
+
+    // Prüfen ob User Zugriff auf die Preisliste hat
+    const priceList = await prisma.priceList.findFirst({
+      where: { id: priceListId, userId: session.user.id },
+      select: {
+        id: true,
+        name: true,
+        // @ts-ignore
+        lastPdfUrl: true,
+        // @ts-ignore
+        lastPdfHash: true,
+      },
+    })
+
+    if (!priceList) {
+      return NextResponse.json({ error: 'Preisliste nicht gefunden' }, { status: 404 })
+    }
+
+    // @ts-ignore
+    if (!priceList.lastPdfUrl) {
+      return NextResponse.json({ error: 'Kein PDF verfügbar' }, { status: 404 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      // @ts-ignore
+      url: priceList.lastPdfUrl,
+      // @ts-ignore
+      hash: priceList.lastPdfHash,
+    })
+
+  } catch (error) {
+    console.error('Error fetching PDF:', error)
+    return NextResponse.json(
+      { error: 'Fehler beim Laden des PDFs' },
+      { status: 500 }
+    )
+  }
+}
+
+/**
+ * DELETE /api/pricelist/pdf?id=xxx
+ * Löscht gecachte PDFs einer Preisliste
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
+    }
+
+    const priceListId = request.nextUrl.searchParams.get('id')
+    if (!priceListId) {
+      return NextResponse.json({ error: 'id ist erforderlich' }, { status: 400 })
+    }
+
+    // Prüfen ob User Zugriff hat
+    const priceList = await prisma.priceList.findFirst({
+      where: { id: priceListId, userId: session.user.id },
+    })
+
+    if (!priceList) {
+      return NextResponse.json({ error: 'Preisliste nicht gefunden' }, { status: 404 })
+    }
+
+    // PDF-URL aus DB löschen
+    try {
+      await prisma.priceList.update({
+        where: { id: priceListId },
+        data: {
+          // @ts-ignore
+          lastPdfUrl: null,
+          // @ts-ignore
+          lastPdfHash: null,
+        },
+      })
+    } catch {
+      // Ignorieren
+    }
+
+    return NextResponse.json({ success: true })
+
+  } catch (error) {
+    console.error('Error deleting PDF:', error)
+    return NextResponse.json(
+      { error: 'Fehler beim Löschen des PDFs' },
       { status: 500 }
     )
   }
@@ -724,6 +915,11 @@ function renderBlockToHTML(
       
       return `<div class="column-container">${columnsHTML}</div>`
 
+    case 'PAGE_BREAK':
+      return `
+        <div class="page-break" style="page-break-after: always; break-after: page;"></div>
+      `
+
     default:
       return ''
   }
@@ -740,4 +936,3 @@ function escapeHTML(str: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;')
 }
-

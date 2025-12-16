@@ -16,7 +16,9 @@ export { SocialLinksBlock } from './social-links-block'
 export { QrCodeBlock } from './qr-code-block'
 export { LogoBlock } from './logo-block'
 export { FooterBlock } from './footer-block'
+export { PageBreakBlock } from './page-break-block'
 // Utility Components
 export { TextAlignSelector, getTextAlignClass, getTextAlignStyle } from './text-align-selector'
+export { BackgroundColorSelector, getBackgroundColorStyle } from './background-color-selector'
 
 

@@ -16,6 +16,12 @@ import {
 } from '@/components/ui/sheet'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import {
   Loader2,
   ArrowLeft,
   Save,
@@ -23,9 +29,12 @@ import {
   Settings,
   Eye,
   EyeOff,
+  Undo2,
+  Redo2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { BlockEditor, PreviewViewer, ThemeSelector } from '@/components/pricelist'
+import { BlockEditor, PreviewViewer, ThemeSelector, PaddingEditor, BackgroundSelector } from '@/components/pricelist'
+import { useHistory } from '@/hooks/use-history'
 import type { PriceListClient, PriceBlockClient } from '@/lib/pricelist/types'
 
 export default function EditPricelistPage() {
@@ -34,12 +43,22 @@ export default function EditPricelistPage() {
   const id = params.id as string
 
   const [priceList, setPriceList] = useState<PriceListClient | null>(null)
-  const [blocks, setBlocks] = useState<PriceBlockClient[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [showPreview, setShowPreview] = useState(true)
   const [hasChanges, setHasChanges] = useState(false)
+  
+  // History für Undo/Redo
+  const { 
+    state: blocks, 
+    setState: setBlocks, 
+    undo, 
+    redo, 
+    canUndo, 
+    canRedo,
+    reset: resetHistory,
+  } = useHistory<PriceBlockClient[]>([])
 
   // Daten laden
   const fetchPriceList = useCallback(async () => {
@@ -55,18 +74,39 @@ export default function EditPricelistPage() {
       }
       const data = await res.json()
       setPriceList(data.priceList)
-      setBlocks(data.priceList.blocks)
+      resetHistory(data.priceList.blocks) // History zurücksetzen beim Laden
     } catch (error) {
       console.error('Error:', error)
       toast.error('Fehler beim Laden der Preisliste')
     } finally {
       setIsLoading(false)
     }
-  }, [id, router])
+  }, [id, router, resetHistory])
 
   useEffect(() => {
     fetchPriceList()
   }, [fetchPriceList])
+
+  // Keyboard shortcuts für Undo/Redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignorieren wenn in einem Input-Feld
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        if (canUndo) undo()
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault()
+        if (canRedo) redo()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [canUndo, canRedo, undo, redo])
 
   // Name ändern
   const handleNameChange = (name: string) => {
@@ -85,6 +125,56 @@ export default function EditPricelistPage() {
   const handleFontChange = (fontFamily: string) => {
     if (!priceList) return
     setPriceList({ ...priceList, fontFamily })
+    setHasChanges(true)
+  }
+
+  // Hintergrund ändern
+  const handleBackgroundChange = (backgroundId: string | null, backgroundUrl: string | null) => {
+    if (!priceList) return
+    setPriceList({ 
+      ...priceList, 
+      backgroundId: backgroundId || undefined,
+      backgroundUrl: backgroundUrl || undefined,
+    })
+    setHasChanges(true)
+  }
+
+  // Padding ändern
+  const handlePaddingChange = (padding: {
+    paddingTop?: number
+    paddingBottom?: number
+    paddingLeft?: number
+    paddingRight?: number
+  }) => {
+    if (!priceList) return
+    setPriceList({
+      ...priceList,
+      ...(padding.paddingTop !== undefined && { paddingTop: padding.paddingTop }),
+      ...(padding.paddingBottom !== undefined && { paddingBottom: padding.paddingBottom }),
+      ...(padding.paddingLeft !== undefined && { paddingLeft: padding.paddingLeft }),
+      ...(padding.paddingRight !== undefined && { paddingRight: padding.paddingRight }),
+    })
+    setHasChanges(true)
+  }
+
+  // Inhaltsskalierung ändern
+  const handleContentScaleChange = (contentScale: number) => {
+    if (!priceList) return
+    setPriceList({
+      ...priceList,
+      contentScale,
+    })
+    setHasChanges(true)
+  }
+
+  // Inhaltsverschiebung ändern
+  const handleContentOffsetChange = (offset: { x: number; y: number }) => {
+    if (!priceList) return
+    setPriceList({
+      ...priceList,
+      contentOffsetX: offset.x,
+      contentOffsetY: offset.y,
+    })
     setHasChanges(true)
   }
 
@@ -223,6 +313,77 @@ export default function EditPricelistPage() {
     }
   }
 
+  // Block duplizieren
+  const handleBlockDuplicate = async (blockId: string) => {
+    const blockToDuplicate = blocks.find(b => b.id === blockId)
+    if (!blockToDuplicate) return
+
+    try {
+      // Block-Daten vorbereiten (ohne ID, mit neuem sortOrder)
+      const blockData = {
+        type: blockToDuplicate.type,
+        sortOrder: blockToDuplicate.sortOrder + 1, // Direkt nach dem Original
+        parentBlockId: blockToDuplicate.parentBlockId,
+        columnIndex: blockToDuplicate.columnIndex,
+        columnWidths: blockToDuplicate.columnWidths,
+        title: blockToDuplicate.title,
+        subtitle: blockToDuplicate.subtitle,
+        itemName: blockToDuplicate.itemName,
+        description: blockToDuplicate.description,
+        priceType: blockToDuplicate.priceType,
+        price: blockToDuplicate.price,
+        priceMax: blockToDuplicate.priceMax,
+        priceText: blockToDuplicate.priceText,
+        qualifier: blockToDuplicate.qualifier,
+        content: blockToDuplicate.content,
+        imageUrl: blockToDuplicate.imageUrl,
+        spacerSize: blockToDuplicate.spacerSize,
+        badgeText: blockToDuplicate.badgeText,
+        badgeStyle: blockToDuplicate.badgeStyle,
+        badgeColor: blockToDuplicate.badgeColor,
+        iconName: blockToDuplicate.iconName,
+        phone: blockToDuplicate.phone,
+        email: blockToDuplicate.email,
+        address: blockToDuplicate.address,
+        website: blockToDuplicate.website,
+        socialLinks: blockToDuplicate.socialLinks,
+        qrCodeUrl: blockToDuplicate.qrCodeUrl,
+        qrCodeLabel: blockToDuplicate.qrCodeLabel,
+        footerText: blockToDuplicate.footerText,
+        textAlign: blockToDuplicate.textAlign,
+        variants: blockToDuplicate.variants?.map(v => ({
+          label: v.label,
+          price: v.price,
+          sortOrder: v.sortOrder,
+        })) || [],
+      }
+
+      // Neuen Block erstellen
+      const res = await fetch(`/api/pricelist/${id}/blocks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(blockData),
+      })
+
+      if (!res.ok) throw new Error('Fehler beim Duplizieren')
+      const { block: newBlock } = await res.json()
+
+      // Blöcke aktualisieren (neu sortieren)
+      setBlocks(prev => {
+        const updatedBlocks = [...prev]
+        // Alle Blöcke nach dem Original um 1 erhöhen
+        const originalIndex = updatedBlocks.findIndex(b => b.id === blockId)
+        updatedBlocks.splice(originalIndex + 1, 0, newBlock)
+        return updatedBlocks.map((b, i) => ({ ...b, sortOrder: i }))
+      })
+
+      toast.success('Block dupliziert')
+    } catch (error) {
+      console.error('Error:', error)
+      toast.error('Fehler beim Duplizieren')
+    }
+  }
+
   // Preisliste speichern (inkl. aller neuen Blöcke)
   const handleSave = async () => {
     if (!priceList) return
@@ -288,9 +449,17 @@ export default function EditPricelistPage() {
           name: priceList.name,
           theme: priceList.theme,
           fontFamily: priceList.fontFamily,
+          backgroundId: priceList.backgroundId || null,
           showLogo: priceList.showLogo,
           showContact: priceList.showContact,
           columns: priceList.columns,
+          paddingTop: priceList.paddingTop,
+          paddingBottom: priceList.paddingBottom,
+          paddingLeft: priceList.paddingLeft,
+          paddingRight: priceList.paddingRight,
+          contentScale: priceList.contentScale,
+          contentOffsetX: priceList.contentOffsetX,
+          contentOffsetY: priceList.contentOffsetY,
         }),
       })
 
@@ -300,7 +469,7 @@ export default function EditPricelistPage() {
       const refreshRes = await fetch(`/api/pricelist/${id}`)
       if (refreshRes.ok) {
         const data = await refreshRes.json()
-        setBlocks(data.priceList.blocks)
+        resetHistory(data.priceList.blocks) // History zurücksetzen nach dem Speichern
       }
 
       toast.success('Preisliste gespeichert')
@@ -330,7 +499,7 @@ export default function EditPricelistPage() {
   }
 
   // PDF Export (Server-Side mit Puppeteer)
-  const handleExport = async () => {
+  const handleExport = async (forceRegenerate = false) => {
     if (!priceList) return
 
     setIsExporting(true)
@@ -344,8 +513,9 @@ export default function EditPricelistPage() {
         }
       }
 
-      // Server-Side PDF-Generierung aufrufen
-      const response = await fetch('/api/pricelist/pdf', {
+      // Server-Side PDF-Generierung aufrufen (mit Blob-Caching)
+      const url = `/api/pricelist/pdf${forceRegenerate ? '?forceRegenerate=true' : ''}`
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -360,18 +530,20 @@ export default function EditPricelistPage() {
         throw new Error(errorData.error || 'PDF-Generierung fehlgeschlagen')
       }
 
-      // PDF-Blob erstellen und herunterladen
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `${priceList.name.toLowerCase().replace(/\s+/g, '-')}.pdf`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
+      const result = await response.json()
+      
+      if (result.url) {
+        // PDF-URL öffnen (gecacht oder neu generiert)
+        const link = document.createElement('a')
+        link.href = result.url
+        link.download = `${priceList.name.toLowerCase().replace(/\s+/g, '-')}.pdf`
+        link.target = '_blank'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
 
-      toast.success('PDF exportiert!')
+        toast.success(result.cached ? 'PDF aus Cache geladen!' : 'PDF erstellt und gespeichert!')
+      }
     } catch (error) {
       console.error('Error:', error)
       toast.error(error instanceof Error ? error.message : 'Fehler beim Export')
@@ -409,6 +581,44 @@ export default function EditPricelistPage() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {/* Undo/Redo Buttons */}
+          <TooltipProvider>
+            <div className="flex items-center border rounded-md">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-r-none"
+                    onClick={undo}
+                    disabled={!canUndo}
+                  >
+                    <Undo2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Rückgängig (Strg+Z)</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-l-none border-l"
+                    onClick={redo}
+                    disabled={!canRedo}
+                  >
+                    <Redo2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Wiederholen (Strg+Y)</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
+
           <Button
             variant="outline"
             size="sm"
@@ -432,13 +642,34 @@ export default function EditPricelistPage() {
                   Passe das Aussehen deiner Preisliste an
                 </SheetDescription>
               </SheetHeader>
-              <div className="mt-6">
+              <div className="mt-6 space-y-6">
                 <ThemeSelector
                   selectedTheme={priceList.theme}
                   selectedFont={priceList.fontFamily}
                   onThemeChange={handleThemeChange}
                   onFontChange={handleFontChange}
                 />
+                
+                {/* Hintergrund */}
+                <div className="pt-4 border-t">
+                  <BackgroundSelector
+                    selectedBackgroundId={priceList.backgroundId || null}
+                    onBackgroundChange={handleBackgroundChange}
+                  />
+                </div>
+                
+                {/* Padding/Ränder */}
+                <div className="pt-4 border-t">
+                  <h4 className="font-medium mb-3">Seitenränder</h4>
+                  <PaddingEditor
+                    paddingTop={priceList.paddingTop ?? 20}
+                    paddingBottom={priceList.paddingBottom ?? 20}
+                    paddingLeft={priceList.paddingLeft ?? 15}
+                    paddingRight={priceList.paddingRight ?? 15}
+                    onChange={handlePaddingChange}
+                    className="w-full"
+                  />
+                </div>
               </div>
             </SheetContent>
           </Sheet>
@@ -479,6 +710,7 @@ export default function EditPricelistPage() {
             onBlockSave={handleBlockSave}
             onBlockDelete={handleBlockDelete}
             onBlocksReorder={handleBlocksReorder}
+            onBlockDuplicate={handleBlockDuplicate}
           />
         </div>
 
@@ -488,6 +720,9 @@ export default function EditPricelistPage() {
             <PreviewViewer
               priceList={priceList}
               blocks={blocks}
+              onPaddingChange={handlePaddingChange}
+              onContentScaleChange={handleContentScaleChange}
+              onContentOffsetChange={handleContentOffsetChange}
             />
           </div>
         )}

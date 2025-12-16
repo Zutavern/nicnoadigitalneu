@@ -26,6 +26,7 @@ import {
   FileText,
   Share2,
   Coins,
+  Store,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -91,6 +92,7 @@ const menuItems = [
     items: [
       { label: 'Salon Branding', href: '/salon/marketing', icon: Palette },
       { label: 'Social Media', href: '/salon/marketing/social-media', icon: Share2 },
+      { label: 'Google Business', href: '/salon/marketing/google-business', icon: Store, badge: 'dev' },
       { label: 'Preislisten', href: '/salon/marketing/pricelist', icon: FileText },
     ],
   },
@@ -104,11 +106,33 @@ const menuItems = [
 
 // ==================== SIDEBAR CONTENT ====================
 
+// Alle hrefs flach sammeln für bessere isActive-Logik
+const allHrefs = menuItems.flatMap(section => section.items.map(item => item.href))
+
 function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const pathname = usePathname()
 
-  const renderMenuItem = (item: { label: string; href: string; icon: React.ComponentType<{ className?: string }> }) => {
-    const isActive = pathname === item.href
+  const renderMenuItem = (item: { label: string; href: string; icon: React.ComponentType<{ className?: string }>; badge?: string }) => {
+    // Verbesserte isActive-Logik: Prüft ob ein spezifischerer Pfad existiert
+    const isActive = (() => {
+      // Exakte Übereinstimmung
+      if (pathname === item.href) return true
+      
+      // Prüfe ob der Pfad mit diesem href beginnt
+      if (pathname.startsWith(item.href + '/')) {
+        // Prüfe ob es einen spezifischeren href gibt, der auch matcht
+        const hasMoreSpecificMatch = allHrefs.some(otherHref => 
+          otherHref !== item.href && 
+          otherHref.startsWith(item.href + '/') &&
+          (pathname === otherHref || pathname.startsWith(otherHref + '/'))
+        )
+        // Nur aktiv wenn kein spezifischerer Match existiert
+        return !hasMoreSpecificMatch
+      }
+      
+      return false
+    })()
+    const hasBadge = item.badge === 'dev'
     
     if (collapsed) {
       return (
@@ -119,17 +143,23 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                 <Link
                   href={item.href}
                   className={cn(
-                    "flex items-center justify-center rounded-lg p-3 text-sm transition-all",
+                    "flex items-center justify-center rounded-lg p-3 text-sm transition-all relative",
                     isActive
                       ? "bg-blue-500 text-white shadow-lg shadow-blue-500/40 dark:shadow-blue-500/25"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
                   <item.icon className="h-5 w-5" />
+                  {hasBadge && (
+                    <span className="absolute top-1 right-1 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
+                    </span>
+                  )}
                 </Link>
               </TooltipTrigger>
               <TooltipContent side="right" className="font-medium">
-                {item.label}
+                {item.label} {hasBadge && '(In Entwicklung)'}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -149,7 +179,13 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           )}
         >
           <item.icon className="h-5 w-5" />
-          <span>{item.label}</span>
+          <span className="flex-1">{item.label}</span>
+          {hasBadge && (
+            <span className="flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-orange-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
+            </span>
+          )}
         </Link>
       </li>
     )
