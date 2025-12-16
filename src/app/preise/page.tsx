@@ -331,13 +331,13 @@ export default function PricingPage() {
             </div>
 
             {/* Interval Selector - Floating Cards */}
-            <div className="flex flex-wrap justify-center gap-3">
+            <div className="flex flex-wrap justify-center gap-4 mt-4 mb-8">
               {activeIntervals.map((interval) => (
                 <button
                   key={interval.id}
                   onClick={() => setSelectedInterval(interval.id)}
                   className={cn(
-                    "relative px-6 py-3 rounded-xl font-medium transition-all duration-300",
+                    "relative px-7 py-3.5 rounded-xl font-medium transition-all duration-300",
                     selectedInterval === interval.id
                       ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-105"
                       : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground border border-transparent hover:border-border"
@@ -346,7 +346,7 @@ export default function PricingPage() {
                   <span>{interval.label}</span>
                   {interval.badge && (
                     <span className={cn(
-                      "absolute -top-2 -right-2 px-2 py-0.5 text-[10px] font-bold rounded-full shadow-lg",
+                      "absolute -top-3 -right-3 px-2.5 py-1 text-[10px] font-bold rounded-full shadow-lg",
                       interval.id === 'yearly' 
                         ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white"
                         : "bg-gradient-to-r from-pink-500 to-rose-500 text-white"
@@ -355,7 +355,7 @@ export default function PricingPage() {
                     </span>
                   )}
                   {interval.discount > 0 && selectedInterval !== interval.id && (
-                    <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-xs text-emerald-500 font-semibold whitespace-nowrap">
+                    <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-emerald-500 font-semibold whitespace-nowrap">
                       -{interval.discount}%
                     </span>
                   )}
@@ -367,7 +367,7 @@ export default function PricingPage() {
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-10 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-500/10 text-emerald-500 font-semibold border border-emerald-500/20"
+                className="mt-12 mb-4 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-500/10 text-emerald-500 font-semibold border border-emerald-500/20"
               >
                 <Gift className="h-4 w-4" />
                 Sie sparen {currentInterval.discount}% bei {currentInterval.months} Monaten Laufzeit
@@ -378,7 +378,7 @@ export default function PricingPage() {
       </section>
 
       {/* Pricing Cards */}
-      <section className="container pb-24 -mt-4">
+      <section className="container pb-24 mt-8">
         <AnimatePresence mode="wait">
           {isLoading ? (
             <motion.div
@@ -391,7 +391,30 @@ export default function PricingPage() {
               <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
               <p className="text-muted-foreground">Lade Preispläne...</p>
             </motion.div>
-          ) : (
+          ) : (() => {
+            // Filtere Pläne mit Preis 0 für das aktuelle Intervall heraus
+            const visiblePlans = plans.filter(plan => {
+              const price = getPriceForInterval(plan, selectedInterval)
+              return price > 0
+            })
+            
+            if (visiblePlans.length === 0) {
+              return (
+                <motion.div
+                  key="no-plans"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-center py-16"
+                >
+                  <p className="text-muted-foreground text-lg">
+                    Keine Preispläne für dieses Intervall verfügbar.
+                  </p>
+                </motion.div>
+              )
+            }
+            
+            return (
             <motion.div
               key={`${selectedRole}-${selectedInterval}`}
               initial={{ opacity: 0, y: 30 }}
@@ -399,15 +422,15 @@ export default function PricingPage() {
               exit={{ opacity: 0, y: -30 }}
               transition={{ duration: 0.5 }}
               className={cn(
-                "grid gap-8 mx-auto",
-                // Dynamisches Grid basierend auf Plananzahl
-                plans.length === 1 && "max-w-md",
-                plans.length === 2 && "max-w-3xl grid-cols-1 md:grid-cols-2",
-                plans.length === 3 && "max-w-5xl grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
-                plans.length >= 4 && "max-w-6xl grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+                "grid gap-10 mx-auto px-4",
+                // Dynamisches Grid basierend auf Plananzahl - breitere max-widths
+                visiblePlans.length === 1 && "max-w-lg",
+                visiblePlans.length === 2 && "max-w-4xl grid-cols-1 md:grid-cols-2",
+                visiblePlans.length === 3 && "max-w-6xl grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
+                visiblePlans.length >= 4 && "max-w-[1400px] grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
               )}
             >
-              {plans.map((plan, index) => {
+              {visiblePlans.map((plan, index) => {
                 const monthlyEquivalent = calculateMonthlyEquivalent(plan, selectedInterval)
                 const totalPrice = getPriceForInterval(plan, selectedInterval)
                 const savings = calculateSavings(plan, selectedInterval)
@@ -593,7 +616,8 @@ export default function PricingPage() {
                 )
               })}
             </motion.div>
-          )}
+            )
+          })()}
         </AnimatePresence>
       </section>
 

@@ -905,27 +905,27 @@ export default function PlansPage() {
 
       {/* Full Pricing Page Preview Dialog */}
       <Dialog open={fullPagePreviewOpen} onOpenChange={setFullPagePreviewOpen}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ExternalLink className="h-5 w-5 text-primary" />
               Preisseite Vorschau
             </DialogTitle>
             <DialogDescription>
-              Vorschau aller Pläne wie sie auf /preise erscheinen
+              Vorschau aller Pläne wie sie auf /preise erscheinen (Pläne mit Preis 0€ werden ausgeblendet)
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-6">
             {/* Interval Selector */}
-            <div className="flex gap-2 justify-center p-2 bg-muted rounded-lg">
+            <div className="flex gap-3 justify-center p-3 bg-muted rounded-xl">
               {(['monthly', 'quarterly', 'sixMonths', 'yearly'] as const).map((interval) => (
                 <Button
                   key={interval}
                   variant={previewInterval === interval ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setPreviewInterval(interval)}
-                  className={previewInterval === interval ? 'bg-primary' : ''}
+                  className={cn("px-4", previewInterval === interval && 'bg-primary')}
                 >
                   {interval === 'monthly' ? '1 Monat' : interval === 'quarterly' ? '3 Monate' : interval === 'sixMonths' ? '6 Monate' : '12 Monate'}
                 </Button>
@@ -946,53 +946,85 @@ export default function PlansPage() {
               </TabsList>
 
               <TabsContent value="stylist">
-                <div className={cn(
-                  "grid gap-6",
-                  groupedPlans.STYLIST.length === 1 && "max-w-md mx-auto",
-                  groupedPlans.STYLIST.length === 2 && "grid-cols-1 md:grid-cols-2",
-                  groupedPlans.STYLIST.length === 3 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
-                  groupedPlans.STYLIST.length >= 4 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
-                )}>
-                  {groupedPlans.STYLIST.map((plan) => (
-                    <PlanPreviewCard 
-                      key={plan.id}
-                      plan={plan as Plan}
-                      interval={previewInterval}
-                      showCTA={true}
-                      compact={false}
-                    />
-                  ))}
-                  {groupedPlans.STYLIST.length === 0 && (
-                    <p className="col-span-full text-center text-muted-foreground py-8">
-                      Keine Stuhlmieter-Pläne vorhanden
-                    </p>
-                  )}
-                </div>
+                {(() => {
+                  // Filtere Pläne mit Preis 0 heraus
+                  const visiblePlans = groupedPlans.STYLIST.filter(plan => {
+                    const price = previewInterval === 'monthly' ? plan.priceMonthly 
+                      : previewInterval === 'quarterly' ? plan.priceQuarterly
+                      : previewInterval === 'sixMonths' ? plan.priceSixMonths
+                      : plan.priceYearly
+                    return price > 0
+                  })
+                  
+                  if (visiblePlans.length === 0) {
+                    return (
+                      <p className="text-center text-muted-foreground py-8">
+                        Keine Stuhlmieter-Pläne für dieses Intervall vorhanden
+                      </p>
+                    )
+                  }
+                  
+                  return (
+                    <div className={cn(
+                      "grid gap-8",
+                      visiblePlans.length === 1 && "max-w-lg mx-auto",
+                      visiblePlans.length === 2 && "grid-cols-1 md:grid-cols-2",
+                      visiblePlans.length === 3 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
+                      visiblePlans.length >= 4 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+                    )}>
+                      {visiblePlans.map((plan) => (
+                        <PlanPreviewCard 
+                          key={plan.id}
+                          plan={plan as Plan}
+                          interval={previewInterval}
+                          showCTA={true}
+                          compact={false}
+                        />
+                      ))}
+                    </div>
+                  )
+                })()}
               </TabsContent>
 
               <TabsContent value="salon">
-                <div className={cn(
-                  "grid gap-6",
-                  groupedPlans.SALON_OWNER.length === 1 && "max-w-md mx-auto",
-                  groupedPlans.SALON_OWNER.length === 2 && "grid-cols-1 md:grid-cols-2",
-                  groupedPlans.SALON_OWNER.length === 3 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
-                  groupedPlans.SALON_OWNER.length >= 4 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
-                )}>
-                  {groupedPlans.SALON_OWNER.map((plan) => (
-                    <PlanPreviewCard 
-                      key={plan.id}
-                      plan={plan as Plan}
-                      interval={previewInterval}
-                      showCTA={true}
-                      compact={false}
-                    />
-                  ))}
-                  {groupedPlans.SALON_OWNER.length === 0 && (
-                    <p className="col-span-full text-center text-muted-foreground py-8">
-                      Keine Salonbesitzer-Pläne vorhanden
-                    </p>
-                  )}
-                </div>
+                {(() => {
+                  // Filtere Pläne mit Preis 0 heraus
+                  const visiblePlans = groupedPlans.SALON_OWNER.filter(plan => {
+                    const price = previewInterval === 'monthly' ? plan.priceMonthly 
+                      : previewInterval === 'quarterly' ? plan.priceQuarterly
+                      : previewInterval === 'sixMonths' ? plan.priceSixMonths
+                      : plan.priceYearly
+                    return price > 0
+                  })
+                  
+                  if (visiblePlans.length === 0) {
+                    return (
+                      <p className="text-center text-muted-foreground py-8">
+                        Keine Salonbesitzer-Pläne für dieses Intervall vorhanden
+                      </p>
+                    )
+                  }
+                  
+                  return (
+                    <div className={cn(
+                      "grid gap-8",
+                      visiblePlans.length === 1 && "max-w-lg mx-auto",
+                      visiblePlans.length === 2 && "grid-cols-1 md:grid-cols-2",
+                      visiblePlans.length === 3 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
+                      visiblePlans.length >= 4 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+                    )}>
+                      {visiblePlans.map((plan) => (
+                        <PlanPreviewCard 
+                          key={plan.id}
+                          plan={plan as Plan}
+                          interval={previewInterval}
+                          showCTA={true}
+                          compact={false}
+                        />
+                      ))}
+                    </div>
+                  )
+                })()}
               </TabsContent>
             </Tabs>
           </div>
@@ -1054,9 +1086,9 @@ function PlanGrid({
 
   return (
     <div className={cn(
-      "grid gap-6",
-      plans.length === 1 && "max-w-md mx-auto",
-      plans.length === 2 && "grid-cols-1 md:grid-cols-2",
+      "grid gap-8",
+      plans.length === 1 && "max-w-lg mx-auto",
+      plans.length === 2 && "grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto",
       plans.length === 3 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
       plans.length >= 4 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
     )}>
