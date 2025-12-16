@@ -77,6 +77,25 @@ export async function GET() {
       .reduce((sum, r) => sum + Number(r.rewardValue || 0), 0)
     const pendingRewardsValue = pendingRewards.reduce((sum, r) => sum + Number(r.rewardValue), 0)
 
+    // Aktive Kampagne laden
+    const activeCampaign = await prisma.referralCampaign.findFirst({
+      where: { 
+        isActive: true,
+        OR: [
+          { validFrom: null },
+          { validFrom: { lte: new Date() } }
+        ],
+        AND: [
+          {
+            OR: [
+              { validUntil: null },
+              { validUntil: { gte: new Date() } }
+            ]
+          }
+        ]
+      }
+    })
+
     // Basis-URL für den Referral-Link
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nicnoa.de'
     const referralLink = `${baseUrl}/register?ref=${profile.referralCode}`
@@ -120,6 +139,19 @@ export async function GET() {
         pendingRewardsCount: pendingRewards.length,
         pendingRewardsValue,
       },
+      // Aktive Kampagne mit Belohnungen
+      activeCampaign: activeCampaign ? {
+        id: activeCampaign.id,
+        name: activeCampaign.name,
+        slug: activeCampaign.slug,
+        codePrefix: activeCampaign.codePrefix,
+        referrerRewardMonths: activeCampaign.referrerRewardMonths,
+        referredRewardMonths: activeCampaign.referredRewardMonths,
+        referrerRewardText: activeCampaign.referrerRewardText,
+        referredRewardText: activeCampaign.referredRewardText,
+        marketingText: activeCampaign.marketingText,
+        validUntil: activeCampaign.validUntil?.toISOString() || null,
+      } : null,
     })
   } catch (error) {
     console.error('Fehler beim Laden der Referral-Daten:', error)
@@ -200,6 +232,15 @@ export async function POST(request: Request) {
       })
     }
 
+    // Aktive Kampagne laden für Code-Prefix
+    const activeCampaign = await prisma.referralCampaign.findFirst({
+      where: { isActive: true }
+    })
+
+    // Code generieren mit optionalem Kampagnen-Prefix
+    const codePrefix = activeCampaign?.codePrefix || 'INV'
+    const inviteCode = `${codePrefix}-${crypto.randomBytes(6).toString('hex').toUpperCase()}`
+
     // Ablaufdatum: 30 Tage
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 30)
@@ -212,11 +253,14 @@ export async function POST(request: Request) {
         referrerRole: userRole,
         referredEmail: email.toLowerCase(),
         referredName: name || null,
-        code: generateInviteCode(),
+        code: inviteCode,
+        campaignId: activeCampaign?.id || null,
         status: 'PENDING',
         expiresAt,
         rewardType: 'FREE_MONTH',
-        rewardValue: 29.99, // Standard-Wert eines Monats
+        rewardValue: activeCampaign 
+          ? (activeCampaign.referrerRewardMonths * 29.99) 
+          : 29.99,
       },
     })
 

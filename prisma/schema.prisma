@@ -1922,6 +1922,9 @@ model Referral {
   // Referral Code (eindeutig pro Einladung)
   code String @unique @db.VarChar(50)
 
+  // Kampagnen-Bezug (optional für Abwärtskompatibilität)
+  campaignId String? @map("campaign_id") @db.Uuid
+
   // Status
   status ReferralStatus @default(PENDING)
 
@@ -1997,6 +2000,52 @@ model ReferralReward {
   @@index([referralId])
   @@index([isApplied])
   @@map("referral_rewards")
+}
+
+// Referral Kampagnen - Konfigurierbare Belohnungen
+model ReferralCampaign {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  // Kampagnen-Details
+  name        String @db.VarChar(100) // z.B. "Sommer-Aktion 2024"
+  slug        String @unique @db.VarChar(50) // z.B. "sommer-2024"
+  description String @db.Text // Beschreibung für Admin
+  codePrefix  String @map("code_prefix") @db.VarChar(20) // z.B. "SUMMER" -> SUMMER-ABC123
+
+  // Belohnungen (in Monaten)
+  referrerRewardMonths Int @default(1) @map("referrer_reward_months") // Empfehler bekommt X Monate
+  referredRewardMonths Int @default(1) @map("referred_reward_months") // Geworbener bekommt X Monate
+
+  // Anzeigetexte
+  referrerRewardText String @default("1 Monat gratis") @map("referrer_reward_text") @db.VarChar(200)
+  referredRewardText String @default("1 Monat gratis") @map("referred_reward_text") @db.VarChar(200)
+  marketingText      String @default("Empfehle uns weiter und spare!") @map("marketing_text") @db.VarChar(500)
+
+  // Status
+  isActive    Boolean   @default(false) @map("is_active") // Nur eine kann aktiv sein
+  isDefault   Boolean   @default(false) @map("is_default") // Standard-Kampagne
+  validFrom   DateTime? @map("valid_from") @db.Timestamptz
+  validUntil  DateTime? @map("valid_until") @db.Timestamptz
+
+  // Stripe Coupons (werden automatisch erstellt)
+  stripeReferrerCouponId String? @map("stripe_referrer_coupon_id") @db.VarChar(100)
+  stripeReferredCouponId String? @map("stripe_referred_coupon_id") @db.VarChar(100)
+
+  // Limits
+  maxRedemptions    Int? @map("max_redemptions") // Max Einlösungen gesamt
+  currentRedemptions Int @default(0) @map("current_redemptions")
+
+  // Statistiken
+  totalReferrals      Int @default(0) @map("total_referrals")
+  successfulReferrals Int @default(0) @map("successful_referrals")
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([isActive])
+  @@index([slug])
+  @@map("referral_campaigns")
 }
 
 // User Referral Settings

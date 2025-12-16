@@ -80,6 +80,19 @@ interface PendingReward {
   expiresAt: string | null
 }
 
+interface ActiveCampaign {
+  id: string
+  name: string
+  slug: string
+  codePrefix: string
+  referrerRewardMonths: number
+  referredRewardMonths: number
+  referrerRewardText: string
+  referredRewardText: string
+  marketingText: string
+  validUntil: string | null
+}
+
 interface ReferralData {
   profile: ReferralProfile
   referralCode: string
@@ -94,6 +107,7 @@ interface ReferralData {
     pendingRewardsCount: number
     pendingRewardsValue: number
   }
+  activeCampaign: ActiveCampaign | null
 }
 
 const statusConfig = {
@@ -210,8 +224,50 @@ export default function SalonReferralPage() {
 
   if (!data) return null
 
+  const campaign = data.activeCampaign
+
   return (
     <div className="space-y-6">
+      {/* Aktive Kampagne Banner */}
+      {campaign && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-600 via-purple-500 to-indigo-500 p-6 text-white"
+        >
+          <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+          <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-5 w-5" />
+              <span className="text-sm font-medium opacity-90">{campaign.name}</span>
+            </div>
+            <h2 className="text-2xl font-bold mb-2">{campaign.marketingText}</h2>
+            <div className="flex flex-wrap gap-4 mt-4">
+              <div className="flex items-center gap-2 bg-white/20 rounded-lg px-4 py-2">
+                <Gift className="h-5 w-5" />
+                <div>
+                  <p className="text-xs opacity-75">Sie erhalten</p>
+                  <p className="font-bold">{campaign.referrerRewardMonths} Monat{campaign.referrerRewardMonths > 1 ? 'e' : ''} gratis</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 bg-white/20 rounded-lg px-4 py-2">
+                <Building2 className="h-5 w-5" />
+                <div>
+                  <p className="text-xs opacity-75">Ihr Partner erhält</p>
+                  <p className="font-bold">{campaign.referredRewardMonths} Monat{campaign.referredRewardMonths > 1 ? 'e' : ''} gratis</p>
+                </div>
+              </div>
+            </div>
+            {campaign.validUntil && (
+              <p className="text-xs opacity-75 mt-3">
+                Gültig bis {format(new Date(campaign.validUntil), 'dd.MM.yyyy', { locale: de })}
+              </p>
+            )}
+          </div>
+        </motion.div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
@@ -237,7 +293,10 @@ export default function SalonReferralPage() {
             <DialogHeader>
               <DialogTitle>Salon-Besitzer einladen</DialogTitle>
               <DialogDescription>
-                Laden Sie einen anderen Salon-Besitzer ein. Wenn er sich registriert und ein Abo abschließt, erhalten Sie einen Monat gratis!
+                {campaign 
+                  ? `Laden Sie einen anderen Salon-Besitzer ein. Sie erhalten ${campaign.referrerRewardMonths} Monat${campaign.referrerRewardMonths > 1 ? 'e' : ''} gratis, Ihr Partner ${campaign.referredRewardMonths} Monat${campaign.referredRewardMonths > 1 ? 'e' : ''}!`
+                  : 'Laden Sie einen anderen Salon-Besitzer ein. Wenn er sich registriert und ein Abo abschließt, erhalten Sie einen Monat gratis!'
+                }
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
