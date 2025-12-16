@@ -1292,6 +1292,344 @@ export function getMockSalonInvoices() {
 }
 
 // ============================================
+// Enhanced Revenue Analytics Mock Data
+// ============================================
+export function getMockEnhancedRevenue() {
+  return {
+    // Overview Stats
+    overview: {
+      totalRevenue: 156780,
+      monthlyRevenue: 24680,
+      mrr: 18750,
+      arr: 225000,
+      activeSubscriptions: 127,
+      trialingSubscriptions: 23,
+      churnRate: 2.3,
+      ltv: 1250, // Lifetime Value
+      arpu: 147, // Average Revenue Per User
+      netRevenue: 151350, // Nach Stripe Gebühren
+      stripeFees: 5430, // Stripe Gebühren MTD
+    },
+
+    // Revenue by Subscription Plan with detailed metrics
+    revenueByPlan: [
+      { 
+        planId: 'plan-stylist-basic',
+        planName: 'Stuhlmieter Basis', 
+        planType: 'STYLIST',
+        count: 45, 
+        mrr: 1350, 
+        arr: 16200,
+        percentage: 18.2,
+        avgMonthsActive: 4.2,
+        churnRate: 3.1,
+        trialConversions: 12,
+        color: 'bg-blue-500'
+      },
+      { 
+        planId: 'plan-stylist-pro',
+        planName: 'Stuhlmieter Pro', 
+        planType: 'STYLIST',
+        count: 32, 
+        mrr: 2560, 
+        arr: 30720,
+        percentage: 34.5,
+        avgMonthsActive: 6.8,
+        churnRate: 1.8,
+        trialConversions: 8,
+        color: 'bg-violet-500'
+      },
+      { 
+        planId: 'plan-salon-starter',
+        planName: 'Salon Starter', 
+        planType: 'SALON_OWNER',
+        count: 28, 
+        mrr: 2800, 
+        arr: 33600,
+        percentage: 22.0,
+        avgMonthsActive: 5.1,
+        churnRate: 2.4,
+        trialConversions: 5,
+        color: 'bg-emerald-500'
+      },
+      { 
+        planId: 'plan-salon-pro',
+        planName: 'Salon Professional', 
+        planType: 'SALON_OWNER',
+        count: 18, 
+        mrr: 3600, 
+        arr: 43200,
+        percentage: 19.2,
+        avgMonthsActive: 8.3,
+        churnRate: 1.2,
+        trialConversions: 3,
+        color: 'bg-pink-500'
+      },
+      { 
+        planId: 'plan-salon-enterprise',
+        planName: 'Salon Enterprise', 
+        planType: 'SALON_OWNER',
+        count: 4, 
+        mrr: 2000, 
+        arr: 24000,
+        percentage: 6.1,
+        avgMonthsActive: 11.5,
+        churnRate: 0.5,
+        trialConversions: 1,
+        color: 'bg-amber-500'
+      },
+    ],
+
+    // Revenue by Billing Interval
+    revenueByInterval: [
+      { interval: 'monthly', label: 'Monatlich', count: 67, revenue: 4890, percentage: 26 },
+      { interval: 'quarterly', label: 'Quartalsweise', count: 38, revenue: 5420, percentage: 29 },
+      { interval: 'sixMonths', label: 'Halbjährlich', count: 15, revenue: 4200, percentage: 22 },
+      { interval: 'yearly', label: 'Jährlich', count: 7, revenue: 4240, percentage: 23 },
+    ],
+
+    // Monthly Trend with extended metrics
+    monthlyTrend: [
+      { month: 'Jul', revenue: 18500, subscriptions: 95, newSubs: 12, churned: 3, netGrowth: 9 },
+      { month: 'Aug', revenue: 19200, subscriptions: 102, newSubs: 10, churned: 3, netGrowth: 7 },
+      { month: 'Sep', revenue: 20800, subscriptions: 110, newSubs: 11, churned: 3, netGrowth: 8 },
+      { month: 'Okt', revenue: 22100, subscriptions: 118, newSubs: 12, churned: 4, netGrowth: 8 },
+      { month: 'Nov', revenue: 23500, subscriptions: 124, newSubs: 9, churned: 3, netGrowth: 6 },
+      { month: 'Dez', revenue: 24680, subscriptions: 127, newSubs: 8, churned: 5, netGrowth: 3 },
+    ],
+
+    // Trial Conversion Metrics
+    trialMetrics: {
+      activeTrials: 23,
+      trialsStartedThisMonth: 15,
+      trialsConvertedThisMonth: 8,
+      trialConversionRate: 53.3,
+      avgTrialDuration: 10.2, // Tage
+      trialsByPlan: [
+        { plan: 'Stuhlmieter Basis', active: 8, converted: 5, rate: 62.5 },
+        { plan: 'Stuhlmieter Pro', active: 6, converted: 3, rate: 50.0 },
+        { plan: 'Salon Starter', active: 5, converted: 0, rate: 0 },
+        { plan: 'Salon Professional', active: 4, converted: 0, rate: 0 },
+      ],
+    },
+
+    // AI/Metered Billing Revenue
+    aiRevenue: {
+      totalRevenueEur: 2340.50,
+      totalCostEur: 1672.50,
+      profitEur: 668.00,
+      marginPercent: 28.5,
+      totalRequests: 45230,
+      uniqueUsers: 89,
+      avgRevenuePerUser: 26.30,
+      includedCreditsUsed: 1250.00, // EUR der inkludierten Credits verbraucht
+      overage: 1090.50, // EUR über inkludierten Credits
+      
+      // Trend
+      dailyTrend: [
+        { date: getRelativeDate(-6).toISOString().split('T')[0], revenue: 312.50, cost: 223.20, requests: 6230 },
+        { date: getRelativeDate(-5).toISOString().split('T')[0], revenue: 345.80, cost: 247.00, requests: 6890 },
+        { date: getRelativeDate(-4).toISOString().split('T')[0], revenue: 298.20, cost: 213.00, requests: 5940 },
+        { date: getRelativeDate(-3).toISOString().split('T')[0], revenue: 378.90, cost: 270.60, requests: 7560 },
+        { date: getRelativeDate(-2).toISOString().split('T')[0], revenue: 356.40, cost: 254.60, requests: 7120 },
+        { date: getRelativeDate(-1).toISOString().split('T')[0], revenue: 324.50, cost: 231.80, requests: 6490 },
+        { date: getRelativeDate(0).toISOString().split('T')[0], revenue: 324.20, cost: 232.30, requests: 5000 },
+      ],
+
+      // By Feature
+      byFeature: [
+        { feature: 'social_post', label: 'Social Media', revenue: 890.40, cost: 636.00, requests: 15230, avgCost: 0.058 },
+        { feature: 'image_gen', label: 'Bildgenerierung', revenue: 680.20, cost: 485.90, requests: 4520, avgCost: 0.150 },
+        { feature: 'translation', label: 'Übersetzungen', revenue: 320.50, cost: 228.90, requests: 8900, avgCost: 0.036 },
+        { feature: 'chat', label: 'Chat/Beratung', revenue: 245.30, cost: 175.20, requests: 12340, avgCost: 0.020 },
+        { feature: 'video_gen', label: 'Videos', revenue: 204.10, cost: 145.80, requests: 240, avgCost: 0.850 },
+      ],
+
+      // Top AI Consumers
+      topConsumers: [
+        { userId: 'u1', name: 'Hair Dreams Salon', email: 'info@hairdreams.de', spent: 186.40, requests: 3420, plan: 'Salon Professional' },
+        { userId: 'u2', name: 'Lisa Müller', email: 'lisa@email.de', spent: 142.30, requests: 2890, plan: 'Stuhlmieter Pro' },
+        { userId: 'u3', name: 'Beauty Palace', email: 'info@beautypalace.de', spent: 128.90, requests: 2450, plan: 'Salon Starter' },
+        { userId: 'u4', name: 'Max Schneider', email: 'max@schneider.de', spent: 98.60, requests: 1980, plan: 'Stuhlmieter Basis' },
+        { userId: 'u5', name: 'Style Factory', email: 'hello@stylefactory.de', spent: 87.20, requests: 1650, plan: 'Salon Professional' },
+      ],
+    },
+
+    // Credit Package Sales
+    creditPackageSales: {
+      totalSales: 3450.00,
+      totalPackages: 48,
+      avgPackageValue: 71.88,
+      packages: [
+        { name: 'Starter Pack', price: 19.99, sold: 18, revenue: 359.82 },
+        { name: 'Pro Pack', price: 49.99, sold: 15, revenue: 749.85 },
+        { name: 'Business Pack', price: 99.99, sold: 12, revenue: 1199.88 },
+        { name: 'Enterprise Pack', price: 299.99, sold: 3, revenue: 899.97 },
+      ],
+      monthlySales: [
+        { month: 'Okt', count: 12, revenue: 890.00 },
+        { month: 'Nov', count: 18, revenue: 1280.00 },
+        { month: 'Dez', count: 18, revenue: 1280.00 },
+      ],
+    },
+
+    // Coupon Analytics
+    couponAnalytics: {
+      totalRedemptions: 156,
+      totalDiscount: 4320.50,
+      avgDiscountPerUse: 27.70,
+      activeCoupons: 8,
+      topCoupons: [
+        { code: 'WELCOME2024', redemptions: 45, discount: 1125.00, type: 'percent', value: 25 },
+        { code: 'REFER50', redemptions: 38, discount: 1900.00, type: 'amount', value: 50 },
+        { code: 'BLACKFRIDAY', redemptions: 28, discount: 840.00, type: 'percent', value: 30 },
+        { code: 'NEWYEAR15', redemptions: 23, discount: 345.50, type: 'percent', value: 15 },
+        { code: 'SPRING10', redemptions: 22, discount: 110.00, type: 'amount', value: 5 },
+      ],
+      monthlyRedemptions: [
+        { month: 'Okt', count: 42, discount: 1180.00 },
+        { month: 'Nov', count: 68, discount: 2040.00 },
+        { month: 'Dez', count: 46, discount: 1100.50 },
+      ],
+    },
+
+    // Referral Revenue
+    referralRevenue: {
+      totalReferrals: 89,
+      successfulConversions: 34,
+      conversionRate: 38.2,
+      revenueFromReferrals: 5680.00,
+      rewardsGiven: 1870.00, // Free Monate als EUR-Wert
+      netReferralRevenue: 3810.00,
+      avgReferralValue: 167.06,
+      topReferrers: [
+        { name: 'Anna Schmidt', email: 'anna@email.de', referrals: 8, conversions: 5, revenue: 680.00 },
+        { name: 'Max Weber', email: 'max@weber.de', referrals: 6, conversions: 4, revenue: 520.00 },
+        { name: 'Lisa Klein', email: 'lisa@klein.de', referrals: 5, conversions: 3, revenue: 390.00 },
+      ],
+    },
+
+    // Stripe Specific Data
+    stripeMetrics: {
+      balance: {
+        available: 18450.00,
+        pending: 3280.00,
+        total: 21730.00,
+      },
+      fees: {
+        thisMonth: 5430.00,
+        lastMonth: 5180.00,
+        avgPerTransaction: 2.35,
+        feeRate: 2.9, // %
+      },
+      disputes: {
+        open: 2,
+        won: 5,
+        lost: 1,
+        totalAmountDisputed: 450.00,
+        disputeRate: 0.12, // %
+      },
+      paymentMethods: [
+        { method: 'Kreditkarte', percentage: 68, transactions: 856 },
+        { method: 'SEPA-Lastschrift', percentage: 24, transactions: 302 },
+        { method: 'Andere', percentage: 8, transactions: 101 },
+      ],
+    },
+
+    // Churn Metrics
+    churnMetrics: {
+      currentChurnRate: 2.3,
+      lastMonthChurnRate: 2.1,
+      churnedThisMonth: 5,
+      churnedMrr: 245.00,
+      churnReasons: [
+        { reason: 'Zu teuer', count: 2 },
+        { reason: 'Nicht mehr benötigt', count: 1 },
+        { reason: 'Konkurrenzprodukt', count: 1 },
+        { reason: 'Sonstiges', count: 1 },
+      ],
+      atRiskSubscriptions: 8, // Nutzer die bald churnen könnten
+    },
+
+    // Recent Transactions with more detail
+    recentTransactions: [
+      {
+        id: 'tx-1',
+        stripeId: 'pi_demo_1',
+        customerName: 'Hair Dreams Salon',
+        email: 'info@hairdreams.de',
+        amount: 199.99,
+        fee: 5.80,
+        net: 194.19,
+        plan: 'Salon Professional',
+        interval: 'monthly',
+        type: 'subscription',
+        status: 'succeeded',
+        date: getRelativeDate(0, 10, 0),
+      },
+      {
+        id: 'tx-2',
+        stripeId: 'pi_demo_2',
+        customerName: 'Lisa Stylist',
+        email: 'lisa@email.de',
+        amount: 49.99,
+        fee: 1.45,
+        net: 48.54,
+        plan: 'Stuhlmieter Pro',
+        interval: 'monthly',
+        type: 'subscription',
+        status: 'succeeded',
+        date: getRelativeDate(0, 7, 0),
+      },
+      {
+        id: 'tx-3',
+        stripeId: 'pi_demo_3',
+        customerName: 'Beauty Palace',
+        email: 'info@beautypalace.de',
+        amount: 99.99,
+        fee: 2.90,
+        net: 97.09,
+        plan: 'Salon Starter',
+        interval: 'quarterly',
+        type: 'subscription',
+        status: 'succeeded',
+        date: getRelativeDate(-1),
+      },
+      {
+        id: 'tx-4',
+        stripeId: 'pi_demo_4',
+        customerName: 'Max Schneider',
+        email: 'max@schneider.de',
+        amount: 49.99,
+        fee: 1.45,
+        net: 48.54,
+        plan: 'Pro Pack',
+        interval: null,
+        type: 'credit_package',
+        status: 'succeeded',
+        date: getRelativeDate(-1, 5, 0),
+      },
+      {
+        id: 'tx-5',
+        stripeId: 'pi_demo_5',
+        customerName: 'Style Factory',
+        email: 'hello@stylefactory.de',
+        amount: 15.80,
+        fee: 0.46,
+        net: 15.34,
+        plan: 'AI Überschuss',
+        interval: null,
+        type: 'metered_billing',
+        status: 'succeeded',
+        date: getRelativeDate(-2),
+      },
+    ],
+  }
+}
+
+export const mockEnhancedRevenue = getMockEnhancedRevenue()
+
+// ============================================
 // Helper: Check if Demo Mode is Active
 // ============================================
 import { prisma } from '@/lib/prisma'

@@ -4219,3 +4219,60 @@ model SpendingLimit {
 
   @@map("spending_limits")
 }
+
+// ============================================
+// Revenue Dashboard Configuration
+// ============================================
+
+model RevenueDashboardConfig {
+  id String @id @default("default") @db.VarChar(50) // Singleton, immer "default"
+
+  // Panel Visibility
+  showOverviewStats   Boolean @default(true) @map("show_overview_stats")
+  showRevenueChart    Boolean @default(true) @map("show_revenue_chart")
+  showRevenueByPlan   Boolean @default(true) @map("show_revenue_by_plan")
+  showTransactions    Boolean @default(true) @map("show_transactions")
+  showPaymentMethods  Boolean @default(true) @map("show_payment_methods")
+  showChurnMetrics    Boolean @default(true) @map("show_churn_metrics")
+  showSubscriptionMetrics Boolean @default(true) @map("show_subscription_metrics")
+  
+  // AI/Metered Billing Panels
+  showAiRevenuePanel    Boolean @default(true) @map("show_ai_revenue_panel")
+  showAiUsageBreakdown  Boolean @default(true) @map("show_ai_usage_breakdown")
+  showAiTopConsumers    Boolean @default(true) @map("show_ai_top_consumers")
+  showIncludedCreditsUsage Boolean @default(true) @map("show_included_credits_usage")
+  
+  // Pricing Plans Revenue
+  showPlanPerformance   Boolean @default(true) @map("show_plan_performance")
+  showIntervalBreakdown Boolean @default(true) @map("show_interval_breakdown")
+  showTrialConversions  Boolean @default(true) @map("show_trial_conversions")
+  
+  // Credit Packages Revenue
+  showCreditPackageSales Boolean @default(true) @map("show_credit_package_sales")
+  
+  // Coupon Analytics
+  showCouponRedemptions Boolean @default(true) @map("show_coupon_redemptions")
+  showCouponRevenueLoss Boolean @default(true) @map("show_coupon_revenue_loss")
+  
+  // Referral Revenue
+  showReferralRevenue   Boolean @default(true) @map("show_referral_revenue")
+  
+  // Stripe Direct
+  showStripeBalance     Boolean @default(true) @map("show_stripe_balance")
+  showStripeFees        Boolean @default(true) @map("show_stripe_fees")
+  showStripeDisputes    Boolean @default(false) @map("show_stripe_disputes")
+  
+  // Panel Order (JSON array of panel keys for custom ordering)
+  panelOrder Json @default("[]") @map("panel_order")
+  
+  // Display Settings
+  defaultPeriod      String @default("30d") @map("default_period") @db.VarChar(10) // 7d, 30d, 90d, 1y
+  autoRefreshEnabled Boolean @default(false) @map("auto_refresh_enabled")
+  autoRefreshSeconds Int     @default(60) @map("auto_refresh_seconds")
+  
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("revenue_dashboard_configs")
+}
