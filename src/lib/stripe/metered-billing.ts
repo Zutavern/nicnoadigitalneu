@@ -20,7 +20,7 @@ interface UsageReportParams {
  * Meldet Nutzung an Stripe für metered billing
  */
 export async function reportUsageToStripe(params: UsageReportParams) {
-  if (!isStripeConfigured() || !stripe) {
+  if (!isStripeConfigured || !stripe) {
     console.warn('Stripe not configured, skipping usage report')
     return null
   }
@@ -49,7 +49,7 @@ export async function reportUsageToStripe(params: UsageReportParams) {
  * Holt die Subscription Item ID für metered billing
  */
 export async function getMeteredSubscriptionItemId(userId: string): Promise<string | null> {
-  if (!isStripeConfigured() || !stripe) {
+  if (!isStripeConfigured || !stripe) {
     return null
   }
 
@@ -344,7 +344,7 @@ export async function checkSpendingLimit(userId: string): Promise<{
  * Erstellt oder holt einen Stripe Meter für AI-Usage
  */
 export async function getOrCreateAIMeter(): Promise<string | null> {
-  if (!isStripeConfigured() || !stripe) {
+  if (!isStripeConfigured || !stripe) {
     return null
   }
 

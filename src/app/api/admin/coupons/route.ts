@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
     let stripeCouponId: string | null = null
 
     // In Stripe erstellen falls konfiguriert
-    if (syncToStripe && isStripeConfigured() && stripe) {
+    if (syncToStripe && isStripeConfigured && stripe) {
       try {
         const stripeParams: {
           id: string
@@ -269,7 +269,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Auch in Stripe löschen falls vorhanden
-    if (coupon.stripeCouponId && isStripeConfigured() && stripe) {
+    if (coupon.stripeCouponId && isStripeConfigured && stripe) {
       try {
         await stripe.coupons.del(coupon.stripeCouponId)
       } catch (stripeError) {

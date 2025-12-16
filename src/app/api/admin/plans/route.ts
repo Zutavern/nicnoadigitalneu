@@ -8,12 +8,13 @@ import { isDemoModeActive, getMockAdminPlans } from '@/lib/mock-data'
 // GET /api/admin/plans - Alle Pläne abrufen
 export async function GET(request: Request) {
   try {
-    // Demo-Modus prüfen
-    if (await isDemoModeActive({ ignoreForAdmin: true })) {
+    const session = await auth()
+    
+    // Demo-Modus prüfen (Admins bekommen echte Daten)
+    const isAdmin = session?.user?.role === 'ADMIN'
+    if (!isAdmin && await isDemoModeActive()) {
       return NextResponse.json(getMockAdminPlans())
     }
-
-    const session = await auth()
     
     if (!session?.user) {
       return NextResponse.json({ error: 'Nicht authentifiziert' }, { status: 401 })
@@ -238,7 +239,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json()
-    const { id, ...updateData } = body
+    const { id, syncToStripe, ...updateData } = body
 
     if (!id) {
       return NextResponse.json({ error: 'Plan-ID erforderlich' }, { status: 400 })
@@ -262,6 +263,112 @@ export async function PUT(request: Request) {
           { error: 'Ein Plan mit diesem Slug existiert bereits' },
           { status: 400 }
         )
+      }
+    }
+
+    // Stripe-Synchronisierung wenn aktiviert
+    if (syncToStripe && isStripeConfigured) {
+      const stripe = getStripe()
+      const slug = updateData.slug || existingPlan.slug
+      const name = updateData.name || existingPlan.name
+      const description = updateData.description || existingPlan.description
+
+      // Produkt in Stripe erstellen oder aktualisieren
+      if (existingPlan.stripeProductId) {
+        // Produkt aktualisieren
+        await stripe.products.update(existingPlan.stripeProductId, {
+          name,
+          description: description || undefined,
+          metadata: {
+            planType: updateData.planType || existingPlan.planType,
+            slug
+          }
+        })
+      } else {
+        // Neues Produkt erstellen
+        const product = await stripe.products.create({
+          name,
+          description: description || undefined,
+          metadata: {
+            planType: updateData.planType || existingPlan.planType,
+            slug
+          }
+        })
+        updateData.stripeProductId = product.id
+      }
+
+      const productId = updateData.stripeProductId || existingPlan.stripeProductId
+
+      // Preise aktualisieren (Stripe erlaubt keine Preisänderungen, daher neue erstellen)
+      const priceMonthly = updateData.priceMonthly ?? existingPlan.priceMonthly
+      const priceQuarterly = updateData.priceQuarterly ?? existingPlan.priceQuarterly
+      const priceSixMonths = updateData.priceSixMonths ?? existingPlan.priceSixMonths
+      const priceYearly = updateData.priceYearly ?? existingPlan.priceYearly
+
+      // Monatspreis
+      if (priceMonthly > 0 && priceMonthly !== existingPlan.priceMonthly) {
+        // Alten Preis archivieren
+        if (existingPlan.stripePriceMonthly) {
+          await stripe.prices.update(existingPlan.stripePriceMonthly, { active: false })
+        }
+        // Neuen Preis erstellen
+        const newPrice = await stripe.prices.create({
+          product: productId!,
+          unit_amount: Math.round(priceMonthly * 100),
+          currency: 'eur',
+          recurring: { interval: 'month' },
+          lookup_key: `${slug}_monthly`,
+          metadata: { planSlug: slug, interval: 'monthly' }
+        })
+        updateData.stripePriceMonthly = newPrice.id
+      }
+
+      // Quartalspreis
+      if (priceQuarterly > 0 && priceQuarterly !== existingPlan.priceQuarterly) {
+        if (existingPlan.stripePriceQuarterly) {
+          await stripe.prices.update(existingPlan.stripePriceQuarterly, { active: false })
+        }
+        const newPrice = await stripe.prices.create({
+          product: productId!,
+          unit_amount: Math.round(priceQuarterly * 100),
+          currency: 'eur',
+          recurring: { interval: 'month', interval_count: 3 },
+          lookup_key: `${slug}_quarterly`,
+          metadata: { planSlug: slug, interval: 'quarterly' }
+        })
+        updateData.stripePriceQuarterly = newPrice.id
+      }
+
+      // 6-Monatspreis
+      if (priceSixMonths > 0 && priceSixMonths !== existingPlan.priceSixMonths) {
+        if (existingPlan.stripePriceSixMonths) {
+          await stripe.prices.update(existingPlan.stripePriceSixMonths, { active: false })
+        }
+        const newPrice = await stripe.prices.create({
+          product: productId!,
+          unit_amount: Math.round(priceSixMonths * 100),
+          currency: 'eur',
+          recurring: { interval: 'month', interval_count: 6 },
+          lookup_key: `${slug}_six_months`,
+          metadata: { planSlug: slug, interval: 'sixMonths' }
+        })
+        updateData.stripePriceSixMonths = newPrice.id
+      }
+
+      // Jahrespreis
+      if (priceYearly > 0 && priceYearly !== existingPlan.priceYearly) {
+        if (existingPlan.stripePriceYearly) {
+          await stripe.prices.update(existingPlan.stripePriceYearly, { active: false })
+        }
+        const newPrice = await stripe.prices.create({
+          product: productId!,
+          unit_amount: Math.round(priceYearly * 100),
+          currency: 'eur',
+          recurring: { interval: 'year' },
+          lookup_key: `${slug}_yearly`,
+          metadata: { planSlug: slug, interval: 'yearly' }
+        })
+        updateData.stripePriceYearly = newPrice.id
       }
     }
 

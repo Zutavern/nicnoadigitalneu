@@ -29,8 +29,8 @@ export async function GET() {
       })
     }
 
-    // Stripe-Status prüfen
-    const stripeConfigured = isStripeConfigured()
+    // Stripe-Status prüfen (isStripeConfigured ist ein boolean, keine Funktion)
+    const stripeConfigured = isStripeConfigured
 
     return NextResponse.json({
       settings,

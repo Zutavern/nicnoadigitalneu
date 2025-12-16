@@ -12,7 +12,7 @@ import { BillingInterval } from '@prisma/client'
  */
 export async function GET(req: NextRequest) {
   try {
-    if (!isStripeConfigured()) {
+    if (!isStripeConfigured) {
       return NextResponse.json(
         { error: 'Stripe ist nicht konfiguriert' },
         { status: 503 }
@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
-    if (!isStripeConfigured()) {
+    if (!isStripeConfigured) {
       return NextResponse.json(
         { error: 'Stripe ist nicht konfiguriert' },
         { status: 503 }
