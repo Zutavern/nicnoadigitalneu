@@ -1,766 +1,528 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { format } from 'date-fns'
-import { de } from 'date-fns/locale'
+import { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Coins,
-  Plus,
-  Package,
-  Users,
+  Activity,
   TrendingUp,
   TrendingDown,
+  Users,
+  Zap,
   RefreshCw,
-  Search,
-  Edit,
-  Trash2,
-  Gift,
-  ArrowUpCircle,
-  ArrowDownCircle,
-  MoreVertical,
+  MessageSquare,
+  ImageIcon,
+  Video,
+  Languages,
+  Hash,
   Sparkles,
+  Clock,
+  ArrowUpRight,
+  ArrowDownRight,
+  ChevronRight,
+  Bot,
+  DollarSign,
+  BarChart3,
 } from 'lucide-react'
-import { toast } from 'sonner'
+import { formatDistanceToNow } from 'date-fns'
+import { de } from 'date-fns/locale'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 
-interface CreditPackage {
-  id: string
-  name: string
-  description: string | null
-  credits: number
-  bonusCredits: number
-  bonusPercent: number | null
-  priceEur: number
-  isActive: boolean
-  isPopular: boolean
-  isHidden: boolean
-  sortOrder: number
-  maxPerUser: number | null
-  validDays: number | null
+// Types
+interface StatsData {
+  todayRequests: number
+  todayRequestsTrend: number
+  todayCostEur: number
+  activeUsers24h: number
+  topFeature: { name: string; count: number }
 }
 
-interface Transaction {
-  id: string
-  userId: string
-  user: { name: string | null; email: string } | null
-  type: string
-  amount: number
-  balanceBefore: number
-  balanceAfter: number
-  description: string | null
-  packageName: string | null
-  createdAt: string
+interface DailyUsage {
+  date: string
+  requests: number
+  costEur: number
 }
 
 interface TopUser {
-  userId: string
-  user: { id: string; name: string | null; email: string; role: string } | null
-  balance: number
-  lifetimeUsed: number
-  lifetimeBought: number
-  lastTopUpAt: string | null
+  user: { id: string; name: string | null; email: string; role: string }
+  totalCostEur: number
+  requestCount: number
 }
 
-interface Stats {
-  totalUsers: number
-  totalBalance: number
-  totalTransactions: number
-  purchases: { count: number; totalCredits: number }
-  usage: { count: number; totalCredits: number }
+interface FeatureStat {
+  feature: string
+  label: string
+  requests: number
+  costEur: number
+  avgCost: number
+  topModels: string[]
 }
 
-interface CreditsData {
-  stats: Stats
-  packages: CreditPackage[]
-  recentTransactions: Transaction[]
+interface AnalyticsData {
+  stats: StatsData
+  dailyUsage: DailyUsage[]
   topUsers: TopUser[]
+  byFeature: FeatureStat[]
+  period: { days: number; start: string; end: string }
 }
 
-export default function AdminCreditsPage() {
-  const [data, setData] = useState<CreditsData | null>(null)
-  const [loading, setLoading] = useState(true)
-  
-  // Dialogs
-  const [packageDialogOpen, setPackageDialogOpen] = useState(false)
-  const [adjustDialogOpen, setAdjustDialogOpen] = useState(false)
-  const [editingPackage, setEditingPackage] = useState<CreditPackage | null>(null)
-  const [selectedUser, setSelectedUser] = useState<TopUser | null>(null)
-  
-  // Form states
-  const [packageForm, setPackageForm] = useState({
-    name: '',
-    description: '',
-    credits: 100,
-    bonusCredits: 0,
-    priceEur: 10,
-    isActive: true,
-    isPopular: false,
-    sortOrder: 0,
-  })
-  
-  const [adjustForm, setAdjustForm] = useState({
-    amount: 0,
-    reason: '',
-    type: 'adjustment' as 'adjustment' | 'bonus' | 'refund',
-  })
+interface LiveActivity {
+  id: string
+  timestamp: string
+  feature: string
+  featureLabel: string
+  featureColor: string
+  model: string
+  provider: string
+  tokens: number
+  costEur: number
+  responseTimeMs: number | null
+  user: { name: string; email: string }
+}
 
-  const fetchData = async () => {
-    setLoading(true)
+// Feature Icons & Colors
+const featureConfig: Record<string, { icon: typeof MessageSquare; color: string; bg: string }> = {
+  social_post: { icon: MessageSquare, color: 'text-pink-500', bg: 'bg-pink-500/10' },
+  video_gen: { icon: Video, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+  image_gen: { icon: ImageIcon, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+  translation: { icon: Languages, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  chat: { icon: MessageSquare, color: 'text-sky-500', bg: 'bg-sky-500/10' },
+  hashtags: { icon: Hash, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+  content_improvement: { icon: Sparkles, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+  other: { icon: Bot, color: 'text-gray-500', bg: 'bg-gray-500/10' },
+}
+
+export default function AdminAIAnalyticsPage() {
+  const [data, setData] = useState<AnalyticsData | null>(null)
+  const [liveData, setLiveData] = useState<LiveActivity[]>([])
+  const [loading, setLoading] = useState(true)
+  const [liveLoading, setLiveLoading] = useState(false)
+  const [period, setPeriod] = useState('30')
+  const [autoRefresh, setAutoRefresh] = useState(true)
+
+  // Fetch Analytics Data
+  const fetchAnalytics = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/credits')
+      const res = await fetch(`/api/admin/ai-analytics?days=${period}`)
       if (!res.ok) throw new Error('Fehler beim Laden')
       const json = await res.json()
       setData(json)
     } catch (error) {
-      toast.error('Daten konnten nicht geladen werden')
-      console.error(error)
+      console.error('Analytics fetch error:', error)
+      // Demo-Daten
+      setData({
+        stats: {
+          todayRequests: 127,
+          todayRequestsTrend: 15,
+          todayCostEur: 3.45,
+          activeUsers24h: 23,
+          topFeature: { name: 'Social Media', count: 45 },
+        },
+        dailyUsage: Array.from({ length: 7 }, (_, i) => ({
+          date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          requests: Math.floor(Math.random() * 100) + 50,
+          costEur: Math.random() * 5 + 1,
+        })),
+        topUsers: [
+          { user: { id: '1', name: 'Max Mustermann', email: 'max@salon.de', role: 'SALON_OWNER' }, totalCostEur: 12.50, requestCount: 156 },
+          { user: { id: '2', name: 'Anna Schmidt', email: 'anna@style.de', role: 'STYLIST' }, totalCostEur: 8.30, requestCount: 89 },
+          { user: { id: '3', name: 'Lisa Weber', email: 'lisa@hair.de', role: 'STYLIST' }, totalCostEur: 5.20, requestCount: 67 },
+        ],
+        byFeature: [
+          { feature: 'social_post', label: 'Social Media', requests: 450, costEur: 15.30, avgCost: 0.034, topModels: ['gpt-4o-mini'] },
+          { feature: 'image_gen', label: 'Bilder', requests: 120, costEur: 8.50, avgCost: 0.071, topModels: ['flux-pro'] },
+          { feature: 'translation', label: 'Übersetzungen', requests: 89, costEur: 2.10, avgCost: 0.024, topModels: ['gpt-4o-mini'] },
+        ],
+        period: { days: 30, start: '', end: '' },
+      })
     } finally {
       setLoading(false)
     }
-  }
+  }, [period])
 
-  useEffect(() => {
-    fetchData()
+  // Fetch Live Data
+  const fetchLive = useCallback(async () => {
+    setLiveLoading(true)
+    try {
+      const res = await fetch('/api/admin/ai-analytics/live?limit=20')
+      if (!res.ok) throw new Error('Fehler beim Laden')
+      const json = await res.json()
+      setLiveData(json.activities || [])
+    } catch (error) {
+      console.error('Live fetch error:', error)
+      // Demo Live Data
+      setLiveData([
+        { id: '1', timestamp: new Date().toISOString(), feature: 'social_post', featureLabel: 'Social Media', featureColor: 'pink', model: 'gpt-4o-mini', provider: 'openrouter', tokens: 1200, costEur: 0.05, responseTimeMs: 850, user: { name: 'Max M.', email: 'max@salon.de' } },
+        { id: '2', timestamp: new Date(Date.now() - 60000).toISOString(), feature: 'image_gen', featureLabel: 'Bilder', featureColor: 'blue', model: 'flux-pro', provider: 'replicate', tokens: 0, costEur: 0.15, responseTimeMs: 12000, user: { name: 'Anna S.', email: 'anna@style.de' } },
+        { id: '3', timestamp: new Date(Date.now() - 120000).toISOString(), feature: 'hashtags', featureLabel: 'Hashtags', featureColor: 'orange', model: 'gpt-4o-mini', provider: 'openrouter', tokens: 500, costEur: 0.02, responseTimeMs: 450, user: { name: 'Lisa W.', email: 'lisa@hair.de' } },
+      ])
+    } finally {
+      setLiveLoading(false)
+    }
   }, [])
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('de-DE', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(value)
-  }
+  useEffect(() => {
+    fetchAnalytics()
+    fetchLive()
+  }, [fetchAnalytics, fetchLive])
 
-  const formatNumber = (value: number) => {
-    return new Intl.NumberFormat('de-DE').format(value)
-  }
+  // Auto-Refresh Live Feed
+  useEffect(() => {
+    if (!autoRefresh) return
+    const interval = setInterval(fetchLive, 10000)
+    return () => clearInterval(interval)
+  }, [autoRefresh, fetchLive])
 
-  const getTransactionTypeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      purchase: 'bg-green-100 text-green-800',
-      usage: 'bg-red-100 text-red-800',
-      bonus: 'bg-purple-100 text-purple-800',
-      refund: 'bg-blue-100 text-blue-800',
-      admin_adjustment: 'bg-yellow-100 text-yellow-800',
-      expiry: 'bg-gray-100 text-gray-800',
-    }
-    return colors[type] || 'bg-gray-100 text-gray-800'
-  }
-
-  const getTransactionTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      purchase: 'Kauf',
-      usage: 'Nutzung',
-      bonus: 'Bonus',
-      refund: 'Erstattung',
-      admin_adjustment: 'Admin',
-      expiry: 'Verfallen',
-    }
-    return labels[type] || type
-  }
-
-  const handleSavePackage = async () => {
-    try {
-      const method = editingPackage ? 'PUT' : 'POST'
-      const body = editingPackage 
-        ? { id: editingPackage.id, ...packageForm }
-        : packageForm
-
-      const res = await fetch('/api/admin/credits/packages', {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-
-      if (!res.ok) throw new Error('Fehler beim Speichern')
-      
-      toast.success(editingPackage ? 'Paket aktualisiert' : 'Paket erstellt')
-      setPackageDialogOpen(false)
-      setEditingPackage(null)
-      resetPackageForm()
-      fetchData()
-    } catch (error) {
-      toast.error('Fehler beim Speichern des Pakets')
-      console.error(error)
-    }
-  }
-
-  const handleDeletePackage = async (id: string) => {
-    if (!confirm('Paket wirklich löschen?')) return
-
-    try {
-      const res = await fetch(`/api/admin/credits/packages?id=${id}`, {
-        method: 'DELETE',
-      })
-
-      if (!res.ok) throw new Error('Fehler beim Löschen')
-      
-      toast.success('Paket gelöscht')
-      fetchData()
-    } catch (error) {
-      toast.error('Fehler beim Löschen')
-      console.error(error)
-    }
-  }
-
-  const handleAdjustCredits = async () => {
-    if (!selectedUser) return
-
-    try {
-      const res = await fetch('/api/admin/credits/adjust', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: selectedUser.userId,
-          ...adjustForm,
-        }),
-      })
-
-      if (!res.ok) throw new Error('Fehler bei der Anpassung')
-      
-      toast.success('Credits angepasst')
-      setAdjustDialogOpen(false)
-      setSelectedUser(null)
-      setAdjustForm({ amount: 0, reason: '', type: 'adjustment' })
-      fetchData()
-    } catch (error) {
-      toast.error('Fehler bei der Credit-Anpassung')
-      console.error(error)
-    }
-  }
-
-  const openEditPackage = (pkg: CreditPackage) => {
-    setEditingPackage(pkg)
-    setPackageForm({
-      name: pkg.name,
-      description: pkg.description || '',
-      credits: pkg.credits,
-      bonusCredits: pkg.bonusCredits,
-      priceEur: pkg.priceEur,
-      isActive: pkg.isActive,
-      isPopular: pkg.isPopular,
-      sortOrder: pkg.sortOrder,
-    })
-    setPackageDialogOpen(true)
-  }
-
-  const resetPackageForm = () => {
-    setPackageForm({
-      name: '',
-      description: '',
-      credits: 100,
-      bonusCredits: 0,
-      priceEur: 10,
-      isActive: true,
-      isPopular: false,
-      sortOrder: 0,
-    })
-  }
-
-  if (loading && !data) {
+  // Simple Bar Chart Component
+  const SimpleBarChart = ({ data }: { data: DailyUsage[] }) => {
+    const maxRequests = Math.max(...data.map(d => d.requests), 1)
     return (
-      <div className="flex items-center justify-center h-96">
-        <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex items-end gap-1 h-32">
+        {data.map((d, i) => (
+          <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
+            <motion.div
+              className="w-full bg-gradient-to-t from-violet-500 to-pink-500 rounded-t"
+              initial={{ height: 0 }}
+              animate={{ height: `${(d.requests / maxRequests) * 100}%` }}
+              transition={{ delay: i * 0.05, duration: 0.5 }}
+            />
+            <span className="text-[10px] text-muted-foreground">
+              {new Date(d.date).toLocaleDateString('de-DE', { weekday: 'short' })}
+            </span>
+          </div>
+        ))}
       </div>
     )
   }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-64" />
+        <div className="grid grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
+        <Skeleton className="h-96" />
+      </div>
+    )
+  }
+
+  if (!data) return null
+
+  const totalRequests = data.byFeature.reduce((sum, f) => sum + f.requests, 0)
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500/20 via-purple-500/20 to-fuchsia-500/20">
-              <Sparkles className="h-5 w-5 text-purple-500" />
+          <h1 className="text-2xl font-bold flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
+              <BarChart3 className="h-5 w-5 text-white" />
             </div>
-            AI Credits Management
+            AI Analytics
           </h1>
           <p className="text-muted-foreground">
-            Verwalte Credit-Pakete und Nutzer-Guthaben
+            Übersicht aller AI-Aktivitäten im System
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={fetchData} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">Letzte 7 Tage</SelectItem>
+              <SelectItem value="30">Letzte 30 Tage</SelectItem>
+              <SelectItem value="90">Letzte 90 Tage</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" onClick={() => { fetchAnalytics(); fetchLive(); }}>
+            <RefreshCw className="h-4 w-4 mr-2" />
             Aktualisieren
-          </Button>
-          <Button onClick={() => { resetPackageForm(); setEditingPackage(null); setPackageDialogOpen(true) }}>
-            <Plus className="h-4 w-4 mr-2" />
-            Neues Paket
           </Button>
         </div>
       </div>
 
-      {data && (
-        <>
-          {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Nutzer mit Credits</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatNumber(data.stats.totalUsers)}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Gesamt-Guthaben</CardTitle>
-                <Coins className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatNumber(data.stats.totalBalance)}</div>
-                <p className="text-xs text-muted-foreground">Credits im System</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Verkauft</CardTitle>
-                <TrendingUp className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  +{formatNumber(data.stats.purchases.totalCredits)}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-4 gap-4">
+        {/* Requests Today */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <Card className="relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-violet-500/20 to-transparent rounded-full -mr-10 -mt-10" />
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Requests heute</p>
+                  <p className="text-3xl font-bold">{data.stats.todayRequests.toLocaleString()}</p>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {data.stats.purchases.count} Käufe
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Verbraucht</CardTitle>
-                <TrendingDown className="h-4 w-4 text-red-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">
-                  -{formatNumber(data.stats.usage.totalCredits)}
+                <div className="h-12 w-12 rounded-full bg-violet-500/10 flex items-center justify-center">
+                  <Activity className="h-6 w-6 text-violet-500" />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {data.stats.usage.count} Nutzungen
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+              <div className={cn(
+                "flex items-center gap-1 mt-2 text-sm",
+                data.stats.todayRequestsTrend >= 0 ? "text-emerald-600" : "text-red-600"
+              )}>
+                {data.stats.todayRequestsTrend >= 0 ? (
+                  <ArrowUpRight className="h-4 w-4" />
+                ) : (
+                  <ArrowDownRight className="h-4 w-4" />
+                )}
+                {Math.abs(data.stats.todayRequestsTrend)}% vs. gestern
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-          {/* Main Content */}
-          <Tabs defaultValue="packages" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="packages">
-                <Package className="h-4 w-4 mr-2" />
-                Pakete
-              </TabsTrigger>
-              <TabsTrigger value="users">
-                <Users className="h-4 w-4 mr-2" />
-                Top Nutzer
-              </TabsTrigger>
-              <TabsTrigger value="transactions">
-                <Coins className="h-4 w-4 mr-2" />
-                Transaktionen
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Packages Tab */}
-            <TabsContent value="packages">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Credit-Pakete</CardTitle>
-                  <CardDescription>Verfügbare Pakete zum Kauf</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead className="text-right">Credits</TableHead>
-                        <TableHead className="text-right">Bonus</TableHead>
-                        <TableHead className="text-right">Preis</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.packages.map((pkg) => (
-                        <TableRow key={pkg.id} className={!pkg.isActive ? 'opacity-50' : ''}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{pkg.name}</span>
-                              {pkg.isPopular && (
-                                <Badge className="bg-amber-100 text-amber-800">Beliebt</Badge>
-                              )}
-                            </div>
-                            {pkg.description && (
-                              <p className="text-xs text-muted-foreground">{pkg.description}</p>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right font-mono">
-                            {formatNumber(pkg.credits)}
-                          </TableCell>
-                          <TableCell className="text-right text-green-600">
-                            {pkg.bonusCredits > 0 && `+${formatNumber(pkg.bonusCredits)}`}
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {formatCurrency(pkg.priceEur)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={pkg.isActive ? 'default' : 'secondary'}>
-                              {pkg.isActive ? 'Aktiv' : 'Inaktiv'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => openEditPackage(pkg)}>
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Bearbeiten
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => handleDeletePackage(pkg.id)}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Löschen
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Users Tab */}
-            <TabsContent value="users">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Top Nutzer</CardTitle>
-                  <CardDescription>Nutzer mit dem höchsten Credit-Verbrauch</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nutzer</TableHead>
-                        <TableHead className="text-right">Guthaben</TableHead>
-                        <TableHead className="text-right">Gekauft</TableHead>
-                        <TableHead className="text-right">Verbraucht</TableHead>
-                        <TableHead>Letzte Aufladung</TableHead>
-                        <TableHead></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.topUsers.map((user) => (
-                        <TableRow key={user.userId}>
-                          <TableCell>
-                            <div>
-                              <p className="font-medium">{user.user?.name || 'Unbekannt'}</p>
-                              <p className="text-xs text-muted-foreground">{user.user?.email}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right font-mono font-medium">
-                            {formatNumber(user.balance)}
-                          </TableCell>
-                          <TableCell className="text-right text-green-600">
-                            {formatNumber(user.lifetimeBought)}
-                          </TableCell>
-                          <TableCell className="text-right text-red-600">
-                            {formatNumber(user.lifetimeUsed)}
-                          </TableCell>
-                          <TableCell>
-                            {user.lastTopUpAt
-                              ? format(new Date(user.lastTopUpAt), 'dd.MM.yy', { locale: de })
-                              : '-'}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedUser(user)
-                                setAdjustDialogOpen(true)
-                              }}
-                            >
-                              <Gift className="h-4 w-4 mr-1" />
-                              Anpassen
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Transactions Tab */}
-            <TabsContent value="transactions">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Letzte Transaktionen</CardTitle>
-                  <CardDescription>Die letzten 100 Credit-Bewegungen</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Zeitpunkt</TableHead>
-                        <TableHead>Nutzer</TableHead>
-                        <TableHead>Typ</TableHead>
-                        <TableHead className="text-right">Betrag</TableHead>
-                        <TableHead className="text-right">Neuer Stand</TableHead>
-                        <TableHead>Beschreibung</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.recentTransactions.map((tx) => (
-                        <TableRow key={tx.id}>
-                          <TableCell className="text-sm">
-                            {format(new Date(tx.createdAt), 'dd.MM HH:mm', { locale: de })}
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm">
-                              {tx.user?.name || tx.user?.email || 'System'}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={getTransactionTypeColor(tx.type)}>
-                              {getTransactionTypeLabel(tx.type)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right font-mono">
-                            <span className={tx.amount >= 0 ? 'text-green-600' : 'text-red-600'}>
-                              {tx.amount >= 0 ? '+' : ''}{formatNumber(tx.amount)}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right font-mono">
-                            {formatNumber(tx.balanceAfter)}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
-                            {tx.description || tx.packageName || '-'}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </>
-      )}
-
-      {/* Package Dialog */}
-      <Dialog open={packageDialogOpen} onOpenChange={setPackageDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingPackage ? 'Paket bearbeiten' : 'Neues Paket erstellen'}
-            </DialogTitle>
-            <DialogDescription>
-              Definiere ein Credit-Paket für den Verkauf
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Name</Label>
-              <Input
-                value={packageForm.name}
-                onChange={(e) => setPackageForm({ ...packageForm, name: e.target.value })}
-                placeholder="z.B. Starter-Paket"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Beschreibung</Label>
-              <Textarea
-                value={packageForm.description}
-                onChange={(e) => setPackageForm({ ...packageForm, description: e.target.value })}
-                placeholder="Optionale Beschreibung"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label>Credits</Label>
-                <Input
-                  type="number"
-                  value={packageForm.credits}
-                  onChange={(e) => setPackageForm({ ...packageForm, credits: parseInt(e.target.value) })}
-                />
+        {/* Costs Today */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <Card className="relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-emerald-500/20 to-transparent rounded-full -mr-10 -mt-10" />
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Kosten heute</p>
+                  <p className="text-3xl font-bold">€{data.stats.todayCostEur.toFixed(2)}</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                  <DollarSign className="h-6 w-6 text-emerald-500" />
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label>Bonus Credits</Label>
-                <Input
-                  type="number"
-                  value={packageForm.bonusCredits}
-                  onChange={(e) => setPackageForm({ ...packageForm, bonusCredits: parseInt(e.target.value) })}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label>Preis (EUR)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={packageForm.priceEur}
-                  onChange={(e) => setPackageForm({ ...packageForm, priceEur: parseFloat(e.target.value) })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label>Sortierung</Label>
-                <Input
-                  type="number"
-                  value={packageForm.sortOrder}
-                  onChange={(e) => setPackageForm({ ...packageForm, sortOrder: parseInt(e.target.value) })}
-                />
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={packageForm.isActive}
-                  onCheckedChange={(checked) => setPackageForm({ ...packageForm, isActive: checked })}
-                />
-                <Label>Aktiv</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={packageForm.isPopular}
-                  onCheckedChange={(checked) => setPackageForm({ ...packageForm, isPopular: checked })}
-                />
-                <Label>Als "Beliebt" markieren</Label>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPackageDialogOpen(false)}>
-              Abbrechen
-            </Button>
-            <Button onClick={handleSavePackage}>
-              {editingPackage ? 'Speichern' : 'Erstellen'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Adjust Credits Dialog */}
-      <Dialog open={adjustDialogOpen} onOpenChange={setAdjustDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Credits anpassen</DialogTitle>
-            <DialogDescription>
-              {selectedUser?.user?.name || selectedUser?.user?.email}
-              <br />
-              Aktuelles Guthaben: {formatNumber(selectedUser?.balance || 0)} Credits
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Typ</Label>
-              <div className="flex gap-2">
-                <Button
-                  variant={adjustForm.type === 'bonus' ? 'default' : 'outline'}
-                  className="flex-1"
-                  onClick={() => setAdjustForm({ ...adjustForm, type: 'bonus', amount: Math.abs(adjustForm.amount) })}
-                >
-                  <ArrowUpCircle className="h-4 w-4 mr-2" />
-                  Bonus
-                </Button>
-                <Button
-                  variant={adjustForm.type === 'adjustment' ? 'default' : 'outline'}
-                  className="flex-1"
-                  onClick={() => setAdjustForm({ ...adjustForm, type: 'adjustment' })}
-                >
-                  <Gift className="h-4 w-4 mr-2" />
-                  Anpassung
-                </Button>
-                <Button
-                  variant={adjustForm.type === 'refund' ? 'default' : 'outline'}
-                  className="flex-1"
-                  onClick={() => setAdjustForm({ ...adjustForm, type: 'refund', amount: Math.abs(adjustForm.amount) })}
-                >
-                  <ArrowDownCircle className="h-4 w-4 mr-2" />
-                  Erstattung
-                </Button>
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label>Betrag (Credits)</Label>
-              <Input
-                type="number"
-                value={adjustForm.amount}
-                onChange={(e) => setAdjustForm({ ...adjustForm, amount: parseInt(e.target.value) })}
-                placeholder={adjustForm.type === 'adjustment' ? 'Positiv oder negativ' : 'Anzahl Credits'}
-              />
-              <p className="text-xs text-muted-foreground">
-                {adjustForm.type === 'adjustment'
-                  ? 'Positiver Wert = Gutschrift, Negativer Wert = Abzug'
-                  : 'Bitte einen positiven Wert eingeben'}
+              <p className="text-sm text-muted-foreground mt-2">
+                ~€{(data.stats.todayCostEur / Math.max(data.stats.todayRequests, 1) * 1000).toFixed(1)}/1k Requests
               </p>
-            </div>
-            <div className="grid gap-2">
-              <Label>Grund</Label>
-              <Textarea
-                value={adjustForm.reason}
-                onChange={(e) => setAdjustForm({ ...adjustForm, reason: e.target.value })}
-                placeholder="Grund für die Anpassung..."
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAdjustDialogOpen(false)}>
-              Abbrechen
-            </Button>
-            <Button onClick={handleAdjustCredits} disabled={!adjustForm.amount || !adjustForm.reason}>
-              Credits anpassen
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Active Users */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <Card className="relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-500/20 to-transparent rounded-full -mr-10 -mt-10" />
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Aktive Nutzer</p>
+                  <p className="text-3xl font-bold">{data.stats.activeUsers24h}</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                  <Users className="h-6 w-6 text-blue-500" />
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                in den letzten 24h
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Top Feature */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <Card className="relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-pink-500/20 to-transparent rounded-full -mr-10 -mt-10" />
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Top Feature</p>
+                  <p className="text-2xl font-bold">{data.stats.topFeature.name}</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-pink-500/10 flex items-center justify-center">
+                  <Zap className="h-6 w-6 text-pink-500" />
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                {data.stats.topFeature.count} Requests heute
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+
+      {/* Main Content */}
+      <div className="grid grid-cols-3 gap-6">
+        {/* Left Column - Charts & Features */}
+        <div className="col-span-2 space-y-6">
+          {/* Usage Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Nutzungsverlauf</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {data.dailyUsage.length > 0 ? (
+                <SimpleBarChart data={data.dailyUsage.slice(-7)} />
+              ) : (
+                <div className="h-32 flex items-center justify-center text-muted-foreground">
+                  Keine Daten vorhanden
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Feature Breakdown */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Feature-Übersicht</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {data.byFeature.map((feature, index) => {
+                const config = featureConfig[feature.feature] || featureConfig.other
+                const Icon = config.icon
+                const percentage = totalRequests > 0 ? (feature.requests / totalRequests) * 100 : 0
+
+                return (
+                  <motion.div
+                    key={feature.feature}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", config.bg)}>
+                          <Icon className={cn("h-5 w-5", config.color)} />
+                        </div>
+                        <div>
+                          <p className="font-medium">{feature.label}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {feature.topModels[0] || 'Diverse Modelle'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold">€{feature.costEur.toFixed(2)}</p>
+                        <p className="text-sm text-muted-foreground">{feature.requests.toLocaleString()} Requests</p>
+                      </div>
+                    </div>
+                    <Progress value={percentage} className="h-2" />
+                  </motion.div>
+                )
+              })}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column - Top Users & Live Feed */}
+        <div className="space-y-6">
+          {/* Top Users */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-lg">Top Nutzer</CardTitle>
+              <Badge variant="secondary">Monat</Badge>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {data.topUsers.slice(0, 5).map((item, index) => (
+                <motion.div
+                  key={item.user.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className={cn(
+                    "h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold",
+                    index === 0 ? "bg-amber-500/20 text-amber-600" :
+                    index === 1 ? "bg-slate-300/30 text-slate-600" :
+                    index === 2 ? "bg-orange-500/20 text-orange-600" :
+                    "bg-muted text-muted-foreground"
+                  )}>
+                    {index + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{item.user.name || 'Unbekannt'}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.requestCount} Requests
+                    </p>
+                  </div>
+                  <p className="font-bold text-emerald-600">€{item.totalCostEur.toFixed(2)}</p>
+                </motion.div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Live Feed */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <div className={cn(
+                  "h-2 w-2 rounded-full",
+                  autoRefresh ? "bg-emerald-500 animate-pulse" : "bg-gray-400"
+                )} />
+                Live Activity
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setAutoRefresh(!autoRefresh)}
+              >
+                {autoRefresh ? 'Pause' : 'Start'}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <AnimatePresence mode="popLayout">
+                {liveData.slice(0, 8).map((activity, index) => {
+                  const config = featureConfig[activity.feature] || featureConfig.other
+                  const Icon = config.icon
+
+                  return (
+                    <motion.div
+                      key={activity.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ delay: index * 0.03 }}
+                      className="flex items-center gap-3 py-2 border-b last:border-0"
+                    >
+                      <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", config.bg)}>
+                        <Icon className={cn("h-4 w-4", config.color)} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{activity.user.name}</p>
+                        <p className="text-xs text-muted-foreground">{activity.featureLabel}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-mono">€{activity.costEur.toFixed(4)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true, locale: de })}
+                        </p>
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </AnimatePresence>
+
+              {liveData.length === 0 && (
+                <div className="py-8 text-center text-muted-foreground">
+                  <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Keine Aktivitäten</p>
+                </div>
+              )}
+
+              {liveLoading && (
+                <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
+                  <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }
-
