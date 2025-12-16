@@ -570,40 +570,8 @@ export default function PricingPage() {
                           </div>
                         )}
 
-                        {/* AI Credits Included - Marketing Style */}
-                        {plan.includedAiCreditsEur > 0 && (
-                          <motion.div 
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="mb-6 relative overflow-hidden"
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 via-pink-500/10 to-orange-500/10 rounded-xl" />
-                            <div className="relative p-4 rounded-xl border border-violet-500/20 backdrop-blur-sm">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center flex-shrink-0 shadow-lg">
-                                  <Bot className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-500 to-pink-500">
-                                      {config.currencySign}{plan.includedAiCreditsEur}
-                                    </span>
-                                    <Badge className="bg-violet-500/20 text-violet-600 dark:text-violet-400 border-violet-500/30 text-[10px] uppercase tracking-wide">
-                                      Included
-                                    </Badge>
-                                  </div>
-                                  <p className="text-xs text-muted-foreground">
-                                    AI Credits every month – Create content, generate images & more
-                                  </p>
-                                </div>
-                                <Sparkles className="w-5 h-5 text-violet-400 animate-pulse" />
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-
                         {/* Features */}
-                        <div className="space-y-4 mb-10 flex-1">
+                        <div className="space-y-4 mb-6 flex-1">
                           {plan.features.map((feature, i) => (
                             <motion.div 
                               key={i} 
@@ -624,6 +592,17 @@ export default function PricingPage() {
                             </motion.div>
                           ))}
                         </div>
+
+                        {/* AI Credits - Dezentes Design-Element unter Features */}
+                        {plan.includedAiCreditsEur > 0 && (
+                          <div className="flex items-center gap-2 mb-6 py-2 px-3 rounded-lg bg-gradient-to-r from-violet-500/5 to-pink-500/5 border border-violet-500/10">
+                            <Bot className="w-4 h-4 text-violet-500" />
+                            <span className="text-sm text-muted-foreground">
+                              <span className="font-semibold text-foreground">{config.currencySign}{plan.includedAiCreditsEur}</span>
+                              {' '}AI-Guthaben/Monat inklusive
+                            </span>
+                          </div>
+                        )}
 
                         {/* Limits Badge + CTA am Ende */}
                         <div className="mt-auto">
