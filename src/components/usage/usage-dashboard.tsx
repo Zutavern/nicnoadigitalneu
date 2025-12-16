@@ -1,12 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   TrendingUp,
-  DollarSign,
   Activity,
-  Clock,
   MessageSquare,
   ImageIcon,
   Video,
@@ -16,21 +14,22 @@ import {
   Settings2,
   Info,
   AlertTriangle,
+  ChevronDown,
   ChevronRight,
   Loader2,
   Gift,
-  Bot,
   Zap,
+  Check,
+  Shield,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { formatDistanceToNow, format } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Progress } from '@/components/ui/progress'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -44,11 +43,10 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
 
 interface FeatureStat {
@@ -113,14 +111,50 @@ interface UsageData {
   recentActivity: RecentActivity[]
 }
 
-const featureIcons: Record<string, typeof MessageSquare> = {
-  social_post: MessageSquare,
-  video_gen: Video,
-  image_gen: ImageIcon,
-  translation: Languages,
-  chat: MessageSquare,
-  hashtags: Hash,
-  content_improvement: Sparkles,
+// Feature Konfiguration - lesbare Labels und Icons
+const featureConfig: Record<string, { label: string; icon: typeof MessageSquare; color: string; bgColor: string }> = {
+  social_post: { 
+    label: 'Social Media', 
+    icon: MessageSquare, 
+    color: 'text-pink-500',
+    bgColor: 'bg-pink-500/10'
+  },
+  video_gen: { 
+    label: 'Videos', 
+    icon: Video, 
+    color: 'text-purple-500',
+    bgColor: 'bg-purple-500/10'
+  },
+  image_gen: { 
+    label: 'Bilder', 
+    icon: ImageIcon, 
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10'
+  },
+  translation: { 
+    label: 'Übersetzungen', 
+    icon: Languages, 
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500/10'
+  },
+  chat: { 
+    label: 'Chat', 
+    icon: MessageSquare, 
+    color: 'text-sky-500',
+    bgColor: 'bg-sky-500/10'
+  },
+  hashtags: { 
+    label: 'Hashtags', 
+    icon: Hash, 
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-500/10'
+  },
+  content_improvement: { 
+    label: 'Verbesserungen', 
+    icon: Sparkles, 
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-500/10'
+  },
 }
 
 interface UsageDashboardProps {
@@ -132,6 +166,8 @@ export function UsageDashboard({ onOpenOnboarding, showOnboarding }: UsageDashbo
   const [data, setData] = useState<UsageData | null>(null)
   const [loading, setLoading] = useState(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const [activityOpen, setActivityOpen] = useState(false)
   const [savingSettings, setSavingSettings] = useState(false)
   
   // Settings state
@@ -150,7 +186,6 @@ export function UsageDashboard({ onOpenOnboarding, showOnboarding }: UsageDashbo
       
       const usageData = await usageRes.json()
       
-      // Prüfe ob Demo-Modus
       if (usageData.isDemo) {
         throw new Error('Demo-Modus')
       }
@@ -167,8 +202,7 @@ export function UsageDashboard({ onOpenOnboarding, showOnboarding }: UsageDashbo
 
       setData(usageData)
     } catch {
-      // Demo-Modus: Mock-Daten anzeigen (kein console.error für erwarteten Fall)
-      // Demo-Modus: Mock-Daten anzeigen
+      // Demo-Daten
       const mockData: UsageData = {
         summary: {
           totalRequests: 47,
@@ -239,10 +273,8 @@ export function UsageDashboard({ onOpenOnboarding, showOnboarding }: UsageDashbo
       toast.success('Einstellungen gespeichert')
       setSettingsOpen(false)
       fetchData()
-    } catch (error) {
-      console.error('Error saving settings:', error)
-      // Im Demo-Modus trotzdem erfolgreich melden
-      toast.success('Einstellungen gespeichert (Demo-Modus)')
+    } catch {
+      toast.success('Einstellungen gespeichert (Demo)')
       setSettingsOpen(false)
     } finally {
       setSavingSettings(false)
@@ -251,21 +283,17 @@ export function UsageDashboard({ onOpenOnboarding, showOnboarding }: UsageDashbo
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-64" />
-        <div className="grid grid-cols-3 gap-4">
-          {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
-        </div>
-        <Skeleton className="h-64" />
+      <div className="space-y-6 max-w-3xl mx-auto">
+        <Skeleton className="h-12 w-64" />
+        <Skeleton className="h-48 rounded-3xl" />
+        <Skeleton className="h-32 rounded-2xl" />
       </div>
     )
   }
 
   if (!data) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-12 max-w-3xl mx-auto">
         <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
         <p className="text-muted-foreground">Keine Daten verfügbar</p>
         <Button onClick={fetchData} variant="outline" className="mt-4">
@@ -275,415 +303,369 @@ export function UsageDashboard({ onOpenOnboarding, showOnboarding }: UsageDashbo
     )
   }
 
+  const hasIncludedCredits = data.includedCredits && data.includedCredits.totalEur > 0
+  const creditsRemaining = data.includedCredits?.remainingEur || 0
+  const creditsUsed = data.includedCredits?.usedEur || 0
+  const creditsTotal = data.includedCredits?.totalEur || 0
+
   return (
-    <TooltipProvider>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-              Dein AI-Verbrauch
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Transparente Übersicht deiner AI-Nutzung
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {showOnboarding && (
-              <Button variant="outline" size="sm" onClick={onOpenOnboarding}>
-                <Info className="h-4 w-4 mr-2" />
-                Wie funktioniert das?
+    <div className="space-y-6 max-w-3xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Dein AI-Guthaben</h1>
+          <p className="text-muted-foreground text-sm">
+            Alles auf einen Blick
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {showOnboarding && (
+            <Button variant="ghost" size="sm" onClick={onOpenOnboarding}>
+              <Info className="h-4 w-4" />
+            </Button>
+          )}
+          <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <Settings2 className="h-4 w-4" />
               </Button>
-            )}
-            <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Settings2 className="h-4 w-4 mr-2" />
-                  Limit-Einstellungen
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Verbrauchs-Einstellungen</DialogTitle>
-                  <DialogDescription>
-                    Setze ein monatliches Limit und erhalte Warnungen
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-6 py-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label>Monatliches Limit</Label>
-                      <span className="text-2xl font-bold">€{monthlyLimit}</span>
-                    </div>
-                    <Slider
-                      value={[monthlyLimit]}
-                      onValueChange={([v]) => setMonthlyLimit(v)}
-                      min={10}
-                      max={500}
-                      step={10}
-                    />
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Einstellungen</DialogTitle>
+                <DialogDescription>
+                  Setze dein monatliches Limit
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-6 py-4">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Monatliches Limit</Label>
+                    <span className="text-2xl font-bold">€{monthlyLimit}</span>
+                  </div>
+                  <Slider
+                    value={[monthlyLimit]}
+                    onValueChange={([v]) => setMonthlyLimit(v)}
+                    min={10}
+                    max={200}
+                    step={10}
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Warnung bei</Label>
+                    <span className="font-medium">{alertThreshold}%</span>
+                  </div>
+                  <Slider
+                    value={[alertThreshold]}
+                    onValueChange={([v]) => setAlertThreshold(v)}
+                    min={50}
+                    max={95}
+                    step={5}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <Label>Stopp bei Limit</Label>
                     <p className="text-sm text-muted-foreground">
-                      Dein maximales Budget pro Monat
+                      AI-Features pausieren
                     </p>
                   </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label>Warnung bei</Label>
-                      <span className="font-medium">{alertThreshold}%</span>
-                    </div>
-                    <Slider
-                      value={[alertThreshold]}
-                      onValueChange={([v]) => setAlertThreshold(v)}
-                      min={50}
-                      max={95}
-                      step={5}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Du wirst benachrichtigt, wenn du diesen Schwellenwert erreichst
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between py-2">
-                    <div>
-                      <Label>Hartes Limit</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Blockiere AI-Features wenn Limit erreicht
-                      </p>
-                    </div>
-                    <Switch
-                      checked={hardLimit}
-                      onCheckedChange={setHardLimit}
-                    />
-                  </div>
+                  <Switch
+                    checked={hardLimit}
+                    onCheckedChange={setHardLimit}
+                  />
                 </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setSettingsOpen(false)}>
-                    Abbrechen
-                  </Button>
-                  <Button onClick={handleSaveSettings} disabled={savingSettings}>
-                    {savingSettings && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                    Speichern
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-3 gap-4">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <Card className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-emerald-500/20">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Dieser Monat</p>
-                    <p className="text-3xl font-bold">€{data.summary.currentMonthCostEur.toFixed(2)}</p>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                    <DollarSign className="h-6 w-6 text-emerald-500" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <Card className="bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border-blue-500/20">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Letzte 30 Tage</p>
-                    <p className="text-3xl font-bold">€{data.summary.totalCostEur.toFixed(2)}</p>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                    <TrendingUp className="h-6 w-6 text-blue-500" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <Card className={cn(
-              "bg-gradient-to-br border",
-              data.spendingLimit?.isNearLimit
-                ? "from-amber-500/10 to-orange-500/10 border-amber-500/20"
-                : "from-purple-500/10 to-pink-500/10 border-purple-500/20"
-            )}>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Limit</p>
-                    <p className="text-3xl font-bold">€{monthlyLimit}/Monat</p>
-                  </div>
-                  <div className={cn(
-                    "h-12 w-12 rounded-full flex items-center justify-center",
-                    data.spendingLimit?.isNearLimit ? "bg-amber-500/20" : "bg-purple-500/20"
-                  )}>
-                    <Activity className={cn(
-                      "h-6 w-6",
-                      data.spendingLimit?.isNearLimit ? "text-amber-500" : "text-purple-500"
-                    )} />
-                  </div>
-                </div>
-                <Progress
-                  value={data.spendingLimit?.percentageUsed || 0}
-                  className={cn(
-                    "h-2",
-                    data.spendingLimit?.isNearLimit && "[&>div]:bg-amber-500"
-                  )}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {data.spendingLimit?.percentageUsed.toFixed(0)}% verwendet
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
-
-        {/* Included AI Credits Card - Only show if user has included credits */}
-        {data.includedCredits && data.includedCredits.totalEur > 0 && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }} 
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <Card className="relative overflow-hidden bg-gradient-to-br from-violet-500/10 via-pink-500/5 to-orange-500/10 border-violet-500/20">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-violet-500/20 to-transparent rounded-full blur-2xl -mr-10 -mt-10" />
-              <CardContent className="py-5 relative">
-                <div className="flex items-center gap-6">
-                  {/* Icon */}
-                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center flex-shrink-0 shadow-lg">
-                    <Gift className="h-8 w-8 text-white" />
-                  </div>
-                  
-                  {/* Content */}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-bold text-lg">Included AI Credits</h3>
-                      <Badge className="bg-gradient-to-r from-violet-500 to-pink-500 text-white border-0 text-xs">
-                        Monthly Bonus
-                      </Badge>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-6">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Your Plan Includes</p>
-                        <p className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-500 to-pink-500">
-                          €{data.includedCredits.totalEur.toFixed(2)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Remaining</p>
-                        <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                          €{data.includedCredits.remainingEur.toFixed(2)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Used</p>
-                        <p className="text-2xl font-bold">
-                          €{data.includedCredits.usedEur.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {/* Progress Bar */}
-                    <div className="mt-4">
-                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                        <span>Free Credit Usage</span>
-                        <span>{data.includedCredits.percentageUsed.toFixed(0)}% used</span>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <motion.div 
-                          className="h-full bg-gradient-to-r from-violet-500 to-pink-500 rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${data.includedCredits.percentageUsed}%` }}
-                          transition={{ duration: 1, delay: 0.5 }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status */}
-                  <div className="text-right">
-                    {data.includedCredits.remainingEur > 0 ? (
-                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-                        <span className="text-sm font-medium">Free credits available</span>
-                        <div className="h-3 w-3 rounded-full bg-emerald-500 animate-pulse" />
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                        <span className="text-sm font-medium">Free credits used</span>
-                        <Zap className="h-4 w-4" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Extra Usage Warning */}
-                {data.extraUsage?.hasExtraUsage && (
-                  <div className="mt-4 pt-4 border-t border-violet-500/20 flex items-center gap-3">
-                    <Zap className="h-5 w-5 text-amber-500" />
-                    <span className="text-sm">
-                      <span className="font-medium text-amber-600 dark:text-amber-400">€{data.extraUsage.chargedEur.toFixed(2)}</span>
-                      <span className="text-muted-foreground"> additional usage this month (billed at end of period)</span>
-                    </span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-
-        {/* How it works */}
-        <Card className="bg-gradient-to-r from-sky-50 to-indigo-50 dark:from-sky-950/30 dark:to-indigo-950/30 border-sky-200/50">
-          <CardContent className="py-4">
-            <div className="flex items-start gap-4">
-              <div className="h-10 w-10 rounded-full bg-sky-100 dark:bg-sky-900/50 flex items-center justify-center flex-shrink-0">
-                <Info className="h-5 w-5 text-sky-600 dark:text-sky-400" />
               </div>
-              <div>
-                <h3 className="font-semibold text-sky-900 dark:text-sky-100">So funktioniert die Abrechnung</h3>
-                <div className="grid grid-cols-3 gap-4 mt-3 text-sm">
-                  <div className="flex items-start gap-2">
-                    <Badge variant="outline" className="mt-0.5">1</Badge>
-                    <span className="text-muted-foreground">Du nutzt AI-Features wie gewohnt</span>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setSettingsOpen(false)}>
+                  Abbrechen
+                </Button>
+                <Button onClick={handleSaveSettings} disabled={savingSettings}>
+                  {savingSettings && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Speichern
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {/* Hauptkarte - Guthaben */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-violet-600 via-purple-600 to-pink-600">
+          <CardContent className="p-6 text-white">
+            {/* Guthaben Anzeige */}
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-4 py-1 text-sm mb-4">
+                <Gift className="h-4 w-4" />
+                {hasIncludedCredits ? 'Inklusiv-Guthaben' : 'Verbrauch'}
+              </div>
+              
+              {hasIncludedCredits ? (
+                <>
+                  <div className="text-6xl font-bold mb-2">
+                    €{creditsRemaining.toFixed(2)}
                   </div>
-                  <div className="flex items-start gap-2">
-                    <Badge variant="outline" className="mt-0.5">2</Badge>
-                    <span className="text-muted-foreground">
-                      {data.includedCredits?.totalEur 
-                        ? 'Dein inkludiertes Guthaben wird zuerst genutzt'
-                        : 'Wir berechnen die Kosten transparent pro Nutzung'
-                      }
-                    </span>
+                  <p className="text-white/80">
+                    von €{creditsTotal.toFixed(2)} übrig
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="text-6xl font-bold mb-2">
+                    €{data.summary.currentMonthCostEur.toFixed(2)}
                   </div>
-                  <div className="flex items-start gap-2">
-                    <Badge variant="outline" className="mt-0.5">3</Badge>
-                    <span className="text-muted-foreground">
-                      {data.includedCredits?.totalEur 
-                        ? 'Nur Nutzung über das Guthaben hinaus wird berechnet'
-                        : 'Am Monatsende erhältst du eine Rechnung'
-                      }
-                    </span>
+                  <p className="text-white/80">
+                    diesen Monat verbraucht
+                  </p>
+                </>
+              )}
+            </div>
+
+            {/* Fortschrittsbalken */}
+            {hasIncludedCredits && (
+              <div className="mb-6">
+                <div className="h-3 bg-white/20 rounded-full overflow-hidden">
+                  <motion.div 
+                    className="h-full bg-white rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${100 - (data.includedCredits?.percentageUsed || 0)}%` }}
+                    transition={{ duration: 1, delay: 0.3 }}
+                  />
+                </div>
+                <div className="flex justify-between text-sm text-white/70 mt-2">
+                  <span>€{creditsUsed.toFixed(2)} verbraucht</span>
+                  <span>{(100 - (data.includedCredits?.percentageUsed || 0)).toFixed(0)}% übrig</span>
+                </div>
+              </div>
+            )}
+
+            {/* Status */}
+            <div className="flex justify-center">
+              {creditsRemaining > 0 ? (
+                <div className="flex items-center gap-2 bg-emerald-500/30 rounded-full px-4 py-2">
+                  <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-sm font-medium">Guthaben verfügbar</span>
+                </div>
+              ) : hasIncludedCredits ? (
+                <div className="flex items-center gap-2 bg-amber-500/30 rounded-full px-4 py-2">
+                  <Zap className="h-4 w-4 text-amber-400" />
+                  <span className="text-sm font-medium">Guthaben aufgebraucht</span>
+                </div>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Info-Box */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
+        <Card className="border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center flex-shrink-0">
+                <Shield className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="text-sm">
+                <p className="font-medium text-emerald-900 dark:text-emerald-100">
+                  So funktioniert&apos;s
+                </p>
+                <p className="text-emerald-700 dark:text-emerald-300 mt-1">
+                  {hasIncludedCredits 
+                    ? `Jeden Monat bekommst du €${creditsTotal.toFixed(0)} AI-Guthaben geschenkt. Erst wenn das aufgebraucht ist, zahlst du extra.`
+                    : 'Du zahlst nur für das, was du nutzt. Transparent und fair.'
+                  }
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Features Übersicht - aufklappbar */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <button className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                    <Activity className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold">Wofür nutzt du AI?</p>
+                    <p className="text-sm text-muted-foreground">
+                      {data.byFeature.length} Features aktiv
+                    </p>
                   </div>
                 </div>
-                {data.includedCredits?.totalEur ? (
-                  <p className="text-sm mt-3 text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-2">
-                    <Bot className="h-4 w-4" />
-                    Dein Abo enthält bereits €{data.includedCredits.totalEur.toFixed(2)} AI-Credits/Monat
+                <ChevronDown className={cn(
+                  "h-5 w-5 text-muted-foreground transition-transform",
+                  detailsOpen && "rotate-180"
+                )} />
+              </button>
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent>
+              <div className="px-4 pb-4 space-y-3">
+                {data.byFeature.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-4">
+                    Noch keine AI-Nutzung
                   </p>
                 ) : (
-                  <p className="text-sm mt-3 text-muted-foreground">
-                    💡 Upgrade auf einen Plan mit inkludierten AI-Credits für zusätzliche Vorteile
-                  </p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Usage by Feature */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Verbrauch nach Feature</CardTitle>
-            <CardDescription>Wo werden deine AI-Kosten verwendet?</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {data.byFeature.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Activity className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                <p>Noch keine AI-Nutzung in diesem Zeitraum</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {data.byFeature.map((feature, index) => {
-                  const Icon = featureIcons[feature.feature] || Sparkles
-                  return (
-                    <motion.div
-                      key={feature.feature}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                          <span className="text-xl">{feature.icon}</span>
+                  data.byFeature.map((feature, index) => {
+                    const config = featureConfig[feature.feature] || {
+                      label: feature.label,
+                      icon: Sparkles,
+                      color: 'text-gray-500',
+                      bgColor: 'bg-gray-500/10'
+                    }
+                    const Icon = config.icon
+                    
+                    return (
+                      <motion.div
+                        key={feature.feature}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="flex items-center gap-3 p-3 rounded-xl bg-muted/50"
+                      >
+                        <div className={cn(
+                          "h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                          config.bgColor
+                        )}>
+                          <Icon className={cn("h-5 w-5", config.color)} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium">{feature.label}</span>
-                            <span className="font-mono font-semibold">€{feature.costEur.toFixed(2)}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Progress value={feature.percentage} className="h-2 flex-1" />
-                            <span className="text-sm text-muted-foreground w-12 text-right">
-                              {feature.percentage.toFixed(0)}%
-                            </span>
-                          </div>
+                          <p className="font-medium">{config.label}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {feature.requests}x genutzt
+                          </p>
                         </div>
-                      </div>
-                    </motion.div>
-                  )
-                })}
+                        <div className="text-right">
+                          <p className="font-bold">€{feature.costEur.toFixed(2)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {feature.percentage.toFixed(0)}%
+                          </p>
+                        </div>
+                      </motion.div>
+                    )
+                  })
+                )}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+      </motion.div>
 
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Letzte Aktivitäten</CardTitle>
-              <CardDescription>Deine neuesten AI-Anfragen</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm">
-              Alle anzeigen
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {data.recentActivity.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Clock className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                <p>Keine Aktivitäten vorhanden</p>
+      {/* Letzte Aktivitäten - aufklappbar */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <Collapsible open={activityOpen} onOpenChange={setActivityOpen}>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <button className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                    <TrendingUp className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold">Letzte Aktivitäten</p>
+                    <p className="text-sm text-muted-foreground">
+                      Deine letzten AI-Anfragen
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown className={cn(
+                  "h-5 w-5 text-muted-foreground transition-transform",
+                  activityOpen && "rotate-180"
+                )} />
+              </button>
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent>
+              <div className="px-4 pb-4 space-y-2">
+                {data.recentActivity.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-4">
+                    Noch keine Aktivitäten
+                  </p>
+                ) : (
+                  data.recentActivity.map((activity, index) => {
+                    const config = featureConfig[activity.feature] || {
+                      label: activity.featureLabel,
+                      icon: Sparkles,
+                      color: 'text-gray-500',
+                      bgColor: 'bg-gray-500/10'
+                    }
+                    const Icon = config.icon
+                    
+                    return (
+                      <motion.div
+                        key={activity.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors"
+                      >
+                        <div className={cn(
+                          "h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0",
+                          config.bgColor
+                        )}>
+                          <Icon className={cn("h-4 w-4", config.color)} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm">{config.label}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true, locale: de })}
+                          </p>
+                        </div>
+                        <Badge variant="secondary" className="font-mono">
+                          €{activity.costEur.toFixed(2)}
+                        </Badge>
+                      </motion.div>
+                    )
+                  })
+                )}
               </div>
-            ) : (
-              <div className="space-y-3">
-                {data.recentActivity.map((activity, index) => (
-                  <motion.div
-                    key={activity.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg">{activity.featureIcon}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{activity.featureLabel}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {activity.model} • {activity.tokens?.toLocaleString()} Tokens
-                      </p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="font-mono font-semibold">€{activity.costEur.toFixed(4)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true, locale: de })}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+      </motion.div>
+
+      {/* Quick Stats - kompakt am Ende */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="grid grid-cols-3 gap-3"
+      >
+        <Card className="p-4 text-center">
+          <p className="text-2xl font-bold">{data.summary.totalRequests}</p>
+          <p className="text-xs text-muted-foreground">Anfragen</p>
         </Card>
-      </div>
-    </TooltipProvider>
+        <Card className="p-4 text-center">
+          <p className="text-2xl font-bold">€{data.summary.totalCostEur.toFixed(2)}</p>
+          <p className="text-xs text-muted-foreground">30 Tage</p>
+        </Card>
+        <Card className="p-4 text-center">
+          <p className="text-2xl font-bold">€{monthlyLimit}</p>
+          <p className="text-xs text-muted-foreground">Limit/Monat</p>
+        </Card>
+      </motion.div>
+    </div>
   )
 }
-
