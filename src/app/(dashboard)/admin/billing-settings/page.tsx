@@ -255,7 +255,11 @@ export default function BillingSettingsPage() {
                   Billing-Intervalle
                 </CardTitle>
                 <CardDescription>
-                  Aktivieren oder deaktivieren Sie Laufzeit-Optionen und legen Sie Rabatte fest
+                  Aktivieren oder deaktivieren Sie Laufzeit-Optionen und legen Sie Rabatte fest.
+                  <span className="block mt-1 text-amber-600 dark:text-amber-400">
+                    <Info className="w-3 h-3 inline mr-1" />
+                    Intervalle werden auf der Preisseite nur angezeigt, wenn mindestens ein Plan einen Preis &gt; 0€ hat.
+                  </span>
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">

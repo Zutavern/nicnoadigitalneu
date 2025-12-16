@@ -216,9 +216,33 @@ export default function PricingPage() {
     fetchPlans()
   }, [selectedRole])
 
-  // Nur aktive Intervalle verwenden
-  const activeIntervals = config.intervals.filter(i => i.enabled !== false)
+  // Nur aktive Intervalle verwenden UND nur solche, bei denen mindestens ein Plan einen Preis > 0 hat
+  const getPriceForIntervalStatic = (plan: Plan, interval: BillingInterval): number => {
+    switch (interval) {
+      case 'monthly': return plan.priceMonthly
+      case 'quarterly': return plan.priceQuarterly
+      case 'sixMonths': return plan.priceSixMonths
+      case 'yearly': return plan.priceYearly
+      default: return plan.priceMonthly
+    }
+  }
+
+  // Filtere Intervalle: nur anzeigen wenn enabled UND mindestens ein Plan einen Preis > 0 hat
+  const activeIntervals = config.intervals.filter(interval => {
+    if (interval.enabled === false) return false
+    // Prüfe ob mindestens ein Plan einen Preis > 0 für dieses Intervall hat
+    const hasPlansWithPrice = plans.some(plan => getPriceForIntervalStatic(plan, interval.id) > 0)
+    return hasPlansWithPrice
+  })
+  
   const currentInterval = activeIntervals.find(i => i.id === selectedInterval) || activeIntervals[0]
+
+  // Auto-select erstes verfügbares Intervall wenn das aktuelle nicht mehr verfügbar ist
+  useEffect(() => {
+    if (activeIntervals.length > 0 && !activeIntervals.find(i => i.id === selectedInterval)) {
+      setSelectedInterval(activeIntervals[0].id)
+    }
+  }, [activeIntervals, selectedInterval])
 
   const getPriceForInterval = (plan: Plan, interval: BillingInterval): number => {
     switch (interval) {
