@@ -27,8 +27,6 @@ const nextConfig: NextConfig = {
     // Temporär TypeScript-Fehler während Build ignorieren  
     ignoreBuildErrors: true,
   },
-  // External packages für Serverless (Puppeteer/Chromium)
-  serverExternalPackages: ['@sparticuz/chromium-min', 'puppeteer-core'],
 };
 
 export default nextConfig;

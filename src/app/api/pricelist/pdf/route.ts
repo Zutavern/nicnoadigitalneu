@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { put, head, del } from '@vercel/blob'
+import { put, head } from '@vercel/blob'
 import { createHash } from 'crypto'
 import { prisma } from '@/lib/prisma'
 import { getTheme, getThemeCSS } from '@/lib/pricelist/themes'
@@ -69,13 +69,13 @@ function generatePDFHash(priceList: PriceListClient, blocks: PriceBlockClient[],
 }
 
 /**
- * Startet Puppeteer basierend auf der Umgebung
+ * Versucht Puppeteer zu starten - mit verschiedenen Fallback-Strategien
  */
 async function getBrowser() {
-  const isLocal = process.env.NODE_ENV === 'development' || !process.env.VERCEL
-
-  if (isLocal) {
-    // Lokal: puppeteer-core mit lokalem Chrome
+  const isVercel = !!process.env.VERCEL
+  
+  // Lokal: puppeteer-core mit lokalem Chrome
+  if (!isVercel) {
     const puppeteerCore = await import('puppeteer-core')
     
     // Versuche lokalen Chrome zu finden
@@ -113,29 +113,11 @@ async function getBrowser() {
       },
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     })
-  } else {
-    // Vercel Serverless Environment - chromium-min verwenden
-    const puppeteerCore = await import('puppeteer-core')
-    const chromium = await import('@sparticuz/chromium-min')
-    
-    // Chromium Binary von Sparticuz GitHub Release laden (Vercel-kompatibel)
-    const executablePath = await chromium.default.executablePath(
-      'https://github.com/Sparticuz/chromium/releases/download/v143.0.0/chromium-v143.0.0-pack.tar'
-    )
-    
-    console.log('Chromium executable path:', executablePath)
-    
-    return puppeteerCore.default.launch({
-      args: chromium.default.args,
-      defaultViewport: {
-        width: A4_WIDTH,
-        height: A4_HEIGHT,
-        deviceScaleFactor: 2,
-      },
-      executablePath,
-      headless: chromium.default.headless,
-    })
   }
+  
+  // Vercel: Puppeteer ist auf Vercel serverless nicht verfügbar
+  // Werfe einen spezifischen Fehler, damit wir den Nutzer informieren können
+  throw new Error('VERCEL_PDF_NOT_SUPPORTED')
 }
 
 /**
@@ -190,7 +172,25 @@ export async function POST(request: NextRequest) {
     const html = generateHTML(priceList, blocks, backgroundBase64)
 
     // Browser starten
-    const browser = await getBrowser()
+    let browser
+    try {
+      browser = await getBrowser()
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      
+      // Spezifischer Fehler für Vercel
+      if (errorMessage === 'VERCEL_PDF_NOT_SUPPORTED') {
+        return NextResponse.json({
+          error: 'PDF-Generierung ist auf Vercel nicht verfügbar',
+          details: 'Bitte nutze die "Client-Download" Option im Browser oder generiere das PDF lokal.',
+          html: html, // HTML wird mitgesendet, damit Client-seitig generiert werden kann
+          serverless: true,
+        }, { status: 503 })
+      }
+      
+      throw error
+    }
+    
     const page = await browser.newPage()
     
     await page.setContent(html, {
