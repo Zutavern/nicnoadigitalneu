@@ -3,6 +3,18 @@
     "src/app/api/pricelist/pdf/route.ts": {
       "memory": 1024,
       "maxDuration": 60
+    },
+    "src/app/api/social/ai/image-replicate/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/social/ai/video/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/social/ai/generate/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/admin/blog/generate/article/route.ts": {
+      "maxDuration": 60
     }
   },
   "crons": [
