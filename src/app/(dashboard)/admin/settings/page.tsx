@@ -379,9 +379,9 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {[
-                  { label: 'App URL', value: typeof window !== 'undefined' ? window.location.origin : 'https://app.nicnoa.de' },
-                  { label: 'API Endpoint', value: typeof window !== 'undefined' ? `${window.location.origin}/api` : 'https://app.nicnoa.de/api' },
-                  { label: 'Webhook URL', value: typeof window !== 'undefined' ? `${window.location.origin}/api/stripe/webhook` : 'https://app.nicnoa.de/api/stripe/webhook' },
+                  { label: 'App URL', value: typeof window !== 'undefined' ? window.location.origin : 'https://app.nicnoa.online' },
+                  { label: 'API Endpoint', value: typeof window !== 'undefined' ? `${window.location.origin}/api` : 'https://app.nicnoa.online/api' },
+                  { label: 'Webhook URL', value: typeof window !== 'undefined' ? `${window.location.origin}/api/stripe/webhook` : 'https://app.nicnoa.online/api/stripe/webhook' },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                     <div>

@@ -21,7 +21,7 @@ interface SubscriptionActivatedEmailProps {
 export function SubscriptionActivatedEmail({
   userName,
   planName,
-  dashboardUrl = 'https://nicnoa.de/dashboard',
+  dashboardUrl = 'https://nicnoa.online/dashboard',
   content,
   logoUrl,
   primaryColor = '#10b981',

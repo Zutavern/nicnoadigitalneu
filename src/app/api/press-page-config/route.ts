@@ -27,7 +27,7 @@ export async function GET() {
       pressKitDownloadUrl: null,
       contactTitle: 'Presse-Kontakt',
       contactDescription: null,
-      contactEmail: 'presse@nicnoa.de',
+      contactEmail: 'presse@nicnoa.online',
       contactPhone: null,
       contactPerson: null,
       metaTitle: 'Presse & Medien | NICNOA',
@@ -56,7 +56,7 @@ export async function GET() {
       pressKitDownloadUrl: null,
       contactTitle: 'Presse-Kontakt',
       contactDescription: null,
-      contactEmail: 'presse@nicnoa.de',
+      contactEmail: 'presse@nicnoa.online',
       contactPhone: null,
       contactPerson: null
     })

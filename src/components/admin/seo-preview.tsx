@@ -16,7 +16,7 @@ interface SEOPreviewProps {
   metaDescription: string | null
   fallbackTitle?: string
   fallbackDescription?: string
-  url: string // z.B. "nicnoa.de › uber-uns"
+  url: string // z.B. "nicnoa.online › uber-uns"
   onTitleChange: (value: string) => void
   onDescriptionChange: (value: string) => void
   // Optional: OG Image Support

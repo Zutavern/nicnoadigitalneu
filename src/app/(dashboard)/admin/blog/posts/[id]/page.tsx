@@ -405,7 +405,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
                     {metaTitle || title || 'Titel des Artikels'}
                   </p>
                   <p className="text-green-700 text-sm">
-                    nicnoa.de/blog/{slug || 'url-slug'}
+                    nicnoa.online/blog/{slug || 'url-slug'}
                   </p>
                   <p className="text-sm text-muted-foreground line-clamp-2">
                     {metaDescription || excerpt || 'Beschreibung des Artikels erscheint hier...'}

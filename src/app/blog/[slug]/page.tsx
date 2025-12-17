@@ -240,12 +240,12 @@ export default async function BlogPostPage({
       name: 'NICNOA',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://nicnoa.de/logo.png',
+        url: 'https://nicnoa.online/logo.png',
       },
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://nicnoa.de/blog/${post.slug}`,
+      '@id': `https://nicnoa.online/blog/${post.slug}`,
     },
   }
 

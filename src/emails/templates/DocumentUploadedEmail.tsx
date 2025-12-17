@@ -35,7 +35,7 @@ export function DocumentUploadedEmail({
   uploadTime,
   pendingDocuments,
   totalDocuments,
-  reviewUrl = 'https://nicnoa.de/admin/onboarding',
+  reviewUrl = 'https://nicnoa.online/admin/onboarding',
   content,
   logoUrl,
   primaryColor = '#6366f1',

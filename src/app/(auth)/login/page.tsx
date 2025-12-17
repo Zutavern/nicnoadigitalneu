@@ -15,9 +15,9 @@ import { AuthEvents, identifyUser } from '@/lib/analytics'
 
 // Dev Login Credentials
 const DEV_USERS = {
-  admin: { email: 'admin@nicnoa.de', password: 'test123', redirect: '/admin' },
-  salon: { email: 'salon@nicnoa.de', password: 'test123', redirect: '/salon' },
-  stylist: { email: 'stylist@nicnoa.de', password: 'test123', redirect: '/stylist' },
+  admin: { email: 'admin@nicnoa.online', password: 'test123', redirect: '/admin' },
+  salon: { email: 'salon@nicnoa.online', password: 'test123', redirect: '/salon' },
+  stylist: { email: 'stylist@nicnoa.online', password: 'test123', redirect: '/stylist' },
 }
 
 // Icon-Komponente Helper

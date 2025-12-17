@@ -50,7 +50,7 @@ export function WeeklySummaryEmail({
   topService,
   averageRating,
   upcomingBookings,
-  dashboardUrl = 'https://nicnoa.de/stylist/dashboard',
+  dashboardUrl = 'https://nicnoa.online/stylist',
   content,
   logoUrl,
   primaryColor = '#10b981',

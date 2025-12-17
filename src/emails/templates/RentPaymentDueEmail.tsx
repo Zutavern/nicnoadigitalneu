@@ -31,7 +31,7 @@ export function RentPaymentDueEmail({
   dueDate,
   periodDescription,
   daysUntilDue,
-  paymentUrl = 'https://nicnoa.de/stylist/invoices',
+  paymentUrl = 'https://nicnoa.online/stylist/invoices',
   content,
   logoUrl,
   primaryColor = '#f59e0b',

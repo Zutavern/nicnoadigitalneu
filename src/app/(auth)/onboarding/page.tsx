@@ -161,9 +161,9 @@ export default function OnboardingPage() {
       case 'ADMIN':
         return '/admin'
       case 'SALON_OWNER':
-        return '/salon/dashboard'
+        return '/salon'
       case 'STYLIST':
-        return '/stylist/dashboard'
+        return '/stylist'
       default:
         return '/dashboard'
     }

@@ -25,7 +25,7 @@ export function SubscriptionRenewedEmail({
   planName,
   nextBillingDate,
   amount,
-  dashboardUrl = 'https://nicnoa.de/dashboard/settings/billing',
+  dashboardUrl = 'https://nicnoa.online/dashboard/settings/billing',
   content,
   logoUrl,
   primaryColor = '#10b981',

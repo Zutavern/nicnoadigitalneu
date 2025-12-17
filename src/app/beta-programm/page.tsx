@@ -111,11 +111,11 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       type: 'website',
-      url: 'https://nicnoa.de/beta-programm',
+      url: 'https://nicnoa.online/beta-programm',
       siteName: 'NICNOA',
       images: [
         {
-          url: 'https://nicnoa.de/og-beta.png',
+          url: 'https://nicnoa.online/og-beta.png',
           width: 1200,
           height: 630,
           alt: 'NICNOA Beta-Programm',
@@ -126,10 +126,10 @@ export async function generateMetadata(): Promise<Metadata> {
       card: 'summary_large_image',
       title,
       description,
-      images: ['https://nicnoa.de/og-beta.png'],
+      images: ['https://nicnoa.online/og-beta.png'],
     },
     alternates: {
-      canonical: 'https://nicnoa.de/beta-programm',
+      canonical: 'https://nicnoa.online/beta-programm',
     },
   }
 }
@@ -143,13 +143,13 @@ export default async function BetaProgrammPage() {
     '@type': 'WebPage',
     name: data.metaTitle || 'Beta-Programm | NICNOA',
     description: data.metaDescription || data.heroDescription,
-    url: 'https://nicnoa.de/beta-programm',
+    url: 'https://nicnoa.online/beta-programm',
     publisher: {
       '@type': 'Organization',
       name: 'NICNOA',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://nicnoa.de/logo.png',
+        url: 'https://nicnoa.online/logo.png',
       },
     },
     mainEntity: {

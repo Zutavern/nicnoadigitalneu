@@ -51,7 +51,7 @@ export function DailySummaryEmail({
   pendingOnboardings,
   openSupportTickets,
   failedPayments,
-  dashboardUrl = 'https://nicnoa.de/admin/dashboard',
+  dashboardUrl = 'https://nicnoa.online/admin/dashboard',
   content,
   logoUrl,
   primaryColor = '#6366f1',

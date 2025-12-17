@@ -23,7 +23,7 @@ export function ReferralSuccessEmail({
   userName,
   referredName,
   rewardDescription,
-  dashboardUrl = 'https://nicnoa.de/dashboard',
+  dashboardUrl = 'https://nicnoa.online/dashboard',
   content,
   logoUrl,
   primaryColor = '#10b981',

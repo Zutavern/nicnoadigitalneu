@@ -27,7 +27,7 @@ export function BookingCancelledEmail({
   bookingDate,
   bookingTime,
   reason,
-  rebookUrl = 'https://nicnoa.de/dashboard/bookings/new',
+  rebookUrl = 'https://nicnoa.online/dashboard/bookings/new',
   content,
   logoUrl,
   primaryColor = '#10b981',

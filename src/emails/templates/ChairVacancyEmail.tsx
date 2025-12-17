@@ -31,7 +31,7 @@ export function ChairVacancyEmail({
   availableFrom,
   monthlyRate,
   chairFeatures = [],
-  manageUrl = 'https://nicnoa.de/salon/chairs',
+  manageUrl = 'https://nicnoa.online/salon/chairs',
   content,
   logoUrl,
   primaryColor = '#6366f1',

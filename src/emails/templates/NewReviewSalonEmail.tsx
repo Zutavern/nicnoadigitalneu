@@ -31,7 +31,7 @@ export function NewReviewSalonEmail({
   reviewTitle,
   reviewText,
   reviewDate,
-  reviewsUrl = 'https://nicnoa.de/salon/reviews',
+  reviewsUrl = 'https://nicnoa.online/salon/reviews',
   content,
   logoUrl,
   primaryColor = '#10b981',

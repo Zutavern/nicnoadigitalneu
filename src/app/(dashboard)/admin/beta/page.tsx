@@ -635,7 +635,7 @@ export default function BetaAdminPage() {
                     {config.metaTitle || config.heroTitle || 'Beta-Programm | NICNOA'}
                   </p>
                   <p className="text-[#006621] text-sm">
-                    nicnoa.de › beta-programm
+                    nicnoa.online › beta-programm
                   </p>
                   <p className="text-sm text-[#545454] line-clamp-2">
                     {config.metaDescription || config.heroDescription || 'Werden Sie Beta-Tester und gestalten Sie die Zukunft des Salon-Managements mit.'}

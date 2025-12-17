@@ -35,7 +35,7 @@ export function NewReviewStylistEmail({
   reviewDate,
   currentAverageRating,
   totalReviews,
-  reviewsUrl = 'https://nicnoa.de/stylist/reviews',
+  reviewsUrl = 'https://nicnoa.online/stylist/reviews',
   content,
   logoUrl,
   primaryColor = '#10b981',

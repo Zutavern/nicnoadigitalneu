@@ -97,7 +97,7 @@ export async function GET() {
     })
 
     // Basis-URL für den Referral-Link
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nicnoa.de'
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nicnoa.online'
     const referralLink = `${baseUrl}/register?ref=${profile.referralCode}`
 
     return NextResponse.json({

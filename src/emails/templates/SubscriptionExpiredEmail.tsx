@@ -19,7 +19,7 @@ interface SubscriptionExpiredEmailProps {
 
 export function SubscriptionExpiredEmail({
   userName,
-  reactivateUrl = 'https://nicnoa.de/dashboard/settings/billing',
+  reactivateUrl = 'https://nicnoa.online/dashboard/settings/billing',
   content,
   logoUrl,
   primaryColor = '#10b981',

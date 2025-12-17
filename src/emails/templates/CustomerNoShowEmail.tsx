@@ -31,7 +31,7 @@ export function CustomerNoShowEmail({
   bookingTime,
   estimatedLoss,
   noShowCount = 1,
-  dashboardUrl = 'https://nicnoa.de/stylist/bookings',
+  dashboardUrl = 'https://nicnoa.online/stylist/bookings',
   content,
   logoUrl,
   primaryColor = '#dc2626',

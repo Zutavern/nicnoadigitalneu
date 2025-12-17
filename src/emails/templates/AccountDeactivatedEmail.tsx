@@ -26,7 +26,7 @@ export function AccountDeactivatedEmail({
   deactivationDate,
   reason = 'admin_action',
   dataRetentionDays = 30,
-  reactivationUrl = 'https://nicnoa.de/reactivate',
+  reactivationUrl = 'https://nicnoa.online/reactivate',
   supportEmail = 'support@nicnoa.online',
   content,
   logoUrl,

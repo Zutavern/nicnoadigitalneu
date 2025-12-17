@@ -31,7 +31,7 @@ export function LoginNewDeviceEmail({
   browser,
   ipAddress,
   location,
-  securityUrl = 'https://nicnoa.de/dashboard/settings/security',
+  securityUrl = 'https://nicnoa.online/dashboard/settings/security',
   content,
   logoUrl,
   primaryColor = '#f59e0b',

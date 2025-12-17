@@ -33,7 +33,7 @@ export function DocumentStatusEmail({
   reviewDate,
   rejectionReason,
   nextSteps = [],
-  dashboardUrl = 'https://nicnoa.de/onboarding/stylist',
+  dashboardUrl = 'https://nicnoa.online/onboarding/stylist',
   content,
   logoUrl,
   primaryColor,

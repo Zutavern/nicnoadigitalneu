@@ -82,11 +82,11 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       type: 'website',
-      url: 'https://nicnoa.de/updates',
+      url: 'https://nicnoa.online/updates',
       siteName: 'NICNOA',
       images: [
         {
-          url: 'https://nicnoa.de/og-updates.png',
+          url: 'https://nicnoa.online/og-updates.png',
           width: 1200,
           height: 630,
           alt: 'NICNOA Updates',
@@ -97,10 +97,10 @@ export async function generateMetadata(): Promise<Metadata> {
       card: 'summary_large_image',
       title,
       description,
-      images: ['https://nicnoa.de/og-updates.png'],
+      images: ['https://nicnoa.online/og-updates.png'],
     },
     alternates: {
-      canonical: 'https://nicnoa.de/updates',
+      canonical: 'https://nicnoa.online/updates',
     },
   }
 }
@@ -114,13 +114,13 @@ export default async function UpdatesPage() {
     '@type': 'WebPage',
     name: data.metaTitle || 'Updates | NICNOA',
     description: data.metaDescription || data.heroDescription,
-    url: 'https://nicnoa.de/updates',
+    url: 'https://nicnoa.online/updates',
     publisher: {
       '@type': 'Organization',
       name: 'NICNOA',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://nicnoa.de/logo.png',
+        url: 'https://nicnoa.online/logo.png',
       },
     },
     mainEntity: {

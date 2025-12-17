@@ -31,7 +31,7 @@ export function BookingReminderEmail({
   bookingTime,
   salonName,
   salonAddress,
-  dashboardUrl = 'https://nicnoa.de/dashboard/bookings',
+  dashboardUrl = 'https://nicnoa.online/dashboard/bookings',
   content,
   logoUrl,
   primaryColor = '#10b981',

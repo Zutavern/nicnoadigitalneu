@@ -27,7 +27,7 @@ export function RentalEndingSoonEmail({
   chairName,
   endDate,
   daysRemaining,
-  renewUrl = 'https://nicnoa.de/stylist/workspace',
+  renewUrl = 'https://nicnoa.online/stylist/workspace',
   content,
   logoUrl,
   primaryColor = '#f59e0b',

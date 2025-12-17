@@ -31,7 +31,7 @@ export function NewRentalRequestEmail({
   salonName,
   requestedStartDate,
   message,
-  reviewUrl = 'https://nicnoa.de/salon/chairs',
+  reviewUrl = 'https://nicnoa.online/salon/chairs',
   content,
   logoUrl,
   primaryColor = '#10b981',

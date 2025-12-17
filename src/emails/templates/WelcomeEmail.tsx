@@ -27,7 +27,7 @@ interface WelcomeEmailProps {
 
 export function WelcomeEmail({
   userName,
-  dashboardUrl = 'https://nicnoa.de/dashboard',
+  dashboardUrl = 'https://nicnoa.online/dashboard',
   content,
   logoUrl,
   primaryColor = '#10b981',

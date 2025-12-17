@@ -35,7 +35,7 @@ export function PaymentReceivedEmail({
   periodDescription,
   invoiceNumber,
   invoiceUrl,
-  dashboardUrl = 'https://nicnoa.de/salon/invoices',
+  dashboardUrl = 'https://nicnoa.online/salon/invoices',
   content,
   logoUrl,
   primaryColor = '#10b981',

@@ -29,7 +29,7 @@ export function RentalApplicationSentEmail({
   chairName,
   monthlyRent,
   applicationDate,
-  dashboardUrl = 'https://nicnoa.de/stylist',
+  dashboardUrl = 'https://nicnoa.online/stylist',
   content,
   logoUrl,
   primaryColor = '#6366f1',

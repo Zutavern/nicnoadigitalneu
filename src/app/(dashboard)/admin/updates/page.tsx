@@ -415,7 +415,7 @@ export default function UpdatesAdminPage() {
                     {config.metaTitle || config.heroTitle || 'Updates | NICNOA'}
                   </p>
                   <p className="text-[#006621] text-sm">
-                    nicnoa.de › updates
+                    nicnoa.online › updates
                   </p>
                   <p className="text-sm text-[#545454] line-clamp-2">
                     {config.metaDescription || config.heroDescription || 'Entdecken Sie die neuesten Updates und Verbesserungen der NICNOA Plattform.'}

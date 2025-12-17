@@ -29,7 +29,7 @@ export function RentalRejectedEmail({
   chairName,
   rejectionReason,
   applicationDate,
-  findSalonUrl = 'https://nicnoa.de/stylist',
+  findSalonUrl = 'https://nicnoa.online/stylist',
   content,
   logoUrl,
   primaryColor = '#71717a',

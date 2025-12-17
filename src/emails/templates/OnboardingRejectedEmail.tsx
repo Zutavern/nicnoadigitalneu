@@ -21,7 +21,7 @@ interface OnboardingRejectedEmailProps {
 export function OnboardingRejectedEmail({
   userName,
   reason,
-  retryUrl = 'https://nicnoa.de/onboarding/stylist',
+  retryUrl = 'https://nicnoa.online/onboarding/stylist',
   content,
   logoUrl,
   primaryColor = '#10b981',

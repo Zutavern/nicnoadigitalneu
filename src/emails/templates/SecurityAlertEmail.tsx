@@ -41,7 +41,7 @@ export function SecurityAlertEmail({
   device,
   description,
   recommendations,
-  securityUrl = 'https://nicnoa.de/admin/security',
+  securityUrl = 'https://nicnoa.online/admin/security',
   content,
   logoUrl,
   primaryColor = '#dc2626',

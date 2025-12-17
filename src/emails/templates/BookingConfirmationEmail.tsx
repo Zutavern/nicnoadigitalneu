@@ -42,7 +42,7 @@ export function BookingConfirmationEmail({
   bookingTime,
   duration,
   price,
-  bookingUrl = 'https://nicnoa.de/dashboard/bookings',
+  bookingUrl = 'https://nicnoa.online/dashboard/bookings',
   content,
   logoUrl,
   primaryColor = '#10b981',

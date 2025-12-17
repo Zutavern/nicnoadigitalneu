@@ -487,7 +487,7 @@ export function getMockReferralData() {
       pendingRewardsValue: 29.99,
     },
     referralCode: 'DEMO-ABC123',
-    referralLink: 'https://app.nicnoa.de/register?ref=DEMO-ABC123',
+    referralLink: 'https://app.nicnoa.online/register?ref=DEMO-ABC123',
     referrals: [
       {
         id: 'ref-1',
@@ -2910,7 +2910,7 @@ export function getMockAdminSettings() {
   return {
     platform: {
       name: 'NICNOA',
-      url: 'https://nicnoa.de',
+      url: 'https://nicnoa.online',
       supportEmail: 'support@nicnoa.online',
       defaultLanguage: 'de',
       timezone: 'Europe/Berlin',

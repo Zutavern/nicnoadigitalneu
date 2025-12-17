@@ -439,7 +439,7 @@ export default function DatenschutzAdminPage() {
                   <p className="text-[#1a0dab] text-sm hover:underline cursor-pointer truncate">
                     {pageConfig.metaTitle || 'Datenschutz | NICNOA'}
                   </p>
-                  <p className="text-[#006621] text-xs">nicnoa.de › datenschutz</p>
+                  <p className="text-[#006621] text-xs">nicnoa.online › datenschutz</p>
                   <p className="text-xs text-[#545454] line-clamp-2">
                     {pageConfig.metaDescription || pageConfig.heroDescription || 'Datenschutzerklärung gemäß DSGVO'}
                   </p>
