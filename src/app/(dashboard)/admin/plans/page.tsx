@@ -125,6 +125,9 @@ const INTERVALS = [
   { key: 'yearly', label: '12 Monate', field: 'priceYearly', stripePriceField: 'stripePriceYearly', months: 12, discount: 25 },
 ] as const
 
+// Design-Variante Typ
+type DesignVariant = 'compact' | 'expanded' | 'modern'
+
 interface BillingSettings {
   monthlyDiscount: number
   quarterlyDiscount: number
@@ -132,6 +135,7 @@ interface BillingSettings {
   yearlyDiscount: number
   priceRoundingEnabled: boolean
   priceRoundingTarget: number
+  pricingPageDesign: DesignVariant
 }
 
 const defaultBillingSettings: BillingSettings = {
@@ -140,7 +144,8 @@ const defaultBillingSettings: BillingSettings = {
   sixMonthsDiscount: 15,
   yearlyDiscount: 25,
   priceRoundingEnabled: true,
-  priceRoundingTarget: 9
+  priceRoundingTarget: 9,
+  pricingPageDesign: 'compact'
 }
 
 export default function PlansPage() {
@@ -203,7 +208,8 @@ export default function PlansPage() {
               sixMonthsDiscount: data.settings.sixMonthsDiscount ?? 15,
               yearlyDiscount: data.settings.yearlyDiscount ?? 25,
               priceRoundingEnabled: data.settings.priceRoundingEnabled ?? true,
-              priceRoundingTarget: data.settings.priceRoundingTarget ?? 9
+              priceRoundingTarget: data.settings.priceRoundingTarget ?? 9,
+              pricingPageDesign: data.settings.pricingPageDesign ?? 'compact'
             })
             setPlanDiscounts({
               monthly: data.settings.monthlyDiscount ?? 0,
@@ -910,9 +916,14 @@ export default function PlansPage() {
             <DialogTitle className="flex items-center gap-2">
               <ExternalLink className="h-5 w-5 text-primary" />
               Preisseite Vorschau
+              <Badge variant="outline" className="ml-2 capitalize">
+                {billingSettings.pricingPageDesign === 'compact' ? 'Kompakt' 
+                  : billingSettings.pricingPageDesign === 'modern' ? 'Modern' 
+                  : 'Erweitert'}
+              </Badge>
             </DialogTitle>
             <DialogDescription>
-              Vorschau aller Pläne wie sie auf /preise erscheinen (Pläne mit Preis 0€ werden ausgeblendet)
+              Vorschau aller Pläne wie sie auf /preise und in der Paywall erscheinen (Pläne mit Preis 0€ werden ausgeblendet)
             </DialogDescription>
           </DialogHeader>
           
@@ -979,6 +990,7 @@ export default function PlansPage() {
                           interval={previewInterval}
                           showCTA={true}
                           compact={false}
+                          designVariant={billingSettings.pricingPageDesign}
                         />
                       ))}
                     </div>
@@ -1020,6 +1032,7 @@ export default function PlansPage() {
                           interval={previewInterval}
                           showCTA={true}
                           compact={false}
+                          designVariant={billingSettings.pricingPageDesign}
                         />
                       ))}
                     </div>
