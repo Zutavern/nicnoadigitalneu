@@ -218,13 +218,16 @@ export async function POST(request: NextRequest) {
     // Hash für Caching generieren
     const pdfHash = generatePDFHash(priceList, blocks, backgroundBase64)
     const blobPath = `pricelists/${priceList.id}/${pdfHash}.pdf`
+    
+    console.log(`[PDF] Hash: ${pdfHash}, Pfad: ${blobPath}, forceRegenerate: ${forceRegenerate}`)
 
     // Prüfen ob gecachtes PDF existiert (nur wenn nicht forceRegenerate)
     if (!forceRegenerate) {
       try {
+        console.log('[PDF] Prüfe Cache...')
         const existingBlob = await head(blobPath)
-        if (existingBlob) {
-          console.log(`PDF cache hit: ${blobPath}`)
+        if (existingBlob && existingBlob.url) {
+          console.log(`[PDF] ✅ Cache HIT! URL: ${existingBlob.url}`)
           
           // Gecachte URL zurückgeben
           return NextResponse.json({
@@ -233,11 +236,16 @@ export async function POST(request: NextRequest) {
             url: existingBlob.url,
             hash: pdfHash,
           })
+        } else {
+          console.log('[PDF] Cache MISS: Blob nicht gefunden')
         }
-      } catch {
+      } catch (cacheError) {
         // Blob existiert nicht, wir generieren ein neues PDF
-        console.log(`PDF cache miss: ${blobPath}`)
+        const errorMsg = cacheError instanceof Error ? cacheError.message : String(cacheError)
+        console.log(`[PDF] Cache MISS (Fehler): ${errorMsg}`)
       }
+    } else {
+      console.log('[PDF] Cache übersprungen (forceRegenerate=true)')
     }
 
     // HTML generieren
