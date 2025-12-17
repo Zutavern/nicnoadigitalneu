@@ -17,7 +17,9 @@ const defaultConfig = {
   couponsEnabled: true,
   showCouponOnPricing: false,
   moneyBackEnabled: true,
-  moneyBackDays: 30
+  moneyBackDays: 30,
+  pricingPageDesign: 'compact', // compact, expanded, modern
+  priceRoundingEnabled: true
 }
 
 /**
@@ -79,7 +81,9 @@ export async function GET() {
       couponsEnabled: settings.couponsEnabled,
       showCouponOnPricing: settings.showCouponOnPricing,
       moneyBackEnabled: settings.moneyBackEnabled,
-      moneyBackDays: settings.moneyBackDays
+      moneyBackDays: settings.moneyBackDays,
+      pricingPageDesign: settings.pricingPageDesign || 'compact',
+      priceRoundingEnabled: settings.priceRoundingEnabled
     })
 
   } catch (error) {

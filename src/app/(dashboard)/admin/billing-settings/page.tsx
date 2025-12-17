@@ -29,7 +29,11 @@ import {
   Calendar,
   Ticket,
   RefreshCw,
-  Info
+  Info,
+  Palette,
+  LayoutGrid,
+  Rows3,
+  Sparkles
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -55,6 +59,9 @@ interface BillingSettings {
   moneyBackDays: number
   webhookStatus: string
   webhookLastPing: string | null
+  priceRoundingEnabled: boolean
+  priceRoundingTarget: number
+  pricingPageDesign: 'compact' | 'expanded' | 'modern'
 }
 
 const intervals = [
@@ -225,8 +232,12 @@ export default function BillingSettingsPage() {
       </motion.div>
 
       {/* Tabs */}
-      <Tabs defaultValue="intervals" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 h-12">
+      <Tabs defaultValue="display" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5 h-12">
+          <TabsTrigger value="display" className="flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            <span className="hidden sm:inline">Anzeige</span>
+          </TabsTrigger>
           <TabsTrigger value="intervals" className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             <span className="hidden sm:inline">Laufzeiten</span>
@@ -244,6 +255,139 @@ export default function BillingSettingsPage() {
             <span className="hidden sm:inline">Allgemein</span>
           </TabsTrigger>
         </TabsList>
+
+        {/* Display Tab */}
+        <TabsContent value="display">
+          <div className="grid gap-6">
+            {/* Pricing Page Design */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="w-5 h-5 text-primary" />
+                  Preisseiten-Design
+                </CardTitle>
+                <CardDescription>
+                  Wählen Sie das Design für die öffentliche Preisseite und die In-App Preisanzeige
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-3">
+                  {[
+                    { 
+                      id: 'compact', 
+                      label: 'Kompakt', 
+                      icon: Rows3, 
+                      description: 'Minimalistisch, above the fold, schnelle Übersicht' 
+                    },
+                    { 
+                      id: 'modern', 
+                      label: 'Modern', 
+                      icon: Sparkles, 
+                      description: 'Poppig aber kompakt, mit animierten Elementen' 
+                    },
+                    { 
+                      id: 'expanded', 
+                      label: 'Erweitert', 
+                      icon: LayoutGrid, 
+                      description: 'Detailliert mit allen Features, großes Layout' 
+                    },
+                  ].map((design) => (
+                    <motion.button
+                      key={design.id}
+                      onClick={() => updateSetting('pricingPageDesign', design.id as 'compact' | 'expanded' | 'modern')}
+                      className={cn(
+                        "relative p-6 rounded-xl border-2 text-left transition-all",
+                        settings.pricingPageDesign === design.id
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      )}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {settings.pricingPageDesign === design.id && (
+                        <div className="absolute top-3 right-3">
+                          <CheckCircle2 className="w-5 h-5 text-primary" />
+                        </div>
+                      )}
+                      <design.icon className={cn(
+                        "w-8 h-8 mb-3",
+                        settings.pricingPageDesign === design.id ? "text-primary" : "text-muted-foreground"
+                      )} />
+                      <h4 className="font-semibold mb-1">{design.label}</h4>
+                      <p className="text-sm text-muted-foreground">{design.description}</p>
+                    </motion.button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Marketing-Preise */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Percent className="w-5 h-5 text-primary" />
+                  Marketing-Preise
+                </CardTitle>
+                <CardDescription>
+                  Automatische Rundung auf psychologische Preise (z.B. 147€ → 149€)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between p-4 rounded-lg border">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Percent className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Marketing-Preise aktivieren</p>
+                      <p className="text-sm text-muted-foreground">
+                        Preise werden automatisch auf 9er-Endungen gerundet
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={settings.priceRoundingEnabled}
+                    onCheckedChange={(checked) => updateSetting('priceRoundingEnabled', checked)}
+                  />
+                </div>
+
+                {settings.priceRoundingEnabled && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="space-y-4"
+                  >
+                    <div className="p-4 rounded-lg bg-muted/50 border">
+                      <p className="text-sm font-medium mb-3">Beispiele:</p>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">147€</span>
+                          <span>→ <strong>149€</strong></span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">52€</span>
+                          <span>→ <strong>59€</strong></span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">195€</span>
+                          <span>→ <strong>199€</strong></span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">23€</span>
+                          <span>→ <strong>29€</strong></span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Info className="w-4 h-4" />
+                      <span>Die gerundeten Preise werden an Stripe und auf allen Seiten angezeigt</span>
+                    </div>
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         {/* Laufzeiten Tab */}
         <TabsContent value="intervals">
