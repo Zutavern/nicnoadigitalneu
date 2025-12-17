@@ -457,10 +457,9 @@ const replicateImageModels: ReplicateImageModel[] = [
     modelId: 'black-forest-labs/flux-schnell',
     modelKey: 'flux-schnell',
     name: 'Flux Schnell',
-    description: 'Schnellstes Modell - 1-4 Schritte, ideal für Social Media',
+    description: 'Schnellstes Modell - $0.003/Bild',
     costPerRun: 0.003,
     avgDurationMs: 3000,
-    isFree: true,
   },
   {
     modelId: 'google/imagen-4-fast',

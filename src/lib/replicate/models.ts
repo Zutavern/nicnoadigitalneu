@@ -51,13 +51,12 @@ export const IMAGE_MODELS: Record<string, ImageModel> = {
   'flux-schnell': {
     id: 'black-forest-labs/flux-schnell',
     name: 'Flux Schnell ⚡',
-    description: 'Schnellstes Modell - 1-4 Schritte, ideal für Social Media',
+    description: 'Schnellstes Modell - $0.003/Bild',
     costPerRun: 0.003,
     avgDuration: 3,
     outputFormat: 'webp',
     supportsAspectRatio: true,
     maxResolution: 1440,
-    free: true,
     category: 'fast',
   },
 
