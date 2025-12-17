@@ -271,12 +271,25 @@ export function AIModelSelector({ value, onChange, className }: AIModelSelectorP
           </div>
           
           <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
+            <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSaving}>
               Abbrechen
             </Button>
-            <Button onClick={handleConfirm} className="bg-gradient-to-r from-purple-500 to-pink-500">
-              <Check className="h-4 w-4 mr-2" />
-              Auswählen
+            <Button 
+              onClick={handleConfirm} 
+              disabled={isSaving}
+              className="bg-gradient-to-r from-purple-500 to-pink-500"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Speichern...
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Auswählen
+                </>
+              )}
             </Button>
           </div>
         </DialogContent>
@@ -339,6 +352,6 @@ function ModelOption({
 }
 
 // Export für Nutzung in anderen Komponenten
-export { AI_MODELS, DEFAULT_MODEL, STORAGE_KEY }
+export { AI_MODELS, DEFAULT_MODEL }
 export type { AIModel }
 

@@ -55,8 +55,9 @@ export async function PATCH(request: Request) {
     const body = await request.json()
     const { preferredAiImageModel } = body
 
-    // Validierung: Nur erlaubte Modell-IDs
+    // Validierung: Nur erlaubte Modell-IDs (alle Replicate + OpenRouter Modelle)
     const allowedModels = [
+      // Replicate Modelle
       'flux-schnell',
       'flux-pro-11',
       'imagen-4',
@@ -65,10 +66,16 @@ export async function PATCH(request: Request) {
       'seedream-4',
       'qwen-image',
       'nano-banana-pro',
-      'flux-kontext-max'
+      'flux-kontext-max',
+      // OpenRouter Modelle (falls später hinzugefügt)
+      'gemini-2-flash',
+      'gemini-2.5-flash',
+      'ideogram-v2',
+      'recraft-v3',
+      'dall-e-3'
     ]
 
-    if (!allowedModels.includes(preferredAiImageModel)) {
+    if (!preferredAiImageModel || !allowedModels.includes(preferredAiImageModel)) {
       return NextResponse.json(
         { error: 'Ungültiges Modell' },
         { status: 400 }
