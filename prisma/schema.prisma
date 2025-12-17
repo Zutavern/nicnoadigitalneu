@@ -116,6 +116,9 @@ model User {
   contentTemplates    ContentTemplate[]
   hashtagCollections  HashtagCollection[]
 
+  // AI Preferences
+  preferredAiImageModel String? @map("preferred_ai_image_model") @db.VarChar(50)
+
   // Credits System
   credits            UserCredits?
   creditTransactions CreditTransaction[]

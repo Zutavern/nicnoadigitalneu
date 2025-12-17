@@ -42,8 +42,7 @@ export function EmailLayout({
             ) : (
               <div style={textLogoContainer}>
                 <span style={textLogoMain}>NICNOA</span>
-                <span style={textLogoAmp}>&amp;CO.</span>
-                <div style={textLogoSub}>DIGITAL</div>
+                <span style={{ ...textLogoAmp, color: primaryColor }}>&amp;CO.online</span>
               </div>
             )}
           </Section>
@@ -104,29 +103,19 @@ const textLogoContainer: React.CSSProperties = {
 }
 
 const textLogoMain: React.CSSProperties = {
-  fontFamily: 'Georgia, "Times New Roman", serif',
-  fontSize: '28px',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  fontSize: '32px',
   fontWeight: 700,
-  letterSpacing: '3px',
+  letterSpacing: '-0.025em',
   color: '#ffffff',
 }
 
 const textLogoAmp: React.CSSProperties = {
-  fontFamily: 'Georgia, "Times New Roman", serif',
-  fontSize: '18px',
-  fontWeight: 400,
-  letterSpacing: '2px',
-  color: 'rgba(255, 255, 255, 0.85)',
-  marginLeft: '2px',
-}
-
-const textLogoSub: React.CSSProperties = {
-  fontFamily: 'Georgia, "Times New Roman", serif',
-  fontSize: '11px',
-  fontWeight: 400,
-  letterSpacing: '6px',
-  color: 'rgba(255, 255, 255, 0.75)',
-  marginTop: '-2px',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  fontSize: '32px',
+  fontWeight: 700,
+  letterSpacing: '-0.025em',
+  // color wird dynamisch vom primaryColor gesetzt
 }
 
 const content: React.CSSProperties = {

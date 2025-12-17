@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -16,11 +16,12 @@ import {
   Sparkles, 
   Zap, 
   Star,
-  ChevronRight,
   Check,
-  Settings2
+  Settings2,
+  Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 // Vereinfachte Modell-Definition
 interface AIModel {
@@ -96,9 +97,6 @@ const AI_MODELS: AIModel[] = [
   },
 ]
 
-// LocalStorage Key
-const STORAGE_KEY = 'nicnoa_preferred_image_model'
-
 // Default Modell
 const DEFAULT_MODEL = 'flux-schnell'
 
@@ -111,29 +109,62 @@ interface AIModelSelectorProps {
 export function AIModelSelector({ value, onChange, className }: AIModelSelectorProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedModel, setSelectedModel] = useState(value || DEFAULT_MODEL)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
   
-  // Lade gespeichertes Modell beim Mount
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved && AI_MODELS.find(m => m.id === saved)) {
-      setSelectedModel(saved)
-      onChange(saved)
+  // Lade gespeichertes Modell aus der Datenbank beim Mount
+  const fetchPreferences = useCallback(async () => {
+    try {
+      const res = await fetch('/api/user/ai-preferences')
+      if (res.ok) {
+        const data = await res.json()
+        if (data.preferredAiImageModel && AI_MODELS.find(m => m.id === data.preferredAiImageModel)) {
+          setSelectedModel(data.preferredAiImageModel)
+          onChange(data.preferredAiImageModel)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching AI preferences:', error)
+    } finally {
+      setIsLoading(false)
     }
   }, [onChange])
+  
+  useEffect(() => {
+    fetchPreferences()
+  }, [fetchPreferences])
   
   // Aktuelles Modell finden
   const currentModel = AI_MODELS.find(m => m.id === value) || AI_MODELS[0]
   
-  // Modell auswählen und speichern
+  // Modell auswählen (nur lokaler State im Dialog)
   const handleSelect = (modelId: string) => {
     setSelectedModel(modelId)
   }
   
-  // Bestätigen und Dialog schließen
-  const handleConfirm = () => {
-    localStorage.setItem(STORAGE_KEY, selectedModel)
-    onChange(selectedModel)
-    setIsOpen(false)
+  // Bestätigen und in Datenbank speichern
+  const handleConfirm = async () => {
+    setIsSaving(true)
+    try {
+      const res = await fetch('/api/user/ai-preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preferredAiImageModel: selectedModel })
+      })
+      
+      if (res.ok) {
+        onChange(selectedModel)
+        setIsOpen(false)
+        toast.success('KI-Modell gespeichert')
+      } else {
+        toast.error('Fehler beim Speichern')
+      }
+    } catch (error) {
+      console.error('Error saving AI preferences:', error)
+      toast.error('Fehler beim Speichern')
+    } finally {
+      setIsSaving(false)
+    }
   }
   
   // Speed Badge Farbe

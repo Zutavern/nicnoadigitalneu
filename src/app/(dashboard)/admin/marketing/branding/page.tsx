@@ -222,11 +222,9 @@ export default function AdminBrandingPage() {
                 ? `<img src="${logoUrl}" alt="${company}" />`
                 : company.toUpperCase().includes('NICNOA')
                   ? `<div style="display: inline-block; text-align: center;">
-                      <span style="font-family: Georgia, 'Times New Roman', serif; font-size: 32px; font-weight: 700; letter-spacing: 4px; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">NICNOA</span>
-                      <span style="font-family: Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: 400; letter-spacing: 2px; color: rgba(255,255,255,0.9); margin-left: 4px;">&amp;CO.</span>
-                      <div style="margin-top: 4px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 3px; color: rgba(255,255,255,0.7); text-transform: uppercase;">DIGITAL</div>
+                      <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 32px; font-weight: 700; letter-spacing: -0.025em; color: #ffffff;">NICNOA</span><span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 32px; font-weight: 700; letter-spacing: -0.025em; color: ${primaryColor};">&amp;CO.online</span>
                     </div>`
-                  : `<span style="font-family: Georgia, 'Times New Roman', serif; font-size: 28px; font-weight: 700; letter-spacing: 3px; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">${company.toUpperCase()}</span>`
+                  : `<span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.025em; color: #ffffff;">${company.toUpperCase()}</span>`
               }
             </div>
             <div class="content">
