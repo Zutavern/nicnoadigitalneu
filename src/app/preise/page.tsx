@@ -593,13 +593,13 @@ export default function PricingPage() {
                           ))}
                         </div>
 
-                        {/* AI Credits - Dezentes Design-Element unter Features */}
+                        {/* AI-Guthaben - Dezentes Design-Element unter Features */}
                         {plan.includedAiCreditsEur > 0 && (
-                          <div className="flex items-center gap-2 mb-6 py-2 px-3 rounded-lg bg-gradient-to-r from-violet-500/5 to-pink-500/5 border border-violet-500/10">
-                            <Bot className="w-4 h-4 text-violet-500" />
+                          <div className="flex items-center gap-2 mb-6 py-2 px-3 rounded-lg bg-muted/50 border">
+                            <Bot className="w-4 h-4 text-muted-foreground" />
                             <span className="text-sm text-muted-foreground">
-                              <span className="font-semibold text-foreground">{config.currencySign}{plan.includedAiCreditsEur}</span>
-                              {' '}AI-Guthaben/Monat inklusive
+                              <span className="font-medium text-foreground">{config.currencySign}{plan.includedAiCreditsEur}</span>
+                              {' '}AI-Guthaben pro Monat inklusive
                             </span>
                           </div>
                         )}

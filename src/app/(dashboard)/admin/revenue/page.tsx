@@ -225,7 +225,7 @@ const defaultConfig: DashboardConfig = {
   showPlanPerformance: true,
   showIntervalBreakdown: true,
   showTrialConversions: true,
-  showCreditPackageSales: true,
+  showCreditPackageSales: false, // Deaktiviert - Metered Pricing statt Credit-Paketen
   showCouponRedemptions: true,
   showCouponRevenueLoss: true,
   showReferralRevenue: true,

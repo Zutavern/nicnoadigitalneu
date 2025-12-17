@@ -1144,16 +1144,16 @@ function PlanGrid({
                 </Badge>
               )}
 
-              {/* AI Credits Badge */}
+              {/* AI-Guthaben Badge */}
               {plan.includedAiCreditsEur > 0 && (
-                <div className="mt-3 p-3 rounded-xl bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-pink-500/10 border border-violet-200/50 dark:border-violet-800/50">
+                <div className="mt-3 p-3 rounded-lg bg-muted/50 border">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                      <Bot className="h-5 w-5 text-white" />
+                    <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                      <Bot className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Inkl. AI-Budget</p>
-                      <p className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-pink-600">
+                      <p className="text-xs text-muted-foreground">Inkl. AI-Guthaben</p>
+                      <p className="text-base font-semibold">
                         €{plan.includedAiCreditsEur}/Monat
                       </p>
                     </div>
