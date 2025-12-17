@@ -86,18 +86,32 @@ async function getBrowser() {
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     })
   } else {
+    // Vercel Serverless Environment
     const puppeteerCore = await import('puppeteer-core')
     const chromium = await import('@sparticuz/chromium')
     
+    // Chromium für Lambda/Serverless optimieren
+    chromium.default.setHeadlessMode = true
+    chromium.default.setGraphicsMode = false
+    
+    const executablePath = await chromium.default.executablePath()
+    console.log('Chromium executable path:', executablePath)
+    
     return puppeteerCore.default.launch({
-      args: chromium.default.args,
+      args: [
+        ...chromium.default.args,
+        '--disable-gpu',
+        '--disable-dev-shm-usage',
+        '--disable-software-rasterizer',
+        '--single-process',
+      ],
       defaultViewport: {
         width: A4_WIDTH,
         height: A4_HEIGHT,
         deviceScaleFactor: 2,
       },
-      executablePath: await chromium.default.executablePath(),
-      headless: true,
+      executablePath,
+      headless: chromium.default.headless,
     })
   }
 }
