@@ -179,6 +179,7 @@ const menuItems: MenuSection[] = [
               { label: 'Homepage', href: '/admin/homepage', icon: Home },
               { label: 'Login & Registrierung', href: '/admin/login', icon: LogIn },
               { label: 'Produkt', href: '/admin/product', icon: Package },
+              { label: 'Preise', href: '/admin/pricing-cms', icon: CreditCard },
               { label: 'FAQ', href: '/admin/faqs', icon: HelpCircle },
               { label: 'Testimonials', href: '/admin/testimonials', icon: Quote },
               { label: 'Partner & Vorteile', href: '/admin/partners', icon: HandshakeIcon },

@@ -3836,6 +3836,58 @@ model BillingSetting {
 }
 
 // ============================================
+// Pricing Page CMS Config
+// ============================================
+
+model PricingPageConfig {
+  id String @id @default("default") @db.VarChar(50) // Singleton, immer "default"
+
+  // Hero Section - Stuhlmieter
+  stylistBadgeText     String? @default("Für Stuhlmieter") @map("stylist_badge_text") @db.VarChar(100)
+  stylistTitle         String  @default("Der perfekte Plan für deinen Erfolg") @map("stylist_title") @db.Text
+  stylistDescription   String? @default("Starte jetzt durch mit NICNOA – alle Tools für moderne Stylisten") @map("stylist_description") @db.Text
+
+  // Hero Section - Salonbesitzer
+  salonBadgeText       String? @default("Für Salonbesitzer") @map("salon_badge_text") @db.VarChar(100)
+  salonTitle           String  @default("Dein Salon, dein Erfolg, deine Plattform") @map("salon_title") @db.Text
+  salonDescription     String? @default("Verwalte dein Team, optimiere Abläufe und steigere deinen Umsatz") @map("salon_description") @db.Text
+
+  // CTA Section
+  ctaTitle             String? @default("Bereit für den nächsten Schritt?") @map("cta_title") @db.Text
+  ctaDescription       String? @default("Starte jetzt kostenlos und überzeuge dich selbst") @map("cta_description") @db.Text
+  ctaButtonText        String? @default("Jetzt kostenlos testen") @map("cta_button_text") @db.VarChar(100)
+  ctaButtonUrl         String? @default("/register") @map("cta_button_url") @db.VarChar(255)
+
+  // Trust Elements
+  showTrustElements    Boolean @default(true) @map("show_trust_elements")
+  trustElement1Text    String? @default("14 Tage kostenlos") @map("trust_element_1_text") @db.VarChar(100)
+  trustElement2Text    String? @default("Jederzeit kündbar") @map("trust_element_2_text") @db.VarChar(100)
+  trustElement3Text    String? @default("Keine Kreditkarte nötig") @map("trust_element_3_text") @db.VarChar(100)
+  trustElement4Text    String? @default("30 Tage Geld-zurück-Garantie") @map("trust_element_4_text") @db.VarChar(100)
+
+  // FAQ Section
+  showFAQ              Boolean @default(true) @map("show_faq")
+  faqTitle             String? @default("Häufige Fragen") @map("faq_title") @db.VarChar(255)
+  faqDescription       String? @default("Alles was du über unsere Preise wissen musst") @map("faq_description") @db.Text
+
+  // Testimonials Section
+  showTestimonials     Boolean @default(true) @map("show_testimonials")
+  testimonialsTitle    String? @default("Das sagen unsere Kunden") @map("testimonials_title") @db.VarChar(255)
+
+  // SEO
+  metaTitle            String? @default("Preise & Pläne | NICNOA") @map("meta_title") @db.VarChar(120)
+  metaDescription      String? @default("Finde den perfekten Plan für dein Salon-Business. Flexible Preise, kostenlose Testphase und jederzeit kündbar.") @map("meta_description") @db.VarChar(320)
+  metaKeywords         String? @map("meta_keywords") @db.Text
+  ogImage              String? @map("og_image") @db.Text
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("pricing_page_config")
+}
+
+// ============================================
 // Coupons / Promo-Codes
 // ============================================
 

@@ -93,6 +93,53 @@ interface BillingConfig {
   priceRoundingEnabled: boolean
 }
 
+// CMS-Konfiguration für die Preisseite
+interface PricingPageConfig {
+  stylistBadgeText: string | null
+  stylistTitle: string
+  stylistDescription: string | null
+  salonBadgeText: string | null
+  salonTitle: string
+  salonDescription: string | null
+  ctaTitle: string | null
+  ctaDescription: string | null
+  ctaButtonText: string | null
+  ctaButtonUrl: string | null
+  showTrustElements: boolean
+  trustElement1Text: string | null
+  trustElement2Text: string | null
+  trustElement3Text: string | null
+  trustElement4Text: string | null
+  showFAQ: boolean
+  faqTitle: string | null
+  faqDescription: string | null
+  showTestimonials: boolean
+  testimonialsTitle: string | null
+}
+
+const defaultPageConfig: PricingPageConfig = {
+  stylistBadgeText: 'Für Stuhlmieter',
+  stylistTitle: 'Der perfekte Plan für deinen Erfolg',
+  stylistDescription: 'Starte jetzt durch mit NICNOA – alle Tools für moderne Stylisten',
+  salonBadgeText: 'Für Salonbesitzer',
+  salonTitle: 'Dein Salon, dein Erfolg, deine Plattform',
+  salonDescription: 'Verwalte dein Team, optimiere Abläufe und steigere deinen Umsatz',
+  ctaTitle: 'Bereit für den nächsten Schritt?',
+  ctaDescription: 'Starte jetzt kostenlos und überzeuge dich selbst',
+  ctaButtonText: 'Jetzt kostenlos testen',
+  ctaButtonUrl: '/register',
+  showTrustElements: true,
+  trustElement1Text: '14 Tage kostenlos',
+  trustElement2Text: 'Jederzeit kündbar',
+  trustElement3Text: 'Keine Kreditkarte nötig',
+  trustElement4Text: '30 Tage Geld-zurück-Garantie',
+  showFAQ: true,
+  faqTitle: 'Häufige Fragen',
+  faqDescription: 'Alles was du über unsere Preise wissen musst',
+  showTestimonials: true,
+  testimonialsTitle: 'Das sagen unsere Kunden'
+}
+
 // Trust-Elemente (statisch, Trial-Tage werden dynamisch eingefügt)
 const getTrustElements = (trialDays: number) => [
   { icon: Shield, text: '256-bit SSL', description: 'Bankensichere Verschlüsselung' },
@@ -185,6 +232,7 @@ export default function PricingPage() {
   const [plans, setPlans] = useState<Plan[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [designVariant, setDesignVariant] = useState<DesignVariant>('compact') // Wird aus API geladen
+  const [pageConfig, setPageConfig] = useState<PricingPageConfig>(defaultPageConfig)
   const [config, setConfig] = useState<BillingConfig>({
     intervals: defaultIntervals,
     defaultInterval: 'sixMonths',
@@ -201,13 +249,18 @@ export default function PricingPage() {
   })
   const [configLoaded, setConfigLoaded] = useState(false)
 
-  // Billing-Konfiguration aus der API laden
+  // Billing-Konfiguration und Seiten-CMS aus der API laden
   useEffect(() => {
-    const fetchConfig = async () => {
+    const fetchConfigs = async () => {
       try {
-        const res = await fetch('/api/billing-config')
-        if (res.ok) {
-          const data = await res.json()
+        // Billing Config und Page Config parallel laden
+        const [billingRes, pageRes] = await Promise.all([
+          fetch('/api/billing-config'),
+          fetch('/api/pricing-page-config')
+        ])
+        
+        if (billingRes.ok) {
+          const data = await billingRes.json()
           setConfig(data)
           // Design-Variante aus API übernehmen
           if (data.pricingPageDesign) {
@@ -220,13 +273,20 @@ export default function PricingPage() {
             setSelectedInterval(data.intervals[0].id)
           }
         }
+        
+        if (pageRes.ok) {
+          const pageData = await pageRes.json()
+          if (pageData.config) {
+            setPageConfig({ ...defaultPageConfig, ...pageData.config })
+          }
+        }
       } catch (error) {
-        console.error('Error fetching billing config:', error)
+        console.error('Error fetching configs:', error)
       } finally {
         setConfigLoaded(true)
       }
     }
-    fetchConfig()
+    fetchConfigs()
   }, [])
 
   // Pläne aus der API laden
@@ -315,11 +375,24 @@ export default function PricingPage() {
             <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
             <div className="container relative">
               <div className="text-center max-w-3xl mx-auto">
+                {/* Badge */}
+                <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
+                  {selectedRole === 'stylist' 
+                    ? (pageConfig.stylistBadgeText || 'Für Stuhlmieter')
+                    : (pageConfig.salonBadgeText || 'Für Salonbesitzer')
+                  }
+                </Badge>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">
-                  Wähle deinen Plan
+                  {selectedRole === 'stylist' 
+                    ? pageConfig.stylistTitle
+                    : pageConfig.salonTitle
+                  }
                 </h1>
                 <p className="text-muted-foreground mb-6">
-                  {config.trialEnabled && `${config.trialDays} Tage kostenlos • `}Jederzeit kündbar • Keine versteckten Kosten
+                  {selectedRole === 'stylist' 
+                    ? pageConfig.stylistDescription
+                    : pageConfig.salonDescription
+                  }
                 </p>
 
                 {/* Compact Controls */}
@@ -575,16 +648,24 @@ export default function PricingPage() {
               >
                 <Badge className="mb-4 px-4 py-1.5 bg-primary/10 text-primary border-primary/20">
                   <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                  {config.trialEnabled ? `${config.trialDays} Tage kostenlos` : 'Sofort starten'}
+                  {selectedRole === 'stylist' 
+                    ? (pageConfig.stylistBadgeText || 'Für Stuhlmieter')
+                    : (pageConfig.salonBadgeText || 'Für Salonbesitzer')
+                  }
                 </Badge>
                 
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-                  Wähle deinen{' '}
-                  <span className="text-primary">perfekten Plan</span>
+                  {selectedRole === 'stylist' 
+                    ? pageConfig.stylistTitle
+                    : pageConfig.salonTitle
+                  }
                 </h1>
                 
                 <p className="text-lg text-muted-foreground mb-8">
-                  Transparent, fair und ohne versteckte Kosten
+                  {selectedRole === 'stylist' 
+                    ? pageConfig.stylistDescription
+                    : pageConfig.salonDescription
+                  }
                 </p>
 
                 {/* Modern Controls - Stacked */}
@@ -858,28 +939,25 @@ export default function PricingPage() {
                 >
                   <Badge className="mb-6 px-5 py-2 text-sm bg-gradient-to-r from-violet-500/10 to-pink-500/10 text-primary border-primary/20 backdrop-blur-sm">
                     <Sparkles className="w-4 h-4 mr-2" />
-                    {config.trialEnabled ? `${config.trialDays} Tage kostenlos testen • Keine Kreditkarte` : 'Sofort starten'}
+                    {selectedRole === 'stylist' 
+                      ? (pageConfig.stylistBadgeText || 'Für Stuhlmieter')
+                      : (pageConfig.salonBadgeText || 'Für Salonbesitzer')
+                    }
                   </Badge>
                 </motion.div>
                 
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-                  <span className="block">Dein Erfolg beginnt</span>
-                  <span className="relative">
-                    <span className="bg-gradient-to-r from-violet-500 via-pink-500 to-orange-500 bg-clip-text text-transparent">
-                      mit dem richtigen Plan
-                    </span>
-                    <motion.span
-                      className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 via-pink-500 to-orange-500 rounded-full"
-                      initial={{ scaleX: 0 }}
-                      animate={{ scaleX: 1 }}
-                      transition={{ delay: 0.5, duration: 0.8 }}
-                    />
-                  </span>
+                  {selectedRole === 'stylist' 
+                    ? pageConfig.stylistTitle
+                    : pageConfig.salonTitle
+                  }
                 </h1>
                 
                 <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-12">
-                  Wähl den perfekten Plan für deine Bedürfnisse. 
-                  Transparent, fair und ohne versteckte Kosten.
+                  {selectedRole === 'stylist' 
+                    ? pageConfig.stylistDescription
+                    : pageConfig.salonDescription
+                  }
                 </p>
 
                 {/* Role Toggle - Modern Pill Design */}
