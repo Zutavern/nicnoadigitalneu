@@ -69,13 +69,54 @@ function generatePDFHash(priceList: PriceListClient, blocks: PriceBlockClient[],
 }
 
 /**
+ * Holt die Browserless-Konfiguration aus der Datenbank
+ */
+async function getBrowserlessConfig(): Promise<{ apiKey: string; enabled: boolean } | null> {
+  try {
+    const settings = await prisma.platformSettings.findFirst()
+    if (!settings) return null
+    
+    // Type-safe access
+    const apiKey = (settings as Record<string, unknown>).browserlessApiKey as string | null
+    const enabled = (settings as Record<string, unknown>).browserlessEnabled as boolean | null
+    
+    if (enabled && apiKey) {
+      return { apiKey, enabled: true }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Versucht Puppeteer zu starten - mit verschiedenen Fallback-Strategien
+ * 1. Browserless (wenn aktiviert und konfiguriert)
+ * 2. Lokaler Chrome (nur für Entwicklung)
+ * 3. Fehler auf Vercel ohne Browserless
  */
 async function getBrowser() {
   const isVercel = !!process.env.VERCEL
   
-  // Lokal: puppeteer-core mit lokalem Chrome
+  // 1. Versuche Browserless (Cloud-basiert)
+  const browserlessConfig = await getBrowserlessConfig()
+  if (browserlessConfig) {
+    console.log('Using Browserless for PDF generation')
+    const puppeteerCore = await import('puppeteer-core')
+    
+    return puppeteerCore.default.connect({
+      browserWSEndpoint: `wss://production-sfo.browserless.io?token=${browserlessConfig.apiKey}`,
+      defaultViewport: {
+        width: A4_WIDTH,
+        height: A4_HEIGHT,
+        deviceScaleFactor: 2,
+      },
+    })
+  }
+  
+  // 2. Lokal: puppeteer-core mit lokalem Chrome
   if (!isVercel) {
+    console.log('Using local Chrome for PDF generation')
     const puppeteerCore = await import('puppeteer-core')
     
     // Versuche lokalen Chrome zu finden
@@ -115,8 +156,7 @@ async function getBrowser() {
     })
   }
   
-  // Vercel: Puppeteer ist auf Vercel serverless nicht verfügbar
-  // Werfe einen spezifischen Fehler, damit wir den Nutzer informieren können
+  // 3. Vercel ohne Browserless: Nicht unterstützt
   throw new Error('VERCEL_PDF_NOT_SUPPORTED')
 }
 
@@ -182,7 +222,7 @@ export async function POST(request: NextRequest) {
       if (errorMessage === 'VERCEL_PDF_NOT_SUPPORTED') {
         return NextResponse.json({
           error: 'PDF-Generierung ist auf Vercel nicht verfügbar',
-          details: 'Bitte nutze die "Client-Download" Option im Browser oder generiere das PDF lokal.',
+          details: 'Bitte aktiviere Browserless in den Admin-Einstellungen (Integrationen → PDF-Generierung) oder nutze die "Client-Download" Option.',
           html: html, // HTML wird mitgesendet, damit Client-seitig generiert werden kann
           serverless: true,
         }, { status: 503 })
@@ -205,7 +245,12 @@ export async function POST(request: NextRequest) {
       preferCSSPageSize: true,
     })
 
-    await browser.close()
+    // Browserless verwendet disconnect(), lokaler Chrome verwendet close()
+    if ('disconnect' in browser && typeof browser.disconnect === 'function') {
+      await browser.disconnect()
+    } else {
+      await browser.close()
+    }
 
     // PDF in Vercel Blob speichern
     const blob = await put(blobPath, pdfBuffer, {

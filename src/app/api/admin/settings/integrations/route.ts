@@ -39,6 +39,9 @@ interface IntegrationSettingsResult {
   replicateApiKey: string | null
   replicateEnabled: boolean
   replicateDefaultVideoModel: string | null
+  // Browserless
+  browserlessApiKey: string | null
+  browserlessEnabled: boolean
 }
 
 // GET /api/admin/settings/integrations
@@ -124,6 +127,10 @@ export async function GET() {
       replicateApiKey: maskKey(settings.replicateApiKey),
       replicateEnabled: settings.replicateEnabled ?? false,
       replicateDefaultVideoModel: settings.replicateDefaultVideoModel,
+      
+      // Browserless
+      browserlessApiKey: maskKey(settings.browserlessApiKey),
+      browserlessEnabled: settings.browserlessEnabled ?? false,
       
       // Stripe (aus env)
       stripeConfigured: !!(process.env.STRIPE_SECRET_KEY && process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
@@ -260,6 +267,14 @@ export async function PUT(request: Request) {
     }
     if (body.replicateDefaultVideoModel !== undefined) {
       updateData.replicateDefaultVideoModel = body.replicateDefaultVideoModel || 'minimax-video-01'
+    }
+
+    // Browserless
+    if (body.browserlessApiKey !== undefined) {
+      updateData.browserlessApiKey = body.browserlessApiKey || null
+    }
+    if (body.browserlessEnabled !== undefined) {
+      updateData.browserlessEnabled = body.browserlessEnabled
     }
 
     // Update oder Create

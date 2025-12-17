@@ -318,6 +318,48 @@ export async function GET(request: Request) {
         }
       }
 
+      case 'browserless': {
+        const browserlessApiKey = (settings as Record<string, unknown> | null)?.browserlessApiKey as string | undefined
+        
+        if (!browserlessApiKey) {
+          return NextResponse.json({ success: false, error: 'Kein API-Token konfiguriert' })
+        }
+
+        try {
+          // Browserless API - Test durch Health-Check
+          const res = await fetch(`https://production-sfo.browserless.io/config?token=${browserlessApiKey}`)
+
+          if (!res.ok) {
+            if (res.status === 401 || res.status === 403) {
+              return NextResponse.json({ 
+                success: false, 
+                error: 'Ungültiger API-Token' 
+              })
+            }
+            return NextResponse.json({ 
+              success: false, 
+              error: `API Error: ${res.status}` 
+            })
+          }
+
+          const data = await res.json()
+          return NextResponse.json({ 
+            success: true, 
+            message: `Verbunden! Concurrent Sessions: ${data.concurrent || 'N/A'}`,
+            debug: { 
+              concurrent: data.concurrent, 
+              timeout: data.timeout,
+              queued: data.queued 
+            }
+          })
+        } catch (err) {
+          return NextResponse.json({ 
+            success: false, 
+            error: err instanceof Error ? err.message : 'Verbindungsfehler' 
+          })
+        }
+      }
+
       default:
         return NextResponse.json({ error: 'Unbekannte Integration' }, { status: 400 })
     }

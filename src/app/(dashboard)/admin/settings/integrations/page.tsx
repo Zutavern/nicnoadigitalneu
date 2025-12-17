@@ -25,6 +25,7 @@ import {
   Sparkles,
   Mail,
   Phone,
+  FileText,
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -108,6 +109,10 @@ interface IntegrationSettings {
   sevenIoSenderId: string | null
   sevenIoTestNumbers: string | null
   
+  // Browserless (PDF-Generierung)
+  browserlessApiKey: string | null
+  browserlessEnabled: boolean
+  
   // Stripe (read-only, aus env)
   stripeConfigured: boolean
 }
@@ -160,6 +165,10 @@ export default function IntegrationsPage() {
   const [replicateApiKey, setReplicateApiKey] = useState('')
   const [replicateEnabled, setReplicateEnabled] = useState(false)
   const [replicateDefaultVideoModel, setReplicateDefaultVideoModel] = useState('minimax-video-01')
+  
+  // Browserless (PDF-Generierung)
+  const [browserlessApiKey, setBrowserlessApiKey] = useState('')
+  const [browserlessEnabled, setBrowserlessEnabled] = useState(false)
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true)
@@ -189,6 +198,7 @@ export default function IntegrationsPage() {
       setSevenIoTestNumbers(data.sevenIoTestNumbers || '')
       setReplicateEnabled(data.replicateEnabled || false)
       setReplicateDefaultVideoModel(data.replicateDefaultVideoModel || 'minimax-video-01')
+      setBrowserlessEnabled(data.browserlessEnabled || false)
       
       // API Keys werden maskiert zurückgegeben, also nicht überschreiben
     } catch (error) {
@@ -226,6 +236,7 @@ export default function IntegrationsPage() {
         sevenIoTestNumbers: sevenIoTestNumbers || null,
         replicateEnabled,
         replicateDefaultVideoModel: replicateDefaultVideoModel || 'minimax-video-01',
+        browserlessEnabled,
       }
       
       // Nur nicht-leere API-Keys senden
@@ -267,6 +278,9 @@ export default function IntegrationsPage() {
       }
       if (sevenIoApiKey && !sevenIoApiKey.includes('•')) {
         payload.sevenIoApiKey = sevenIoApiKey
+      }
+      if (browserlessApiKey && !browserlessApiKey.includes('•')) {
+        payload.browserlessApiKey = browserlessApiKey
       }
 
       const res = await fetch('/api/admin/settings/integrations', {
@@ -1332,6 +1346,117 @@ export default function IntegrationsPage() {
                     disabled={testingConnection === 'sevenio' || !settings?.sevenIoApiKey}
                   >
                     {testingConnection === 'sevenio' ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Zap className="h-4 w-4 mr-2" />
+                    )}
+                    Verbindung testen
+                  </Button>
+                  <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                    {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                    Speichern
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* PDF-Generierung (Browserless) */}
+        <AccordionItem value="pdf" className="border rounded-lg overflow-hidden">
+          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                <FileText className="h-5 w-5 text-white" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold">PDF-Generierung</h3>
+                <p className="text-sm text-muted-foreground">Browserless</p>
+              </div>
+              {settings?.browserlessEnabled && (
+                <Badge className="ml-auto mr-4 bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  Aktiv
+                </Badge>
+              )}
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-6 pb-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-amber-500" />
+                    <div>
+                      <CardTitle className="text-base">Browserless</CardTitle>
+                      <CardDescription>Cloud-basierte PDF-Generierung mit Headless Chrome</CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={browserlessEnabled}
+                      onCheckedChange={setBrowserlessEnabled}
+                    />
+                    <Label className="text-sm">Aktiviert</Label>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="browserlessApiKey">API Token</Label>
+                  <div className="relative">
+                    <Input
+                      id="browserlessApiKey"
+                      type={showSecrets['browserless'] ? 'text' : 'password'}
+                      value={browserlessApiKey}
+                      onChange={(e) => setBrowserlessApiKey(e.target.value)}
+                      placeholder={settings?.browserlessApiKey || 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'}
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                      onClick={() => toggleShowSecret('browserless')}
+                    >
+                      {showSecrets['browserless'] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Hol dir deinen Token auf{' '}
+                    <a href="https://www.browserless.io/dashboard" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                      browserless.io <ExternalLink className="inline h-3 w-3" />
+                    </a>
+                  </p>
+                </div>
+
+                <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                  <h4 className="text-sm font-medium">Verwendung</h4>
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <FileText className="h-4 w-4" />
+                      <span>Preislisten als PDF</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <FileText className="h-4 w-4" />
+                      <span>Rechnungen & Dokumente</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Browserless ermöglicht serverseitige PDF-Generierung ohne lokalen Chrome-Browser.
+                    Ideal für Vercel Serverless Deployments.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => testConnection('browserless')}
+                    disabled={testingConnection === 'browserless' || !settings?.browserlessApiKey}
+                  >
+                    {testingConnection === 'browserless' ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     ) : (
                       <Zap className="h-4 w-4 mr-2" />

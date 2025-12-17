@@ -1175,6 +1175,10 @@ model PlatformSettings {
   sevenIoSenderId    String? @default("NICNOA") @map("seven_io_sender_id") @db.VarChar(16)
   sevenIoTestNumbers String? @map("seven_io_test_numbers") @db.Text // Komma-getrennte Liste von Testnummern
 
+  // Browserless (Headless Chrome as a Service für PDF-Generierung)
+  browserlessApiKey String? @map("browserless_api_key") @db.VarChar(500)
+  browserlessEnabled Boolean @default(false) @map("browserless_enabled")
+
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
