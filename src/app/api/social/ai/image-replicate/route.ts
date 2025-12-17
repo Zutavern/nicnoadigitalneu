@@ -45,6 +45,13 @@ function getAspectRatio(imageFormat: ImageFormat): string {
 /**
  * Baut modell-spezifische Input-Parameter
  * Jedes Replicate-Modell hat unterschiedliche Anforderungen!
+ * 
+ * Parameter-Dokumentation basierend auf Replicate OpenAPI Schemas:
+ * - FLUX Schnell: prompt, aspect_ratio, output_format, num_outputs, go_fast, seed
+ * - FLUX Pro 1.1: prompt, aspect_ratio, output_format, output_quality, safety_tolerance
+ * - Google Imagen: prompt, aspect_ratio, safety_filter_level, person_generation, output_format
+ * - Ideogram: prompt, aspect_ratio, style_type, magic_prompt_option
+ * - Seedream: prompt, aspect_ratio, image_format
  */
 function buildModelInput(
   modelKey: string,
@@ -54,31 +61,30 @@ function buildModelInput(
   imageFormat: ImageFormat,
   numOutputs: number
 ): Record<string, unknown> {
-  // Basis-Input (die meisten Modelle unterstützen "prompt")
+  // Basis-Input - NUR prompt, sonst nichts
   const input: Record<string, unknown> = { prompt }
 
-  // Modell-spezifische Parameter basierend auf Replicate-Dokumentation
+  // Modell-spezifische Parameter basierend auf Replicate OpenAPI Schemas
   switch (modelKey) {
     // ===== BLACK FOREST LABS (FLUX) =====
     case 'flux-schnell':
-      // https://replicate.com/black-forest-labs/flux-schnell
+      // Dokumentiert: prompt, aspect_ratio, output_format, num_outputs, go_fast, seed
       input.aspect_ratio = aspectRatio
       input.output_format = 'webp'
-      input.output_quality = 90
       input.num_outputs = Math.min(numOutputs, 4)
+      input.go_fast = true
       break
 
     case 'flux-pro-11':
-      // https://replicate.com/black-forest-labs/flux-1.1-pro
+      // Dokumentiert: prompt, aspect_ratio, output_format, output_quality, safety_tolerance
       input.aspect_ratio = aspectRatio
       input.output_format = 'webp'
       input.output_quality = 90
-      input.safety_tolerance = 2
+      input.safety_tolerance = 2 // 0-6, weniger streng = höher
       break
 
     case 'flux-kontext-max':
-      // https://replicate.com/black-forest-labs/flux-kontext-max
-      // Editing-Modell - braucht nur prompt
+      // Editing-Modell - minimale Parameter
       input.aspect_ratio = aspectRatio
       input.output_format = 'webp'
       break
@@ -86,45 +92,48 @@ function buildModelInput(
     // ===== GOOGLE MODELS =====
     case 'imagen-4':
     case 'imagen-4-fast':
-      // https://replicate.com/google/imagen-4
-      // https://replicate.com/google/imagen-4-fast
+      // Google Imagen 4 Parameter
+      // Wichtig: Nutzt möglicherweise andere aspect_ratio Formate
       input.aspect_ratio = aspectRatio
-      input.safety_filter_level = 'block_only_high'
-      input.person_generation = 'allow_adult'
+      input.output_format = 'png'
+      // Safety-Parameter nur hinzufügen wenn nötig
+      // input.safety_filter_level = 'block_only_high'
+      // input.person_generation = 'allow_adult'
       break
 
     case 'nano-banana-pro':
-      // https://replicate.com/google/nano-banana-pro
       input.aspect_ratio = aspectRatio
       break
 
     // ===== IDEOGRAM =====
     case 'ideogram-v3-turbo':
-      // https://replicate.com/ideogram-ai/ideogram-v3-turbo
+      // Ideogram V3 Parameter
       input.aspect_ratio = aspectRatio
+      // style_type: Auto, General, Realistic, Design, Render 3D, Anime
       input.style_type = 'Auto'
+      // magic_prompt_option: Auto, On, Off
+      input.magic_prompt_option = 'Auto'
       break
 
     // ===== BYTEDANCE =====
     case 'seedream-4':
-      // https://replicate.com/bytedance/seedream-4
       input.aspect_ratio = aspectRatio
+      // Nutzt image_format statt output_format
       input.image_format = 'png'
       break
 
     // ===== QWEN =====
     case 'qwen-image':
-      // https://replicate.com/qwen/qwen-image
+      // Qwen Image - sehr einfach
       input.aspect_ratio = aspectRatio
       break
 
     // ===== FALLBACK für unbekannte Modelle =====
     default:
-      // Versuche Standard-Parameter
+      // Minimale Parameter - nur aspect_ratio hinzufügen
+      // Nicht alle Modelle unterstützen das!
+      console.warn(`[Replicate] Unbekanntes Modell ${modelKey} - verwende minimale Parameter`)
       input.aspect_ratio = aspectRatio
-      if (numOutputs > 1) {
-        input.num_outputs = numOutputs
-      }
       break
   }
 
@@ -248,7 +257,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'Authorization': `Bearer ${config.apiKey}`,
         'Content-Type': 'application/json',
-        'Prefer': 'wait=120', // Warte bis zu 120 Sekunden auf Ergebnis
+        'Prefer': 'wait=60', // Max 60 Sekunden (Replicate Limit)
       },
       body: JSON.stringify({ input }),
     })
@@ -256,6 +265,7 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const errorText = await response.text()
       console.error(`[Replicate Image] API Error: ${response.status} - ${errorText}`)
+      console.error(`[Replicate Image] Sent input:`, JSON.stringify(input))
       
       // Versuche JSON zu parsen für bessere Fehlermeldung
       let replicateError: { detail?: string; title?: string } = {}
@@ -275,8 +285,9 @@ export async function POST(request: NextRequest) {
         // Zeige den tatsächlichen Replicate-Fehler
         const detail = replicateError.detail || errorText
         errorMessage = 'Ungültige Parameter'
-        hint = `Replicate: ${detail.slice(0, 200)}`
+        hint = `Replicate: ${detail.slice(0, 300)}`
         console.error(`[Replicate Image] 422 Detail: ${detail}`)
+        console.error(`[Replicate Image] Input was:`, JSON.stringify(input, null, 2))
       } else if (response.status === 402) {
         errorMessage = 'Keine Replicate Credits'
         hint = 'Bitte Replicate-Konto aufladen.'
@@ -286,7 +297,15 @@ export async function POST(request: NextRequest) {
       }
       
       return NextResponse.json(
-        { error: errorMessage, hint, debug: { status: response.status, model: selectedModel.id } },
+        { 
+          error: errorMessage, 
+          hint, 
+          debug: { 
+            status: response.status, 
+            model: selectedModel.id,
+            sentInput: input 
+          } 
+        },
         { status: response.status }
       )
     }
