@@ -150,41 +150,8 @@ const imageStyles = [
   { id: 'artistic', name: 'Künstlerisch', description: 'Kreative Interpretation' },
 ]
 
-// AI-Bild-Modelle - OpenRouter (Text-zu-Bild via Chat)
-const openRouterImageModels = [
-  { id: 'gemini-2-flash', name: 'Gemini 2.0 Flash ⚡', description: 'Schnell, kostenlos & zuverlässig', free: true, credits: 1, recommended: true, provider: 'openrouter' },
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Neuestes Gemini-Modell', free: false, credits: 3, provider: 'openrouter' },
-  { id: 'ideogram-v2', name: 'Ideogram V2', description: 'Beste Qualität, Text auf Bildern', free: false, credits: 5, provider: 'openrouter' },
-  { id: 'recraft-v3', name: 'Recraft V3', description: 'Kreativ & stilvoll', free: false, credits: 5, provider: 'openrouter' },
-  { id: 'dall-e-3', name: 'DALL-E 3', description: 'OpenAI Standard - bewährt', free: false, credits: 8, provider: 'openrouter' },
-]
-
-// AI-Bild-Modelle - Replicate (Aktualisiert mit verifizierten Model-IDs)
-// HINWEIS: Replicate hat KEINE kostenlosen Modelle - jede Prediction kostet
-const replicateImageModels = [
-  // SCHNELLE MODELLE (günstig)
-  { id: 'flux-schnell', name: 'Flux Schnell ⚡', description: '$0.003 - Schnellstes Modell', credits: 1, recommended: true, provider: 'replicate' },
-  { id: 'imagen-4-fast', name: 'Imagen 4 Fast ⚡', description: '$0.02 - Google AI, 10x schneller', credits: 2, provider: 'replicate' },
-  { id: 'ideogram-v3-turbo', name: 'Ideogram V3 Turbo ⚡', description: '$0.03 - Beste Text-Rendering', credits: 2, provider: 'replicate' },
-  // QUALITÄTS-MODELLE
-  { id: 'flux-pro-11', name: 'Flux Pro 1.1 ✨', description: '$0.04 - Höchste Qualität', credits: 4, provider: 'replicate' },
-  { id: 'imagen-4', name: 'Imagen 4 ✨', description: '$0.04 - Google Flagship, 2K', credits: 4, provider: 'replicate' },
-  { id: 'seedream-4', name: 'Seedream 4 ✨', description: '$0.035 - ByteDance, bis zu 4K', credits: 4, provider: 'replicate' },
-  { id: 'qwen-image', name: 'Qwen Image', description: '$0.025 - Komplexe Text-Gen', credits: 3, provider: 'replicate' },
-  // PREMIUM MODELLE
-  { id: 'nano-banana-pro', name: 'Nano Banana Pro 🍌', description: '$0.05 - Google State-of-Art', credits: 5, provider: 'replicate' },
-  // EDITING MODELLE
-  { id: 'flux-kontext-max', name: 'Flux Kontext Max 🎨', description: '$0.05 - Premium Bild-Editing', credits: 5, provider: 'replicate' },
-]
-
-// Kombinierte Liste für Anzeige
-const allImageModels = [
-  ...replicateImageModels.map(m => ({ ...m, providerName: 'Replicate' })),
-  ...openRouterImageModels.map(m => ({ ...m, providerName: 'OpenRouter' })),
-]
-
-// Legacy alias für Kompatibilität
-const imageModels = allImageModels
+// AI-Modell Import aus der neuen Komponente
+import { AIModelSelector, AI_MODELS, DEFAULT_MODEL } from '@/components/social/ai-model-selector'
 
 interface MediaItem {
   id: string
@@ -230,7 +197,7 @@ export default function CreatePostPage() {
   // AI Image State - verbessert
   const [aiImagePrompt, setAiImagePrompt] = useState('')
   const [aiImageStyle, setAiImageStyle] = useState('vivid')
-  const [aiImageModel, setAiImageModel] = useState('flux-schnell') // Replicate - schnell & günstig
+  const [aiImageModel, setAiImageModel] = useState(DEFAULT_MODEL)
   const [useContentAsPrompt, setUseContentAsPrompt] = useState(true)
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const [aiImageDialogOpen, setAiImageDialogOpen] = useState(false)
@@ -1150,81 +1117,28 @@ export default function CreatePostPage() {
                               </div>
                             )}
                             
-                            {/* Stil & Modell */}
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <Label>Stil</Label>
-                                <Select value={aiImageStyle} onValueChange={setAiImageStyle}>
-                                  <SelectTrigger className="mt-1">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {imageStyles.map(style => (
-                                      <SelectItem key={style.id} value={style.id}>
-                                        {style.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              
-                              <div>
-                                <Label>KI-Modell</Label>
-                                <Select value={aiImageModel} onValueChange={setAiImageModel}>
-                                  <SelectTrigger className="mt-1">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent className="max-h-80">
-                                    {/* Replicate Modelle - Spezialisiert */}
-                                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
-                                      🚀 Replicate (Spezialisiert)
-                                    </div>
-                                    {replicateImageModels.map(model => (
-                                      <SelectItem key={`replicate-${model.id}`} value={model.id}>
-                                        <div className="flex items-center gap-2">
-                                          <span>{model.name}</span>
-                                          {model.free && (
-                                            <Badge variant="secondary" className="text-xs py-0">
-                                              Kostenlos
-                                            </Badge>
-                                          )}
-                                          {model.recommended && (
-                                            <Badge className="text-xs py-0 bg-green-500">
-                                              Empfohlen
-                                            </Badge>
-                                          )}
-                                        </div>
-                                      </SelectItem>
-                                    ))}
-                                    
-                                    {/* OpenRouter Modelle - Vielseitig */}
-                                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 mt-1">
-                                      🌐 OpenRouter (Vielseitig)
-                                    </div>
-                                    {openRouterImageModels.map(model => (
-                                      <SelectItem key={`openrouter-${model.id}`} value={model.id}>
-                                        <div className="flex items-center gap-2">
-                                          <span>{model.name}</span>
-                                          {model.free && (
-                                            <Badge variant="secondary" className="text-xs py-0">
-                                              Kostenlos
-                                            </Badge>
-                                          )}
-                                          {model.recommended && (
-                                            <Badge className="text-xs py-0 bg-green-500">
-                                              Empfohlen
-                                            </Badge>
-                                          )}
-                                        </div>
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {allImageModels.find(m => m.id === aiImageModel)?.description}
-                                </p>
-                              </div>
+                            {/* Stil-Auswahl */}
+                            <div>
+                              <Label>Stil</Label>
+                              <Select value={aiImageStyle} onValueChange={setAiImageStyle}>
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {imageStyles.map(style => (
+                                    <SelectItem key={style.id} value={style.id}>
+                                      {style.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </div>
+                            
+                            {/* KI-Modell - Vereinfachte Auswahl mit Speicherfunktion */}
+                            <AIModelSelector 
+                              value={aiImageModel} 
+                              onChange={setAiImageModel}
+                            />
                           </div>
                           
                           <DialogFooter>
