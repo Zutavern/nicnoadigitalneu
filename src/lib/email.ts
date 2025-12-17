@@ -229,56 +229,49 @@ const FOOTER_LINKS = [
 
 /**
  * Generate a stylized text logo when no image logo is uploaded
- * Creates a professional "NICNOA&CO." style text logo
+ * Matches the styling from the React navigation component
  */
 function generateTextLogo(companyName: string, primaryColor: string): string {
-  // Split company name for styling (e.g., "NICNOA & CO." -> styled parts)
-  // Default styling creates a modern, professional look
+  // Use the same system font stack as the website (sans-serif)
+  const fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
   
-  // Check if it's the default NICNOA name - apply special styling
+  // Check if it's the default NICNOA name - apply special styling matching the nav
   if (companyName.toUpperCase().includes('NICNOA')) {
     return `
       <div style="display: inline-block; text-align: center;">
         <span style="
-          font-family: 'Georgia', 'Times New Roman', serif;
-          font-size: 32px;
+          font-family: ${fontFamily};
+          font-size: 24px;
           font-weight: 700;
-          letter-spacing: 4px;
+          letter-spacing: -0.5px;
           color: #ffffff;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        ">NICNOA</span>
-        <span style="
-          font-family: 'Georgia', 'Times New Roman', serif;
-          font-size: 20px;
-          font-weight: 400;
-          letter-spacing: 2px;
-          color: rgba(255,255,255,0.9);
-          margin-left: 4px;
-        ">&amp;CO.</span>
-        <div style="
-          margin-top: 4px;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          font-size: 10px;
-          font-weight: 500;
-          letter-spacing: 3px;
-          color: rgba(255,255,255,0.7);
-          text-transform: uppercase;
-        ">DIGITAL</div>
+        ">NICNOA</span><span style="
+          font-family: ${fontFamily};
+          font-size: 24px;
+          font-weight: 700;
+          letter-spacing: -0.5px;
+          color: ${primaryColor};
+        ">&amp;CO</span><span style="
+          font-family: ${fontFamily};
+          font-size: 24px;
+          font-weight: 700;
+          letter-spacing: -0.5px;
+          color: ${primaryColor};
+        ">.online</span>
       </div>
     `
   }
   
-  // Generic styling for custom company names
+  // Generic styling for custom company names (same font stack)
   return `
     <div style="display: inline-block; text-align: center;">
       <span style="
-        font-family: 'Georgia', 'Times New Roman', serif;
-        font-size: 28px;
+        font-family: ${fontFamily};
+        font-size: 24px;
         font-weight: 700;
-        letter-spacing: 3px;
+        letter-spacing: -0.5px;
         color: #ffffff;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      ">${companyName.toUpperCase()}</span>
+      ">${companyName}</span>
     </div>
   `
 }
