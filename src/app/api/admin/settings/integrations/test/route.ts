@@ -326,31 +326,45 @@ export async function GET(request: Request) {
         }
 
         try {
-          // Browserless API - Test durch Health-Check
-          const res = await fetch(`https://production-sfo.browserless.io/config?token=${browserlessApiKey}`)
+          // Browserless API - Zuerst /config testen (zeigt mehr Infos)
+          const configRes = await fetch(`https://production-sfo.browserless.io/config?token=${browserlessApiKey}`)
 
-          if (!res.ok) {
-            if (res.status === 401 || res.status === 403) {
-              return NextResponse.json({ 
-                success: false, 
-                error: 'Ungültiger API-Token' 
-              })
-            }
+          if (configRes.ok) {
+            const data = await configRes.json()
             return NextResponse.json({ 
-              success: false, 
-              error: `API Error: ${res.status}` 
+              success: true, 
+              message: `Verbunden! Concurrent: ${data.concurrent || 'N/A'}, Timeout: ${data.timeout ? Math.round(data.timeout/1000) + 's' : 'N/A'}`,
+              debug: { 
+                concurrent: data.concurrent, 
+                timeout: data.timeout,
+                queued: data.queued,
+                maxCPU: data.maxCPU,
+                maxMemory: data.maxMemory
+              }
             })
           }
 
-          const data = await res.json()
+          // Fallback: /active Endpoint (einfacher Liveness-Check, gibt 204 zurück)
+          const activeRes = await fetch(`https://production-sfo.browserless.io/active?token=${browserlessApiKey}`)
+          
+          if (activeRes.status === 204 || activeRes.ok) {
+            return NextResponse.json({ 
+              success: true, 
+              message: 'Verbunden! Service ist aktiv.'
+            })
+          }
+
+          // Spezifische Fehlerbehandlung
+          if (configRes.status === 401 || configRes.status === 403) {
+            return NextResponse.json({ 
+              success: false, 
+              error: 'Ungültiger API-Token' 
+            })
+          }
+
           return NextResponse.json({ 
-            success: true, 
-            message: `Verbunden! Concurrent Sessions: ${data.concurrent || 'N/A'}`,
-            debug: { 
-              concurrent: data.concurrent, 
-              timeout: data.timeout,
-              queued: data.queued 
-            }
+            success: false, 
+            error: `API Error: ${configRes.status}` 
           })
         } catch (err) {
           return NextResponse.json({ 

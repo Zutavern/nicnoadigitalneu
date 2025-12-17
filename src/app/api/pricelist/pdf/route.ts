@@ -245,12 +245,8 @@ export async function POST(request: NextRequest) {
       preferCSSPageSize: true,
     })
 
-    // Browserless verwendet disconnect(), lokaler Chrome verwendet close()
-    if ('disconnect' in browser && typeof browser.disconnect === 'function') {
-      await browser.disconnect()
-    } else {
-      await browser.close()
-    }
+    // Browser schließen (funktioniert für Browserless und lokalen Chrome)
+    await browser.close()
 
     // PDF in Vercel Blob speichern
     const blob = await put(blobPath, pdfBuffer, {
