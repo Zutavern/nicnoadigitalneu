@@ -25,118 +25,156 @@ export interface ImageModel {
   supportsAspectRatio: boolean
   maxResolution?: number
   free?: boolean
+  category?: 'fast' | 'quality' | 'premium' | 'editing'
 }
 
-// Bild-Generierungs-Modelle - geprüfte und verfügbare Modelle
+/**
+ * Bild-Generierungs-Modelle - verifiziert und aktualisiert
+ * 
+ * Quellen:
+ * - https://replicate.com/black-forest-labs/flux-schnell
+ * - https://replicate.com/black-forest-labs/flux-1.1-pro
+ * - https://replicate.com/google/imagen-4
+ * - https://replicate.com/google/imagen-4-fast
+ * - https://replicate.com/ideogram-ai/ideogram-v3-turbo
+ * - https://replicate.com/bytedance/seedream-4
+ * - https://replicate.com/qwen/qwen-image
+ * - https://replicate.com/google/nano-banana-pro
+ * - https://replicate.com/black-forest-labs/flux-kontext-max
+ */
 export const IMAGE_MODELS: Record<string, ImageModel> = {
-  // Flux Schnell - KOSTENLOS und SCHNELL (empfohlen)
+  // ============================================
+  // SCHNELLE MODELLE (Empfohlen für Social Media)
+  // ============================================
+  
+  // Flux Schnell - SCHNELLSTES Modell (571M+ Runs)
   'flux-schnell': {
     id: 'black-forest-labs/flux-schnell',
-    name: 'Flux Schnell',
-    description: 'Schnell & kostenlos - perfekt für Social Media',
+    name: 'Flux Schnell ⚡',
+    description: 'Schnellstes Modell - 1-4 Schritte, ideal für Social Media',
     costPerRun: 0.003,
-    avgDuration: 5,
-    outputFormat: 'webp',
-    supportsAspectRatio: true,
-    maxResolution: 1440,
-    free: true,
-  },
-
-  // Flux Dev - Bessere Qualität als Schnell
-  'flux-dev': {
-    id: 'black-forest-labs/flux-dev',
-    name: 'Flux Dev',
-    description: 'Gute Qualität mit Prompt-Adherence',
-    costPerRun: 0.025,
-    avgDuration: 15,
-    outputFormat: 'webp',
-    supportsAspectRatio: true,
-    maxResolution: 1440,
-  },
-
-  // Flux Pro 1.1 - Premium Qualität
-  'flux-pro-11': {
-    id: 'black-forest-labs/flux-1.1-pro',
-    name: 'Flux Pro 1.1',
-    description: 'Premium Qualität für professionelle Anwendung',
-    costPerRun: 0.04,
-    avgDuration: 20,
-    outputFormat: 'webp',
-    supportsAspectRatio: true,
-    maxResolution: 1440,
-  },
-
-  // Stable Diffusion XL - Klassiker
-  'sdxl': {
-    id: 'stability-ai/sdxl',
-    name: 'Stable Diffusion XL',
-    description: 'Klassische SDXL Qualität, viele Stile',
-    costPerRun: 0.004,
-    avgDuration: 8,
-    outputFormat: 'png',
-    supportsAspectRatio: false,
-    maxResolution: 1024,
-  },
-
-  // Stable Diffusion 3.5 Large Turbo - Neu & Schnell
-  'sd35-turbo': {
-    id: 'stability-ai/stable-diffusion-3.5-large-turbo',
-    name: 'SD 3.5 Large Turbo',
-    description: 'Neueste SD Version, schnell & qualitativ',
-    costPerRun: 0.006,
-    avgDuration: 6,
-    outputFormat: 'webp',
-    supportsAspectRatio: true,
-    maxResolution: 1440,
-  },
-
-  // PlaygroundV2.5 - Kreativ & Künstlerisch
-  'playground-v25': {
-    id: 'playgroundai/playground-v2.5-1024px-aesthetic',
-    name: 'Playground V2.5',
-    description: 'Künstlerisch & ästhetisch, ideal für Social Media',
-    costPerRun: 0.004,
-    avgDuration: 8,
-    outputFormat: 'png',
-    supportsAspectRatio: false,
-    maxResolution: 1024,
-  },
-
-  // SDXL Lightning - Ultra-Schnell
-  'sdxl-lightning': {
-    id: 'bytedance/sdxl-lightning-4step',
-    name: 'SDXL Lightning',
-    description: 'Ultra-schnell in 4 Schritten',
-    costPerRun: 0.002,
     avgDuration: 3,
     outputFormat: 'webp',
-    supportsAspectRatio: false,
-    maxResolution: 1024,
+    supportsAspectRatio: true,
+    maxResolution: 1440,
     free: true,
+    category: 'fast',
   },
 
-  // RealVisXL - Fotorealistisch
-  'realvisxl': {
-    id: 'adirik/realvisxl-v4.0',
-    name: 'RealVisXL V4',
-    description: 'Fotorealistisch - ideal für Produktbilder',
-    costPerRun: 0.004,
-    avgDuration: 10,
+  // Google Imagen 4 Fast - Schnelle Version (2.7M+ Runs)
+  'imagen-4-fast': {
+    id: 'google/imagen-4-fast',
+    name: 'Imagen 4 Fast ⚡',
+    description: 'Google AI - 10x schneller als Imagen 3',
+    costPerRun: 0.02,
+    avgDuration: 5,
     outputFormat: 'png',
-    supportsAspectRatio: false,
-    maxResolution: 1024,
+    supportsAspectRatio: true,
+    maxResolution: 2048,
+    category: 'fast',
   },
 
-  // Ideogram - Text auf Bildern
-  'ideogram': {
-    id: 'ideogram-ai/ideogram-v2-turbo',
-    name: 'Ideogram V2 Turbo',
-    description: 'Beste Text-auf-Bild Qualität',
-    costPerRun: 0.01,
-    avgDuration: 8,
+  // Ideogram V3 Turbo - Schnell & günstig (5.4M+ Runs)
+  'ideogram-v3-turbo': {
+    id: 'ideogram-ai/ideogram-v3-turbo',
+    name: 'Ideogram V3 Turbo ⚡',
+    description: 'Beste Text-Rendering - $0.03/Bild',
+    costPerRun: 0.03,
+    avgDuration: 6,
     outputFormat: 'png',
     supportsAspectRatio: true,
     maxResolution: 1280,
+    category: 'fast',
+  },
+
+  // ============================================
+  // QUALITÄTS-MODELLE (Beste Ergebnisse)
+  // ============================================
+
+  // Flux Pro 1.1 - Premium Qualität (65M+ Runs)
+  'flux-pro-11': {
+    id: 'black-forest-labs/flux-1.1-pro',
+    name: 'Flux Pro 1.1 ✨',
+    description: '6x schneller als Flux Pro, höchste Qualität',
+    costPerRun: 0.04,
+    avgDuration: 8,
+    outputFormat: 'webp',
+    supportsAspectRatio: true,
+    maxResolution: 1440,
+    category: 'quality',
+  },
+
+  // Google Imagen 4 - Flagship (6.5M+ Runs)
+  'imagen-4': {
+    id: 'google/imagen-4',
+    name: 'Imagen 4 ✨',
+    description: 'Google Flagship - Feine Details, 2K Auflösung',
+    costPerRun: 0.04,
+    avgDuration: 15,
+    outputFormat: 'png',
+    supportsAspectRatio: true,
+    maxResolution: 2048,
+    category: 'quality',
+  },
+
+  // ByteDance Seedream 4 - 4K Generierung (18M+ Runs)
+  'seedream-4': {
+    id: 'bytedance/seedream-4',
+    name: 'Seedream 4 ✨',
+    description: 'ByteDance - bis zu 4K, Multi-Referenz',
+    costPerRun: 0.035,
+    avgDuration: 10,
+    outputFormat: 'png',
+    supportsAspectRatio: true,
+    maxResolution: 4096,
+    category: 'quality',
+  },
+
+  // Qwen Image - Text-Rendering Spezialist (1.2M+ Runs)
+  'qwen-image': {
+    id: 'qwen/qwen-image',
+    name: 'Qwen Image',
+    description: 'Alibaba - Beste komplexe Text-Generierung',
+    costPerRun: 0.025,
+    avgDuration: 12,
+    outputFormat: 'png',
+    supportsAspectRatio: true,
+    maxResolution: 2048,
+    category: 'quality',
+  },
+
+  // ============================================
+  // PREMIUM MODELLE (Höchste Qualität)
+  // ============================================
+
+  // Google Nano Banana Pro - State of the Art (4.7M+ Runs)
+  'nano-banana-pro': {
+    id: 'google/nano-banana-pro',
+    name: 'Nano Banana Pro 🍌',
+    description: 'Google State-of-Art - Generation & Editing',
+    costPerRun: 0.05,
+    avgDuration: 15,
+    outputFormat: 'png',
+    supportsAspectRatio: true,
+    maxResolution: 2048,
+    category: 'premium',
+  },
+
+  // ============================================
+  // EDITING MODELLE (Bild-Bearbeitung)
+  // ============================================
+
+  // Flux Kontext Max - Bild-Editing (9.3M+ Runs)
+  'flux-kontext-max': {
+    id: 'black-forest-labs/flux-kontext-max',
+    name: 'Flux Kontext Max 🎨',
+    description: 'Premium Bild-Editing via Text-Prompts',
+    costPerRun: 0.05,
+    avgDuration: 12,
+    outputFormat: 'webp',
+    supportsAspectRatio: true,
+    maxResolution: 1440,
+    category: 'editing',
   },
 }
 

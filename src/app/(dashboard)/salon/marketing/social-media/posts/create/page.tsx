@@ -159,16 +159,22 @@ const openRouterImageModels = [
   { id: 'dall-e-3', name: 'DALL-E 3', description: 'OpenAI Standard - bewährt', free: false, credits: 8, provider: 'openrouter' },
 ]
 
-// AI-Bild-Modelle - Replicate (Spezialisiert auf Bildgenerierung)
+// AI-Bild-Modelle - Replicate (Aktualisiert mit verifizierten Model-IDs)
+// Quellen: replicate.com/google/imagen-4-fast, replicate.com/black-forest-labs/flux-schnell, etc.
 const replicateImageModels = [
-  { id: 'flux-schnell', name: 'Flux Schnell ⚡', description: 'Ultra-schnell & günstig', free: true, credits: 1, recommended: true, provider: 'replicate' },
-  { id: 'flux-dev', name: 'Flux Dev', description: 'Gute Qualität mit Prompt-Treue', free: false, credits: 3, provider: 'replicate' },
-  { id: 'sdxl-lightning', name: 'SDXL Lightning ⚡', description: 'Ultra-schnell in 4 Schritten', free: true, credits: 1, provider: 'replicate' },
-  { id: 'sd35-turbo', name: 'SD 3.5 Turbo', description: 'Neueste SD Version, schnell', free: false, credits: 2, provider: 'replicate' },
-  { id: 'playground-v25', name: 'Playground V2.5', description: 'Ästhetisch für Social Media', free: false, credits: 2, provider: 'replicate' },
-  { id: 'realvisxl', name: 'RealVisXL V4', description: 'Fotorealistisch - für Produktbilder', free: false, credits: 2, provider: 'replicate' },
-  { id: 'flux-pro-11', name: 'Flux Pro 1.1 ✨', description: 'Premium Qualität', free: false, credits: 5, provider: 'replicate' },
-  { id: 'ideogram', name: 'Ideogram V2 Turbo', description: 'Beste Text-auf-Bild Qualität', free: false, credits: 3, provider: 'replicate' },
+  // SCHNELLE MODELLE
+  { id: 'flux-schnell', name: 'Flux Schnell ⚡', description: 'Schnellstes Modell - 571M+ Runs', free: true, credits: 1, recommended: true, provider: 'replicate' },
+  { id: 'imagen-4-fast', name: 'Imagen 4 Fast ⚡', description: 'Google AI - 10x schneller', free: false, credits: 2, provider: 'replicate' },
+  { id: 'ideogram-v3-turbo', name: 'Ideogram V3 Turbo ⚡', description: 'Beste Text-Rendering - $0.03', free: false, credits: 2, provider: 'replicate' },
+  // QUALITÄTS-MODELLE
+  { id: 'flux-pro-11', name: 'Flux Pro 1.1 ✨', description: '6x schneller, höchste Qualität', free: false, credits: 4, provider: 'replicate' },
+  { id: 'imagen-4', name: 'Imagen 4 ✨', description: 'Google Flagship - 2K Auflösung', free: false, credits: 4, provider: 'replicate' },
+  { id: 'seedream-4', name: 'Seedream 4 ✨', description: 'ByteDance - bis zu 4K', free: false, credits: 4, provider: 'replicate' },
+  { id: 'qwen-image', name: 'Qwen Image', description: 'Alibaba - Komplexe Text-Gen', free: false, credits: 3, provider: 'replicate' },
+  // PREMIUM MODELLE
+  { id: 'nano-banana-pro', name: 'Nano Banana Pro 🍌', description: 'Google State-of-Art', free: false, credits: 5, provider: 'replicate' },
+  // EDITING MODELLE
+  { id: 'flux-kontext-max', name: 'Flux Kontext Max 🎨', description: 'Premium Bild-Editing', free: false, credits: 5, provider: 'replicate' },
 ]
 
 // Kombinierte Liste für Anzeige

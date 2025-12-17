@@ -437,80 +437,97 @@ interface ReplicateImageModel {
   isFree?: boolean
 }
 
+/**
+ * Replicate Image Models - Verifiziert und Aktualisiert
+ * 
+ * Quellen:
+ * - https://replicate.com/black-forest-labs/flux-schnell (571M+ runs)
+ * - https://replicate.com/black-forest-labs/flux-1.1-pro (65M+ runs)
+ * - https://replicate.com/google/imagen-4 (6.5M+ runs)
+ * - https://replicate.com/google/imagen-4-fast (2.7M+ runs)
+ * - https://replicate.com/ideogram-ai/ideogram-v3-turbo (5.4M+ runs)
+ * - https://replicate.com/bytedance/seedream-4 (18M+ runs)
+ * - https://replicate.com/qwen/qwen-image (1.2M+ runs)
+ * - https://replicate.com/google/nano-banana-pro (4.7M+ runs)
+ * - https://replicate.com/black-forest-labs/flux-kontext-max (9.3M+ runs)
+ */
 const replicateImageModels: ReplicateImageModel[] = [
+  // ===== SCHNELLE MODELLE =====
   {
     modelId: 'black-forest-labs/flux-schnell',
     modelKey: 'flux-schnell',
     name: 'Flux Schnell',
-    description: 'Schnell & kostenlos - perfekt für Social Media',
+    description: 'Schnellstes Modell - 1-4 Schritte, ideal für Social Media',
     costPerRun: 0.003,
-    avgDurationMs: 5000,
-    isFree: true,
-  },
-  {
-    modelId: 'black-forest-labs/flux-dev',
-    modelKey: 'flux-dev',
-    name: 'Flux Dev',
-    description: 'Gute Qualität mit Prompt-Adherence',
-    costPerRun: 0.025,
-    avgDurationMs: 15000,
-  },
-  {
-    modelId: 'black-forest-labs/flux-1.1-pro',
-    modelKey: 'flux-pro-11',
-    name: 'Flux Pro 1.1',
-    description: 'Premium Qualität für professionelle Anwendung',
-    costPerRun: 0.04,
-    avgDurationMs: 20000,
-  },
-  {
-    modelId: 'stability-ai/sdxl',
-    modelKey: 'sdxl',
-    name: 'Stable Diffusion XL',
-    description: 'Klassische SDXL Qualität, viele Stile',
-    costPerRun: 0.004,
-    avgDurationMs: 8000,
-  },
-  {
-    modelId: 'stability-ai/stable-diffusion-3.5-large-turbo',
-    modelKey: 'sd35-turbo',
-    name: 'SD 3.5 Large Turbo',
-    description: 'Neueste SD Version, schnell & qualitativ',
-    costPerRun: 0.006,
-    avgDurationMs: 6000,
-  },
-  {
-    modelId: 'playgroundai/playground-v2.5-1024px-aesthetic',
-    modelKey: 'playground-v25',
-    name: 'Playground V2.5',
-    description: 'Künstlerisch & ästhetisch, ideal für Social Media',
-    costPerRun: 0.004,
-    avgDurationMs: 8000,
-  },
-  {
-    modelId: 'bytedance/sdxl-lightning-4step',
-    modelKey: 'sdxl-lightning',
-    name: 'SDXL Lightning',
-    description: 'Ultra-schnell in 4 Schritten',
-    costPerRun: 0.002,
     avgDurationMs: 3000,
     isFree: true,
   },
   {
-    modelId: 'adirik/realvisxl-v4.0',
-    modelKey: 'realvisxl',
-    name: 'RealVisXL V4',
-    description: 'Fotorealistisch - ideal für Produktbilder',
-    costPerRun: 0.004,
+    modelId: 'google/imagen-4-fast',
+    modelKey: 'imagen-4-fast',
+    name: 'Imagen 4 Fast',
+    description: 'Google AI - 10x schneller als Imagen 3',
+    costPerRun: 0.02,
+    avgDurationMs: 5000,
+  },
+  {
+    modelId: 'ideogram-ai/ideogram-v3-turbo',
+    modelKey: 'ideogram-v3-turbo',
+    name: 'Ideogram V3 Turbo',
+    description: 'Beste Text-Rendering - $0.03/Bild',
+    costPerRun: 0.03,
+    avgDurationMs: 6000,
+  },
+  // ===== QUALITÄTS-MODELLE =====
+  {
+    modelId: 'black-forest-labs/flux-1.1-pro',
+    modelKey: 'flux-pro-11',
+    name: 'Flux Pro 1.1',
+    description: '6x schneller als Flux Pro, höchste Qualität',
+    costPerRun: 0.04,
+    avgDurationMs: 8000,
+  },
+  {
+    modelId: 'google/imagen-4',
+    modelKey: 'imagen-4',
+    name: 'Imagen 4',
+    description: 'Google Flagship - Feine Details, 2K Auflösung',
+    costPerRun: 0.04,
+    avgDurationMs: 15000,
+  },
+  {
+    modelId: 'bytedance/seedream-4',
+    modelKey: 'seedream-4',
+    name: 'Seedream 4',
+    description: 'ByteDance - bis zu 4K, Multi-Referenz',
+    costPerRun: 0.035,
     avgDurationMs: 10000,
   },
   {
-    modelId: 'ideogram-ai/ideogram-v2-turbo',
-    modelKey: 'ideogram',
-    name: 'Ideogram V2 Turbo',
-    description: 'Beste Text-auf-Bild Qualität',
-    costPerRun: 0.01,
-    avgDurationMs: 8000,
+    modelId: 'qwen/qwen-image',
+    modelKey: 'qwen-image',
+    name: 'Qwen Image',
+    description: 'Alibaba - Beste komplexe Text-Generierung',
+    costPerRun: 0.025,
+    avgDurationMs: 12000,
+  },
+  // ===== PREMIUM MODELLE =====
+  {
+    modelId: 'google/nano-banana-pro',
+    modelKey: 'nano-banana-pro',
+    name: 'Nano Banana Pro',
+    description: 'Google State-of-Art - Generation & Editing',
+    costPerRun: 0.05,
+    avgDurationMs: 15000,
+  },
+  // ===== EDITING MODELLE =====
+  {
+    modelId: 'black-forest-labs/flux-kontext-max',
+    modelKey: 'flux-kontext-max',
+    name: 'Flux Kontext Max',
+    description: 'Premium Bild-Editing via Text-Prompts',
+    costPerRun: 0.05,
+    avgDurationMs: 12000,
   },
 ]
 
