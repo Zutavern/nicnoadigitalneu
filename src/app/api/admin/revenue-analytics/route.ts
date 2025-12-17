@@ -51,7 +51,7 @@ export async function GET(request: Request) {
     }
 
     // If Stripe is configured, fetch real data
-    if (isStripeConfigured() && stripe) {
+    if (isStripeConfigured && stripe) {
       return await getStripeEnhancedRevenue(startDate, now, period)
     }
 
