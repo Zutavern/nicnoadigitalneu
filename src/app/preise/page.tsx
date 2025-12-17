@@ -30,10 +30,15 @@ import {
   CreditCard,
   Globe,
   Lock,
-  Bot
+  Bot,
+  LayoutGrid,
+  Rows3
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+
+// Design-Variante
+type DesignVariant = 'expanded' | 'compact'
 
 // Plan-Interface
 interface Plan {
@@ -180,6 +185,7 @@ export default function PricingPage() {
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null)
   const [plans, setPlans] = useState<Plan[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [designVariant, setDesignVariant] = useState<DesignVariant>('compact')
   const [config, setConfig] = useState<BillingConfig>({
     intervals: defaultIntervals,
     defaultInterval: 'sixMonths',
@@ -296,135 +302,414 @@ export default function PricingPage() {
     <main className="min-h-screen bg-background overflow-x-hidden">
       <MainNav />
 
-      {/* Hero Section mit dramatischem Gradient */}
-      <section className="relative pt-24 pb-16 overflow-hidden">
-        {/* Animated Background */}
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-background to-background" />
-          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-violet-500/30 to-transparent rounded-full blur-3xl animate-pulse" />
-          <div className="absolute top-20 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-pink-500/20 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-t from-primary/10 to-transparent rounded-full blur-3xl" />
-        </div>
-        
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:72px_72px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)]" />
-        
-        <div className="container relative">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center max-w-4xl mx-auto"
+      {/* Design Toggle - Fixed Position */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <div className="flex items-center gap-1 p-1 rounded-full bg-background/80 backdrop-blur-xl border shadow-lg">
+          <button
+            onClick={() => setDesignVariant('compact')}
+            className={cn(
+              "p-2.5 rounded-full transition-all",
+              designVariant === 'compact' 
+                ? "bg-primary text-primary-foreground" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            title="Kompakte Ansicht"
           >
-            {/* Floating Badge */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Badge className="mb-6 px-5 py-2 text-sm bg-gradient-to-r from-violet-500/10 to-pink-500/10 text-primary border-primary/20 backdrop-blur-sm">
-                <Sparkles className="w-4 h-4 mr-2" />
-                {config.trialEnabled ? `${config.trialDays} Tage kostenlos testen • Keine Kreditkarte` : 'Sofort starten'}
-              </Badge>
-            </motion.div>
-            
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-              <span className="block">Dein Erfolg beginnt</span>
-              <span className="relative">
-                <span className="bg-gradient-to-r from-violet-500 via-pink-500 to-orange-500 bg-clip-text text-transparent">
-                  mit dem richtigen Plan
-                </span>
-                <motion.span
-                  className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 via-pink-500 to-orange-500 rounded-full"
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ delay: 0.5, duration: 0.8 }}
-                />
-              </span>
-            </h1>
-            
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-12">
-              Wähl den perfekten Plan für deine Bedürfnisse. 
-              Transparent, fair und ohne versteckte Kosten.
-            </p>
+            <Rows3 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setDesignVariant('expanded')}
+            className={cn(
+              "p-2.5 rounded-full transition-all",
+              designVariant === 'expanded' 
+                ? "bg-primary text-primary-foreground" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            title="Erweiterte Ansicht"
+          >
+            <LayoutGrid className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
 
-            {/* Role Toggle - Modern Pill Design */}
-            <div className="flex justify-center mb-10">
-              <div className="inline-flex p-1.5 rounded-2xl bg-muted/50 backdrop-blur-lg border border-white/10 shadow-xl">
-                {[
-                  { id: 'stylist', label: 'Stuhlmieter', icon: Scissors, color: 'from-violet-500 to-purple-600' },
-                  { id: 'salon', label: 'Salonbesitzer', icon: Building2, color: 'from-blue-500 to-cyan-500' }
-                ].map((role) => (
-                  <button
-                    key={role.id}
-                    onClick={() => setSelectedRole(role.id as 'stylist' | 'salon')}
+      {/* ========== COMPACT DESIGN VARIANT ========== */}
+      {designVariant === 'compact' ? (
+        <>
+          {/* Minimal Hero */}
+          <section className="relative pt-20 pb-8">
+            <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
+            <div className="container relative">
+              <div className="text-center max-w-3xl mx-auto">
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">
+                  Wähle deinen Plan
+                </h1>
+                <p className="text-muted-foreground mb-6">
+                  {config.trialEnabled && `${config.trialDays} Tage kostenlos • `}Jederzeit kündbar • Keine versteckten Kosten
+                </p>
+
+                {/* Compact Controls */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+                  {/* Role Toggle */}
+                  <div className="inline-flex p-1 rounded-lg bg-muted border">
+                    {[
+                      { id: 'stylist', label: 'Stuhlmieter', icon: Scissors },
+                      { id: 'salon', label: 'Salonbesitzer', icon: Building2 }
+                    ].map((role) => (
+                      <button
+                        key={role.id}
+                        onClick={() => setSelectedRole(role.id as 'stylist' | 'salon')}
+                        className={cn(
+                          "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
+                          selectedRole === role.id
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        <role.icon className="w-4 h-4" />
+                        {role.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Interval Toggle */}
+                  <div className="inline-flex p-1 rounded-lg bg-muted border">
+                    {activeIntervals.map((interval) => (
+                      <button
+                        key={interval.id}
+                        onClick={() => setSelectedInterval(interval.id)}
+                        className={cn(
+                          "px-4 py-2 rounded-md text-sm font-medium transition-all",
+                          selectedInterval === interval.id
+                            ? "bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        {interval.label}
+                        {interval.discount > 0 && (
+                          <span className="ml-1.5 text-xs opacity-80">-{interval.discount}%</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Compact Pricing Cards */}
+          <section className="container pb-8">
+            <AnimatePresence mode="wait">
+              {isLoading ? (
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center justify-center py-12"
+                >
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </motion.div>
+              ) : (() => {
+                const visiblePlans = plans.filter(plan => getPriceForInterval(plan, selectedInterval) > 0)
+                
+                if (visiblePlans.length === 0) {
+                  return (
+                    <motion.div key="no-plans" className="text-center py-12">
+                      <p className="text-muted-foreground">Keine Preispläne für dieses Intervall verfügbar.</p>
+                    </motion.div>
+                  )
+                }
+                
+                return (
+                  <motion.div
+                    key={`${selectedRole}-${selectedInterval}-compact`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
                     className={cn(
-                      "relative flex items-center gap-2.5 px-8 py-4 rounded-xl text-base font-semibold transition-all duration-300",
-                      selectedRole === role.id
-                        ? "text-white shadow-lg"
-                        : "text-muted-foreground hover:text-foreground"
+                      "grid gap-4 mx-auto",
+                      visiblePlans.length === 1 && "max-w-md",
+                      visiblePlans.length === 2 && "max-w-3xl grid-cols-1 md:grid-cols-2",
+                      visiblePlans.length === 3 && "max-w-5xl grid-cols-1 md:grid-cols-3",
+                      visiblePlans.length >= 4 && "max-w-6xl grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
                     )}
                   >
-                    {selectedRole === role.id && (
-                      <motion.div
-                        layoutId="rolePill"
-                        className={cn("absolute inset-0 rounded-xl bg-gradient-to-r", role.color)}
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                      />
-                    )}
-                    <role.icon className="w-5 h-5 relative z-10" />
-                    <span className="relative z-10">{role.label}</span>
-                  </button>
+                    {visiblePlans.map((plan, index) => {
+                      const monthlyEquivalent = calculateMonthlyEquivalent(plan, selectedInterval)
+                      const totalPrice = getPriceForInterval(plan, selectedInterval)
+                      const savings = calculateSavings(plan, selectedInterval)
+                      
+                      return (
+                        <motion.div
+                          key={plan.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className={cn(
+                            "relative rounded-xl border bg-card p-5 transition-all hover:shadow-md",
+                            plan.isPopular && "border-primary ring-1 ring-primary/20"
+                          )}
+                        >
+                          {/* Popular Badge */}
+                          {plan.isPopular && (
+                            <Badge className="absolute -top-2.5 left-4 bg-primary text-primary-foreground text-xs px-2 py-0.5">
+                              Beliebt
+                            </Badge>
+                          )}
+
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <h3 className="font-semibold text-lg">{plan.name}</h3>
+                              <p className="text-sm text-muted-foreground">{plan.description}</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-2xl font-bold">{config.currencySign}{monthlyEquivalent}</div>
+                              <div className="text-xs text-muted-foreground">/Monat</div>
+                            </div>
+                          </div>
+
+                          {/* Compact Price Info */}
+                          <div className="flex items-center gap-3 mb-4 text-sm">
+                            <span className="text-muted-foreground">
+                              {config.currencySign}{totalPrice} / {currentInterval?.months || 1} Mon.
+                            </span>
+                            {savings > 0 && (
+                              <Badge variant="secondary" className="text-emerald-600 bg-emerald-500/10 text-xs">
+                                -{config.currencySign}{savings}
+                              </Badge>
+                            )}
+                          </div>
+
+                          {/* Top Features (max 4) */}
+                          <div className="space-y-1.5 mb-4">
+                            {plan.features.slice(0, 4).map((feature, i) => (
+                              <div key={i} className="flex items-center gap-2 text-sm">
+                                <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                                <span className="truncate">{feature}</span>
+                              </div>
+                            ))}
+                            {plan.features.length > 4 && (
+                              <p className="text-xs text-muted-foreground pl-5">
+                                +{plan.features.length - 4} weitere Features
+                              </p>
+                            )}
+                          </div>
+
+                          {/* AI Credits */}
+                          {plan.includedAiCreditsEur > 0 && (
+                            <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
+                              <Bot className="w-3.5 h-3.5" />
+                              <span>{config.currencySign}{plan.includedAiCreditsEur} AI-Guthaben/Mon.</span>
+                            </div>
+                          )}
+
+                          {/* CTA */}
+                          <Button 
+                            className={cn(
+                              "w-full",
+                              plan.isPopular && "bg-primary"
+                            )}
+                            variant={plan.isPopular ? 'default' : 'outline'}
+                            size="sm"
+                            asChild
+                          >
+                            <Link href="/register">
+                              {config.trialEnabled ? 'Kostenlos testen' : 'Jetzt starten'}
+                            </Link>
+                          </Button>
+                        </motion.div>
+                      )
+                    })}
+                  </motion.div>
+                )
+              })()}
+            </AnimatePresence>
+          </section>
+
+          {/* Compact Trust Bar */}
+          <section className="border-t border-b bg-muted/30">
+            <div className="container py-4">
+              <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+                {[
+                  { icon: Shield, text: 'DSGVO-konform' },
+                  { icon: BadgeCheck, text: 'Sichere Zahlung' },
+                  { icon: Clock, text: `${config.trialDays} Tage gratis` },
+                  { icon: Headphones, text: 'Deutscher Support' },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <item.icon className="w-4 h-4" />
+                    <span>{item.text}</span>
+                  </div>
                 ))}
               </div>
             </div>
+          </section>
 
-            {/* Interval Selector - Floating Cards */}
-            <div className="flex flex-wrap justify-center gap-4 mt-4 mb-8">
-              {activeIntervals.map((interval) => (
-                <button
-                  key={interval.id}
-                  onClick={() => setSelectedInterval(interval.id)}
-                  className={cn(
-                    "relative px-7 py-3.5 rounded-xl font-medium transition-all duration-300",
-                    selectedInterval === interval.id
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-105"
-                      : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground border border-transparent hover:border-border"
-                  )}
-                >
-                  <span>{interval.label}</span>
-                  {interval.badge && (
-                    <span className={cn(
-                      "absolute -top-3 -right-3 px-2.5 py-1 text-[10px] font-bold rounded-full shadow-lg",
-                      interval.id === 'yearly' 
-                        ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white"
-                        : "bg-gradient-to-r from-pink-500 to-rose-500 text-white"
-                    )}>
-                      {interval.badge}
-                    </span>
-                  )}
-                  {interval.discount > 0 && selectedInterval !== interval.id && (
-                    <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-emerald-500 font-semibold whitespace-nowrap">
-                      -{interval.discount}%
-                    </span>
-                  )}
-                </button>
-              ))}
+          {/* Compact Testimonial */}
+          <section className="container py-8">
+            <div className="max-w-2xl mx-auto text-center">
+              <div className="flex justify-center gap-0.5 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                ))}
+              </div>
+              <blockquote className="text-lg text-muted-foreground mb-3">
+                &ldquo;{testimonialsByRole[selectedRole][0].quote}&rdquo;
+              </blockquote>
+              <p className="text-sm font-medium">
+                {testimonialsByRole[selectedRole][0].author} – {testimonialsByRole[selectedRole][0].role}
+              </p>
             </div>
+          </section>
 
-            {currentInterval && currentInterval.discount > 0 && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
+          {/* Compact CTA */}
+          <section className="container pb-12">
+            <div className="max-w-xl mx-auto text-center p-6 rounded-2xl bg-primary/5 border border-primary/10">
+              <h3 className="font-semibold mb-2">Bereit durchzustarten?</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Starte deine {config.trialDays}-tägige kostenlose Testphase
+              </p>
+              <Button asChild>
+                <Link href="/register">
+                  Jetzt kostenlos testen
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </section>
+        </>
+      ) : (
+        /* ========== EXPANDED DESIGN VARIANT (Original) ========== */
+        <>
+          {/* Hero Section mit dramatischem Gradient */}
+          <section className="relative pt-24 pb-16 overflow-hidden">
+            {/* Animated Background */}
+            <div className="absolute inset-0">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-background to-background" />
+              <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-violet-500/30 to-transparent rounded-full blur-3xl animate-pulse" />
+              <div className="absolute top-20 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-pink-500/20 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-t from-primary/10 to-transparent rounded-full blur-3xl" />
+            </div>
+            
+            {/* Grid Pattern */}
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:72px_72px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)]" />
+            
+            <div className="container relative">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-12 mb-4 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-500/10 text-emerald-500 font-semibold border border-emerald-500/20"
+                transition={{ duration: 0.8 }}
+                className="text-center max-w-4xl mx-auto"
               >
-                <Gift className="h-4 w-4" />
-                Du sparst {currentInterval.discount}% bei {currentInterval.months} Monaten Laufzeit
+                {/* Floating Badge */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <Badge className="mb-6 px-5 py-2 text-sm bg-gradient-to-r from-violet-500/10 to-pink-500/10 text-primary border-primary/20 backdrop-blur-sm">
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    {config.trialEnabled ? `${config.trialDays} Tage kostenlos testen • Keine Kreditkarte` : 'Sofort starten'}
+                  </Badge>
+                </motion.div>
+                
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
+                  <span className="block">Dein Erfolg beginnt</span>
+                  <span className="relative">
+                    <span className="bg-gradient-to-r from-violet-500 via-pink-500 to-orange-500 bg-clip-text text-transparent">
+                      mit dem richtigen Plan
+                    </span>
+                    <motion.span
+                      className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 via-pink-500 to-orange-500 rounded-full"
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      transition={{ delay: 0.5, duration: 0.8 }}
+                    />
+                  </span>
+                </h1>
+                
+                <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-12">
+                  Wähl den perfekten Plan für deine Bedürfnisse. 
+                  Transparent, fair und ohne versteckte Kosten.
+                </p>
+
+                {/* Role Toggle - Modern Pill Design */}
+                <div className="flex justify-center mb-10">
+                  <div className="inline-flex p-1.5 rounded-2xl bg-muted/50 backdrop-blur-lg border border-white/10 shadow-xl">
+                    {[
+                      { id: 'stylist', label: 'Stuhlmieter', icon: Scissors, color: 'from-violet-500 to-purple-600' },
+                      { id: 'salon', label: 'Salonbesitzer', icon: Building2, color: 'from-blue-500 to-cyan-500' }
+                    ].map((role) => (
+                      <button
+                        key={role.id}
+                        onClick={() => setSelectedRole(role.id as 'stylist' | 'salon')}
+                        className={cn(
+                          "relative flex items-center gap-2.5 px-8 py-4 rounded-xl text-base font-semibold transition-all duration-300",
+                          selectedRole === role.id
+                            ? "text-white shadow-lg"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        {selectedRole === role.id && (
+                          <motion.div
+                            layoutId="rolePillExpanded"
+                            className={cn("absolute inset-0 rounded-xl bg-gradient-to-r", role.color)}
+                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                          />
+                        )}
+                        <role.icon className="w-5 h-5 relative z-10" />
+                        <span className="relative z-10">{role.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Interval Selector - Floating Cards */}
+                <div className="flex flex-wrap justify-center gap-4 mt-4 mb-8">
+                  {activeIntervals.map((interval) => (
+                    <button
+                      key={interval.id}
+                      onClick={() => setSelectedInterval(interval.id)}
+                      className={cn(
+                        "relative px-7 py-3.5 rounded-xl font-medium transition-all duration-300",
+                        selectedInterval === interval.id
+                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-105"
+                          : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground border border-transparent hover:border-border"
+                      )}
+                    >
+                      <span>{interval.label}</span>
+                      {interval.badge && (
+                        <span className={cn(
+                          "absolute -top-3 -right-3 px-2.5 py-1 text-[10px] font-bold rounded-full shadow-lg",
+                          interval.id === 'yearly' 
+                            ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white"
+                            : "bg-gradient-to-r from-pink-500 to-rose-500 text-white"
+                        )}>
+                          {interval.badge}
+                        </span>
+                      )}
+                      {interval.discount > 0 && selectedInterval !== interval.id && (
+                        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-emerald-500 font-semibold whitespace-nowrap">
+                          -{interval.discount}%
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {currentInterval && currentInterval.discount > 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-12 mb-4 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-500/10 text-emerald-500 font-semibold border border-emerald-500/20"
+                  >
+                    <Gift className="h-4 w-4" />
+                    Du sparst {currentInterval.discount}% bei {currentInterval.months} Monaten Laufzeit
+                  </motion.div>
+                )}
               </motion.div>
-            )}
-          </motion.div>
-        </div>
-      </section>
+            </div>
+          </section>
 
       {/* Pricing Cards */}
       <section className="container pb-24 mt-8">
@@ -892,23 +1177,25 @@ export default function PricingPage() {
         </motion.div>
       </section>
 
-      {/* Guarantee Banner */}
-      {config.moneyBackEnabled && (
-        <section className="border-t">
-          <div className="container py-10">
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6 text-center md:text-left">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-                <Shield className="w-8 h-8 text-emerald-500" />
+          {/* Guarantee Banner */}
+          {config.moneyBackEnabled && (
+            <section className="border-t">
+              <div className="container py-10">
+                <div className="flex flex-col md:flex-row items-center justify-center gap-6 text-center md:text-left">
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+                    <Shield className="w-8 h-8 text-emerald-500" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-bold mb-1">{config.moneyBackDays}-Tage Geld-zurück-Garantie</h4>
+                    <p className="text-muted-foreground">
+                      Nicht zufrieden? Wir erstatten dir den vollen Betrag – ohne Fragen zu stellen.
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h4 className="text-xl font-bold mb-1">{config.moneyBackDays}-Tage Geld-zurück-Garantie</h4>
-                <p className="text-muted-foreground">
-                  Nicht zufrieden? Wir erstatten dir den vollen Betrag – ohne Fragen zu stellen.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+            </section>
+          )}
+        </>
       )}
 
       <Footer />
