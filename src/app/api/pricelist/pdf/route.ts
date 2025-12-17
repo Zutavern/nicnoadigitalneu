@@ -75,9 +75,37 @@ async function getBrowser() {
   const isLocal = process.env.NODE_ENV === 'development' || !process.env.VERCEL
 
   if (isLocal) {
-    const puppeteer = await import('puppeteer')
-    return puppeteer.default.launch({
+    // Lokal: puppeteer-core mit lokalem Chrome
+    const puppeteerCore = await import('puppeteer-core')
+    
+    // Versuche lokalen Chrome zu finden
+    const possiblePaths = [
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', // macOS
+      '/usr/bin/google-chrome', // Linux
+      '/usr/bin/chromium-browser', // Linux Chromium
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', // Windows
+    ]
+    
+    let executablePath = ''
+    for (const path of possiblePaths) {
+      try {
+        const fs = await import('fs')
+        if (fs.existsSync(path)) {
+          executablePath = path
+          break
+        }
+      } catch {
+        continue
+      }
+    }
+    
+    if (!executablePath) {
+      throw new Error('Kein lokaler Chrome/Chromium gefunden. Bitte Chrome installieren.')
+    }
+    
+    return puppeteerCore.default.launch({
       headless: true,
+      executablePath,
       defaultViewport: {
         width: A4_WIDTH,
         height: A4_HEIGHT,
@@ -86,25 +114,19 @@ async function getBrowser() {
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     })
   } else {
-    // Vercel Serverless Environment
+    // Vercel Serverless Environment - chromium-min verwenden
     const puppeteerCore = await import('puppeteer-core')
-    const chromium = await import('@sparticuz/chromium')
+    const chromium = await import('@sparticuz/chromium-min')
     
-    // Chromium für Lambda/Serverless optimieren
-    chromium.default.setHeadlessMode = true
-    chromium.default.setGraphicsMode = false
+    // Chromium Binary von Sparticuz GitHub Release laden (Vercel-kompatibel)
+    const executablePath = await chromium.default.executablePath(
+      'https://github.com/Sparticuz/chromium/releases/download/v143.0.0/chromium-v143.0.0-pack.tar'
+    )
     
-    const executablePath = await chromium.default.executablePath()
     console.log('Chromium executable path:', executablePath)
     
     return puppeteerCore.default.launch({
-      args: [
-        ...chromium.default.args,
-        '--disable-gpu',
-        '--disable-dev-shm-usage',
-        '--disable-software-rasterizer',
-        '--single-process',
-      ],
+      args: chromium.default.args,
       defaultViewport: {
         width: A4_WIDTH,
         height: A4_HEIGHT,
