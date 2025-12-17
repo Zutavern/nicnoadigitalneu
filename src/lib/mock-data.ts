@@ -1427,13 +1427,13 @@ export function getMockEnhancedRevenue() {
       
       // Trend
       dailyTrend: [
-        { date: getRelativeDate(-6).toISOString().split('T')[0], revenue: 312.50, cost: 223.20, requests: 6230 },
-        { date: getRelativeDate(-5).toISOString().split('T')[0], revenue: 345.80, cost: 247.00, requests: 6890 },
-        { date: getRelativeDate(-4).toISOString().split('T')[0], revenue: 298.20, cost: 213.00, requests: 5940 },
-        { date: getRelativeDate(-3).toISOString().split('T')[0], revenue: 378.90, cost: 270.60, requests: 7560 },
-        { date: getRelativeDate(-2).toISOString().split('T')[0], revenue: 356.40, cost: 254.60, requests: 7120 },
-        { date: getRelativeDate(-1).toISOString().split('T')[0], revenue: 324.50, cost: 231.80, requests: 6490 },
-        { date: getRelativeDate(0).toISOString().split('T')[0], revenue: 324.20, cost: 232.30, requests: 5000 },
+        { date: getRelativeDate(-6).split('T')[0], revenue: 312.50, cost: 223.20, requests: 6230 },
+        { date: getRelativeDate(-5).split('T')[0], revenue: 345.80, cost: 247.00, requests: 6890 },
+        { date: getRelativeDate(-4).split('T')[0], revenue: 298.20, cost: 213.00, requests: 5940 },
+        { date: getRelativeDate(-3).split('T')[0], revenue: 378.90, cost: 270.60, requests: 7560 },
+        { date: getRelativeDate(-2).split('T')[0], revenue: 356.40, cost: 254.60, requests: 7120 },
+        { date: getRelativeDate(-1).split('T')[0], revenue: 324.50, cost: 231.80, requests: 6490 },
+        { date: getRelativeDate(0).split('T')[0], revenue: 324.20, cost: 232.30, requests: 5000 },
       ],
 
       // By Feature
