@@ -97,26 +97,55 @@ async function getBrowserlessConfig(): Promise<{ apiKey: string; enabled: boolea
  */
 async function getBrowser() {
   const isVercel = !!process.env.VERCEL
+  const startTime = Date.now()
   
   // 1. Versuche Browserless (Cloud-basiert)
   const browserlessConfig = await getBrowserlessConfig()
   if (browserlessConfig) {
-    console.log('Using Browserless for PDF generation')
+    console.log('[PDF] Verbinde mit Browserless.io...')
     const puppeteerCore = await import('puppeteer-core')
     
-    return puppeteerCore.default.connect({
-      browserWSEndpoint: `wss://production-sfo.browserless.io?token=${browserlessConfig.apiKey}`,
-      defaultViewport: {
-        width: A4_WIDTH,
-        height: A4_HEIGHT,
-        deviceScaleFactor: 2,
-      },
-    })
+    try {
+      const wsEndpoint = `wss://production-sfo.browserless.io?token=${browserlessConfig.apiKey}`
+      console.log('[PDF] WebSocket Endpoint:', wsEndpoint.replace(browserlessConfig.apiKey, 'xxx...'))
+      
+      const browser = await Promise.race([
+        puppeteerCore.default.connect({
+          browserWSEndpoint: wsEndpoint,
+          defaultViewport: {
+            width: A4_WIDTH,
+            height: A4_HEIGHT,
+            deviceScaleFactor: 2,
+          },
+        }),
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('BROWSERLESS_TIMEOUT')), 30000)
+        )
+      ])
+      
+      console.log(`[PDF] Browserless verbunden in ${Date.now() - startTime}ms`)
+      return browser
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      console.error('[PDF] Browserless Fehler:', errorMsg)
+      
+      if (errorMsg === 'BROWSERLESS_TIMEOUT') {
+        throw new Error('BROWSERLESS_TIMEOUT: Verbindung zu Browserless dauerte zu lange (>30s)')
+      }
+      
+      // Bei Browserless-Fehlern auf Vercel: Klare Fehlermeldung
+      if (isVercel) {
+        throw new Error(`BROWSERLESS_ERROR: ${errorMsg}`)
+      }
+      
+      // Lokal: Fallback auf Chrome
+      console.log('[PDF] Browserless fehlgeschlagen, versuche lokalen Chrome...')
+    }
   }
   
   // 2. Lokal: puppeteer-core mit lokalem Chrome
   if (!isVercel) {
-    console.log('Using local Chrome for PDF generation')
+    console.log('[PDF] Verwende lokalen Chrome...')
     const puppeteerCore = await import('puppeteer-core')
     
     // Versuche lokalen Chrome zu finden
@@ -144,7 +173,7 @@ async function getBrowser() {
       throw new Error('Kein lokaler Chrome/Chromium gefunden. Bitte Chrome installieren.')
     }
     
-    return puppeteerCore.default.launch({
+    const browser = await puppeteerCore.default.launch({
       headless: true,
       executablePath,
       defaultViewport: {
@@ -154,6 +183,9 @@ async function getBrowser() {
       },
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     })
+    
+    console.log(`[PDF] Lokaler Chrome gestartet in ${Date.now() - startTime}ms`)
+    return browser
   }
   
   // 3. Vercel ohne Browserless: Nicht unterstützt
@@ -212,13 +244,16 @@ export async function POST(request: NextRequest) {
     const html = generateHTML(priceList, blocks, backgroundBase64)
 
     // Browser starten
+    const pdfStartTime = Date.now()
     let browser
     try {
+      console.log('[PDF] Starte Browser...')
       browser = await getBrowser()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
+      console.error('[PDF] Browser-Fehler:', errorMessage)
       
-      // Spezifischer Fehler für Vercel
+      // Spezifischer Fehler für Vercel ohne Browserless
       if (errorMessage === 'VERCEL_PDF_NOT_SUPPORTED') {
         return NextResponse.json({
           error: 'PDF-Generierung ist auf Vercel nicht verfügbar',
@@ -228,25 +263,63 @@ export async function POST(request: NextRequest) {
         }, { status: 503 })
       }
       
+      // Browserless-spezifische Fehler
+      if (errorMessage.includes('BROWSERLESS_')) {
+        return NextResponse.json({
+          error: 'Browserless-Verbindungsfehler',
+          details: errorMessage,
+          html: html,
+          serverless: true,
+        }, { status: 503 })
+      }
+      
       throw error
     }
     
-    const page = await browser.newPage()
-    
-    await page.setContent(html, {
-      waitUntil: 'networkidle0',
-    })
+    let pdfBuffer: Uint8Array
+    try {
+      console.log('[PDF] Erstelle neue Seite...')
+      const page = await browser.newPage()
+      
+      console.log('[PDF] Setze HTML-Inhalt...')
+      await page.setContent(html, {
+        waitUntil: 'networkidle0',
+        timeout: 30000, // 30 Sekunden Timeout für Content
+      })
 
-    // PDF generieren
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: { top: 0, right: 0, bottom: 0, left: 0 },
-      preferCSSPageSize: true,
-    })
+      console.log('[PDF] Generiere PDF...')
+      // PDF generieren
+      pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: { top: 0, right: 0, bottom: 0, left: 0 },
+        preferCSSPageSize: true,
+        timeout: 30000, // 30 Sekunden Timeout für PDF
+      })
+      
+      console.log(`[PDF] PDF generiert in ${Date.now() - pdfStartTime}ms (${pdfBuffer.length} bytes)`)
 
-    // Browser schließen (funktioniert für Browserless und lokalen Chrome)
-    await browser.close()
+      // Browser schließen (funktioniert für Browserless und lokalen Chrome)
+      await browser.close()
+      console.log('[PDF] Browser geschlossen')
+    } catch (pageError) {
+      // Browser versuchen zu schließen, auch bei Fehler
+      try {
+        await browser.close()
+      } catch {
+        // Ignorieren
+      }
+      
+      const errorMsg = pageError instanceof Error ? pageError.message : String(pageError)
+      console.error('[PDF] Seiten/PDF-Fehler:', errorMsg)
+      
+      return NextResponse.json({
+        error: 'PDF-Generierung fehlgeschlagen',
+        details: errorMsg,
+        html: html,
+        serverless: true,
+      }, { status: 503 })
+    }
 
     // PDF in Vercel Blob speichern
     const blob = await put(blobPath, pdfBuffer, {
@@ -255,7 +328,7 @@ export async function POST(request: NextRequest) {
       addRandomSuffix: false,
     })
 
-    console.log(`PDF saved to blob: ${blob.url}`)
+    console.log(`[PDF] Gespeichert in Blob: ${blob.url}`)
 
     // Optional: PDF-URL in der Datenbank speichern
     try {
