@@ -42,6 +42,95 @@ function getAspectRatio(imageFormat: ImageFormat): string {
   return '9:16'                        // Stories/Reels
 }
 
+/**
+ * Baut modell-spezifische Input-Parameter
+ * Jedes Replicate-Modell hat unterschiedliche Anforderungen!
+ */
+function buildModelInput(
+  modelKey: string,
+  modelId: string,
+  prompt: string,
+  aspectRatio: string,
+  imageFormat: ImageFormat,
+  numOutputs: number
+): Record<string, unknown> {
+  // Basis-Input (die meisten Modelle unterstützen "prompt")
+  const input: Record<string, unknown> = { prompt }
+
+  // Modell-spezifische Parameter basierend auf Replicate-Dokumentation
+  switch (modelKey) {
+    // ===== BLACK FOREST LABS (FLUX) =====
+    case 'flux-schnell':
+      // https://replicate.com/black-forest-labs/flux-schnell
+      input.aspect_ratio = aspectRatio
+      input.output_format = 'webp'
+      input.output_quality = 90
+      input.num_outputs = Math.min(numOutputs, 4)
+      break
+
+    case 'flux-pro-11':
+      // https://replicate.com/black-forest-labs/flux-1.1-pro
+      input.aspect_ratio = aspectRatio
+      input.output_format = 'webp'
+      input.output_quality = 90
+      input.safety_tolerance = 2
+      break
+
+    case 'flux-kontext-max':
+      // https://replicate.com/black-forest-labs/flux-kontext-max
+      // Editing-Modell - braucht nur prompt
+      input.aspect_ratio = aspectRatio
+      input.output_format = 'webp'
+      break
+
+    // ===== GOOGLE MODELS =====
+    case 'imagen-4':
+    case 'imagen-4-fast':
+      // https://replicate.com/google/imagen-4
+      // https://replicate.com/google/imagen-4-fast
+      input.aspect_ratio = aspectRatio
+      input.safety_filter_level = 'block_only_high'
+      input.person_generation = 'allow_adult'
+      break
+
+    case 'nano-banana-pro':
+      // https://replicate.com/google/nano-banana-pro
+      input.aspect_ratio = aspectRatio
+      break
+
+    // ===== IDEOGRAM =====
+    case 'ideogram-v3-turbo':
+      // https://replicate.com/ideogram-ai/ideogram-v3-turbo
+      input.aspect_ratio = aspectRatio
+      input.style_type = 'Auto'
+      break
+
+    // ===== BYTEDANCE =====
+    case 'seedream-4':
+      // https://replicate.com/bytedance/seedream-4
+      input.aspect_ratio = aspectRatio
+      input.image_format = 'png'
+      break
+
+    // ===== QWEN =====
+    case 'qwen-image':
+      // https://replicate.com/qwen/qwen-image
+      input.aspect_ratio = aspectRatio
+      break
+
+    // ===== FALLBACK für unbekannte Modelle =====
+    default:
+      // Versuche Standard-Parameter
+      input.aspect_ratio = aspectRatio
+      if (numOutputs > 1) {
+        input.num_outputs = numOutputs
+      }
+      break
+  }
+
+  return input
+}
+
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
   
@@ -138,25 +227,18 @@ export async function POST(request: NextRequest) {
     console.log(`[Replicate Image] Prompt: ${prompt.slice(0, 100)}...`)
     console.log(`[Replicate Image] Aspect Ratio: ${aspectRatio}`)
     
-    // Input für Replicate vorbereiten
-    const input: Record<string, unknown> = {
-      prompt,
-      num_outputs: numOutputs,
-    }
+    // Modell-spezifische Input-Parameter
+    // Jedes Modell hat unterschiedliche Anforderungen!
+    const input: Record<string, unknown> = buildModelInput(
+      modelKey, 
+      selectedModel.id, 
+      prompt, 
+      aspectRatio, 
+      imageFormat, 
+      numOutputs
+    )
     
-    // Modell-spezifische Parameter
-    if (selectedModel.supportsAspectRatio) {
-      input.aspect_ratio = aspectRatio
-    } else {
-      // Für Modelle ohne Aspect Ratio Support - feste Größen
-      input.width = Math.min(imageFormat.width, selectedModel.maxResolution || 1024)
-      input.height = Math.min(imageFormat.height, selectedModel.maxResolution || 1024)
-    }
-    
-    // Output-Format wenn unterstützt
-    if (selectedModel.outputFormat !== 'png') {
-      input.output_format = selectedModel.outputFormat
-    }
+    console.log(`[Replicate Image] Input:`, JSON.stringify(input).slice(0, 500))
     
     // Replicate API aufrufen
     const apiUrl = `https://api.replicate.com/v1/models/${selectedModel.id}/predictions`
@@ -175,6 +257,14 @@ export async function POST(request: NextRequest) {
       const errorText = await response.text()
       console.error(`[Replicate Image] API Error: ${response.status} - ${errorText}`)
       
+      // Versuche JSON zu parsen für bessere Fehlermeldung
+      let replicateError: { detail?: string; title?: string } = {}
+      try {
+        replicateError = JSON.parse(errorText)
+      } catch {
+        // Nicht JSON, verwende raw text
+      }
+      
       let errorMessage = 'Bildgenerierung fehlgeschlagen'
       let hint = 'Versuche es später erneut.'
       
@@ -182,15 +272,21 @@ export async function POST(request: NextRequest) {
         errorMessage = `Modell "${selectedModel.id}" nicht gefunden`
         hint = 'Das Modell ist möglicherweise nicht mehr verfügbar. Wähle ein anderes Modell.'
       } else if (response.status === 422) {
+        // Zeige den tatsächlichen Replicate-Fehler
+        const detail = replicateError.detail || errorText
         errorMessage = 'Ungültige Parameter'
-        hint = 'Versuche einen kürzeren Prompt oder andere Einstellungen.'
+        hint = `Replicate: ${detail.slice(0, 200)}`
+        console.error(`[Replicate Image] 422 Detail: ${detail}`)
       } else if (response.status === 402) {
         errorMessage = 'Keine Replicate Credits'
         hint = 'Bitte Replicate-Konto aufladen.'
+      } else if (response.status === 401) {
+        errorMessage = 'Replicate API-Key ungültig'
+        hint = 'Bitte prüfe den API-Key in den Einstellungen.'
       }
       
       return NextResponse.json(
-        { error: errorMessage, hint },
+        { error: errorMessage, hint, debug: { status: response.status, model: selectedModel.id } },
         { status: response.status }
       )
     }
