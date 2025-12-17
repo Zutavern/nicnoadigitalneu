@@ -32,8 +32,8 @@ export async function getReplicateConfig(): Promise<ReplicateConfigCache> {
     return configCache
   }
 
-  const settings = await prisma.platformSettings.findUnique({
-    where: { id: 'default' },
+  // Verwende findFirst, da es nur einen PlatformSettings-Datensatz gibt
+  const settings = await prisma.platformSettings.findFirst({
     select: {
       replicateApiKey: true,
       replicateEnabled: true,
@@ -41,6 +41,14 @@ export async function getReplicateConfig(): Promise<ReplicateConfigCache> {
       replicateWebhookSecret: true,
     },
   })
+
+  // Debug logging in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[Replicate Config] Settings found:', !!settings)
+    console.log('[Replicate Config] API Key present:', !!settings?.replicateApiKey)
+    console.log('[Replicate Config] Enabled:', settings?.replicateEnabled)
+    console.log('[Replicate Config] Env Token present:', !!process.env.REPLICATE_API_TOKEN)
+  }
 
   configCache = {
     apiKey: settings?.replicateApiKey || process.env.REPLICATE_API_TOKEN || null,

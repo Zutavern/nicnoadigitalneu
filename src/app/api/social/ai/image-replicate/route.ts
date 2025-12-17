@@ -55,21 +55,27 @@ export async function POST(request: NextRequest) {
     // Hole Replicate-Konfiguration
     const config = await getReplicateConfig()
     
+    console.log('[Replicate Image] Config check - API Key:', !!config.apiKey, 'Enabled:', config.enabled)
+    
     if (!config.apiKey) {
+      console.error('[Replicate Image] Kein API-Key konfiguriert')
       return NextResponse.json(
         { 
           error: 'Replicate API-Key nicht konfiguriert',
-          hint: 'Bitte den Replicate API-Key unter Admin → Einstellungen → Integrationen hinterlegen.'
+          hint: 'Bitte den Replicate API-Key unter Admin → Einstellungen → Integrationen hinterlegen.',
+          debug: { hasApiKey: false, isEnabled: config.enabled }
         },
         { status: 500 }
       )
     }
     
     if (!config.enabled) {
+      console.error('[Replicate Image] Replicate ist deaktiviert')
       return NextResponse.json(
         { 
           error: 'Replicate ist deaktiviert',
-          hint: 'Bitte Replicate unter Admin → Einstellungen → Integrationen aktivieren.'
+          hint: 'Bitte Replicate unter Admin → Einstellungen → Integrationen aktivieren.',
+          debug: { hasApiKey: true, isEnabled: false }
         },
         { status: 500 }
       )
