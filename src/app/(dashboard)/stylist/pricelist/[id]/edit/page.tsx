@@ -31,7 +31,15 @@ import {
   EyeOff,
   Undo2,
   Redo2,
+  ChevronDown,
+  RefreshCw,
 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import { BlockEditor, PreviewViewer, ThemeSelector, PaddingEditor, BackgroundSelector } from '@/components/pricelist'
 import { useHistory } from '@/hooks/use-history'
@@ -674,19 +682,34 @@ export default function EditPricelistPage() {
             </SheetContent>
           </Sheet>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExport}
-            disabled={isExporting}
-          >
-            {isExporting ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <FileDown className="h-4 w-4 mr-2" />
-            )}
-            PDF
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isExporting}
+              >
+                {isExporting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <FileDown className="h-4 w-4 mr-2" />
+                )}
+                PDF
+                <ChevronDown className="h-3 w-3 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExport(false)}>
+                <FileDown className="h-4 w-4 mr-2" />
+                PDF herunterladen
+                {!hasChanges && <span className="ml-2 text-xs text-muted-foreground">(aus Cache)</span>}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport(true)}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Neu generieren
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <Button size="sm" onClick={handleSave} disabled={isSaving || !hasChanges}>
             {isSaving ? (

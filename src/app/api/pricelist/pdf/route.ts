@@ -329,11 +329,12 @@ export async function POST(request: NextRequest) {
       }, { status: 503 })
     }
 
-    // PDF in Vercel Blob speichern
+    // PDF in Vercel Blob speichern (allowOverwrite für Regenerierung)
     const blob = await put(blobPath, pdfBuffer, {
       access: 'public',
       contentType: 'application/pdf',
       addRandomSuffix: false,
+      allowOverwrite: true, // Erlaubt Überschreiben bei forceRegenerate
     })
 
     console.log(`[PDF] Gespeichert in Blob: ${blob.url}`)
