@@ -1455,23 +1455,7 @@ export function getMockEnhancedRevenue() {
       ],
     },
 
-    // Credit Package Sales
-    creditPackageSales: {
-      totalSales: 3450.00,
-      totalPackages: 48,
-      avgPackageValue: 71.88,
-      packages: [
-        { name: 'Starter Pack', price: 19.99, sold: 18, revenue: 359.82 },
-        { name: 'Pro Pack', price: 49.99, sold: 15, revenue: 749.85 },
-        { name: 'Business Pack', price: 99.99, sold: 12, revenue: 1199.88 },
-        { name: 'Enterprise Pack', price: 299.99, sold: 3, revenue: 899.97 },
-      ],
-      monthlySales: [
-        { month: 'Okt', count: 12, revenue: 890.00 },
-        { month: 'Nov', count: 18, revenue: 1280.00 },
-        { month: 'Dez', count: 18, revenue: 1280.00 },
-      ],
-    },
+    // Credit-Pakete entfernt - Metered Pricing wird verwendet
 
     // Coupon Analytics
     couponAnalytics: {

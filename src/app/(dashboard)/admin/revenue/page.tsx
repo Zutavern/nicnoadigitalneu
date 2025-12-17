@@ -26,7 +26,6 @@ import {
   EyeOff,
   Activity,
   PieChart,
-  Layers,
   AlertTriangle,
   ChevronDown,
   ChevronUp,
@@ -76,7 +75,6 @@ interface DashboardConfig {
   showPlanPerformance: boolean
   showIntervalBreakdown: boolean
   showTrialConversions: boolean
-  showCreditPackageSales: boolean
   showCouponRedemptions: boolean
   showCouponRevenueLoss: boolean
   showReferralRevenue: boolean
@@ -153,13 +151,6 @@ interface RevenueData {
     byFeature: Array<{ feature: string; label: string; revenue: number; cost: number; requests: number; avgCost: number }>
     topConsumers: Array<{ userId: string; name: string; email: string; spent: number; requests: number; plan: string }>
   }
-  creditPackageSales: {
-    totalSales: number
-    totalPackages: number
-    avgPackageValue: number
-    packages: Array<{ name: string; price: number; sold: number; revenue: number }>
-    monthlySales: Array<{ month: string; count: number; revenue: number }>
-  }
   couponAnalytics: {
     totalRedemptions: number
     totalDiscount: number
@@ -225,7 +216,6 @@ const defaultConfig: DashboardConfig = {
   showPlanPerformance: true,
   showIntervalBreakdown: true,
   showTrialConversions: true,
-  showCreditPackageSales: false, // Deaktiviert - Metered Pricing statt Credit-Paketen
   showCouponRedemptions: true,
   showCouponRevenueLoss: true,
   showReferralRevenue: true,
@@ -486,15 +476,10 @@ export default function RevenuePage() {
 
                 <Separator />
 
-                {/* Sales & Marketing */}
+                {/* Marketing */}
                 <div>
-                  <h4 className="font-medium mb-3">Verkäufe & Marketing</h4>
+                  <h4 className="font-medium mb-3">Marketing</h4>
                   <div className="grid grid-cols-2 gap-3">
-                    <ConfigSwitch
-                      label="Credit-Pakete"
-                      checked={config.showCreditPackageSales}
-                      onChange={(v) => saveConfig({ showCreditPackageSales: v })}
-                    />
                     <ConfigSwitch
                       label="Coupon-Einlösungen"
                       checked={config.showCouponRedemptions}
@@ -844,48 +829,15 @@ export default function RevenuePage() {
         </CollapsibleSection>
       )}
 
-      {/* Sales & Marketing Section */}
-      {(config.showCreditPackageSales || config.showCouponRedemptions || config.showReferralRevenue) && (
+      {/* Marketing Section */}
+      {(config.showCouponRedemptions || config.showReferralRevenue) && (
         <CollapsibleSection
-          title="Verkäufe & Marketing"
+          title="Marketing"
           icon={Tag}
           expanded={expandedSections.sales}
           onToggle={() => toggleSection('sales')}
         >
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Credit Package Sales */}
-            {config.showCreditPackageSales && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Layers className="h-5 w-5 text-blue-500" />
-                    Credit-Pakete
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Gesamt</span>
-                      <span className="text-xl font-bold">€{data.creditPackageSales.totalSales.toLocaleString('de-DE')}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">Verkäufe</span>
-                      <span>{data.creditPackageSales.totalPackages}</span>
-                    </div>
-                    <Separator />
-                    <div className="space-y-2">
-                      {data.creditPackageSales.packages.slice(0, 4).map(pkg => (
-                        <div key={pkg.name} className="flex justify-between text-sm">
-                          <span>{pkg.name}</span>
-                          <span className="font-medium">{pkg.sold}x (€{pkg.revenue.toFixed(2)})</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
+          <div className="grid gap-6 lg:grid-cols-2">
             {/* Coupon Analytics */}
             {config.showCouponRedemptions && (
               <Card>

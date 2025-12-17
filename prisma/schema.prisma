@@ -4247,8 +4247,7 @@ model RevenueDashboardConfig {
   showIntervalBreakdown Boolean @default(true) @map("show_interval_breakdown")
   showTrialConversions  Boolean @default(true) @map("show_trial_conversions")
   
-  // Credit Packages Revenue (deaktiviert - Metered Pricing)
-  showCreditPackageSales Boolean @default(false) @map("show_credit_package_sales")
+  // Credit Packages entfernt - Metered Pricing wird verwendet
   
   // Coupon Analytics
   showCouponRedemptions Boolean @default(true) @map("show_coupon_redemptions")

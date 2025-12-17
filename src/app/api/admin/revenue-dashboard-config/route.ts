@@ -18,7 +18,6 @@ const defaultConfig = {
   showPlanPerformance: true,
   showIntervalBreakdown: true,
   showTrialConversions: true,
-  showCreditPackageSales: false, // Deaktiviert - Metered Pricing statt Credit-Paketen
   showCouponRedemptions: true,
   showCouponRevenueLoss: true,
   showReferralRevenue: true,
