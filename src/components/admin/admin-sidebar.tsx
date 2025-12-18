@@ -124,7 +124,7 @@ const menuItems: MenuSection[] = [
         children: [
           { label: 'Benutzer', href: '/admin/users', icon: Users },
           { label: 'Salons', href: '/admin/salons', icon: Building2 },
-          { label: 'Stylisten', href: '/admin/stylists', icon: Scissors },
+          { label: 'Stuhlmieter', href: '/admin/stylists', icon: Scissors },
         ],
       },
     ],

@@ -249,7 +249,7 @@ export default function SalonInvoicesPage() {
                   <TableRow>
                     <TableHead>Rechnungsnr.</TableHead>
                     <TableHead>Typ</TableHead>
-                    <TableHead>Stylist</TableHead>
+                    <TableHead>Stuhlmieter</TableHead>
                     <TableHead>Datum</TableHead>
                     <TableHead>Fällig</TableHead>
                     <TableHead className="text-right">Betrag</TableHead>

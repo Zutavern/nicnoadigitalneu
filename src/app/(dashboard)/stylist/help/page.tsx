@@ -103,7 +103,7 @@ const categories = [
 const quickLinks = [
   { label: 'Erste Schritte', icon: BookOpen, href: '#' },
   { label: 'Video-Tutorials', icon: FileText, href: '#' },
-  { label: 'Stylist Community', icon: MessageCircle, href: '#' },
+  { label: 'Stuhlmieter Community', icon: MessageCircle, href: '#' },
 ]
 
 export default function StylistHelpPage() {

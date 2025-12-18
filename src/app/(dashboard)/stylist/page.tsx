@@ -538,7 +538,7 @@ export default function StylistDashboardPage() {
               <Scissors className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Stylist Dashboard</h1>
+              <h1 className="text-3xl font-bold">Stuhlmieter Dashboard</h1>
               <p className="text-muted-foreground">
                 Willkommen zurück{session?.user?.name ? `, ${session.user.name}` : ''}!
               </p>

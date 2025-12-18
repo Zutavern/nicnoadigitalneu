@@ -45,7 +45,7 @@ export async function GET(
         },
         '00000000-0000-0000-0000-000000000003': {
           id: '00000000-0000-0000-0000-000000000003',
-          name: 'Stylist Test',
+          name: 'Stuhlmieter Test',
           email: 'stylist@nicnoa.online',
           role: 'STYLIST',
           image: null,

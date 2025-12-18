@@ -120,7 +120,7 @@ interface PricingPageConfig {
 const defaultPageConfig: PricingPageConfig = {
   stylistBadgeText: 'Für Stuhlmieter',
   stylistTitle: 'Der perfekte Plan für deinen Erfolg',
-  stylistDescription: 'Starte jetzt durch mit NICNOA – alle Tools für moderne Stylisten',
+  stylistDescription: 'Starte jetzt durch mit NICNOA – alle Tools für moderne Stuhlmieter',
   salonBadgeText: 'Für Salonbesitzer',
   salonTitle: 'Dein Salon, dein Erfolg, deine Plattform',
   salonDescription: 'Verwalte dein Team, optimiere Abläufe und steigere deinen Umsatz',
@@ -164,7 +164,7 @@ const testimonialsByRole = {
       rating: 5
     },
     {
-      quote: "Als Teilzeit-Stylistin ist Flexibilität für mich das A und O. NICNOA gibt mir genau das – plus einen professionellen Auftritt gegenüber meinen Kunden.",
+      quote: "Als Teilzeit-Stuhlmieterin ist Flexibilität für mich das A und O. NICNOA gibt mir genau das – plus einen professionellen Auftritt gegenüber meinen Kunden.",
       author: "Maria K.",
       role: "Stuhlmieterin, Köln",
       rating: 5

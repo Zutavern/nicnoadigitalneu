@@ -65,7 +65,7 @@ const RoleBadge = ({ role }: { role: string }) => {
   const labels: Record<string, string> = {
     ADMIN: 'Admin',
     SALON_OWNER: 'Salonbesitzer',
-    STYLIST: 'Stylist',
+    STYLIST: 'Stuhlmieter',
   }
   return (
     <Badge className={variants[role] || 'bg-gray-500/10 text-gray-500'}>

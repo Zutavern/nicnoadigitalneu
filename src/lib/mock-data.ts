@@ -308,8 +308,8 @@ export function getMockAdminRevenue() {
       churnRate: 2.3,
     },
     revenueByPlan: [
-      { planName: 'Stylist Basic', count: 45, mrr: 1350, percentage: 35.4 },
-      { planName: 'Stylist Pro', count: 32, mrr: 1600, percentage: 25.2 },
+      { planName: 'Stuhlmieter Basic', count: 45, mrr: 1350, percentage: 35.4 },
+      { planName: 'Stuhlmieter Pro', count: 32, mrr: 1600, percentage: 25.2 },
       { planName: 'Salon Starter', count: 28, mrr: 2800, percentage: 22.0 },
       { planName: 'Salon Professional', count: 18, mrr: 3600, percentage: 14.2 },
       { planName: 'Salon Enterprise', count: 4, mrr: 2000, percentage: 3.2 },
@@ -337,7 +337,7 @@ export function getMockAdminRevenue() {
         customerName: 'Lisa Stylist',
         email: 'lisa@email.de',
         amount: 49.99,
-        plan: 'Stylist Pro',
+        plan: 'Stuhlmieter Pro',
         status: 'succeeded',
         date: getRelativeDate(0, 7, 0),
       },
@@ -378,7 +378,7 @@ export function getMockAdminSubscriptions() {
         currentPeriodStart: getRelativeDate(-20),
         currentPeriodEnd: getRelativeDate(10),
         cancelAtPeriodEnd: false,
-        plan: { id: 'plan-2', name: 'Stylist Pro', amount: 4999, interval: 'month' },
+        plan: { id: 'plan-2', name: 'Stuhlmieter Pro', amount: 4999, interval: 'month' },
         user: { id: 'u2', name: 'Sarah Müller', email: 'sarah@email.de', image: null, role: 'STYLIST' },
         stripeSubscriptionId: 'sub_demo_2',
       },
@@ -427,7 +427,7 @@ export function getMockUserSubscription() {
     },
     currentPlan: {
       id: 'plan-stylist-pro',
-      name: 'Stylist Pro',
+      name: 'Stuhlmieter Pro',
       slug: 'stylist-pro',
       description: 'Für wachsende Stylisten',
       planType: 'STYLIST',
@@ -440,7 +440,7 @@ export function getMockUserSubscription() {
     availablePlans: [
       {
         id: 'plan-stylist-basic',
-        name: 'Stylist Basic',
+        name: 'Stuhlmieter Basic',
         slug: 'stylist-basic',
         description: 'Ideal für Einsteiger',
         planType: 'STYLIST',
@@ -454,7 +454,7 @@ export function getMockUserSubscription() {
       },
       {
         id: 'plan-stylist-pro',
-        name: 'Stylist Pro',
+        name: 'Stuhlmieter Pro',
         slug: 'stylist-pro',
         description: 'Für wachsende Stylisten',
         planType: 'STYLIST',
@@ -1892,7 +1892,7 @@ export function getMockConversations() {
             userId: '00000000-0000-0000-0000-000000000003',
             role: 'MEMBER',
             lastReadAt: null,
-            user: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', email: 'stylist@nicnoa.online', image: null, role: 'STYLIST' }
+            user: { id: '00000000-0000-0000-0000-000000000003', name: 'Stuhlmieter Test', email: 'stylist@nicnoa.online', image: null, role: 'STYLIST' }
           },
           { 
             id: 'cp-4', 
@@ -1929,7 +1929,7 @@ export function getMockConversations() {
             userId: '00000000-0000-0000-0000-000000000003',
             role: 'MEMBER',
             lastReadAt: null,
-            user: { id: '00000000-0000-0000-0000-000000000003', name: 'Stylist Test', email: 'stylist@nicnoa.online', image: null, role: 'STYLIST' }
+            user: { id: '00000000-0000-0000-0000-000000000003', name: 'Stuhlmieter Test', email: 'stylist@nicnoa.online', image: null, role: 'STYLIST' }
           },
         ],
         lastMessage: {
@@ -2816,9 +2816,9 @@ export function getMockAdminEmailTemplates() {
     // Onboarding (onboarding)
     // ============================================
     { id: 'tpl-7', slug: 'onboarding-submitted', name: 'Onboarding eingereicht', subject: 'Neuer Onboarding-Antrag von {{stylistName}}', description: 'Benachrichtigt Admin über neuen Antrag', category: 'onboarding', isActive: true, isSystem: true, content: defaultContent('Neuer Onboarding-Antrag', 'Ein neuer Stylist hat seinen Onboarding-Antrag eingereicht und wartet auf Prüfung.', 'Antrag prüfen', 'Bitte prüfe den Antrag zeitnah.'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-25), _count: { sentEmails: 78 } },
-    { id: 'tpl-8', slug: 'onboarding-approved', name: 'Onboarding genehmigt', subject: 'Dein Antrag wurde genehmigt! 🎉', description: 'Stylist wurde freigeschaltet', category: 'onboarding', isActive: true, isSystem: true, content: defaultContent('Herzlichen Glückwunsch!', 'Dein Onboarding-Antrag wurde genehmigt. Du kannst jetzt alle Funktionen nutzen.', 'Zum Dashboard', 'Wir freuen uns auf eine erfolgreiche Zusammenarbeit!'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-20), _count: { sentEmails: 67 } },
+    { id: 'tpl-8', slug: 'onboarding-approved', name: 'Onboarding genehmigt', subject: 'Dein Antrag wurde genehmigt! 🎉', description: 'Stuhlmieter wurde freigeschaltet', category: 'onboarding', isActive: true, isSystem: true, content: defaultContent('Herzlichen Glückwunsch!', 'Dein Onboarding-Antrag wurde genehmigt. Du kannst jetzt alle Funktionen nutzen.', 'Zum Dashboard', 'Wir freuen uns auf eine erfolgreiche Zusammenarbeit!'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-20), _count: { sentEmails: 67 } },
     { id: 'tpl-9', slug: 'onboarding-rejected', name: 'Onboarding abgelehnt', subject: 'Dein Antrag benötigt Überarbeitung', description: 'Antrag muss überarbeitet werden', category: 'onboarding', isActive: true, isSystem: true, content: defaultContent('Überarbeitung erforderlich', 'Leider konnten wir deinen Antrag noch nicht freigeben. Bitte überprüfe die Punkte und reiche erneut ein.', 'Antrag überarbeiten', 'Bei Fragen kannst du uns jederzeit kontaktieren.'), createdAt: getRelativeDate(-90), updatedAt: getRelativeDate(-15), _count: { sentEmails: 23 } },
-    { id: 'tpl-10', slug: 'document-uploaded', name: 'Dokument hochgeladen', subject: 'Neues Dokument von {{stylistName}}: {{documentType}} 📄', description: 'Stylist hat ein Dokument eingereicht', category: 'onboarding', isActive: true, isSystem: true, content: defaultContent('Neues Dokument', 'Ein neues Dokument wurde hochgeladen und wartet auf Prüfung.', 'Dokument prüfen', 'Prüfe das Dokument zeitnah.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-10), _count: { sentEmails: 156 } },
+    { id: 'tpl-10', slug: 'document-uploaded', name: 'Dokument hochgeladen', subject: 'Neues Dokument von {{stylistName}}: {{documentType}} 📄', description: 'Stuhlmieter hat ein Dokument eingereicht', category: 'onboarding', isActive: true, isSystem: true, content: defaultContent('Neues Dokument', 'Ein neues Dokument wurde hochgeladen und wartet auf Prüfung.', 'Dokument prüfen', 'Prüfe das Dokument zeitnah.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-10), _count: { sentEmails: 156 } },
     { id: 'tpl-11', slug: 'document-status', name: 'Dokument-Status', subject: 'Dokument {{status}}: {{documentType}}', description: 'Status-Update zu eingereichtem Dokument', category: 'onboarding', isActive: true, isSystem: true, content: defaultContent('Dokument-Update', 'Der Status deines Dokuments wurde aktualisiert.', 'Details ansehen', 'Bei Fragen wende dich an uns.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-8), _count: { sentEmails: 189 } },
 
     // ============================================
@@ -2845,7 +2845,7 @@ export function getMockAdminEmailTemplates() {
     // ============================================
     // Rental / Stuhlmiete (rental)
     // ============================================
-    { id: 'tpl-25', slug: 'new-rental-request', name: 'Neue Mietanfrage', subject: 'Neue Mietanfrage von {{stylistName}} 💺', description: 'Stylist möchte einen Platz mieten', category: 'rental', isActive: true, isSystem: true, content: defaultContent('Neue Mietanfrage', 'Ein Stylist hat Interesse an einem Platz in deinem Salon.', 'Anfrage prüfen', 'Antworte zeitnah, um qualifizierte Stylisten nicht zu verlieren.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-10), _count: { sentEmails: 45 } },
+    { id: 'tpl-25', slug: 'new-rental-request', name: 'Neue Mietanfrage', subject: 'Neue Mietanfrage von {{stylistName}} 💺', description: 'Stuhlmieter möchte einen Platz mieten', category: 'rental', isActive: true, isSystem: true, content: defaultContent('Neue Mietanfrage', 'Ein Stuhlmieter hat Interesse an einem Platz in deinem Salon.', 'Anfrage prüfen', 'Antworte zeitnah, um qualifizierte Stuhlmieter nicht zu verlieren.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-10), _count: { sentEmails: 45 } },
     { id: 'tpl-26', slug: 'rental-accepted', name: 'Bewerbung angenommen', subject: 'Deine Bewerbung wurde angenommen! 🎉', description: 'Salon-Besitzer hat Mietanfrage akzeptiert', category: 'rental', isActive: true, isSystem: true, content: defaultContent('Willkommen im Team!', 'Deine Bewerbung wurde angenommen. Du kannst jetzt deinen neuen Arbeitsplatz einrichten.', 'Jetzt loslegen', 'Wir freuen uns auf eine erfolgreiche Zusammenarbeit!'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-8), _count: { sentEmails: 34 } },
     { id: 'tpl-27', slug: 'rental-rejected', name: 'Bewerbung abgelehnt', subject: 'Update zu deiner Bewerbung bei {{salonName}}', description: 'Mietanfrage wurde abgelehnt', category: 'rental', isActive: true, isSystem: true, content: defaultContent('Bewerbung nicht erfolgreich', 'Leider wurde deine Bewerbung nicht angenommen. Es gibt viele andere tolle Salons!', 'Weitere Salons entdecken', 'Optimiere dein Profil für bessere Chancen.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-6), _count: { sentEmails: 12 } },
     { id: 'tpl-28', slug: 'rental-application-sent', name: 'Bewerbung versendet', subject: 'Deine Bewerbung bei {{salonName}} wurde versendet 📤', description: 'Bestätigung für eingereichte Bewerbung', category: 'rental', isActive: true, isSystem: true, content: defaultContent('Bewerbung eingereicht!', 'Deine Bewerbung wurde erfolgreich versendet. Der Salon-Besitzer wird benachrichtigt.', 'Status verfolgen', 'Du erhältst eine E-Mail, sobald es eine Entscheidung gibt.'), createdAt: getRelativeDate(-60), updatedAt: getRelativeDate(-5), _count: { sentEmails: 56 } },
@@ -2872,9 +2872,9 @@ export function getMockAdminEmailTemplates() {
     // ============================================
     { id: 'tpl-38', slug: 'salon-invitation', name: 'Salon-Einladung (registriert)', subject: '💼 {{inviterName}} lädt Sie zu {{salonName}} ein', description: 'Einladung für registrierte Stylisten', category: 'invitation', isActive: true, isSystem: true, content: defaultContent('Einladung zum Salon', 'Sie wurden eingeladen, als Stuhlmieter zu arbeiten. Klicken Sie auf den Button, um zu antworten.', 'Einladung ansehen', 'Diese Einladung ist 7 Tage gültig.'), createdAt: getRelativeDate(-30), updatedAt: getRelativeDate(-5), _count: { sentEmails: 45 } },
     { id: 'tpl-39', slug: 'salon-invitation-unregistered', name: 'Salon-Einladung (nicht registriert)', subject: '💼 Sie wurden zu {{salonName}} eingeladen!', description: 'Einladung für nicht-registrierte Stylisten', category: 'invitation', isActive: true, isSystem: true, content: defaultContent('Werden Sie Teil des Teams', 'Sie wurden eingeladen, als Stuhlmieter zu arbeiten. Registrieren Sie sich kostenlos, um die Einladung anzunehmen.', 'Jetzt registrieren', 'Nach der Registrierung können Sie die Einladung annehmen.'), createdAt: getRelativeDate(-30), updatedAt: getRelativeDate(-4), _count: { sentEmails: 23 } },
-    { id: 'tpl-40', slug: 'salon-invitation-accepted', name: 'Einladung angenommen', subject: '🎉 {{stylistName}} hat Ihre Einladung angenommen!', description: 'Benachrichtigung wenn Einladung angenommen wurde', category: 'invitation', isActive: true, isSystem: true, content: defaultContent('Einladung angenommen!', 'Großartige Neuigkeiten! Die Einladung wurde angenommen.', 'Stylisten verwalten', 'Heißen Sie Ihren neuen Stuhlmieter willkommen!'), createdAt: getRelativeDate(-30), updatedAt: getRelativeDate(-3), _count: { sentEmails: 34 } },
+    { id: 'tpl-40', slug: 'salon-invitation-accepted', name: 'Einladung angenommen', subject: '🎉 {{stylistName}} hat Ihre Einladung angenommen!', description: 'Benachrichtigung wenn Einladung angenommen wurde', category: 'invitation', isActive: true, isSystem: true, content: defaultContent('Einladung angenommen!', 'Großartige Neuigkeiten! Die Einladung wurde angenommen.', 'Stuhlmieter verwalten', 'Heißen Sie Ihren neuen Stuhlmieter willkommen!'), createdAt: getRelativeDate(-30), updatedAt: getRelativeDate(-3), _count: { sentEmails: 34 } },
     { id: 'tpl-41', slug: 'salon-invitation-rejected', name: 'Einladung abgelehnt', subject: 'Einladung wurde abgelehnt', description: 'Benachrichtigung wenn Einladung abgelehnt wurde', category: 'invitation', isActive: true, isSystem: true, content: defaultContent('Einladung abgelehnt', 'Leider wurde Ihre Einladung abgelehnt.', 'Andere Stylisten einladen', 'Sie können jederzeit weitere Stylisten einladen.'), createdAt: getRelativeDate(-30), updatedAt: getRelativeDate(-2), _count: { sentEmails: 12 } },
-    { id: 'tpl-42', slug: 'stylist-left-salon', name: 'Stylist verlässt Salon', subject: '{{stylistName}} hat den Salon verlassen', description: 'Benachrichtigung wenn Stylist kündigt', category: 'invitation', isActive: true, isSystem: true, content: defaultContent('Stylist hat gekündigt', 'Ein Stylist hat den Salon verlassen. Der Platz ist wieder verfügbar.', 'Platz verwalten', 'Suchen Sie nach einem neuen Mieter.'), createdAt: getRelativeDate(-30), updatedAt: getRelativeDate(-1), _count: { sentEmails: 8 } },
+    { id: 'tpl-42', slug: 'stylist-left-salon', name: 'Stuhlmieter verlässt Salon', subject: '{{stylistName}} hat den Salon verlassen', description: 'Benachrichtigung wenn Stuhlmieter kündigt', category: 'invitation', isActive: true, isSystem: true, content: defaultContent('Stuhlmieter hat gekündigt', 'Ein Stuhlmieter hat den Salon verlassen. Der Platz ist wieder verfügbar.', 'Platz verwalten', 'Suchen Sie nach einem neuen Mieter.'), createdAt: getRelativeDate(-30), updatedAt: getRelativeDate(-1), _count: { sentEmails: 8 } },
 
     // ============================================
     // System & Messaging (system)

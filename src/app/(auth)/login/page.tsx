@@ -644,7 +644,7 @@ function LoginForm() {
                     ) : (
                       <Scissors className="h-5 w-5 text-primary" />
                     )}
-                    <span className="text-xs font-medium">Stylist</span>
+                    <span className="text-xs font-medium">Stuhlmieter</span>
                   </Button>
                 </div>
               </>

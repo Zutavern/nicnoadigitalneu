@@ -416,7 +416,7 @@ export default function StylistSettingsPage() {
                   <div>
                     <h3 className="text-lg font-semibold">{settings.name || 'Dein Name'}</h3>
                     <p className="text-muted-foreground">{settings.email}</p>
-                    <p className="text-sm text-pink-500 mt-1">Stylist</p>
+                    <p className="text-sm text-pink-500 mt-1">Stuhlmieter</p>
                   </div>
                 </div>
               </CardContent>

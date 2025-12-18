@@ -72,7 +72,7 @@ const features = [
     color: 'from-orange-500 to-red-500',
     stats: [
       { label: 'Stühle', value: '24', icon: Settings },
-      { label: 'Stylisten', value: '18', icon: Users },
+      { label: 'Stuhlmieter', value: '18', icon: Users },
       { label: 'Umsatz', value: '€8.4k', icon: CreditCard },
     ],
   },
@@ -204,7 +204,7 @@ export function FeatureShowcase() {
                       <div className="mt-4 space-y-2">
                         {[
                           { text: 'Neue Buchung eingegangen', time: 'vor 2 Min.' },
-                          { text: 'Stylist Marie ist online', time: 'vor 5 Min.' },
+                          { text: 'Stuhlmieterin Marie ist online', time: 'vor 5 Min.' },
                         ].map((activity, i) => (
                           <motion.div
                             key={i}

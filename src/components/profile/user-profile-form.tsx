@@ -452,7 +452,7 @@ export function UserProfileForm({
     const badges: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
       ADMIN: { label: 'Administrator', variant: 'default' },
       SALON_OWNER: { label: 'Salon-Inhaber', variant: 'secondary' },
-      STYLIST: { label: 'Stylist', variant: 'outline' },
+      STYLIST: { label: 'Stuhlmieter', variant: 'outline' },
     }
     return badges[role] || { label: role, variant: 'outline' }
   }

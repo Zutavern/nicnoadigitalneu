@@ -406,7 +406,7 @@ export default function PlansPage() {
           { label: 'Gesamt', value: stats.total, icon: Package, gradient: 'from-slate-500 to-slate-600' },
           { label: 'Aktiv', value: stats.active, icon: Check, gradient: 'from-emerald-500 to-green-600' },
           { label: 'Salon-Besitzer', value: stats.salonOwnerPlans, icon: Building2, gradient: 'from-blue-500 to-cyan-600' },
-          { label: 'Stylisten', value: stats.stylistPlans, icon: Scissors, gradient: 'from-purple-500 to-violet-600' },
+          { label: 'Stuhlmieter', value: stats.stylistPlans, icon: Scissors, gradient: 'from-purple-500 to-violet-600' },
           { label: 'Stripe verbunden', value: stats.withStripe, icon: Zap, gradient: 'from-amber-500 to-orange-600' }
         ].map((stat, index) => (
           <motion.div

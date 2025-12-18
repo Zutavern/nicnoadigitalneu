@@ -43,14 +43,14 @@ const faqItems: FAQItem[] = [
     answer: 'Öffne die Buchungsübersicht, finde den entsprechenden Termin und klicke auf das Drei-Punkte-Menü. Wähle "Stornieren" und bestätige. Der Kunde wird automatisch über die Stornierung informiert.'
   },
   {
-    category: 'Stylisten',
-    question: 'Wie füge ich einen neuen Stylisten hinzu?',
-    answer: 'Gehe zu "Stylisten" und klicke auf "Stylist einladen". Gib die E-Mail-Adresse des Stylisten ein. Der Stylist erhält eine Einladung und kann sich nach Abschluss des Onboardings deinem Salon anschließen.'
+    category: 'Stuhlmieter',
+    question: 'Wie füge ich einen neuen Stuhlmieter hinzu?',
+    answer: 'Gehe zu "Stuhlmieter" und klicke auf "Stuhlmieter einladen". Gib die E-Mail-Adresse ein. Der Stuhlmieter erhält eine Einladung und kann sich nach Abschluss des Onboardings deinem Salon anschließen.'
   },
   {
-    category: 'Stylisten',
+    category: 'Stuhlmieter',
     question: 'Wie verwalte ich die Stuhlmiete?',
-    answer: 'Unter "Stylisten" findest du bei jedem Stylisten die aktuelle Mietvereinbarung. Du kannst dort die monatliche Miete, den Zeitraum und die Konditionen einsehen und bei Bedarf anpassen.'
+    answer: 'Unter "Stuhlmieter" findest du bei jedem Stuhlmieter die aktuelle Mietvereinbarung. Du kannst dort die monatliche Miete, den Zeitraum und die Konditionen einsehen und bei Bedarf anpassen.'
   },
   {
     category: 'Finanzen',
@@ -60,7 +60,7 @@ const faqItems: FAQItem[] = [
   {
     category: 'Finanzen',
     question: 'Wo finde ich meine Umsatzübersicht?',
-    answer: 'Unter "Umsatz" findest du eine detaillierte Übersicht deiner Einnahmen. Du kannst nach Zeiträumen, Stylisten und Services filtern und die Daten als Bericht exportieren.'
+    answer: 'Unter "Umsatz" findest du eine detaillierte Übersicht deiner Einnahmen. Du kannst nach Zeiträumen, Stuhlmietern und Services filtern und die Daten als Bericht exportieren.'
   },
   {
     category: 'Einstellungen',
@@ -87,7 +87,7 @@ const faqItems: FAQItem[] = [
 const categories = [
   { id: 'all', label: 'Alle', icon: HelpCircle },
   { id: 'Buchungen', label: 'Buchungen', icon: Calendar },
-  { id: 'Stylisten', label: 'Stylisten', icon: Users },
+  { id: 'Stuhlmieter', label: 'Stuhlmieter', icon: Users },
   { id: 'Finanzen', label: 'Finanzen', icon: Euro },
   { id: 'Einstellungen', label: 'Einstellungen', icon: Settings },
   { id: 'Kunden', label: 'Kunden', icon: Users },

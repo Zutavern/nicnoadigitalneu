@@ -114,7 +114,7 @@ const categories = [
   'Kunden',
   'Sicherheit',
   'Compliance',
-  'Stylisten',
+  'Stuhlmieter',
   'Allgemein',
 ]
 
@@ -736,7 +736,7 @@ export default function FAQsPage() {
                             <div className="flex items-center justify-center gap-1.5">
                               <Scissors className="h-3 w-3 text-muted-foreground" />
                               <span className="text-xs text-muted-foreground">
-                                {previewDevice === 'mobile' ? 'Stylist' : pageConfig.stylistTabLabel}
+                                {previewDevice === 'mobile' ? 'Stuhlmieter' : pageConfig.stylistTabLabel}
                               </span>
                             </div>
                           </div>

@@ -215,7 +215,7 @@ export default function SalonBookingsPage() {
                 <TableRow>
                   <TableHead>Termin</TableHead>
                   <TableHead>Kunde</TableHead>
-                  <TableHead>Stylist</TableHead>
+                  <TableHead>Stuhlmieter</TableHead>
                   <TableHead>Service</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Preis</TableHead>

@@ -478,7 +478,7 @@ export default function UsersPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stylists}</p>
-                <p className="text-xs text-muted-foreground">Stylisten</p>
+                <p className="text-xs text-muted-foreground">Stuhlmieter</p>
               </div>
             </div>
           </CardContent>
@@ -526,7 +526,7 @@ export default function UsersPage() {
                 options: [
                   { label: 'Admin', value: 'ADMIN' },
                   { label: 'Salonbesitzer', value: 'SALON_OWNER' },
-                  { label: 'Stylist', value: 'STYLIST' },
+                  { label: 'Stuhlmieter', value: 'STYLIST' },
                 ],
               },
               {
@@ -559,7 +559,7 @@ export default function UsersPage() {
                 { key: 'name', header: 'Name' },
                 { key: 'email', header: 'E-Mail' },
                 { key: 'role', header: 'Rolle', transform: (v) => {
-                  const roles: Record<string, string> = { ADMIN: 'Admin', SALON_OWNER: 'Salonbesitzer', STYLIST: 'Stylist' }
+                  const roles: Record<string, string> = { ADMIN: 'Admin', SALON_OWNER: 'Salonbesitzer', STYLIST: 'Stuhlmieter' }
                   return roles[v as string] || String(v)
                 }},
                 { key: 'emailVerified', header: 'E-Mail verifiziert', transform: (v) => v ? 'Ja' : 'Nein' },
@@ -600,7 +600,7 @@ export default function UsersPage() {
                     'bg-pink-500/10 text-pink-500'
                   }>
                     {selectedUser.role === 'ADMIN' ? 'Admin' :
-                     selectedUser.role === 'SALON_OWNER' ? 'Salonbesitzer' : 'Stylist'}
+                     selectedUser.role === 'SALON_OWNER' ? 'Salonbesitzer' : 'Stuhlmieter'}
                   </Badge>
                 </div>
                 <div>
@@ -668,7 +668,7 @@ export default function UsersPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="STYLIST">Stylist</SelectItem>
+                  <SelectItem value="STYLIST">Stuhlmieter</SelectItem>
                   <SelectItem value="SALON_OWNER">Salonbesitzer</SelectItem>
                   <SelectItem value="ADMIN">Admin</SelectItem>
                 </SelectContent>
@@ -758,7 +758,7 @@ export default function UsersPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="STYLIST">Stylist</SelectItem>
+                  <SelectItem value="STYLIST">Stuhlmieter</SelectItem>
                   <SelectItem value="SALON_OWNER">Salonbesitzer</SelectItem>
                   <SelectItem value="ADMIN">Admin</SelectItem>
                 </SelectContent>

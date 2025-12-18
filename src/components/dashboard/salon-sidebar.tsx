@@ -60,7 +60,7 @@ const menuItems = [
     items: [
       { label: 'Buchungen', href: '/salon/bookings', icon: Clock },
       { label: 'Stühle', href: '/salon/chairs', icon: Armchair },
-      { label: 'Stylisten', href: '/salon/stylists', icon: Scissors },
+      { label: 'Stuhlmieter', href: '/salon/stylists', icon: Scissors },
       { label: 'Kunden', href: '/salon/customers', icon: Users },
     ],
   },

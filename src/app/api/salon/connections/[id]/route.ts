@@ -78,7 +78,7 @@ export async function DELETE(
         template: 'stylist-left-salon',
         data: {
           salonName: salon.name,
-          stylistName: connection.stylist.name || 'Stylist',
+          stylistName: connection.stylist.name || 'Stuhlmieter',
         },
       })
     } catch (emailError) {

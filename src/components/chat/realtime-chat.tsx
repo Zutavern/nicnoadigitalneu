@@ -177,7 +177,7 @@ const roleColors: Record<string, string> = {
 const roleLabels: Record<string, string> = {
   ADMIN: 'Admin',
   SALON_OWNER: 'Salonbetreiber',
-  STYLIST: 'Stylist',
+  STYLIST: 'Stuhlmieter',
 }
 
 // ==================== MAIN COMPONENT ====================

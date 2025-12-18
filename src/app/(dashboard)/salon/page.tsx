@@ -101,7 +101,7 @@ interface SalonStats {
 
 const quickActions = [
   { label: 'Neuen Stuhl anlegen', icon: Armchair, href: '/salon/chairs/new' },
-  { label: 'Stylisten verwalten', icon: Users, href: '/salon/stylists' },
+  { label: 'Stuhlmieter verwalten', icon: Users, href: '/salon/stylists' },
   { label: 'Einstellungen', icon: Settings, href: '/salon/settings' },
 ]
 
@@ -279,7 +279,7 @@ export default function SalonDashboardPage() {
                     </div>
                     <div className="flex items-center gap-1.5 text-sm text-slate-400">
                       <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                      <span>Stylisten finden</span>
+                      <span>Stuhlmieter finden</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-sm text-slate-400">
                       <CheckCircle2 className="h-4 w-4 text-emerald-400" />
@@ -463,7 +463,7 @@ export default function SalonDashboardPage() {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium">{stats.overview.pendingRequests} offene Mietanfragen</p>
-                  <p className="text-sm text-muted-foreground">Stylisten warten auf deine Antwort</p>
+                  <p className="text-sm text-muted-foreground">Stuhlmieter warten auf deine Antwort</p>
                 </div>
                 <Button variant="outline" asChild>
                   <Link href="/salon/requests">Anfragen anzeigen</Link>

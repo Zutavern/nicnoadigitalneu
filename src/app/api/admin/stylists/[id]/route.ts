@@ -41,7 +41,7 @@ export async function GET(
     })
 
     if (!stylist) {
-      return NextResponse.json({ error: "Stylist nicht gefunden" }, { status: 404 })
+      return NextResponse.json({ error: "Stuhlmieter nicht gefunden" }, { status: 404 })
     }
 
     return NextResponse.json({

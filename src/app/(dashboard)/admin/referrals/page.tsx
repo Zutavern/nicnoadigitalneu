@@ -388,7 +388,7 @@ export default function ReferralsPage() {
     if (role === 'SALON_OWNER') {
       return <Badge variant="outline" className="text-blue-500 border-blue-500/30"><Building2 className="h-3 w-3 mr-1" />Salon</Badge>
     }
-    return <Badge variant="outline" className="text-purple-500 border-purple-500/30"><Scissors className="h-3 w-3 mr-1" />Stylist</Badge>
+    return <Badge variant="outline" className="text-purple-500 border-purple-500/30"><Scissors className="h-3 w-3 mr-1" />Stuhlmieter</Badge>
   }
 
   if (isLoading && !stats) {
@@ -712,7 +712,7 @@ export default function ReferralsPage() {
               <SelectContent>
                 <SelectItem value="all">Alle Rollen</SelectItem>
                 <SelectItem value="SALON_OWNER">Salon-Besitzer</SelectItem>
-                <SelectItem value="STYLIST">Stylisten</SelectItem>
+                <SelectItem value="STYLIST">Stuhlmieter</SelectItem>
               </SelectContent>
             </Select>
           </div>

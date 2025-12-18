@@ -243,7 +243,7 @@ export default function SalonStylistsPage() {
         <div>
           <h1 className="text-3xl font-bold">Stuhlmieter</h1>
           <p className="text-muted-foreground">
-            Verwalte die Stylisten in deinem Salon
+            Verwalte die Stuhlmieter in deinem Salon
           </p>
         </div>
         <Button 
@@ -258,7 +258,7 @@ export default function SalonStylistsPage() {
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         {[
-          { label: 'Verbundene Stylisten', value: connections.length, icon: Scissors, color: 'blue' },
+          { label: 'Verbundene Stuhlmieter', value: connections.length, icon: Scissors, color: 'blue' },
           { label: 'Ausstehende Einladungen', value: pendingInvitations.length, icon: Clock, color: 'yellow' },
           { label: 'Monatliche Mieteinnahmen', value: `€${totalRevenue.toLocaleString('de-DE')}`, icon: Euro, color: 'green' },
           { label: 'Durchschn. Bewertung', value: connections.length > 0 
@@ -421,9 +421,9 @@ export default function SalonStylistsPage() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                 <Scissors className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="font-semibold">Keine Stylisten verbunden</h3>
+                <h3 className="font-semibold">Keine Stuhlmieter verbunden</h3>
                 <p className="text-muted-foreground mb-4">
-                  Laden Sie Stylisten ein, um deinen Salon zu füllen.
+                  Laden Sie Stuhlmieter ein, um deinen Salon zu füllen.
                 </p>
                 <Button onClick={() => setInviteDialogOpen(true)}>
                   <UserPlus className="mr-2 h-4 w-4" />

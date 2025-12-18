@@ -42,7 +42,7 @@ export function BookingConfirmationEmail({
   bookingTime,
   duration,
   price,
-  bookingUrl = 'https://nicnoa.online/dashboard/bookings',
+  bookingUrl = 'https://nicnoa.de/dashboard/bookings',
   content,
   logoUrl,
   primaryColor = '#10b981',
@@ -93,7 +93,7 @@ export function BookingConfirmationEmail({
             <Text style={{ margin: '4px 0 0', color: '#0f172a', fontSize: '15px', fontWeight: '600' }}>{serviceName}</Text>
           </Column>
           <Column style={{ width: '50%' }}>
-            <Text style={{ margin: '0', color: '#64748b', fontSize: '13px' }}>Stylist</Text>
+            <Text style={{ margin: '0', color: '#64748b', fontSize: '13px' }}>Stuhlmieter</Text>
             <Text style={{ margin: '4px 0 0', color: '#0f172a', fontSize: '15px', fontWeight: '600' }}>{stylistName}</Text>
           </Column>
         </Row>

@@ -128,7 +128,7 @@ export default function StylistsPage() {
         throw new Error(data.error || 'Fehler beim Aktualisieren')
       }
 
-      toast.success('Stylist erfolgreich aktualisiert')
+      toast.success('Stuhlmieter erfolgreich aktualisiert')
       setEditDialogOpen(false)
       fetchStylists(true)
     } catch (err) {
@@ -152,7 +152,7 @@ export default function StylistsPage() {
         throw new Error(data.error || 'Fehler beim Löschen')
       }
 
-      toast.success('Stylist erfolgreich gelöscht')
+      toast.success('Stuhlmieter erfolgreich gelöscht')
       setDeleteDialogOpen(false)
       setSelectedStylist(null)
       fetchStylists(true)
@@ -230,9 +230,9 @@ export default function StylistsPage() {
   }
 
   const bulkActions: BulkAction[] = useMemo(() => [
-    createDeleteAction(handleBulkDelete, 'Stylisten'),
-    createBlockAction(handleBulkBlock, 'Stylisten'),
-    createUnblockAction(handleBulkUnblock, 'Stylisten'),
+    createDeleteAction(handleBulkDelete, 'Stuhlmieter'),
+    createBlockAction(handleBulkBlock, 'Stuhlmieter'),
+    createUnblockAction(handleBulkUnblock, 'Stuhlmieter'),
   ], [stylists])
 
   // Stats
@@ -285,7 +285,7 @@ export default function StylistsPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stylists.length}</p>
-                <p className="text-xs text-muted-foreground">Stylisten gesamt</p>
+                <p className="text-xs text-muted-foreground">Stuhlmieter gesamt</p>
               </div>
             </div>
           </CardContent>
@@ -394,7 +394,7 @@ export default function StylistsPage() {
             }}
             bulkActions={bulkActions}
             idAccessor={(row) => row.id}
-            itemType="Stylisten"
+            itemType="Stuhlmieter"
           />
         </CardContent>
       </Card>
@@ -405,7 +405,7 @@ export default function StylistsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Scissors className="h-5 w-5" />
-              {selectedStylist?.user?.name || 'Stylist Details'}
+              {selectedStylist?.user?.name || 'Stuhlmieter Details'}
             </DialogTitle>
             <DialogDescription>
               Detaillierte Informationen zum Stylisten
@@ -501,7 +501,7 @@ export default function StylistsPage() {
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Stylist bearbeiten</DialogTitle>
+            <DialogTitle>Stuhlmieter bearbeiten</DialogTitle>
             <DialogDescription>
               Aktualisieren Sie die Informationen des Stylisten
             </DialogDescription>
@@ -560,7 +560,7 @@ export default function StylistsPage() {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Stylist löschen</DialogTitle>
+            <DialogTitle>Stuhlmieter löschen</DialogTitle>
             <DialogDescription>
               Sind Sie sicher, dass Sie den Stylisten "{selectedStylist?.user?.name}" löschen möchten?
               Diese Aktion kann nicht rückgängig gemacht werden.

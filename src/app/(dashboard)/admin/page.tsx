@@ -106,7 +106,7 @@ const DEFAULT_WIDGET_CONFIG: WidgetConfig[] = [
   { id: 'statCards', name: 'Hauptstatistiken', description: 'Nutzer, Salons, Stylisten, Umsatz', enabled: true, icon: TrendingUp },
   { id: 'quickStats', name: 'Schnellübersicht', description: 'Kompakte Statistiken', enabled: true, icon: Activity },
   { id: 'recentBookings', name: 'Letzte Buchungen', description: 'Die neuesten Termine', enabled: true, icon: CalendarDays },
-  { id: 'onboardingStatus', name: 'Onboarding Status', description: 'Stylisten-Anträge Übersicht', enabled: true, icon: FileCheck },
+  { id: 'onboardingStatus', name: 'Onboarding Status', description: 'Stuhlmieter-Anträge Übersicht', enabled: true, icon: FileCheck },
   { id: 'recentUsers', name: 'Neue Registrierungen', description: 'Neueste Benutzer', enabled: true, icon: UserPlus },
   { id: 'topStylists', name: 'Top Stylisten', description: 'Nach Buchungsanzahl', enabled: true, icon: Scissors },
 ]
@@ -639,7 +639,7 @@ export default function AdminDashboard() {
       color: 'from-purple-500 to-pink-500',
     },
     {
-      title: 'Stylisten',
+      title: 'Stuhlmieter',
       value: stats.overview.totalStylists.toLocaleString('de-DE'),
       change: `${stats.growth.users > 0 ? '+' : ''}${stats.growth.users.toFixed(1)}%`,
       trend: stats.growth.users >= 0 ? 'up' : 'down' as const,

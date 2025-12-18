@@ -98,7 +98,7 @@ export const createColumns = (options: ColumnOptions = {}): ColumnDef<Stylist>[]
     id: 'userName',
     accessorFn: (row) => row.user?.name || row.user?.email || '',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Stylist" />
+      <DataTableColumnHeader column={column} title="Stuhlmieter" />
     ),
     cell: ({ row }) => {
       const stylist = row.original

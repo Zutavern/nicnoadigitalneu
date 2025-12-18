@@ -194,7 +194,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
         <div className="mx-4 mt-4">
           <div className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-pink-500/20 to-rose-500/20 dark:from-pink-500/10 dark:to-rose-500/10 border border-pink-500/30 dark:border-pink-500/20 px-3 py-2">
             <Scissors className="h-4 w-4 text-pink-600 dark:text-pink-500" />
-            <span className="text-sm font-medium text-pink-600 dark:text-pink-500">Stylist Dashboard</span>
+            <span className="text-sm font-medium text-pink-600 dark:text-pink-500">Stuhlmieter Dashboard</span>
           </div>
         </div>
       )}
@@ -309,7 +309,7 @@ export function StylistSidebar() {
           className="w-[280px] p-0 flex flex-col"
         >
           <VisuallyHidden>
-            <SheetTitle>Stylist Navigation</SheetTitle>
+            <SheetTitle>Stuhlmieter Navigation</SheetTitle>
           </VisuallyHidden>
           {/* Header */}
           <div className="flex h-16 items-center justify-between border-b px-4">

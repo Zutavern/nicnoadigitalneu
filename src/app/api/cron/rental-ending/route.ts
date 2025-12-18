@@ -60,7 +60,7 @@ export async function GET(request: Request) {
           to: rental.stylist.email,
           templateSlug: 'rental-ending-soon',
           data: {
-            userName: rental.stylist.name || 'Stylist',
+            userName: rental.stylist.name || 'Stuhlmieter',
             salonName: rental.chair.salon.name,
             chairName: rental.chair.name,
             endDate,

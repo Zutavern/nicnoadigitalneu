@@ -26,7 +26,7 @@ interface SectionConfig {
 const defaultSectionConfig: SectionConfig = {
   testimonialsBadgeText: 'Testimonials',
   testimonialsTitle: 'Was unsere Nutzer sagen',
-  testimonialsDescription: 'Erfahren Sie, wie NICNOA&CO.online das Leben von Stylisten und Salonbesitzern verändert',
+  testimonialsDescription: 'Erfahren Sie, wie NICNOA&CO.online das Leben von Stuhlmietern und Salonbesitzern verändert',
   testimonialsStylistTab: 'Stuhlmietern',
   testimonialsSalonTab: 'Salonbesitzer',
 }

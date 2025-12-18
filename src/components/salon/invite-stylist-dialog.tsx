@@ -230,7 +230,7 @@ export function InviteStylistDialog({
             Stuhlmieter einladen
           </DialogTitle>
           <DialogDescription>
-            Laden Sie einen Stylisten ein, Ihrem Salon beizutreten.
+            Laden Sie einen Stuhlmieter ein, Ihrem Salon beizutreten.
           </DialogDescription>
         </DialogHeader>
 
@@ -366,7 +366,7 @@ export function InviteStylistDialog({
                 <h3 className="font-semibold text-lg">Einladung erstellt!</h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   {invitationResult.userStatus === 'verified'
-                    ? 'Die E-Mail wurde an den Stylisten gesendet.'
+                    ? 'Die E-Mail wurde an den Stuhlmieter gesendet.'
                     : 'Der Nutzer muss sich zuerst registrieren.'}
                 </p>
               </div>

@@ -720,7 +720,7 @@ export function StylistOnboardingDialog({ open, onOpenChange, onComplete }: Styl
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] p-0 bg-[#0a0a0f] border-white/10 flex flex-col" hideCloseButton>
         <VisuallyHidden.Root>
-          <DialogTitle>Stylist Onboarding</DialogTitle>
+          <DialogTitle>Stuhlmieter Onboarding</DialogTitle>
         </VisuallyHidden.Root>
         
         {/* Close Button - Fixed position */}

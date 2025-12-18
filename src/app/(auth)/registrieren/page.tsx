@@ -510,7 +510,7 @@ export default function RegisterPage() {
                         <Scissors className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-lg text-white">Stuhlmieter / Stylist</h3>
+                        <h3 className="font-semibold text-lg text-white">Stuhlmieter</h3>
                         <p className="text-sm text-slate-400">
                           Ich suche einen Arbeitsplatz
                         </p>
