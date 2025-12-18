@@ -130,6 +130,9 @@ model User {
   // Google Business Profile
   googleBusinessConnections GoogleBusinessConnection[]
 
+  // Newsletter
+  createdNewsletters Newsletter[]
+
   @@map("users")
 }
 
@@ -4336,4 +4339,70 @@ model RevenueDashboardConfig {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("revenue_dashboard_configs")
+}
+
+// ============================================
+// Newsletter System
+// ============================================
+
+enum NewsletterStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  FAILED
+}
+
+enum NewsletterSegment {
+  ALL
+  STYLISTS
+  SALON_OWNERS
+  CUSTOM
+}
+
+model Newsletter {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String            @db.VarChar(255)
+  subject     String            @db.VarChar(255)
+  preheader   String?           @db.VarChar(255) // Preview text in email clients
+  designJson  Json              @map("design_json") // Unlayer Editor JSON
+  htmlContent String?           @map("html_content") @db.Text
+  status      NewsletterStatus  @default(DRAFT)
+  segment     NewsletterSegment @default(ALL)
+  
+  // Scheduling
+  scheduledAt DateTime?         @map("scheduled_at") @db.Timestamptz
+  sentAt      DateTime?         @map("sent_at") @db.Timestamptz
+  
+  // Statistics
+  sentCount   Int               @default(0) @map("sent_count")
+  openCount   Int               @default(0) @map("open_count")
+  clickCount  Int               @default(0) @map("click_count")
+  bounceCount Int               @default(0) @map("bounce_count")
+  
+  // Relations
+  createdBy   String?           @map("created_by") @db.Uuid
+  creator     User?             @relation(fields: [createdBy], references: [id])
+  
+  // Timestamps
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("newsletters")
+}
+
+model NewsletterTemplate {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  designJson  Json     @map("design_json") // Unlayer Editor JSON
+  thumbnail   String?  @db.Text // Base64 or URL
+  category    String   @default("general") @db.VarChar(50) // general, welcome, promo, update
+  isDefault   Boolean  @default(false) @map("is_default")
+  
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("newsletter_templates")
 }

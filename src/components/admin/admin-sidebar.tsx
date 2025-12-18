@@ -156,6 +156,7 @@ const menuItems: MenuSection[] = [
         label: 'Marketing',
         icon: Gift,
         children: [
+          { label: 'Newsletter', href: '/admin/marketing/newsletter', icon: Mail },
           { label: 'Branding', href: '/admin/marketing/branding', icon: Palette },
           { label: 'Social Media', href: '/admin/marketing/social-media', icon: Share2 },
           { label: 'Google Business', href: '/admin/google-business', icon: MapIcon },
