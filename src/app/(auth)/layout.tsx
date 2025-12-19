@@ -1,3 +1,5 @@
+import { ForceDarkMode } from '@/components/providers/force-dark-mode'
+
 export default function AuthLayout({
   children,
 }: {
@@ -5,6 +7,7 @@ export default function AuthLayout({
 }) {
   return (
     <div className="min-h-screen bg-background">
+      <ForceDarkMode />
       {children}
     </div>
   )
