@@ -2,8 +2,8 @@
 
 ## 📐 System-Architektur Dokumentation
 
-**Version:** 1.4  
-**Datum:** 18. Dezember 2025  
+**Version:** 2.0  
+**Datum:** 19. Dezember 2025  
 **Status:** Produktiv
 
 ---
@@ -18,20 +18,21 @@ NICNOA ist eine B2B SaaS-Plattform für die Friseurbranche, die Salon-Besitzer u
 - **Terminbuchung**: Stylisten verwalten ihre Kundentermine
 - **Compliance**: Rechtssichere Dokumentation der Selbstständigkeit
 - **Abrechnung**: Automatisierte Zahlungsabwicklung via Stripe
+- **Homepage-Builder**: AI-gestützte Erstellung von Webseiten
 
 ### 1.2 High-Level Architektur
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                              NICNOA PLATFORM                                 │
+│                              NICNOA PLATFORM v2.0                           │
 └─────────────────────────────────────────────────────────────────────────────┘
 
                                  ┌───────────────┐
                                  │   FRONTEND    │
-                                 │   (Next.js)   │
+                                 │  (Next.js 16) │
                                  │               │
                                  │  - App Router │
-                                 │  - RSC        │
+                                 │  - Turbopack  │
                                  │  - Shadcn UI  │
                                  └───────┬───────┘
                                          │
@@ -41,12 +42,12 @@ NICNOA ist eine B2B SaaS-Plattform für die Friseurbranche, die Salon-Besitzer u
                  │                       │                       │
                  ▼                       ▼                       ▼
         ┌───────────────┐       ┌───────────────┐       ┌───────────────┐
-        │  API ROUTES   │       │  AUTH (v5)    │       │   STATIC      │
-        │  /api/*       │       │  NextAuth     │       │   ASSETS      │
+        │  API ROUTES   │       │  PROXY AUTH   │       │   STATIC      │
+        │  /api/*       │       │  (Next.js 16) │       │   ASSETS      │
         │               │       │               │       │               │
-        │  - REST APIs  │       │  - Credentials│       │  - Images     │
-        │  - Webhooks   │       │  - Sessions   │       │  - Uploads    │
-        │  - Middleware │       │  - JWT        │       │               │
+        │  - REST APIs  │       │  - Sessions   │       │  - Images     │
+        │  - Webhooks   │       │  - JWT        │       │  - Uploads    │
+        │  - 140+ EP    │       │  - RBAC       │       │               │
         └───────┬───────┘       └───────┬───────┘       └───────┬───────┘
                 │                       │                       │
                 └───────────────────────┼───────────────────────┘
@@ -56,7 +57,7 @@ NICNOA ist eine B2B SaaS-Plattform für die Friseurbranche, die Salon-Besitzer u
                               │    PRISMA ORM     │
                               │                   │
                               │  - Type-safe      │
-                              │  - Migrations     │
+                              │  - 55+ Tabellen   │
                               │  - Relations      │
                               └─────────┬─────────┘
                                         │
@@ -67,21 +68,22 @@ NICNOA ist eine B2B SaaS-Plattform für die Friseurbranche, die Salon-Besitzer u
            │   NEON DB     │   │ VERCEL BLOB   │   │    STRIPE     │
            │  (PostgreSQL) │   │  (Storage)    │   │  (Payments)   │
            │               │   │               │   │               │
-           │  - Users      │   │  - Documents  │   │  - Subscript. │
-           │  - Salons     │   │  - Images     │   │  - Invoices   │
-           │  - Bookings   │   │  - Uploads    │   │  - Webhooks   │
+           │  - Users      │   │  - Documents  │   │  - Embedded   │
+           │  - Salons     │   │  - Images     │   │    Checkout   │
+           │  - Homepages  │   │  - Uploads    │   │  - Link       │
            └───────────────┘   └───────────────┘   └───────────────┘
                     │
-                    │
-                    ▼
-           ┌───────────────┐
-           │    RESEND     │
-           │   (E-Mails)   │
-           │               │
-           │  - Transact.  │
-           │  - Templates  │
-           │  - Tracking   │
-           └───────────────┘
+        ┌───────────┴───────────┐
+        │                       │
+        ▼                       ▼
+┌───────────────┐       ┌───────────────┐
+│    RESEND     │       │  OPENROUTER   │
+│   (E-Mails)   │       │    (AI)       │
+│               │       │               │
+│  - Transact.  │       │  - GPT-4o     │
+│  - Newsletter │       │  - Claude     │
+│  - Tracking   │       │  - Homepage   │
+└───────────────┘       └───────────────┘
 ```
 
 ---
@@ -92,15 +94,14 @@ NICNOA ist eine B2B SaaS-Plattform für die Friseurbranche, die Salon-Besitzer u
 
 | Technologie | Version | Verwendung |
 |-------------|---------|------------|
-| **Next.js** | 16.0.7 | Framework |
+| **Next.js** | 16.0.7 | Framework (Turbopack) |
 | **React** | 19.0.0 | UI Library |
 | **TypeScript** | 5.7.3 | Typisierung |
 | **Tailwind CSS** | 3.4.1 | Styling |
 | **Shadcn/UI** | Latest | Komponenten |
 | **Framer Motion** | 12.4.7 | Animationen |
 | **Recharts** | 3.5.1 | Charts |
-| **React Hook Form** | 7.54.2 | Formulare |
-| **Zod** | 3.24.2 | Validierung |
+| **@stripe/react-stripe-js** | Latest | Embedded Checkout |
 
 ### 2.2 Backend
 
@@ -109,17 +110,15 @@ NICNOA ist eine B2B SaaS-Plattform für die Friseurbranche, die Salon-Besitzer u
 | **Prisma** | 7.1.0 | ORM |
 | **NextAuth.js** | 5.0.0-beta.30 | Authentifizierung |
 | **PostgreSQL** | 16 | Datenbank |
-| **Neon** | Serverless | DB Hosting |
-| **Stripe** | 20.0.0 | Zahlungen |
-| **Resend** | 6.5.2 | E-Mail |
-| **React Email** | 5.0.5 | E-Mail Templates |
+| **Stripe** | 20.0.0 | Embedded Checkout & Link |
+| **Resend** | 6.5.2 | E-Mail & Newsletter |
+| **OpenRouter** | Latest | AI-Modelle |
 
 ### 2.3 Real-time & Analytics
 
 | Technologie | Version | Verwendung |
 |-------------|---------|------------|
 | **Pusher** | 6.x | Real-time Messaging |
-| **pusher-js** | 8.x | Client-side Real-time |
 | **Daily.co** | Latest | Video Calls |
 | **PostHog** | 1.x | Product Analytics |
 
@@ -127,136 +126,222 @@ NICNOA ist eine B2B SaaS-Plattform für die Friseurbranche, die Salon-Besitzer u
 
 | Service | Verwendung |
 |---------|------------|
-| **Vercel** | Hosting & Deployment |
+| **Vercel** | Hosting, Deployment, Domains |
 | **Neon** | PostgreSQL Database |
 | **Vercel Blob** | File Storage |
-| **Stripe** | Payment Processing |
-| **Resend** | Transactional Email |
-| **Pusher** | Real-time WebSockets |
-| **Daily.co** | Video Conferencing |
-| **PostHog** | Analytics & Heatmaps |
-| **GitHub** | Version Control |
+| **Vercel DNS** | Domain Management |
 
 ---
 
-## 3. Datenbank-Architektur
+## 3. Neue Architektur-Komponenten (v2.0)
 
-### 3.1 Entity Relationship Diagram (ERD)
+### 3.1 Stripe Embedded Checkout
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           DATENBANK SCHEMA                                   │
+│                      STRIPE EMBEDDED CHECKOUT FLOW                           │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│    USER      │────<│   ACCOUNT    │     │   SESSION    │>────┐
-│              │     │  (OAuth)     │     │              │     │
-│ id           │     └──────────────┘     └──────────────┘     │
-│ email        │                                               │
-│ password     │──────────────────────────────────────────────┘
-│ role         │
-│ stripeId     │
-└──────┬───────┘
-       │
-       │ 1:1
-       │
-       ├──────────────┬──────────────┬──────────────┐
-       │              │              │              │
-       ▼              ▼              ▼              ▼
-┌──────────────┐┌──────────────┐┌──────────────┐┌──────────────┐
-│ UserProfile  ││ SalonProfile ││StylistProfile││StylistOnboard│
-│              ││              ││              ││              │
-│ phone        ││ salonName    ││ experience   ││ companyName  │
-│ address      ││ chairCount   ││ skills       ││ taxId        │
-│ bio          ││ notifyPrefs  ││ portfolio    ││ documents    │
-└──────────────┘└──────────────┘└──────────────┘└──────────────┘
-       │
-       │ 1:N
-       ▼
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│    SALON     │────<│    CHAIR     │────<│ CHAIR_RENTAL │
-│              │     │              │     │              │
-│ name         │     │ name         │     │ stylistId    │
-│ address      │     │ dailyRate    │     │ startDate    │
-│ images[]     │     │ monthlyRate  │     │ monthlyRent  │
-│ amenities[]  │     │ isAvailable  │     │ status       │
-└──────────────┘     └──────────────┘     └──────────────┘
-       │
-       │ 1:N
-       ▼
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   CUSTOMER   │────<│   BOOKING    │────<│   SERVICE    │
-│              │     │              │     │              │
-│ firstName    │     │ startTime    │     │ name         │
-│ lastName     │     │ endTime      │     │ category     │
-│ phone        │     │ price        │     │ description  │
-│ notes        │     │ status       │     │ sortOrder    │
-└──────────────┘     └──────────────┘     └──────────────┘
-
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   PAYMENT    │     │    REVIEW    │     │ NOTIFICATION │
-│              │     │              │     │              │
-│ type         │     │ rating       │     │ type         │
-│ amount       │     │ comment      │     │ title        │
-│ status       │     │ isVerified   │     │ message      │
-│ stripeId     │     │ salonId      │     │ isRead       │
-└──────────────┘     └──────────────┘     └──────────────┘
-
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│ CONVERSATION │────<│   MESSAGE    │     │EMAIL_TEMPLATE│
-│              │     │              │     │              │
-│ type         │     │ content      │     │ slug         │
-│ subject      │     │ senderId     │     │ subject      │
-│ participants │     │ attachments  │     │ content      │
-└──────────────┘     └──────────────┘     └──────────────┘
-
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  REFERRAL    │     │REFERRAL_     │     │ SUBSCRIPTION │
-│              │     │REWARD        │     │ _PLAN        │
-│ referrerId   │     │              │     │              │
-│ referredId   │     │ rewardType   │     │ name         │
-│ status       │     │ rewardValue  │     │ priceMonthly │
-│ commission   │     │ isApplied    │     │ features[]   │
-└──────────────┘     └──────────────┘     └──────────────┘
+    Benutzer                    NICNOA                      Stripe
+       │                          │                           │
+       │  1. Wählt Plan           │                           │
+       │─────────────────────────>│                           │
+       │                          │                           │
+       │                          │  2. Create Intent         │
+       │                          │  (Payment/Setup)          │
+       │                          │──────────────────────────>│
+       │                          │                           │
+       │                          │  3. Client Secret         │
+       │                          │<──────────────────────────│
+       │                          │                           │
+       │  4. Embedded Form        │                           │
+       │<─────────────────────────│                           │
+       │                          │                           │
+       │  5. Zahlung (im iframe)  │                           │
+       │  - Card                  │                           │
+       │  - Link (1-Klick)        │                           │
+       │  - SEPA Debit            │                           │
+       │                          │                           │
+       │  6. confirmPayment()     │                           │
+       │  oder confirmSetup()     │                           │
+       │─────────────────────────────────────────────────────>│
+       │                          │                           │
+       │                          │  7. Webhook               │
+       │                          │<──────────────────────────│
+       │                          │                           │
+       │  8. Erfolgsseite         │                           │
+       │<─────────────────────────│                           │
 ```
 
-### 3.2 Wichtige Relationen
+**Wichtige Unterscheidung:**
+- **PaymentIntent**: Sofortige Zahlung → `confirmPayment()`
+- **SetupIntent**: Trial-Periode → `confirmSetup()`
 
-| Relation | Typ | Beschreibung |
-|----------|-----|--------------|
-| User → Salon | 1:N | Ein Benutzer kann mehrere Salons besitzen |
-| Salon → Chair | 1:N | Ein Salon hat mehrere Stühle |
-| Chair → ChairRental | 1:N | Ein Stuhl kann mehrfach vermietet werden |
-| User → Booking | 1:N | Ein Stylist hat viele Buchungen |
-| User → Customer | 1:N | Ein Stylist hat viele Kunden |
-| Conversation → Message | 1:N | Eine Konversation hat viele Nachrichten |
+### 3.2 Homepage Builder
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       HOMEPAGE BUILDER ARCHITEKTUR                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                              ┌───────────────────┐
+                              │  Homepage Wizard  │
+                              │                   │
+                              │  1. Projektname   │
+                              │  2. Design-Stil   │
+                              │  3. Seiten-Config │
+                              │  4. Kontaktdaten  │
+                              │  5. Review        │
+                              └─────────┬─────────┘
+                                        │
+                                        ▼
+                              ┌───────────────────┐
+                              │   AI Generation   │
+                              │   (OpenRouter)    │
+                              │                   │
+                              │  - GPT-4o         │
+                              │  - Claude         │
+                              │  - v0-Prompts     │
+                              └─────────┬─────────┘
+                                        │
+                    ┌───────────────────┼───────────────────┐
+                    │                   │                   │
+                    ▼                   ▼                   ▼
+           ┌───────────────┐   ┌───────────────┐   ┌───────────────┐
+           │  Live Editor  │   │  Live Preview │   │   Go Live     │
+           │               │   │               │   │               │
+           │  - Drag&Drop  │   │  - Desktop    │   │  - Subdomain  │
+           │  - Styling    │   │  - Mobile     │   │  - Custom DNS │
+           │  - Pages      │   │  - Real-time  │   │  - SSL        │
+           └───────────────┘   └───────────────┘   └───────────────┘
+
+Design-Stile:
+┌────────────────┬────────────────┬────────────────┬────────────────┐
+│   Minimalist   │    Modern      │    Classic     │    Bold        │
+│                │                │                │                │
+│  Clean Lines   │  Gradients     │  Traditional   │  High Contrast │
+│  White Space   │  Animations    │  Serif Fonts   │  Large Type    │
+└────────────────┴────────────────┴────────────────┴────────────────┘
+```
+
+### 3.3 AI-Integration (OpenRouter)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          AI INTEGRATION ARCHITEKTUR                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                              ┌───────────────────┐
+                              │    OpenRouter     │
+                              │    API Gateway    │
+                              └─────────┬─────────┘
+                                        │
+                    ┌───────────────────┼───────────────────┐
+                    │                   │                   │
+                    ▼                   ▼                   ▼
+           ┌───────────────┐   ┌───────────────┐   ┌───────────────┐
+           │    OpenAI     │   │   Anthropic   │   │    Google     │
+           │               │   │               │   │               │
+           │  - GPT-4o     │   │  - Claude 3.5 │   │  - Gemini     │
+           │  - GPT-4      │   │  - Claude 3   │   │  - PaLM       │
+           └───────────────┘   └───────────────┘   └───────────────┘
+
+Model-Kategorien:
+┌────────────────┬────────────────────────────────────────────────────┐
+│    GENERAL     │  Allgemeine Aufgaben (GPT-4o, Claude 3.5 Sonnet)  │
+│    CREATIVE    │  Kreative Texte (Claude 3.5, GPT-4)               │
+│    CODE        │  Code-Generierung (GPT-4o, Claude 3.5)            │
+│    REASONING   │  Komplexe Logik (o1, Claude 3 Opus)               │
+│    VISION      │  Bildverarbeitung (GPT-4o, Claude 3.5)            │
+│    FAST        │  Schnelle Antworten (GPT-4o-mini, Haiku)          │
+└────────────────┴────────────────────────────────────────────────────┘
+
+Usage Tracking:
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  User → AI Request → Token Count → Cost Calculation → Credit Deduction      │
+│                                                                             │
+│  Credits:                                                                   │
+│  - Inklusiv im Plan (z.B. €10/Monat)                                        │
+│  - Pay-per-Use für Überschreitung                                           │
+│  - Transparente Anzeige im Dashboard                                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 3.4 Domain Management (Vercel DNS)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       DOMAIN MANAGEMENT ARCHITEKTUR                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    Benutzer                    NICNOA                      Vercel
+       │                          │                           │
+       │  1. Domain hinzufügen    │                           │
+       │  (www.mein-salon.de)     │                           │
+       │─────────────────────────>│                           │
+       │                          │                           │
+       │                          │  2. Add Domain            │
+       │                          │  to Project               │
+       │                          │──────────────────────────>│
+       │                          │                           │
+       │                          │  3. DNS Records           │
+       │                          │<──────────────────────────│
+       │                          │                           │
+       │  4. DNS-Einträge         │                           │
+       │  zum Konfigurieren       │                           │
+       │<─────────────────────────│                           │
+       │                          │                           │
+       │  5. Benutzer konfiguriert DNS bei Registrar          │
+       │                          │                           │
+       │  6. Verify Domain        │                           │
+       │─────────────────────────>│──────────────────────────>│
+       │                          │                           │
+       │                          │  7. SSL Certificate       │
+       │                          │<──────────────────────────│
+       │                          │                           │
+       │  8. Domain aktiv!        │                           │
+       │<─────────────────────────│                           │
+
+DNS-Einträge:
+┌────────────────┬────────────────────────────────────────────┐
+│    CNAME       │  www → cname.vercel-dns.com                │
+│    A           │  @ → 76.76.21.21                           │
+│    AAAA        │  @ → 2606:4700:...                         │
+└────────────────┴────────────────────────────────────────────┘
+```
 
 ---
 
 ## 4. Authentifizierung & Autorisierung
 
-### 4.1 NextAuth.js v5 Konfiguration
+### 4.1 NextAuth.js v5 mit Proxy (Next.js 16)
 
 ```typescript
-// src/lib/auth.ts
-export const { auth, signIn, signOut, handlers } = NextAuth({
-  adapter: PrismaAdapter(prisma),
-  providers: [
-    CredentialsProvider({
-      credentials: {
-        email: { type: 'email' },
-        password: { type: 'password' },
-      },
-      authorize: async (credentials) => {
-        // Validierung & Authentifizierung
-      },
-    }),
-  ],
-  callbacks: {
-    jwt: async ({ token, user }) => { ... },
-    session: async ({ session, token }) => { ... },
-  },
-})
+// src/proxy.ts (ersetzt middleware.ts in Next.js 16)
+export async function proxy(req: NextRequest) {
+  const { pathname } = req.nextUrl
+  
+  // Admin-Routen
+  if (pathname.startsWith('/admin')) {
+    if (req.auth?.user?.role !== 'ADMIN') {
+      return redirect('/dashboard')
+    }
+  }
+  
+  // Salon-Routen
+  if (pathname.startsWith('/salon')) {
+    if (req.auth?.user?.role !== 'SALON_OWNER') {
+      return redirect('/dashboard')
+    }
+  }
+  
+  // Stylist-Routen
+  if (pathname.startsWith('/stylist')) {
+    if (req.auth?.user?.role !== 'STYLIST') {
+      return redirect('/dashboard')
+    }
+  }
+}
 ```
 
 ### 4.2 Rollenbasierte Zugriffskontrolle (RBAC)
@@ -281,554 +366,105 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
               │ ✓ Salons   │              │ ✓ Profil   │
               │ ✓ Stühle   │              │ ✓ Termine  │
               │ ✓ Mieter   │              │ ✓ Kunden   │
-              │ ✓ Umsätze  │              │ ✓ Bewertg. │
+              │ ✓ Homepage │              │ ✓ Homepage │
               └────────────┘              └────────────┘
 ```
 
-### 4.3 Middleware-Schutz
+---
 
-```typescript
-// src/middleware.ts
-export default auth((req) => {
-  const { pathname } = req.nextUrl
-  
-  // Admin-Routen
-  if (pathname.startsWith('/admin')) {
-    if (req.auth?.user?.role !== 'ADMIN') {
-      return redirect('/dashboard')
-    }
-  }
-  
-  // Salon-Routen
-  if (pathname.startsWith('/salon')) {
-    if (req.auth?.user?.role !== 'SALON_OWNER') {
-      return redirect('/dashboard')
-    }
-  }
-  
-  // Stylist-Routen
-  if (pathname.startsWith('/stylist')) {
-    if (req.auth?.user?.role !== 'STYLIST') {
-      return redirect('/dashboard')
-    }
-  }
-})
-```
+## 5. Datenbank-Architektur
+
+### 5.1 Neue Tabellen (v2.0)
+
+| Tabelle | Beschreibung |
+|---------|--------------|
+| `Homepage` | Benutzer-Homepages |
+| `HomepagePrompt` | AI-Prompts für Homepage-Generierung |
+| `HomepageDomain` | Custom Domains für Homepages |
+| `AIModel` | Verfügbare AI-Modelle |
+| `AIUsageLog` | AI-Nutzungsprotokolle |
+
+### 5.2 Erweiterte Tabellen
+
+| Tabelle | Neue Felder |
+|---------|-------------|
+| `User` | `salutation`, `aiCreditsUsed` |
+| `SubscriptionPlan` | `priceSixMonths`, `includedAiCreditsEur` |
 
 ---
 
-## 5. API-Architektur
+## 6. Stripe Integration
 
-### 5.1 API-Struktur
+### 6.1 Aktivierte Zahlungsmethoden
 
-```
-src/app/api/
-├── auth/
-│   ├── register/route.ts        # Registrierung
-│   ├── 2fa/                     # Zwei-Faktor-Auth
-│   │   ├── setup/route.ts
-│   │   ├── verify/route.ts
-│   │   ├── status/route.ts
-│   │   └── disable/route.ts
-│   ├── forgot-password/route.ts
-│   ├── reset-password/route.ts
-│   └── verify-email/route.ts
-├── admin/
-│   ├── users/route.ts           # Benutzerverwaltung
-│   ├── salons/route.ts          # Salonverwaltung
-│   ├── stylists/route.ts        # Stylistenverwaltung
-│   ├── stats/route.ts           # Dashboard-Statistiken
-│   ├── revenue/route.ts         # Umsatzberichte
-│   ├── subscriptions/route.ts   # Abo-Verwaltung
-│   ├── settings/route.ts        # Plattform-Einstellungen
-│   ├── design-tokens/route.ts   # Design-System
-│   ├── product-config/          # Produkt-Seite CMS
-│   │   ├── route.ts
-│   │   └── upload/route.ts
-│   ├── security/                # Sicherheit
-│   │   ├── logs/route.ts
-│   │   ├── sessions/route.ts
-│   │   └── api-keys/route.ts
-│   ├── email-templates/         # E-Mail Templates
-│   │   ├── route.ts
-│   │   ├── [id]/route.ts
-│   │   ├── preview/route.ts
-│   │   └── send-test/route.ts
-│   ├── email-analytics/         # E-Mail Analytics
-│   │   └── route.ts             # Analytics-Daten abrufen
-│   ├── onboarding/              # Onboarding-Prüfung
-│   │   ├── route.ts
-│   │   └── [id]/route.ts
-│   ├── blog/                    # Blog CMS
-│   │   ├── posts/route.ts
-│   │   ├── authors/route.ts
-│   │   ├── categories/route.ts
-│   │   └── tags/route.ts
-│   ├── homepage-config/route.ts # Homepage CMS
-│   ├── partners/route.ts        # Partner CMS
-│   ├── press/route.ts           # Presse CMS
-│   ├── faqs/route.ts            # FAQ CMS
-│   ├── testimonials/route.ts    # Testimonials CMS
-│   ├── jobs/route.ts            # Karriere CMS
-│   └── referrals/route.ts       # Empfehlungen
-├── salon/
-│   ├── stats/route.ts           # Salon-Statistiken
-│   ├── bookings/route.ts        # Terminverwaltung
-│   ├── stylists/route.ts        # Mieter im Salon
-│   ├── customers/route.ts       # Kundenverwaltung
-│   ├── revenue/route.ts         # Umsätze
-│   ├── invoices/route.ts        # Rechnungen
-│   ├── reviews/route.ts         # Bewertungen
-│   ├── analytics/route.ts       # Analytics
-│   └── settings/route.ts        # Einstellungen
-├── stylist/
-│   ├── stats/route.ts           # Stylist-Statistiken
-│   ├── bookings/route.ts        # Termine
-│   ├── profile/route.ts         # Profil
-│   ├── earnings/route.ts        # Einnahmen
-│   ├── invoices/route.ts        # Rechnungen
-│   ├── reviews/route.ts         # Bewertungen
-│   ├── analytics/route.ts       # Analytics
-│   └── settings/route.ts        # Einstellungen
-├── user/
-│   ├── subscription/route.ts    # Eigenes Abo
-│   └── referral/route.ts        # Empfehlungen
-├── stripe/
-│   ├── create-checkout/route.ts # Checkout starten
-│   ├── portal/route.ts          # Kundenportal
-│   └── webhook/route.ts         # Stripe Webhooks
-├── messages/
-│   ├── conversations/route.ts
-│   └── users/route.ts
-├── notifications/
-│   ├── route.ts
-│   ├── [id]/read/route.ts
-│   ├── mark-all-read/route.ts
-│   └── unread-count/route.ts
-├── onboarding/
-│   ├── basic/route.ts           # Basis-Onboarding
-│   ├── stylist/                 # Compliance-Onboarding
-│   │   ├── route.ts
-│   │   └── complete/route.ts
-│   └── documents/
-│       └── upload/route.ts
-├── referral/
-│   ├── track/route.ts           # Link-Tracking
-│   └── validate/route.ts        # Code validieren
-├── platform/
-│   ├── design-tokens/route.ts   # Öffentliche Design-Tokens
-│   └── primary-color/route.ts   # Primärfarbe
-├── product-features/            # Produkt-Features
-│   ├── route.ts                 # GET öffentliche Features
-│   ├── admin/route.ts           # Admin CRUD
-│   └── [id]/route.ts            # Feature-Details
-├── product-page-config/route.ts # Produkt-Seiten-Config
-├── webhooks/                    # Externe Webhooks
-│   ├── stripe/route.ts          # Stripe Zahlungs-Events
-│   └── resend/route.ts          # Resend E-Mail-Events
-├── cron/                        # Automatisierte Jobs
-│   ├── booking-reminders/route.ts
-│   ├── daily-summary/route.ts
-│   ├── rent-reminders/route.ts
-│   ├── rental-ending/route.ts
-│   └── subscription-warnings/route.ts
-└── seed/                        # Seed-Endpunkte (Dev)
-    ├── error-messages/route.ts
-    ├── jobs/route.ts
-    ├── press/route.ts
-    └── referrals/route.ts
-```
+| Methode | Beschreibung |
+|---------|--------------|
+| **Card** | Kredit-/Debitkarten |
+| **Link** | Stripe 1-Klick-Checkout |
+| **SEPA Debit** | Lastschrift (Deutschland) |
 
-### 5.2 API-Response-Format
+### 6.2 Checkout-Varianten
 
-```typescript
-// Erfolg
-{
-  success: true,
-  data: { ... }
-}
-
-// Fehler
-{
-  error: "Fehlermeldung",
-  code: "ERROR_CODE",  // optional
-  details: { ... }     // optional
-}
-
-// Paginiert
-{
-  data: [...],
-  pagination: {
-    total: 100,
-    page: 1,
-    perPage: 10,
-    totalPages: 10
-  }
-}
-```
+| Variante | Verwendung |
+|----------|------------|
+| **Embedded Checkout** | Direkt in der App (bevorzugt) |
+| **Custom Elements** | PaymentElement + AddressElement |
+| **Redirect Checkout** | Legacy (Stripe-hosted) |
 
 ---
 
-## 6. Frontend-Architektur
+## 7. Newsletter-Builder
 
-### 6.1 Ordnerstruktur
-
-```
-src/
-├── app/
-│   ├── (auth)/              # Auth-Layouts
-│   │   ├── login/
-│   │   ├── register/
-│   │   └── forgot-password/
-│   ├── (dashboard)/         # Dashboard-Layouts
-│   │   ├── admin/           # Admin-Bereich
-│   │   ├── salon/           # Salon-Besitzer
-│   │   ├── stylist/         # Stuhlmieter
-│   │   └── dashboard/       # Gemeinsame Seiten
-│   ├── (marketing)/         # Marketing-Seiten
-│   │   ├── page.tsx         # Landing Page
-│   │   ├── preise/
-│   │   └── uber-uns/
-│   ├── onboarding/          # Onboarding-Flow
-│   │   ├── page.tsx
-│   │   └── stylist/
-│   ├── api/                 # API Routes
-│   ├── globals.css
-│   └── layout.tsx
-├── components/
-│   ├── ui/                  # Shadcn UI
-│   ├── admin/               # Admin-Komponenten
-│   ├── dashboard/           # Dashboard-Komponenten
-│   └── auth/                # Auth-Komponenten
-├── emails/
-│   ├── components/          # E-Mail-Layouts
-│   └── templates/           # E-Mail-Templates
-├── lib/
-│   ├── prisma.ts           # DB Client
-│   ├── auth.ts             # NextAuth Config
-│   ├── email.ts            # E-Mail Service
-│   ├── stripe.ts           # Stripe Client
-│   ├── notifications.ts    # Notification Helper
-│   ├── mock-data.ts        # Demo-Daten
-│   └── utils.ts            # Utilities
-└── hooks/                   # Custom Hooks
-```
-
-### 6.2 Komponenten-Hierarchie
+### 7.1 Übersicht
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         KOMPONENTEN-STRUKTUR                                 │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-                              ┌──────────────┐
-                              │  RootLayout  │
-                              │              │
-                              │ ThemeProvider│
-                              │ SessionProv. │
-                              │ Toaster      │
-                              └──────┬───────┘
-                                     │
-              ┌──────────────────────┼──────────────────────┐
-              │                      │                      │
-              ▼                      ▼                      ▼
-     ┌───────────────┐     ┌───────────────┐     ┌───────────────┐
-     │  AuthLayout   │     │ DashLayout    │     │ Marketing     │
-     │               │     │               │     │ Layout        │
-     │  - Login      │     │  - Sidebar    │     │               │
-     │  - Register   │     │  - Header     │     │  - Navbar     │
-     │  - Reset      │     │  - Content    │     │  - Footer     │
-     └───────────────┘     └───────┬───────┘     └───────────────┘
-                                   │
-           ┌───────────────────────┼───────────────────────┐
-           │                       │                       │
-           ▼                       ▼                       ▼
-    ┌────────────┐          ┌────────────┐          ┌────────────┐
-    │AdminSidebar│          │SalonSidebar│          │StylistSide │
-    │            │          │            │          │ bar        │
-    │ - Users    │          │ - Bookings │          │ - Calendar │
-    │ - Salons   │          │ - Stylists │          │ - Profile  │
-    │ - Revenue  │          │ - Revenue  │          │ - Earnings │
-    │ - E-Mail   │          │            │          │            │
-    │   Analytics│          │            │          │            │
-    └────────────┘          └────────────┘          └────────────┘
-```
-
----
-
-## 7. Zahlungsintegration (Stripe)
-
-### 7.1 Subscription-Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           STRIPE SUBSCRIPTION FLOW                           │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-    Benutzer                    NICNOA                      Stripe
-       │                          │                           │
-       │  1. Wählt Plan           │                           │
-       │─────────────────────────>│                           │
-       │                          │                           │
-       │                          │  2. Create Checkout       │
-       │                          │  Session                  │
-       │                          │──────────────────────────>│
-       │                          │                           │
-       │                          │  3. Session URL           │
-       │                          │<──────────────────────────│
-       │                          │                           │
-       │  4. Redirect to Stripe   │                           │
-       │<─────────────────────────│                           │
-       │                          │                           │
-       │─────────────────────────────────────────────────────>│
-       │                    5. Zahlung                        │
-       │<─────────────────────────────────────────────────────│
-       │                                                      │
-       │                          │  6. Webhook: checkout.    │
-       │                          │  session.completed        │
-       │                          │<──────────────────────────│
-       │                          │                           │
-       │                          │  7. Update User DB        │
-       │                          │  - stripeCustomerId       │
-       │                          │  - stripeSubscriptionId   │
-       │                          │  - status: active         │
-       │                          │                           │
-       │  8. Redirect to          │                           │
-       │  Success Page            │                           │
-       │<─────────────────────────│                           │
-       │                          │                           │
-```
-
-### 7.2 Webhook-Events
-
-| Event | Aktion |
-|-------|--------|
-| `checkout.session.completed` | Abo aktivieren, Welcome E-Mail |
-| `customer.subscription.created` | Abo in DB speichern |
-| `customer.subscription.updated` | Status aktualisieren |
-| `customer.subscription.deleted` | Abo deaktivieren |
-| `invoice.paid` | Zahlung bestätigen |
-| `invoice.payment_failed` | Warnung senden |
-
----
-
-## 8. E-Mail-System
-
-### 8.1 E-Mail-Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              E-MAIL FLOW                                     │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-    Trigger Event              Email Service              Resend
-         │                          │                       │
-         │  1. Event auslösen       │                       │
-         │  (z.B. Registrierung)    │                       │
-         │─────────────────────────>│                       │
-         │                          │                       │
-         │                          │  2. Template laden    │
-         │                          │  (aus DB)             │
-         │                          │                       │
-         │                          │  3. Variablen         │
-         │                          │  ersetzen             │
-         │                          │                       │
-         │                          │  4. HTML rendern      │
-         │                          │  (React Email)        │
-         │                          │                       │
-         │                          │  5. E-Mail senden     │
-         │                          │──────────────────────>│
-         │                          │                       │
-         │                          │  6. Message ID        │
-         │                          │<──────────────────────│
-         │                          │                       │
-         │                          │  7. Log erstellen     │
-         │                          │  (EmailLog)           │
-         │                          │                       │
-```
-
-### 8.2 Template-Kategorien
-
-| Kategorie | Templates | Trigger |
-|-----------|-----------|---------|
-| **Auth** | welcome, email-verification, password-reset | Registrierung, Passwort |
-| **Onboarding** | submitted, approved, rejected | Onboarding-Status |
-| **Subscription** | activated, renewed, expiring, expired, payment-failed, invoice | Stripe Webhooks |
-| **Booking** | confirmation, reminder, cancelled | Terminaktionen |
-| **Referral** | invitation, success | Empfehlungsprogramm |
-| **System** | new-message | Messaging |
-
-### 8.3 E-Mail Analytics
-
-Die Plattform bietet umfassende E-Mail-Analytics mit Echtzeit-Tracking via Resend Webhooks.
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         E-MAIL ANALYTICS ARCHITEKTUR                         │
+│                       NEWSLETTER-BUILDER ARCHITEKTUR                         │
 └─────────────────────────────────────────────────────────────────────────────┘
 
                               ┌───────────────────┐
-                              │      Resend       │
-                              │    E-Mail API     │
+                              │  NewsletterEditor │
+                              │    (Main UI)      │
                               └─────────┬─────────┘
                                         │
-                    ┌───────────────────┼───────────────────┐
-                    │                   │                   │
-                    ▼                   ▼                   ▼
-           ┌───────────────┐   ┌───────────────┐   ┌───────────────┐
-           │ Email Sent    │   │  Webhooks     │   │  Domains API  │
-           │               │   │               │   │               │
-           │ - Send Email  │   │ - delivered   │   │ - List        │
-           │ - Get Status  │   │ - opened      │   │ - Verify      │
-           │               │   │ - clicked     │   │ - DNS Records │
-           └───────┬───────┘   │ - bounced     │   └───────┬───────┘
-                   │           └───────┬───────┘           │
-                   │                   │                   │
-                   └───────────────────┼───────────────────┘
-                                       │
-                                       ▼
-                              ┌───────────────────┐
-                              │    EmailLog DB    │
-                              │                   │
-                              │ - Status Tracking │
-                              │ - Open/Click Time │
-                              │ - Bounce Reason   │
-                              └─────────┬─────────┘
-                                        │
-                                        ▼
-                              ┌───────────────────┐
-                              │  Admin Dashboard  │
-                              │                   │
-                              │ - Delivery Rate   │
-                              │ - Open Rate       │
-                              │ - Click Rate      │
-                              │ - Bounce Rate     │
-                              │ - Domain Status   │
-                              │ - Charts          │
-                              └───────────────────┘
+              ┌─────────────────────────┼─────────────────────────┐
+              │                         │                         │
+              ▼                         ▼                         ▼
+     ┌───────────────┐        ┌───────────────┐        ┌───────────────┐
+     │  BlockToolbar │        │  BlockEditor  │        │  EmailPreview │
+     │               │        │   (@dnd-kit)  │        │               │
+     │ - 20+ Blöcke  │        │ - Drag & Drop │        │ - Live        │
+     │ - Kategorien  │        │ - Sortieren   │        │ - Desktop     │
+     │ - Tokens      │        │ - Bearbeiten  │        │ - Mobile      │
+     └───────────────┘        └───────────────┘        └───────────────┘
 ```
 
-#### Analytics-Metriken
+### 7.2 Block-Typen
 
-| Metrik | Berechnung | Ziel |
-|--------|------------|------|
-| **Delivery Rate** | (Delivered / Sent) × 100 | >95% |
-| **Open Rate** | (Opened / Delivered) × 100 | >35% |
-| **Click Rate** | (Clicked / Opened) × 100 | >15% |
-| **Bounce Rate** | (Bounced / Sent) × 100 | <2% |
-
-#### Webhook-Events
-
-| Event | Beschreibung | Datenbank-Update |
-|-------|--------------|------------------|
-| `email.sent` | E-Mail wurde an Resend übergeben | status → SENT |
-| `email.delivered` | E-Mail wurde zugestellt | status → DELIVERED, deliveredAt |
-| `email.opened` | E-Mail wurde geöffnet | openedAt |
-| `email.clicked` | Link wurde geklickt | clickedAt |
-| `email.bounced` | E-Mail zurückgekommen | status → BOUNCED |
-| `email.complained` | Spam-Beschwerde | status → COMPLAINED |
+| Block | Beschreibung |
+|-------|--------------|
+| `TEXT` | Formatierter Text |
+| `HEADING` | Überschriften (H1-H3) |
+| `IMAGE` | Bilder mit Upload |
+| `BUTTON` | CTA-Buttons |
+| `DIVIDER` | Trennlinie |
+| `SPACER` | Abstand |
+| `TWO_COLUMN` | Zwei-Spalten |
+| `THREE_COLUMN` | Drei-Spalten |
+| `SOCIAL_LINKS` | Social Media |
+| `QUOTE` | Zitat |
+| `LIST` | Listen |
+| `VIDEO` | Video-Thumbnail |
+| `PRODUCT_CARD` | Produktkarte |
+| `COUPON` | Gutschein |
+| `PROFILE` | Profilkarte |
+| `UNSUBSCRIBE` | Abmelde-Link |
 
 ---
 
-## 9. Monitoring & Logging
+## 8. Deployment
 
-### 9.1 Security Logs
-
-```prisma
-model SecurityLog {
-  id        String              @id @db.Uuid
-  userId    String?             @db.Uuid
-  userEmail String
-  event     SecurityEventType   // LOGIN, LOGOUT, PASSWORD_CHANGED, ...
-  status    SecurityEventStatus // SUCCESS, FAILED, WARNING
-  ipAddress String?
-  userAgent String?
-  location  String?
-  device    String?
-  metadata  Json?
-  createdAt DateTime
-}
-```
-
-### 9.2 Email Logs
-
-```prisma
-model EmailLog {
-  id             String      @id @db.Uuid
-  templateId     String      @db.Uuid
-  userId         String?     @db.Uuid
-  recipientEmail String
-  subject        String
-  status         EmailStatus // PENDING, SENT, FAILED, DELIVERED, ...
-  resendId       String?
-  sentAt         DateTime?
-  deliveredAt    DateTime?
-  openedAt       DateTime?
-  clickedAt      DateTime?
-  metadata       Json?
-}
-```
-
----
-
-## 10. Demo-Modus
-
-### 10.1 Funktionsweise
-
-```typescript
-// src/lib/mock-data.ts
-export async function isDemoModeActive(): Promise<boolean> {
-  const settings = await prisma.platformSettings.findFirst()
-  return settings?.useDemoMode ?? true
-}
-
-// In API Routes
-export async function GET() {
-  if (await isDemoModeActive()) {
-    return NextResponse.json(getMockData())
-  }
-  // Echte Daten laden...
-}
-```
-
-### 10.2 Betroffene APIs
-
-- `/api/stylist/stats`
-- `/api/salon/stats`
-- `/api/admin/revenue`
-- `/api/admin/subscriptions`
-- `/api/user/subscription`
-- `/api/user/referral`
-
----
-
-## 11. Deployment
-
-### 11.1 Umgebungsvariablen
-
-```env
-# Database (Neon)
-DATABASE_URL="postgresql://..."
-DIRECT_DATABASE_URL="postgresql://..."
-
-# Auth
-NEXTAUTH_URL="https://nicnoa.vercel.app"
-NEXTAUTH_SECRET="..."
-
-# Stripe
-STRIPE_SECRET_KEY="sk_..."
-STRIPE_WEBHOOK_SECRET="whsec_..."
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_..."
-
-# Email (Resend)
-RESEND_API_KEY="re_..."
-RESEND_FROM_EMAIL="noreply@nicnoa.de"
-
-# Storage (Vercel Blob)
-BLOB_READ_WRITE_TOKEN="..."
-```
-
-### 11.2 CI/CD Pipeline
+### 8.1 CI/CD Pipeline
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -843,7 +479,7 @@ BLOB_READ_WRITE_TOKEN="..."
         │                       │  2. Trigger Build       │
         │                       │────────────────────────>│
         │                       │                         │
-        │                       │                         │  3. npm install
+        │                       │                         │  3. pnpm install
         │                       │                         │  4. prisma generate
         │                       │                         │  5. next build
         │                       │                         │
@@ -852,646 +488,116 @@ BLOB_READ_WRITE_TOKEN="..."
         │                       │                         │
         │  7. Production URL    │                         │
         │<──────────────────────│                         │
-        │                       │                         │
+```
+
+### 8.2 Vercel CLI Befehle
+
+```bash
+# Deployment
+vercel                    # Preview Deployment
+vercel --prod             # Production Deployment
+
+# Status prüfen
+vercel ls                 # Deployments auflisten
+vercel inspect <url>      # Deployment-Details
+
+# Logs
+vercel logs <url>         # Build-Logs abrufen
 ```
 
 ---
 
-## 12. Design-System
-
-### 12.1 Übersicht
-
-NICNOA verfügt über ein konfigurierbares Design-System mit vordefinierten Presets und anpassbaren Design-Tokens.
+## 9. Projektstruktur (v2.0)
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           DESIGN SYSTEM ARCHITEKTUR                          │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-                    ┌───────────────────────────────────────┐
-                    │         PlatformSettings              │
-                    │  - designSystemPreset                 │
-                    │  - designTokens (JSON)                │
-                    └───────────────────┬───────────────────┘
-                                        │
-                    ┌───────────────────┴───────────────────┐
-                    │                                       │
-                    ▼                                       ▼
-          ┌─────────────────┐                    ┌─────────────────┐
-          │  Design Presets │                    │  Custom Tokens  │
-          │                 │                    │                 │
-          │ - nicnoa-classic│                    │  - colors       │
-          │ - nicnoa-modern │                    │  - typography   │
-          │ - nicnoa-minimal│                    │  - spacing      │
-          │ - custom        │                    │  - shadows      │
-          └─────────────────┘                    └─────────────────┘
-```
-
-### 12.2 Design-Token-Struktur
-
-```typescript
-interface DesignTokens {
-  colors: {
-    primary: string
-    secondary: string
-    accent: string
-    background: string
-    foreground: string
-    muted: string
-    border: string
-  }
-  typography: {
-    fontFamily: string
-    fontSizeBase: string
-    lineHeight: string
-  }
-  spacing: {
-    unit: number
-    containerPadding: string
-  }
-  borderRadius: {
-    small: string
-    medium: string
-    large: string
-  }
-  shadows: {
-    small: string
-    medium: string
-    large: string
-  }
-}
-```
-
-### 12.3 Verfügbare Presets
-
-| Preset | Beschreibung | Primärfarbe |
-|--------|--------------|-------------|
-| `nicnoa-classic` | Klassisches NICNOA Design | Emerald (#10b981) |
-| `nicnoa-modern` | Modernes, lebendiges Design | Violet (#8b5cf6) |
-| `nicnoa-minimal` | Minimalistisches Design | Slate (#64748b) |
-| `custom` | Vollständig anpassbar | Benutzerdefiniert |
-
----
-
-## 13. CMS-System
-
-### 13.1 Übersicht
-
-Die Plattform bietet ein umfassendes CMS für verschiedene Seiten:
-
-| Seite | Config-Modell | Features-Modell |
-|-------|---------------|-----------------|
-| Homepage | `HomePageConfig` | - |
-| Produkt | `ProductPageConfig` | `ProductFeature` |
-| Partner | `PartnerPageConfig` | `Partner` |
-| Presse | `PressPageConfig` | `PressArticle` |
-| FAQ | `FAQPageConfig` | `FAQ` |
-| Über uns | `AboutUsPageConfig` | `ApproachCard` |
-| Blog | `BlogPageConfig` | `BlogPost` |
-| Karriere | (in PlatformSettings) | `JobPosting` |
-
-### 13.2 Produkt-Features CMS
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         PRODUKT-FEATURES STRUKTUR                            │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-    ProductPageConfig              ProductFeature
-          │                              │
-          │  Hero-Konfiguration          │  Feature-Karten
-          │  - Typ (animated/image)      │  - title
-          │  - Layout                    │  - description
-          │  - CTA-Buttons               │  - iconName
-          │  - Trust Indicators          │  - category
-          │                              │  - isHighlight
-          └──────────────────────────────┘
-
-Feature-Kategorien:
-- core: Kernfunktionen
-- communication: Kommunikation
-- analytics: Analytics & Berichte
-- security: Sicherheit
+nicnoa/
+├── docs/                      # Dokumentation
+│   ├── API.md                 # 140+ Endpunkte
+│   ├── ARCHITECTURE.md        # Diese Datei
+│   ├── DATABASE.md            # 55+ Tabellen
+│   └── ...
+├── prisma/
+│   ├── schema.prisma          # Datenbank-Schema
+│   ├── seed-stripe-plans.ts   # Stripe Plans Seed
+│   └── seed-v0-models.ts      # AI Modelle Seed
+├── src/
+│   ├── app/
+│   │   ├── (dashboard)/
+│   │   │   ├── admin/
+│   │   │   │   ├── ai-models/      # AI-Verwaltung
+│   │   │   │   └── marketing/      # Newsletter
+│   │   │   ├── salon/
+│   │   │   │   ├── checkout/       # Embedded Checkout
+│   │   │   │   └── marketing/
+│   │   │   │       └── homepage/   # Homepage Builder
+│   │   │   └── stylist/
+│   │   │       ├── checkout/       # Embedded Checkout
+│   │   │       └── marketing/
+│   │   │           └── homepage/   # Homepage Builder
+│   │   └── api/
+│   │       ├── stripe/
+│   │       │   ├── create-embedded-checkout/
+│   │       │   ├── create-checkout-intent/
+│   │       │   └── checkout-status/
+│   │       ├── homepage/           # Homepage APIs
+│   │       ├── domains/            # Domain APIs
+│   │       └── admin/
+│   │           ├── ai-models/      # AI Model APIs
+│   │           └── homepage-prompts/
+│   ├── components/
+│   │   ├── checkout/               # Stripe Components
+│   │   │   ├── embedded-checkout.tsx
+│   │   │   └── custom-checkout.tsx
+│   │   ├── homepage-builder/       # Homepage Components
+│   │   ├── newsletter-builder/     # Newsletter Components
+│   │   └── domains/                # Domain Components
+│   ├── lib/
+│   │   ├── stripe/
+│   │   │   ├── stripe-service.ts
+│   │   │   └── appearance.ts       # Checkout Styling
+│   │   ├── homepage-builder/
+│   │   ├── newsletter-builder/
+│   │   └── vercel/
+│   │       └── domains.ts          # Vercel DNS API
+│   └── proxy.ts                    # Auth Proxy (Next.js 16)
+└── ...
 ```
 
 ---
 
-## 14. Real-time Kommunikation (Pusher)
+## 10. Nächste Schritte
 
-### 14.1 Architektur-Übersicht
+### 10.1 Abgeschlossen (Phase 6) ✅
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         PUSHER REAL-TIME ARCHITEKTUR                         │
-└─────────────────────────────────────────────────────────────────────────────┘
+- [x] **Stripe Embedded Checkout** mit Link & SEPA Debit
+- [x] **SetupIntent/PaymentIntent** Handling für Trial-Perioden
+- [x] **Homepage Builder** mit AI-Generierung
+- [x] **Custom Domain** Support via Vercel DNS
+- [x] **AI Model Management** Dashboard
+- [x] **OpenRouter Integration** für AI-Features
+- [x] **Newsletter Builder** mit 20+ Block-Typen
+- [x] **Google Business** Integration (Mock)
 
-    Client A                     Pusher                      Client B
-        │                          │                            │
-        │  1. Subscribe to         │                            │
-        │  presence-conversation-X │                            │
-        │─────────────────────────>│                            │
-        │                          │                            │
-        │                          │  2. Subscribe to           │
-        │                          │  presence-conversation-X   │
-        │                          │<───────────────────────────│
-        │                          │                            │
-        │  3. Send Message         │                            │
-        │  via API                 │                            │
-        │                          │                            │
-        │         Server           │                            │
-        │            │             │                            │
-        │            │ 4. Trigger  │                            │
-        │            │ new-message │                            │
-        │            │────────────>│  5. Broadcast              │
-        │            │             │────────────────────────────>│
-        │                          │                            │
-```
+### 10.2 Kurzfristig (Phase 7)
 
-### 14.2 Pusher Events
-
-| Event | Kanal | Beschreibung |
-|-------|-------|--------------|
-| `new-message` | `presence-conversation-{id}` | Neue Nachricht |
-| `user-typing` | `presence-conversation-{id}` | Benutzer tippt |
-| `user-stopped-typing` | `presence-conversation-{id}` | Tippen beendet |
-| `incoming-call` | `private-user-{id}` | Eingehender Video-Anruf |
-| `call-accepted` | `private-user-{id}` | Anruf angenommen |
-| `call-rejected` | `private-user-{id}` | Anruf abgelehnt |
-| `call-ended` | `private-user-{id}` | Anruf beendet |
-
-### 14.3 Server-Konfiguration
-
-```typescript
-// src/lib/pusher-server.ts
-import Pusher from 'pusher'
-
-export async function getPusherServer(): Promise<Pusher | null> {
-  const config = await getPusherConfig()
-  if (!config) return null
-  
-  return new Pusher({
-    appId: config.pusherAppId,
-    key: config.pusherKey,
-    secret: config.pusherSecret,
-    cluster: config.pusherCluster,
-    useTLS: true,
-  })
-}
-
-export async function triggerEvent(
-  channel: string,
-  event: string,
-  data: unknown
-) {
-  const pusher = await getPusherServer()
-  if (pusher) {
-    await pusher.trigger(channel, event, data)
-  }
-}
-```
-
-### 14.4 Client-Konfiguration
-
-```typescript
-// src/lib/pusher-client.ts
-import PusherClient from 'pusher-js'
-
-let pusherInstance: PusherClient | null = null
-
-export function getPusherClient(config: PusherConfig): PusherClient {
-  if (!pusherInstance) {
-    pusherInstance = new PusherClient(config.key, {
-      cluster: config.cluster,
-      authEndpoint: '/api/pusher/auth',
-    })
-  }
-  return pusherInstance
-}
-```
-
----
-
-## 15. Video Calls (Daily.co)
-
-### 15.1 Architektur-Übersicht
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         DAILY.CO VIDEO CALL FLOW                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-    Anrufer                    NICNOA Server                  Empfänger
-        │                           │                            │
-        │  1. POST /video-call/     │                            │
-        │     initiate              │                            │
-        │──────────────────────────>│                            │
-        │                           │                            │
-        │                           │  2. Create Daily Room      │
-        │                           │  + Generate Tokens         │
-        │                           │                            │
-        │                           │  3. Pusher: incoming-call  │
-        │                           │───────────────────────────>│
-        │                           │                            │
-        │  4. Return room URL       │                            │
-        │  + caller token           │                            │
-        │<──────────────────────────│                            │
-        │                           │                            │
-        │                           │  5. POST /video-call/      │
-        │                           │     accept                 │
-        │                           │<───────────────────────────│
-        │                           │                            │
-        │  6. Pusher: call-accepted │                            │
-        │<──────────────────────────│                            │
-        │                           │                            │
-        │       7. Both join Daily Room via iframe               │
-        │<═══════════════════════════════════════════════════════>│
-        │                           │                            │
-```
-
-### 15.2 Daily.co Server-Integration
-
-```typescript
-// src/lib/daily-server.ts
-export async function createVideoCall(
-  callerId: string,
-  callerName: string,
-  calleeId: string,
-  calleeName: string
-) {
-  // 1. Create temporary room
-  const room = await createRoom(`call-${Date.now()}`)
-  
-  // 2. Generate tokens for both participants
-  const callerToken = await createMeetingToken(room.name, callerId, callerName, true)
-  const calleeToken = await createMeetingToken(room.name, calleeId, calleeName, false)
-  
-  return {
-    roomName: room.name,
-    roomUrl: room.url,
-    callerToken,
-    calleeToken,
-  }
-}
-```
-
-### 15.3 Video Call Komponenten
-
-| Komponente | Beschreibung |
-|------------|--------------|
-| `VideoCall` | Daily.co Iframe-Einbettung mit Steuerungen |
-| `IncomingCallModal` | Modal für eingehende Anrufe mit Klingelton |
-
----
-
-## 16. Analytics (PostHog)
-
-### 16.1 Integration
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         POSTHOG ANALYTICS ARCHITEKTUR                        │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-                              ┌───────────────┐
-                              │   PostHog     │
-                              │   Cloud       │
-                              └───────┬───────┘
-                                      │
-                    ┌─────────────────┼─────────────────┐
-                    │                 │                 │
-                    ▼                 ▼                 ▼
-           ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
-           │  Page Views   │  │  User Events  │  │   Heatmaps    │
-           │               │  │               │  │               │
-           │  - Views      │  │  - Clicks     │  │  - Scroll     │
-           │  - Referrer   │  │  - Forms      │  │  - Click maps │
-           │  - Duration   │  │  - Searches   │  │  - Movement   │
-           └───────────────┘  └───────────────┘  └───────────────┘
-```
-
-### 16.2 Provider-Setup
-
-```typescript
-// src/components/providers/posthog-provider.tsx
-'use client'
-
-import posthog from 'posthog-js'
-import { PostHogProvider as PHProvider } from 'posthog-js/react'
-
-export function PostHogProvider({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
-      api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-      capture_pageview: true,
-      capture_pageleave: true,
-    })
-  }, [])
-
-  return <PHProvider client={posthog}>{children}</PHProvider>
-}
-```
-
-### 16.3 Admin Analytics Dashboard
-
-Das Admin-Dashboard bietet:
-- **Übersicht**: Besucher, Page Views, Sessions
-- **Revenue Analytics**: Umsatz-Trends, MRR, Churn
-- **Heatmaps**: Click- und Scroll-Analysen
-- **Events**: Benutzerdefinierte Event-Tracking
-
----
-
-## 17. Nächste Schritte
-
-### 17.1 Abgeschlossen (Phase 4)
-- [x] Cron-Jobs für E-Mail-Erinnerungen
-- [x] Design-System mit konfigurierbaren Tokens
-- [x] Produkt-Seite CMS
-- [x] Echtzeit-Chat mit Pusher
-- [x] Video Calls mit Daily.co
-- [x] PostHog Analytics Integration
-
-### 17.2 Abgeschlossen (Phase 5)
-- [x] **Newsletter-Builder** (Drag & Drop, 16+ Block-Typen)
-- [x] **Newsletter-Vorlagen** (5 professionelle Templates)
-- [x] **Newsletter-Scheduling** (Zeitplanung)
-- [x] **Newsletter-Analytics** (Opens, Clicks, Bounces via Webhooks)
-- [x] **Personalisierung** ({{name}}, {{email}}, {{anrede}}, etc.)
-- [x] **GDPR-konformer Unsubscribe-Link** (automatisch im Footer)
-- [x] **Anrede-System** (Salutation in User-Modell)
-- [x] **System-E-Mail Updates** (Einheitliche "Hallo [Name]" Anrede)
-
-### 17.3 Kurzfristig (Phase 6)
-- [ ] Stripe Produkte/Preise synchronisieren
+- [ ] Google Business API-Integration (produktiv)
 - [ ] Kalender-Integration (Google/Outlook)
 - [ ] Push-Benachrichtigungen (Web Push)
-- [ ] Domain-Verifizierung UI in Admin-Einstellungen
+- [ ] Social Media Posting
 
-### 17.4 Mittelfristig (Phase 7)
+### 10.3 Mittelfristig (Phase 8)
+
 - [ ] Mobile App (React Native)
 - [ ] KI-gestützte Terminplanung
 - [ ] Multi-Sprachen-Support
 
-### 17.5 Langfristig (Phase 8)
+### 10.4 Langfristig (Phase 9)
+
 - [ ] White-Label für große Ketten
 - [ ] Marketplace für Stylisten-Produkte
 - [ ] AI Chatbot für Kundenservice
 
 ---
 
-## 18. Newsletter-Builder
-
-### 18.1 Übersicht
-
-Der Newsletter-Builder ist ein vollständig selbst-gehosteter, Custom Drag-and-Drop Editor ohne externe Abhängigkeiten (kein iframe, keine kommerzielle Bibliothek).
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         NEWSLETTER-BUILDER ARCHITEKTUR                       │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-                              ┌───────────────────┐
-                              │  NewsletterEditor │
-                              │    (Main UI)      │
-                              └─────────┬─────────┘
-                                        │
-              ┌─────────────────────────┼─────────────────────────┐
-              │                         │                         │
-              ▼                         ▼                         ▼
-     ┌───────────────┐        ┌───────────────┐        ┌───────────────┐
-     │  BlockToolbar │        │  BlockEditor  │        │  EmailPreview │
-     │               │        │   (@dnd-kit)  │        │               │
-     │ - Add Blocks  │        │               │        │ - Live Preview│
-     │ - Categories  │        │ - Drag & Drop │        │ - Desktop/    │
-     │ - Personalize │        │ - Sort        │        │   Mobile      │
-     └───────────────┘        │ - Edit        │        │ - Branding    │
-                              └───────┬───────┘        └───────────────┘
-                                      │
-                    ┌─────────────────┼─────────────────┐
-                    │                 │                 │
-                    ▼                 ▼                 ▼
-           ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
-           │   BlockItem   │  │   BlockItem   │  │   BlockItem   │
-           │   (Text)      │  │   (Image)     │  │   (Button)    │
-           └───────────────┘  └───────────────┘  └───────────────┘
-```
-
-### 18.2 Block-Typen
-
-| Block-Typ | Beschreibung | Icon |
-|-----------|--------------|------|
-| `TEXT` | Formatierter Text mit Alignment | Type |
-| `HEADING` | Überschriften (H1-H3) | Heading |
-| `IMAGE` | Bilder mit Upload zu Vercel Blob | Image |
-| `BUTTON` | Call-to-Action Buttons | MousePointer |
-| `DIVIDER` | Horizontale Trennlinie | Minus |
-| `SPACER` | Vertikaler Abstand | Space |
-| `TWO_COLUMN` | Zwei-Spalten Layout | Columns |
-| `THREE_COLUMN` | Drei-Spalten Layout | LayoutGrid |
-| `SOCIAL_LINKS` | Social Media Icons | Share2 |
-| `QUOTE` | Zitat-Block | Quote |
-| `LIST` | Listen (Punkte, Nummern, Checks) | List |
-| `VIDEO` | Video-Thumbnail mit Link | Video |
-| `PRODUCT_CARD` | Produktkarte | Package |
-| `COUPON` | Gutschein-Block | Tag |
-| `PROFILE` | Profilkarte | User |
-| `UNSUBSCRIBE` | Abmelde-Link (GDPR) | UserMinus |
-
-### 18.3 Editor-Features
-
-| Feature | Beschreibung | Implementierung |
-|---------|--------------|-----------------|
-| **Drag & Drop** | Blöcke per Drag & Drop sortieren | `@dnd-kit/core`, `@dnd-kit/sortable` |
-| **Live-Preview** | Echtzeit-Vorschau des Newsletters | `EmailPreview` Komponente |
-| **Mobile Preview** | Umschaltbar zwischen Desktop/Mobile | `previewMode` State |
-| **Undo/Redo** | Historie der Änderungen | History-Stack mit max. 50 Einträgen |
-| **Auto-Save** | Automatisches Speichern alle 30s | `useEffect` mit `setInterval` |
-| **Test-E-Mail** | Newsletter als Test-Mail senden | `/api/admin/newsletter/[id]/send-test` |
-| **Scheduling** | Newsletter für später planen | `ScheduleDialog` Komponente |
-| **Personalisierung** | Platzhalter wie `{{name}}` einfügen | `PersonalizationPalette` |
-| **Block-Duplizierung** | Blöcke kopieren | `handleDuplicateBlock` |
-| **Keyboard Shortcuts** | Cmd/Ctrl+Z (Undo), Cmd/Ctrl+S (Save) | `useEffect` Event Listener |
-
-### 18.4 Personalisierungs-Tokens
-
-| Token | Beschreibung | Fallback |
-|-------|--------------|----------|
-| `{{name}}` | Vollständiger Name | "Kunde" |
-| `{{firstName}}` | Vorname | "Kunde" |
-| `{{email}}` | E-Mail-Adresse | - |
-| `{{company}}` | Firmenname / Salonname | - |
-| `{{date}}` | Aktuelles Datum | - |
-| `{{year}}` | Aktuelles Jahr | - |
-| `{{anrede}}` | Personalisierte Anrede | "Hallo" |
-
-### 18.5 Vorlagen
-
-5 professionelle Newsletter-Vorlagen sind verfügbar:
-
-| Template | Use Case |
-|----------|----------|
-| **Willkommen** | Begrüßung neuer Abonnenten |
-| **Produkt-Ankündigung** | Neue Produkte/Services |
-| **Sale & Promotion** | Rabattaktionen |
-| **Monatlicher Update** | Regelmäßige Newsletter |
-| **Event-Einladung** | Events & Workshops |
-
-### 18.6 API-Endpunkte
-
-```
-/api/admin/newsletter/
-├── route.ts                    # GET (Liste), POST (Erstellen)
-├── [id]/
-│   ├── route.ts               # GET, PUT, DELETE
-│   ├── send/route.ts          # POST (Newsletter versenden)
-│   └── send-test/route.ts     # POST (Test-E-Mail)
-├── upload/route.ts            # POST (Bilder zu Vercel Blob)
-└── base-template/route.ts     # GET (Branding laden)
-```
-
-### 18.7 Resend Webhooks für Analytics
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       NEWSLETTER ANALYTICS FLOW                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-    Newsletter gesendet           Resend                    NICNOA
-           │                        │                         │
-           │  1. E-Mail an          │                         │
-           │  Empfänger             │                         │
-           │───────────────────────>│                         │
-           │                        │                         │
-           │                        │  2. Empfänger öffnet    │
-           │                        │  E-Mail                 │
-           │                        │                         │
-           │                        │  3. Webhook:            │
-           │                        │  email.opened           │
-           │                        │────────────────────────>│
-           │                        │                         │
-           │                        │                         │  4. Update DB:
-           │                        │                         │  openCount++
-           │                        │                         │
-           │                        │  5. Empfänger klickt    │
-           │                        │  Link                   │
-           │                        │                         │
-           │                        │  6. Webhook:            │
-           │                        │  email.clicked          │
-           │                        │────────────────────────>│
-           │                        │                         │
-           │                        │                         │  7. Update DB:
-           │                        │                         │  clickCount++
-```
-
-#### Webhook-Events
-
-| Event | DB-Update |
-|-------|-----------|
-| `email.sent` | sentCount++ |
-| `email.delivered` | deliveredCount++ |
-| `email.opened` | openCount++ |
-| `email.clicked` | clickCount++ |
-| `email.bounced` | bounceCount++ |
-| `email.complained` | Log complaint |
-
----
-
-## 19. Salutation (Anrede) System
-
-### 19.1 Übersicht
-
-Das System unterstützt personalisierte Anreden für Benutzer, die in E-Mails und Newslettern verwendet werden.
-
-### 19.2 Datenbank-Schema
-
-```prisma
-enum Salutation {
-  HERR
-  FRAU
-  DIVERS
-  KEINE_ANGABE
-}
-
-model User {
-  // ...
-  salutation  Salutation?  @map("salutation")
-}
-```
-
-### 19.3 Integration
-
-| Stelle | Beschreibung |
-|--------|--------------|
-| **Onboarding** | Abfrage bei Registrierung (Salon & Stylist) |
-| **Einstellungen** | Änderbar in Profil-Einstellungen |
-| **Newsletter** | Token `{{anrede}}` für personalisierte Anrede |
-| **System-E-Mails** | `EmailGreeting` Komponente verwendet Anrede |
-
-### 19.4 E-Mail-Anrede
-
-Die Anrede in E-Mails ist immer **informell (Du-Form)**:
-
-```typescript
-// src/emails/components/EmailComponents.tsx
-export function getSalutationText(salutation: Salutation, name: string): string {
-  const firstName = getFirstName(name)
-  // Immer "Hallo [Vorname]" - informell und einheitlich
-  return firstName ? `Hallo ${firstName}` : 'Hallo'
-}
-```
-
----
-
-## 20. Aktualisierte Projektstruktur
-
-### 20.1 Newsletter-Builder Komponenten
-
-```
-src/
-├── components/newsletter-builder/
-│   ├── newsletter-editor.tsx      # Haupt-Editor-Komponente
-│   ├── block-editor.tsx           # Drag & Drop Container
-│   ├── block-toolbar.tsx          # Toolbar zum Hinzufügen von Blöcken
-│   ├── block-item.tsx             # Einzelner Block im Editor
-│   ├── email-preview.tsx          # Live-Vorschau
-│   ├── newsletter-thumbnail.tsx   # Mini-Vorschau für Übersicht
-│   ├── create-newsletter-dialog.tsx # Vorlage-Auswahl
-│   ├── image-upload.tsx           # Bild-Upload Komponente
-│   ├── personalization-palette.tsx # Token-Auswahl
-│   ├── schedule-dialog.tsx        # Zeitplanung
-│   ├── index.ts                   # Exports
-│   └── blocks/
-│       ├── text-block.tsx
-│       ├── heading-block.tsx
-│       ├── image-block.tsx
-│       ├── button-block.tsx
-│       ├── divider-block.tsx
-│       ├── spacer-block.tsx
-│       ├── two-column-block.tsx
-│       ├── three-column-block.tsx
-│       ├── social-links-block.tsx
-│       ├── quote-block.tsx
-│       ├── list-block.tsx
-│       ├── video-block.tsx
-│       ├── product-card-block.tsx
-│       ├── coupon-block.tsx
-│       ├── profile-block.tsx
-│       ├── unsubscribe-block.tsx
-│       └── index.ts
-├── lib/newsletter-builder/
-│   ├── types.ts                   # TypeScript Typen & Enums
-│   ├── constants.ts               # Block-Konfigurationen
-│   ├── render-email.ts            # HTML-Generierung
-│   ├── templates.ts               # Vordefinierte Templates
-│   └── index.ts                   # Exports
-```
-
----
-
 **Dokumentation gepflegt von:** NICNOA Development Team  
-**Letzte Aktualisierung:** 18. Dezember 2025
-
-
-
-
-
+**Letzte Aktualisierung:** 19. Dezember 2025
