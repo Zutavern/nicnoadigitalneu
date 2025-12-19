@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { CheckCircle2, XCircle, Loader2, ArrowRight, Sparkles } from 'lucide-react'
@@ -16,7 +16,7 @@ interface SessionStatus {
   planName?: string
 }
 
-export default function CheckoutReturnPage() {
+function CheckoutReturnContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [status, setStatus] = useState<CheckoutStatus>('loading')
@@ -145,5 +145,21 @@ export default function CheckoutReturnPage() {
   )
 }
 
+function LoadingFallback() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="text-center">
+        <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+        <p className="text-zinc-600 dark:text-zinc-400">Laden...</p>
+      </div>
+    </div>
+  )
+}
 
-
+export default function CheckoutReturnPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <CheckoutReturnContent />
+    </Suspense>
+  )
+}
