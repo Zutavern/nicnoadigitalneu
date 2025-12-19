@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server'
 
 const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   // Skip auth check if no secret is configured (development without auth)
   if (!secret) {
     console.warn('No AUTH_SECRET or NEXTAUTH_SECRET configured')

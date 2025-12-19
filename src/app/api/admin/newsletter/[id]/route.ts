@@ -33,7 +33,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    return NextResponse.json({ newsletter })
+    // Return contentBlocks at top level for convenience
+    const designJson = newsletter.designJson as Record<string, unknown> | null
+    return NextResponse.json({ 
+      newsletter: {
+        ...newsletter,
+        contentBlocks: designJson?.contentBlocks || [],
+      }
+    })
   } catch (error) {
     console.error('Newsletter GET error:', error)
     return NextResponse.json(
@@ -43,8 +50,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// PATCH - Newsletter aktualisieren
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
+// PUT - Newsletter aktualisieren (für den neuen Editor)
+export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth()
     if (!session?.user || session.user.role !== 'ADMIN') {
@@ -76,7 +83,18 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (body.name !== undefined) updateData.name = body.name
     if (body.subject !== undefined) updateData.subject = body.subject
     if (body.preheader !== undefined) updateData.preheader = body.preheader
-    if (body.designJson !== undefined) updateData.designJson = body.designJson
+    
+    // Handle contentBlocks - store in designJson
+    if (body.contentBlocks !== undefined) {
+      const existingDesignJson = (existing.designJson as Record<string, unknown>) || {}
+      updateData.designJson = {
+        ...existingDesignJson,
+        contentBlocks: body.contentBlocks,
+      }
+    } else if (body.designJson !== undefined) {
+      updateData.designJson = body.designJson
+    }
+    
     if (body.htmlContent !== undefined) updateData.htmlContent = body.htmlContent
     if (body.segment !== undefined) {
       updateData.segment = body.segment as NewsletterSegment
@@ -98,14 +116,26 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       }
     })
 
-    return NextResponse.json({ newsletter })
+    // Return contentBlocks at top level
+    const designJson = newsletter.designJson as Record<string, unknown> | null
+    return NextResponse.json({ 
+      newsletter: {
+        ...newsletter,
+        contentBlocks: designJson?.contentBlocks || [],
+      }
+    })
   } catch (error) {
-    console.error('Newsletter PATCH error:', error)
+    console.error('Newsletter PUT error:', error)
     return NextResponse.json(
       { error: 'Fehler beim Aktualisieren des Newsletters' },
       { status: 500 }
     )
   }
+}
+
+// PATCH - Newsletter aktualisieren (legacy)
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  return PUT(request, { params })
 }
 
 // DELETE - Newsletter löschen
@@ -146,4 +176,3 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     )
   }
 }
-

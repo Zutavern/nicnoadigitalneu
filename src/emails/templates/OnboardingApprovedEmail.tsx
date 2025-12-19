@@ -2,9 +2,11 @@ import { Heading, Text, Hr } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface OnboardingApprovedEmailProps {
   userName: string
+  salutation?: Salutation
   dashboardUrl: string
   content: {
     headline: string
@@ -19,6 +21,7 @@ interface OnboardingApprovedEmailProps {
 
 export function OnboardingApprovedEmail({
   userName,
+  salutation,
   dashboardUrl,
   content,
   logoUrl,
@@ -39,7 +42,7 @@ export function OnboardingApprovedEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{userName}</strong>,
+        {getSalutationText(salutation, userName)},
       </Text>
       
       <Text style={paragraph}>{bodyText}</Text>

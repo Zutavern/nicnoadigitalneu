@@ -9,10 +9,13 @@ import {
   EmailFeatureList,
   EmailButtonContainer,
   EmailFooterNote,
+  EmailGreeting,
+  type Salutation,
 } from '../components/EmailComponents'
 
 interface WelcomeEmailProps {
   userName: string
+  salutation?: Salutation
   dashboardUrl?: string
   content: {
     headline: string
@@ -27,6 +30,7 @@ interface WelcomeEmailProps {
 
 export function WelcomeEmail({
   userName,
+  salutation,
   dashboardUrl = 'https://nicnoa.online/dashboard',
   content,
   logoUrl,
@@ -71,9 +75,7 @@ export function WelcomeEmail({
 
       <EmailHeading as="h1">{content.headline}</EmailHeading>
 
-      <EmailParagraph>
-        Hallo <strong>{userName}</strong>,
-      </EmailParagraph>
+      <EmailGreeting userName={userName} salutation={salutation} />
 
       <EmailParagraph>{bodyText}</EmailParagraph>
 
@@ -86,7 +88,7 @@ export function WelcomeEmail({
       <EmailFeatureList features={features} primaryColor={primaryColor} />
 
       <EmailButtonContainer>
-        <EmailButton href={dashboardUrl} primaryColor={primaryColor} size="lg">
+        <EmailButton href={dashboardUrl} primaryColor={primaryColor}>
           {content.buttonText || 'Zum Dashboard'}
         </EmailButton>
       </EmailButtonContainer>

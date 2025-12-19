@@ -2,9 +2,11 @@ import { Heading, Hr, Text } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface DailySummaryEmailProps {
   adminName: string
+  salutation?: Salutation
   date: string
   // Key Metrics
   totalRevenue: string
@@ -37,6 +39,7 @@ interface DailySummaryEmailProps {
 
 export function DailySummaryEmail({
   adminName,
+  salutation,
   date,
   totalRevenue,
   revenueChangePercent,
@@ -75,7 +78,7 @@ export function DailySummaryEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{adminName}</strong>,
+        {getSalutationText(salutation, adminName)},
       </Text>
       
       <Text style={paragraph}>{bodyText}</Text>

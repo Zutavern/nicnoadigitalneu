@@ -22,6 +22,8 @@ import {
   AlertCircle,
   ChevronDown,
   Loader2,
+  Globe,
+  Edit3,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -64,12 +66,12 @@ import { cn } from '@/lib/utils'
 
 interface AIModel {
   id: string
-  provider: 'OPENROUTER' | 'REPLICATE'
+  provider: 'OPENROUTER' | 'REPLICATE' | 'V0'
   modelId: string
   modelKey: string
   name: string
   description: string | null
-  category: 'TEXT' | 'IMAGE' | 'VIDEO'
+  category: 'TEXT' | 'IMAGE' | 'VIDEO' | 'GENERATION'
   subcategory: string | null
   costPerInputToken: number | null
   costPerOutputToken: number | null
@@ -98,6 +100,7 @@ interface Stats {
     text: number
     image: number
     video: number
+    v0: number
   }
   totalProfit: number
   totalRequests: number
@@ -107,6 +110,7 @@ const categoryIcons = {
   TEXT: MessageSquare,
   IMAGE: ImageIcon,
   VIDEO: Video,
+  GENERATION: Globe,
 }
 
 const subcategoryConfig: Record<string, { label: string; icon: typeof Sparkles; color: string }> = {
@@ -115,6 +119,7 @@ const subcategoryConfig: Record<string, { label: string; icon: typeof Sparkles; 
   reasoning: { label: 'Reasoning', icon: Brain, color: 'text-blue-500' },
   fast: { label: 'Schnell', icon: Zap, color: 'text-green-500' },
   coding: { label: 'Coding', icon: Code, color: 'text-orange-500' },
+  homepage: { label: 'Homepage Builder', icon: Globe, color: 'text-emerald-500' },
 }
 
 export default function AIModelsPage() {
@@ -123,7 +128,10 @@ export default function AIModelsPage() {
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'text' | 'image' | 'video'>('text')
+  const [activeTab, setActiveTab] = useState<'text' | 'image' | 'video' | 'v0'>('text')
+  const [editingV0Model, setEditingV0Model] = useState<AIModel | null>(null)
+  const [v0CostPerRun, setV0CostPerRun] = useState('')
+  const [v0PricePerRun, setV0PricePerRun] = useState('')
   const [bulkMarginOpen, setBulkMarginOpen] = useState(false)
   const [bulkMargin, setBulkMargin] = useState(40)
   const [editingModel, setEditingModel] = useState<AIModel | null>(null)
@@ -212,7 +220,14 @@ export default function AIModelsPage() {
     const matchesSearch = searchQuery === '' ||
       model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       model.modelId.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = model.category === activeTab.toUpperCase()
+    // V0 Tab zeigt GENERATION Kategorie
+    const categoryMap: Record<string, string> = {
+      text: 'TEXT',
+      image: 'IMAGE',
+      video: 'VIDEO',
+      v0: 'GENERATION',
+    }
+    const matchesCategory = model.category === categoryMap[activeTab]
     return matchesSearch && matchesCategory
   })
 
@@ -356,6 +371,10 @@ export default function AIModelsPage() {
                     <Video className="h-4 w-4" />
                     Video ({stats?.byCategory.video || 0})
                   </TabsTrigger>
+                  <TabsTrigger value="v0" className="gap-2">
+                    <Globe className="h-4 w-4" />
+                    V0 Homepage ({stats?.byCategory.v0 || 0})
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
 
@@ -498,13 +517,24 @@ export default function AIModelsPage() {
                                           </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                          <DropdownMenuItem onClick={() => {
-                                            setEditingModel(model)
-                                            setEditMargin(model.marginPercent)
-                                          }}>
-                                            <Percent className="h-4 w-4 mr-2" />
-                                            Marge anpassen
-                                          </DropdownMenuItem>
+                                          {model.category === 'GENERATION' ? (
+                                            <DropdownMenuItem onClick={() => {
+                                              setEditingV0Model(model)
+                                              setV0CostPerRun(model.costPerRun?.toString() || '0')
+                                              setV0PricePerRun(model.pricePerRun?.toString() || '0')
+                                            }}>
+                                              <Edit3 className="h-4 w-4 mr-2" />
+                                              Preise bearbeiten
+                                            </DropdownMenuItem>
+                                          ) : (
+                                            <DropdownMenuItem onClick={() => {
+                                              setEditingModel(model)
+                                              setEditMargin(model.marginPercent)
+                                            }}>
+                                              <Percent className="h-4 w-4 mr-2" />
+                                              Marge anpassen
+                                            </DropdownMenuItem>
+                                          )}
                                           <DropdownMenuSeparator />
                                           <DropdownMenuItem
                                             className="text-destructive"
@@ -553,7 +583,7 @@ export default function AIModelsPage() {
             <DialogHeader>
               <DialogTitle>Alle Margen anpassen</DialogTitle>
               <DialogDescription>
-                Setze die Marge für alle {activeTab === 'text' ? 'Text' : activeTab === 'image' ? 'Bild' : 'Video'}-Modelle auf einmal.
+                Setze die Marge für alle {activeTab === 'text' ? 'Text' : activeTab === 'image' ? 'Bild' : activeTab === 'video' ? 'Video' : 'V0'}-Modelle auf einmal.
               </DialogDescription>
             </DialogHeader>
             <div className="py-6 space-y-4">
@@ -655,6 +685,113 @@ export default function AIModelsPage() {
               <Button onClick={() => editingModel && handleUpdateModel(editingModel.id, { marginPercent: editMargin })}>
                 <Check className="h-4 w-4 mr-2" />
                 Speichern
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* V0 Price Edit Dialog */}
+        <Dialog open={!!editingV0Model} onOpenChange={(open) => !open && setEditingV0Model(null)}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-emerald-500" />
+                V0 Preise bearbeiten: {editingV0Model?.name}
+              </DialogTitle>
+              <DialogDescription>
+                Passe die Einkaufs- und Verkaufspreise für diesen V0-Service an.
+              </DialogDescription>
+            </DialogHeader>
+            {editingV0Model && (
+              <div className="py-4 space-y-6">
+                {/* Einkaufspreis */}
+                <div className="space-y-2">
+                  <Label htmlFor="v0CostPerRun" className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    Einkaufspreis (USD pro Aufruf)
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                    <Input
+                      id="v0CostPerRun"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={v0CostPerRun}
+                      onChange={(e) => setV0CostPerRun(e.target.value)}
+                      className="pl-7"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Deine tatsächlichen Kosten pro V0 API-Aufruf
+                  </p>
+                </div>
+
+                {/* Verkaufspreis */}
+                <div className="space-y-2">
+                  <Label htmlFor="v0PricePerRun" className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-emerald-500" />
+                    Verkaufspreis (EUR pro Aufruf)
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
+                    <Input
+                      id="v0PricePerRun"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={v0PricePerRun}
+                      onChange={(e) => setV0PricePerRun(e.target.value)}
+                      className="pl-7"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Preis der dem Kunden berechnet wird
+                  </p>
+                </div>
+
+                {/* Margin Preview */}
+                <div className="bg-gradient-to-r from-emerald-500/10 to-green-500/10 p-4 rounded-lg border border-emerald-500/20">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Berechnete Marge</span>
+                    <span className="text-2xl font-bold text-emerald-500">
+                      {(() => {
+                        const cost = parseFloat(v0CostPerRun) || 0
+                        const price = parseFloat(v0PricePerRun) || 0
+                        if (cost <= 0) return '∞'
+                        return `${Math.round(((price - cost) / cost) * 100)}%`
+                      })()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Gewinn pro Aufruf:</span>
+                    <span className="font-medium text-green-500">
+                      €{((parseFloat(v0PricePerRun) || 0) - (parseFloat(v0CostPerRun) || 0)).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingV0Model(null)}>
+                Abbrechen
+              </Button>
+              <Button 
+                className="bg-emerald-600 hover:bg-emerald-700"
+                onClick={() => {
+                  if (editingV0Model) {
+                    handleUpdateModel(editingV0Model.id, { 
+                      costPerRun: parseFloat(v0CostPerRun) || 0,
+                      pricePerRun: parseFloat(v0PricePerRun) || 0,
+                    })
+                    setEditingV0Model(null)
+                  }
+                }}
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Preise speichern
               </Button>
             </DialogFooter>
           </DialogContent>

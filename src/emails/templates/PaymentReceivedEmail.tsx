@@ -2,9 +2,11 @@ import { Heading, Hr, Text } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface PaymentReceivedEmailProps {
   salonOwnerName: string
+  salutation?: Salutation
   stylistName: string
   chairName: string
   amount: string
@@ -27,6 +29,7 @@ interface PaymentReceivedEmailProps {
 
 export function PaymentReceivedEmail({
   salonOwnerName,
+  salutation,
   stylistName,
   chairName,
   amount,
@@ -58,7 +61,7 @@ export function PaymentReceivedEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{salonOwnerName}</strong>,
+        {getSalutationText(salutation, salonOwnerName)},
       </Text>
       
       <Text style={paragraph}>{bodyText}</Text>

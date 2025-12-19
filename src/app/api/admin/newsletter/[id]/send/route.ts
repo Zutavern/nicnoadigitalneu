@@ -3,11 +3,67 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { NewsletterStatus, NewsletterSegment, UserRole } from '@prisma/client'
 import { Resend } from 'resend'
+import { format } from 'date-fns'
+import { de } from 'date-fns/locale'
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 interface RouteParams {
   params: Promise<{ id: string }>
+}
+
+interface RecipientData {
+  email: string
+  name: string | null
+  salutation?: string | null
+  salonName?: string | null
+  companyName?: string | null
+}
+
+/**
+ * Generiert die Anrede basierend auf salutation
+ */
+function getSalutationText(salutation: string | null, name: string | null): string {
+  const firstName = name?.split(' ')[0] || ''
+  
+  switch (salutation) {
+    case 'FRAU':
+      return firstName ? `Liebe ${firstName}` : 'Liebe'
+    case 'HERR':
+      return firstName ? `Lieber ${firstName}` : 'Lieber'
+    case 'DIVERS':
+    case 'KEINE_ANGABE':
+    default:
+      return firstName ? `Hallo ${firstName}` : 'Hallo'
+  }
+}
+
+/**
+ * Ersetzt alle Personalisierungsplatzhalter im HTML
+ */
+function replacePersonalizationPlaceholders(
+  html: string, 
+  recipient: RecipientData
+): string {
+  const now = new Date()
+  
+  // Alle verfügbaren Platzhalter
+  const replacements: Record<string, string> = {
+    '{{anrede}}': getSalutationText(recipient.salutation, recipient.name),
+    '{{name}}': recipient.name || 'Geschätzte/r Kunde/in',
+    '{{vorname}}': recipient.name?.split(' ')[0] || 'Geschätzte/r Kunde/in',
+    '{{email}}': recipient.email,
+    '{{company}}': recipient.salonName || recipient.companyName || '',
+    '{{date}}': format(now, 'dd. MMMM yyyy', { locale: de }),
+    '{{year}}': now.getFullYear().toString(),
+  }
+
+  let result = html
+  for (const [placeholder, value] of Object.entries(replacements)) {
+    result = result.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), value)
+  }
+
+  return result
 }
 
 // POST - Newsletter versenden
@@ -100,7 +156,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
       select: {
         email: true,
-        name: true
+        name: true,
+        salutation: true,
+        salon: {
+          select: {
+            name: true
+          }
+        }
       }
     })
 
@@ -135,18 +197,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       const batch = recipients.slice(i, i + batchSize)
       
       try {
-        // Batch-Versand mit individuellen Emails
-        const sendPromises = batch.map(recipient => 
-          resend.emails.send({
+        // Batch-Versand mit individuellen personalisierten Emails
+        const sendPromises = batch.map(recipient => {
+          const personalizedHtml = replacePersonalizationPlaceholders(
+            newsletter.htmlContent!,
+            {
+              email: recipient.email,
+              name: recipient.name,
+              salutation: recipient.salutation,
+              salonName: recipient.salon?.name,
+            }
+          )
+          
+          return resend.emails.send({
             from: fromEmail,
             to: recipient.email,
             subject: newsletter.subject,
-            html: newsletter.htmlContent!.replace(
-              /\{\{name\}\}/g, 
-              recipient.name || 'Liebe/r Nutzer/in'
-            )
+            html: personalizedHtml
           })
-        )
+        })
 
         await Promise.all(sendPromises)
         sentCount += batch.length
@@ -190,4 +259,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     )
   }
 }
+
 

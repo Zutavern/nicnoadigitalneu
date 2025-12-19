@@ -2,9 +2,11 @@ import { Heading, Hr, Text } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface LoginNewDeviceEmailProps {
   userName: string
+  salutation?: Salutation
   loginTime: string
   loginDate: string
   device: string
@@ -25,6 +27,7 @@ interface LoginNewDeviceEmailProps {
 
 export function LoginNewDeviceEmail({
   userName,
+  salutation,
   loginTime,
   loginDate,
   device,
@@ -54,7 +57,7 @@ export function LoginNewDeviceEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{userName}</strong>,
+        {getSalutationText(salutation, userName)},
       </Text>
       
       <Text style={paragraph}>{bodyText}</Text>

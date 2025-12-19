@@ -2,9 +2,11 @@ import { Heading, Text, Section } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface SubscriptionExpiredEmailProps {
   userName: string
+  salutation?: Salutation
   reactivateUrl?: string
   content: {
     headline: string
@@ -19,6 +21,7 @@ interface SubscriptionExpiredEmailProps {
 
 export function SubscriptionExpiredEmail({
   userName,
+  salutation,
   reactivateUrl = 'https://nicnoa.online/dashboard/settings/billing',
   content,
   logoUrl,
@@ -39,7 +42,7 @@ export function SubscriptionExpiredEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{userName}</strong>,
+        {getSalutationText(salutation, userName)},
       </Text>
       
       <Text style={paragraph}>{bodyText}</Text>

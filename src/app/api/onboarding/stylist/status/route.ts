@@ -10,10 +10,16 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Hole Onboarding-Daten
-    const onboarding = await prisma.stylistOnboarding.findUnique({
-      where: { userId: session.user.id },
-    })
+    // Hole Onboarding-Daten und User-Daten (für Anrede)
+    const [onboarding, user] = await Promise.all([
+      prisma.stylistOnboarding.findUnique({
+        where: { userId: session.user.id },
+      }),
+      prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { salutation: true },
+      }),
+    ])
 
     if (!onboarding) {
       return NextResponse.json({
@@ -45,6 +51,7 @@ export async function GET() {
           craftsChamber: { uploaded: false, notAvailable: false },
         },
         businessData: {
+          salutation: user?.salutation || '',
           companyName: '',
           taxId: '',
           vatId: '',
@@ -152,6 +159,7 @@ export async function GET() {
       compliance: complianceAnswers,
       documents: documentsData,
       businessData: {
+        salutation: user?.salutation || '',
         companyName: onboarding.companyName,
         taxId: onboarding.taxId,
         vatId: onboarding.vatId,

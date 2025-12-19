@@ -37,7 +37,7 @@ export async function GET() {
       return NextResponse.json(profile || defaultBranding)
     } 
     
-    if (role === 'SALON') {
+    if (role === 'SALON_OWNER') {
       const profile = await prisma.salonProfile.findUnique({
         where: { userId },
         select: {
@@ -50,8 +50,10 @@ export async function GET() {
       return NextResponse.json(profile || defaultBranding)
     }
 
+    // Fallback für andere Rollen (z.B. ADMIN)
+    console.log(`Branding GET: Unbekannte Rolle ${role} für User ${userId}`)
     return NextResponse.json(
-      { error: 'Ungültige Rolle für Branding' },
+      { error: `Ungültige Rolle für Branding: ${role}` },
       { status: 403 }
     )
   } catch (error) {
@@ -110,7 +112,7 @@ export async function PUT(request: Request) {
       return NextResponse.json(profile)
     }
     
-    if (role === 'SALON') {
+    if (role === 'SALON_OWNER') {
       // Für Salon-Profile brauchen wir einen salonName als Pflichtfeld
       const existingProfile = await prisma.salonProfile.findUnique({
         where: { userId },
@@ -137,8 +139,10 @@ export async function PUT(request: Request) {
       return NextResponse.json(profile)
     }
 
+    // Fallback für andere Rollen (z.B. ADMIN)
+    console.log(`Branding PUT: Unbekannte Rolle ${role} für User ${userId}`)
     return NextResponse.json(
-      { error: 'Ungültige Rolle für Branding' },
+      { error: `Ungültige Rolle für Branding: ${role}` },
       { status: 403 }
     )
   } catch (error) {

@@ -119,6 +119,10 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       'costPerInputToken',
       'costPerOutputToken',
       'costPerRun',
+      // Direkte Preise (für V0 und andere Services mit festen Preisen)
+      'pricePerRun',
+      'pricePerInputToken',
+      'pricePerOutputToken',
     ]
 
     const updateData: Record<string, unknown> = {}
@@ -129,8 +133,13 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Wenn Marge geändert wurde, berechne neue Preise
-    if (body.marginPercent !== undefined) {
+    // Prüfe ob direkte Preise gesetzt werden (überschreibt Marge-Berechnung)
+    const hasDirectPrices = body.pricePerRun !== undefined || 
+                           body.pricePerInputToken !== undefined || 
+                           body.pricePerOutputToken !== undefined
+
+    // Wenn Marge geändert wurde UND keine direkten Preise gesetzt, berechne neue Preise
+    if (body.marginPercent !== undefined && !hasDirectPrices) {
       const margin = body.marginPercent
       
       const costInput = body.costPerInputToken ?? (current.costPerInputToken ? Number(current.costPerInputToken) : null)
@@ -148,18 +157,29 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Wenn Kosten geändert wurden, berechne neue Preise
-    if (body.costPerInputToken !== undefined || body.costPerOutputToken !== undefined || body.costPerRun !== undefined) {
+    // Wenn Kosten geändert wurden UND keine direkten Preise gesetzt, berechne neue Preise
+    if (!hasDirectPrices && (body.costPerInputToken !== undefined || body.costPerOutputToken !== undefined || body.costPerRun !== undefined)) {
       const margin = body.marginPercent ?? current.marginPercent
 
-      if (body.costPerInputToken !== undefined) {
+      if (body.costPerInputToken !== undefined && body.pricePerInputToken === undefined) {
         updateData.pricePerInputToken = body.costPerInputToken * (1 + margin / 100)
       }
-      if (body.costPerOutputToken !== undefined) {
+      if (body.costPerOutputToken !== undefined && body.pricePerOutputToken === undefined) {
         updateData.pricePerOutputToken = body.costPerOutputToken * (1 + margin / 100)
       }
-      if (body.costPerRun !== undefined) {
+      if (body.costPerRun !== undefined && body.pricePerRun === undefined) {
         updateData.pricePerRun = body.costPerRun * (1 + margin / 100)
+      }
+    }
+
+    // Bei direkten Preisänderungen: Berechne Marge automatisch
+    if (hasDirectPrices) {
+      if (body.pricePerRun !== undefined && body.costPerRun !== undefined) {
+        const cost = body.costPerRun
+        const price = body.pricePerRun
+        if (cost > 0) {
+          updateData.marginPercent = Math.round(((price - cost) / cost) * 100)
+        }
       }
     }
 

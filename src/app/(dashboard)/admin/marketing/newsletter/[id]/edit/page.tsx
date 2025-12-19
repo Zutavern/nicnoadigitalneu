@@ -2,11 +2,10 @@
 
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
-import { NewsletterEditor } from '@/components/newsletter'
+import { NewsletterEditor } from '@/components/newsletter-builder'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
-
-type NewsletterSegment = 'ALL' | 'STYLISTS' | 'SALON_OWNERS' | 'CUSTOM'
+import type { NewsletterBlock } from '@/lib/newsletter-builder/types'
 
 interface EditNewsletterPageProps {
   params: Promise<{ id: string }>
@@ -18,9 +17,7 @@ export default function EditNewsletterPage({ params }: EditNewsletterPageProps) 
   const [newsletter, setNewsletter] = useState<{
     name: string
     subject: string
-    preheader?: string
-    designJson?: object
-    segment: NewsletterSegment
+    contentBlocks: NewsletterBlock[]
   } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -37,12 +34,15 @@ export default function EditNewsletterPage({ params }: EditNewsletterPageProps) 
         }
         
         const data = await response.json()
+        
+        // Migration: Falls alte designJson vorhanden, verwende leere Blocks
+        // (alte Unlayer-Designs sind nicht kompatibel)
+        const contentBlocks = data.newsletter.contentBlocks || []
+        
         setNewsletter({
           name: data.newsletter.name,
           subject: data.newsletter.subject,
-          preheader: data.newsletter.preheader || undefined,
-          designJson: data.newsletter.designJson,
-          segment: data.newsletter.segment
+          contentBlocks: contentBlocks,
         })
       } catch (error) {
         console.error('Fetch error:', error)
@@ -56,8 +56,29 @@ export default function EditNewsletterPage({ params }: EditNewsletterPageProps) 
     fetchNewsletter()
   }, [id])
 
-  const handleSave = async () => {
-    toast.success('Newsletter gespeichert')
+  const handleSave = async (data: {
+    name: string
+    subject: string
+    contentBlocks: NewsletterBlock[]
+  }) => {
+    try {
+      const response = await fetch(`/api/admin/newsletter/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name,
+          subject: data.subject,
+          contentBlocks: data.contentBlocks,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Update fehlgeschlagen')
+      }
+    } catch (error) {
+      console.error('Save error:', error)
+      throw error
+    }
   }
 
   const handleBack = () => {
@@ -102,4 +123,3 @@ export default function EditNewsletterPage({ params }: EditNewsletterPageProps) 
     </div>
   )
 }
-

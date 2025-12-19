@@ -2,9 +2,11 @@ import { Heading, Text, Section } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface OnboardingRejectedEmailProps {
   userName: string
+  salutation?: Salutation
   reason: string
   retryUrl?: string
   content: {
@@ -20,6 +22,7 @@ interface OnboardingRejectedEmailProps {
 
 export function OnboardingRejectedEmail({
   userName,
+  salutation,
   reason,
   retryUrl = 'https://nicnoa.online/onboarding/stylist',
   content,
@@ -43,7 +46,7 @@ export function OnboardingRejectedEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{userName}</strong>,
+        {getSalutationText(salutation, userName)},
       </Text>
       
       <Text style={paragraph}>{bodyText}</Text>

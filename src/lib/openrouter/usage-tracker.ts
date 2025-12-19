@@ -17,6 +17,9 @@ const FEATURE_LABELS: Record<string, string> = {
   image_generation: 'Bild-Generierung',
   video_generation: 'Video-Generierung',
   ai_usage: 'AI-Nutzung',
+  // V0 Homepage Builder
+  homepage_generation: 'Homepage erstellen',
+  homepage_prompt: 'Homepage ändern',
 }
 
 // Category mapping for model types
@@ -29,12 +32,16 @@ const IMAGE_VIDEO_CATEGORIES = ['images', 'image', 'video', 'videos']
 export async function logAIUsage(entry: UsageLogEntry): Promise<string | null> {
   try {
     // Ermittle modelKey für DB-Lookup
-    const modelKey = entry.model.includes('/') 
-      ? entry.model 
-      : `${entry.provider}/${entry.model}`
+    // Für V0 und andere Provider mit direktem modelKey: verwende entry.model direkt
+    // Für OpenRouter-ähnliche Provider: verwende provider/model Format
+    let modelKey = entry.model
+    if (!entry.model.includes('-homepage-') && !entry.model.includes('/')) {
+      // Kein V0-Key und kein Slash -> OpenRouter-Format verwenden
+      modelKey = `${entry.provider}/${entry.model}`
+    }
     
-    // Prüfe ob Image/Video Modell
-    const isImageOrVideo = ['image_generation', 'video_generation'].includes(entry.feature || '') ||
+    // Prüfe ob Image/Video Modell oder V0 Homepage Builder (pricePerRun basiert)
+    const isImageOrVideo = ['image_generation', 'video_generation', 'homepage_generation', 'homepage_prompt'].includes(entry.feature || '') ||
       IMAGE_VIDEO_CATEGORIES.some(cat => entry.requestType?.includes(cat))
 
     // Berechne Preise aus der Datenbank

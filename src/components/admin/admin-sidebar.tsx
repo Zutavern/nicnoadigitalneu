@@ -52,6 +52,7 @@ import {
   Database,
   Palette,
   Share2,
+  Library,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -246,6 +247,13 @@ const menuItems: MenuSection[] = [
           { label: 'E-Mail Templates', href: '/admin/email-templates', icon: Mail },
           { label: 'E-Mail Analytics', href: '/admin/settings/email-analytics', icon: BarChart3 },
           { label: 'SMS Analytics', href: '/admin/settings/sms-analytics', icon: MessageSquare },
+          {
+            label: 'Homepage-Builder',
+            icon: Globe,
+            children: [
+              { label: 'Prompt Library', href: '/admin/settings/homepage-builder/prompt-library', icon: Library },
+            ],
+          },
         ],
       },
     ],

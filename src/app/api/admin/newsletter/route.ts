@@ -33,8 +33,17 @@ export async function GET(request: NextRequest) {
       prisma.newsletter.count({ where })
     ])
 
+    // Transform designJson to include contentBlocks at top level for convenience
+    const transformedNewsletters = newsletters.map(newsletter => {
+      const designJson = newsletter.designJson as Record<string, unknown> | null
+      return {
+        ...newsletter,
+        contentBlocks: designJson?.contentBlocks || [],
+      }
+    })
+
     return NextResponse.json({
-      newsletters,
+      newsletters: transformedNewsletters,
       total,
       hasMore: offset + newsletters.length < total
     })
@@ -56,7 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, subject, preheader, designJson, segment } = body
+    const { name, subject, preheader, designJson, contentBlocks, segment } = body
 
     if (!name || !subject) {
       return NextResponse.json(
@@ -65,12 +74,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Store contentBlocks inside designJson for backwards compatibility
+    const finalDesignJson = contentBlocks 
+      ? { contentBlocks, ...designJson }
+      : designJson || {}
+
     const newsletter = await prisma.newsletter.create({
       data: {
         name,
         subject,
         preheader: preheader || null,
-        designJson: designJson || {},
+        designJson: finalDesignJson,
         segment: segment || NewsletterSegment.ALL,
         status: NewsletterStatus.DRAFT,
         createdBy: session.user.id
@@ -82,7 +96,14 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ newsletter }, { status: 201 })
+    // Return contentBlocks at top level
+    const designJsonTyped = newsletter.designJson as Record<string, unknown> | null
+    return NextResponse.json({ 
+      newsletter: {
+        ...newsletter,
+        contentBlocks: designJsonTyped?.contentBlocks || [],
+      }
+    }, { status: 201 })
   } catch (error) {
     console.error('Newsletter POST error:', error)
     return NextResponse.json(
@@ -91,4 +112,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

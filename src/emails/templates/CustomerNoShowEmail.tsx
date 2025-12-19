@@ -2,9 +2,11 @@ import { Heading, Hr, Text } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface CustomerNoShowEmailProps {
   stylistName: string
+  salutation?: Salutation
   customerName: string
   serviceName: string
   bookingDate: string
@@ -25,6 +27,7 @@ interface CustomerNoShowEmailProps {
 
 export function CustomerNoShowEmail({
   stylistName,
+  salutation,
   customerName,
   serviceName,
   bookingDate,
@@ -53,7 +56,7 @@ export function CustomerNoShowEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{stylistName}</strong>,
+        {getSalutationText(salutation, stylistName)},
       </Text>
       
       <Text style={paragraph}>{bodyText}</Text>

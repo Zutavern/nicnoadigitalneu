@@ -243,10 +243,14 @@ export async function POST(request: Request) {
       },
     })
 
-    // Markiere User-Onboarding als abgeschlossen (vorläufig, auch wenn Dokumente fehlen)
+    // Markiere User-Onboarding als abgeschlossen + Speichere Anrede
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { onboardingCompleted: true },
+      data: { 
+        onboardingCompleted: true,
+        // Speichere Anrede im User-Model für personalisierte Kommunikation
+        ...(businessData.salutation && { salutation: businessData.salutation }),
+      },
     })
 
     // Benachrichtige alle Admins über den neuen Onboarding-Antrag

@@ -81,6 +81,8 @@ export const stripeService = {
     return stripe.checkout.sessions.create({
       customer: params.customerId,
       mode: 'subscription',
+      // Link für schnellen 1-Klick-Checkout aktivieren
+      payment_method_types: ['card', 'link'],
       line_items: [{ 
         price: priceId, 
         quantity: 1 
@@ -97,6 +99,11 @@ export const stripeService = {
       },
       allow_promotion_codes: true,
       billing_address_collection: 'required',
+      // Speichere die Billing-Adresse automatisch auf dem Customer (erforderlich für automatic_tax)
+      customer_update: {
+        address: 'auto',
+        name: 'auto',
+      },
       // Stripe Tax für automatische MwSt-Berechnung
       automatic_tax: { enabled: true },
       // Steuer-ID Sammlung für B2B
@@ -139,6 +146,8 @@ export const stripeService = {
     return stripe.checkout.sessions.create({
       customer: params.customerId,
       mode: 'payment',
+      // Link für schnellen 1-Klick-Checkout aktivieren
+      payment_method_types: ['card', 'link'],
       line_items: [{ 
         price: pkg.stripePriceId, 
         quantity: 1 

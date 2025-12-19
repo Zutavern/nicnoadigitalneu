@@ -19,7 +19,11 @@ export async function GET() {
     // Get the user and their stylist profile
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      include: {
+      select: {
+        name: true,
+        email: true,
+        salutation: true,
+        twoFactorEnabled: true,
         stylistProfile: true,
       },
     })
@@ -33,6 +37,7 @@ export async function GET() {
     return NextResponse.json({
       name: user.name || '',
       email: user.email || '',
+      salutation: user.salutation || '',
       phone: profile?.phone || '',
       bio: profile?.bio || '',
       address: profile?.street || '',
@@ -71,6 +76,7 @@ export async function PUT(request: Request) {
     const {
       name,
       email,
+      salutation,
       phone,
       bio,
       address,
@@ -96,6 +102,7 @@ export async function PUT(request: Request) {
         name,
         email,
         twoFactorEnabled,
+        ...(salutation && { salutation }),
       },
     })
 

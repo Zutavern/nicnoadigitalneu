@@ -9,10 +9,13 @@ import {
   EmailInfoCard,
   EmailButtonContainer,
   EmailFooterNote,
+  EmailGreeting,
+  type Salutation,
 } from '../components/EmailComponents'
 
 interface MagicLinkEmailProps {
   userName: string
+  salutation?: Salutation
   loginUrl: string
   content: {
     headline: string
@@ -27,6 +30,7 @@ interface MagicLinkEmailProps {
 
 export function MagicLinkEmail({
   userName,
+  salutation,
   loginUrl,
   content,
   logoUrl,
@@ -40,20 +44,18 @@ export function MagicLinkEmail({
       primaryColor={primaryColor}
       footerText={footerText}
     >
-      <EmailBadge variant="primary" icon="🔗">
+      <EmailBadge variant="info" icon="🔗">
         Magic Link Login
       </EmailBadge>
 
       <EmailHeading as="h1">{content.headline}</EmailHeading>
 
-      <EmailParagraph>
-        Hallo <strong>{userName}</strong>,
-      </EmailParagraph>
+      <EmailGreeting userName={userName} salutation={salutation} />
 
       <EmailParagraph>{content.body}</EmailParagraph>
 
       <EmailButtonContainer>
-        <EmailButton href={loginUrl} primaryColor={primaryColor} size="lg">
+        <EmailButton href={loginUrl} primaryColor={primaryColor}>
           {content.buttonText || 'Jetzt anmelden'}
         </EmailButton>
       </EmailButtonContainer>

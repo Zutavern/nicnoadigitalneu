@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Loader2, Sparkles, ArrowRight, Check, Crown, Zap, Gift, Bot, Scissors, Building2 } from 'lucide-react'
+import { Loader2, Sparkles, ArrowRight, Check, Crown, Zap, Gift, Bot, Scissors, Building2, AlertCircle } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -37,12 +37,21 @@ interface PaywallModalProps {
   trigger?: string
 }
 
+// Intervall-Konfiguration aus Billing-Config
+interface IntervalConfig {
+  id: string
+  enabled: boolean
+  label: string
+  months: number
+}
+
 interface BillingConfig {
   defaultInterval: string
   trialDays: number
   trialEnabled: boolean
   currencySign: string
   pricingPageDesign: DesignVariant
+  intervals?: IntervalConfig[]
 }
 
 export function PaywallModal({ isOpen, onClose, userType, trigger }: PaywallModalProps) {
@@ -55,6 +64,40 @@ export function PaywallModal({ isOpen, onClose, userType, trigger }: PaywallModa
   const [designVariant, setDesignVariant] = useState<DesignVariant>('compact')
   const [currencySign, setCurrencySign] = useState('€')
   const [configLoaded, setConfigLoaded] = useState(false)
+  const [intervals, setIntervals] = useState<IntervalConfig[]>([])
+
+  // Helper: Preis für ein Intervall holen (statisch, für Filter)
+  const getPriceForIntervalStatic = (plan: ExtendedPlan, interval: BillingInterval): number => {
+    switch (interval) {
+      case 'QUARTERLY': return plan.priceQuarterly
+      case 'YEARLY': return plan.priceYearly
+      case 'SIX_MONTHS': return plan.priceSixMonths
+      default: return plan.priceMonthly
+    }
+  }
+
+  // Aktive Intervalle: Nur solche anzeigen, bei denen mindestens ein Plan einen Preis > 0 hat
+  const activeIntervals = useMemo(() => {
+    const intervalMap: Record<string, BillingInterval> = {
+      monthly: 'MONTHLY',
+      quarterly: 'QUARTERLY',
+      sixMonths: 'SIX_MONTHS',
+      yearly: 'YEARLY'
+    }
+
+    return intervals.filter(interval => {
+      if (!interval.enabled) return false
+      const billingInterval = intervalMap[interval.id]
+      if (!billingInterval) return false
+      // Prüfe ob mindestens ein Plan einen Preis > 0 für dieses Intervall hat
+      return plans.some(plan => getPriceForIntervalStatic(plan, billingInterval) > 0)
+    })
+  }, [intervals, plans])
+
+  // Sichtbare Pläne: Nur Pläne mit Preis > 0 für das gewählte Intervall
+  const visiblePlans = useMemo(() => {
+    return plans.filter(plan => getPriceForIntervalStatic(plan, selectedInterval) > 0)
+  }, [plans, selectedInterval])
 
   // Billing-Config laden (einmalig)
   const fetchBillingConfig = useCallback(async () => {
@@ -67,6 +110,18 @@ export function PaywallModal({ isOpen, onClose, userType, trigger }: PaywallModa
         }
         if (data.currencySign) {
           setCurrencySign(data.currencySign)
+        }
+        // Intervalle laden
+        if (data.intervals && data.intervals.length > 0) {
+          setIntervals(data.intervals)
+        } else {
+          // Fallback-Intervalle
+          setIntervals([
+            { id: 'monthly', label: '1 Monat', months: 1, enabled: true },
+            { id: 'quarterly', label: '3 Monate', months: 3, enabled: true },
+            { id: 'sixMonths', label: '6 Monate', months: 6, enabled: true },
+            { id: 'yearly', label: '12 Monate', months: 12, enabled: true },
+          ])
         }
         if (data.defaultInterval) {
           // Konvertiere zu BillingInterval Format
@@ -83,6 +138,13 @@ export function PaywallModal({ isOpen, onClose, userType, trigger }: PaywallModa
       }
     } catch (error) {
       console.error('Error fetching billing config:', error)
+      // Fallback-Intervalle bei Fehler
+      setIntervals([
+        { id: 'monthly', label: '1 Monat', months: 1, enabled: true },
+        { id: 'quarterly', label: '3 Monate', months: 3, enabled: true },
+        { id: 'sixMonths', label: '6 Monate', months: 6, enabled: true },
+        { id: 'yearly', label: '12 Monate', months: 12, enabled: true },
+      ])
     } finally {
       setConfigLoaded(true)
     }
@@ -107,12 +169,22 @@ export function PaywallModal({ isOpen, onClose, userType, trigger }: PaywallModa
         .then(res => res.json())
         .then(data => {
           setPlans(data.plans || [])
-          // Standard: Popular Plan auswählen
-          const popularPlan = data.plans?.find((p: ExtendedPlan) => p.isPopular)
+          // Standard: Popular Plan auswählen (nur wenn Preis > 0)
+          const popularPlan = data.plans?.find((p: ExtendedPlan) => 
+            p.isPopular && getPriceForIntervalStatic(p, selectedInterval) > 0
+          )
           if (popularPlan) {
             setSelectedPlan(popularPlan.id)
-          } else if (data.plans?.length > 0) {
-            setSelectedPlan(data.plans[0].id)
+          } else {
+            // Ersten Plan mit Preis > 0 auswählen
+            const firstValidPlan = data.plans?.find((p: ExtendedPlan) => 
+              getPriceForIntervalStatic(p, selectedInterval) > 0
+            )
+            if (firstValidPlan) {
+              setSelectedPlan(firstValidPlan.id)
+            } else if (data.plans?.length > 0) {
+              setSelectedPlan(data.plans[0].id)
+            }
           }
         })
         .catch(error => {
@@ -121,81 +193,92 @@ export function PaywallModal({ isOpen, onClose, userType, trigger }: PaywallModa
         })
         .finally(() => setIsLoading(false))
     }
-  }, [isOpen, userType, trigger, configLoaded, fetchBillingConfig])
+  }, [isOpen, userType, trigger, configLoaded, fetchBillingConfig, selectedInterval])
 
-  // Checkout starten
-  const handleCheckout = async () => {
+  // Automatisch auf gültiges Intervall wechseln wenn das aktuelle nicht verfügbar ist
+  useEffect(() => {
+    if (activeIntervals.length > 0) {
+      const intervalIdMap: Record<string, BillingInterval> = {
+        monthly: 'MONTHLY',
+        quarterly: 'QUARTERLY',
+        sixMonths: 'SIX_MONTHS',
+        yearly: 'YEARLY'
+      }
+      const reverseMap: Record<BillingInterval, string> = {
+        MONTHLY: 'monthly',
+        QUARTERLY: 'quarterly',
+        SIX_MONTHS: 'sixMonths',
+        YEARLY: 'yearly'
+      }
+      
+      const currentIntervalId = reverseMap[selectedInterval]
+      const isCurrentActive = activeIntervals.some(ai => ai.id === currentIntervalId)
+      
+      if (!isCurrentActive) {
+        // Wechsle zum ersten aktiven Intervall
+        const firstActive = activeIntervals[0]
+        if (firstActive && intervalIdMap[firstActive.id]) {
+          setSelectedInterval(intervalIdMap[firstActive.id])
+        }
+      }
+    }
+  }, [activeIntervals, selectedInterval])
+
+  // Wenn sich das Intervall ändert, aktualisiere die Plan-Auswahl
+  useEffect(() => {
+    if (selectedPlan && visiblePlans.length > 0) {
+      // Prüfe ob der aktuell gewählte Plan noch sichtbar ist
+      const isStillVisible = visiblePlans.some(p => p.id === selectedPlan)
+      if (!isStillVisible) {
+        // Wähle den popular Plan oder den ersten sichtbaren
+        const popularPlan = visiblePlans.find(p => p.isPopular)
+        setSelectedPlan(popularPlan?.id || visiblePlans[0]?.id || null)
+      }
+    }
+  }, [visiblePlans, selectedPlan])
+
+  // Checkout starten - Navigation zur Embedded Checkout Seite
+  const handleCheckout = () => {
     if (!selectedPlan) {
       toast.error('Bitte wähle einen Plan aus')
       return
     }
 
+    // Prüfe ob der Plan einen gültigen Preis hat
+    const selectedPlanData = visiblePlans.find(p => p.id === selectedPlan)
+    if (!selectedPlanData) {
+      toast.error('Bitte wähle einen gültigen Plan aus')
+      return
+    }
+
+    const price = getPriceForIntervalStatic(selectedPlanData, selectedInterval)
+    if (price <= 0) {
+      toast.error('Dieser Plan ist für das gewählte Intervall nicht verfügbar')
+      return
+    }
+
     // Track CTA clicked event
-    const selectedPlanData = plans.find(p => p.id === selectedPlan)
     posthog?.capture('paywall_cta_clicked', {
       plan_id: selectedPlan,
       plan_name: selectedPlanData?.name,
       interval: selectedInterval,
+      price,
     })
 
-    setIsCheckingOut(true)
-
-    try {
-      const response = await fetch('/api/stripe/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          planId: selectedPlan,
-          interval: selectedInterval
-        })
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        // Demo-Modus: Stripe nicht konfiguriert
-        if (error.error?.includes('nicht konfiguriert') || error.error?.includes('not configured')) {
-          toast.info('Demo-Modus: Stripe ist nicht konfiguriert. In der Live-Version würdest du jetzt zum Checkout weitergeleitet werden.', {
-            duration: 5000
-          })
-          onClose()
-          return
-        }
-        throw new Error(error.error || 'Checkout konnte nicht gestartet werden')
-      }
-
-      const { url } = await response.json()
-
-      if (url) {
-        // Redirect zu Stripe Checkout
-        window.location.href = url
-      } else {
-        throw new Error('Keine Checkout-URL erhalten')
-      }
-    } catch (error) {
-      console.error('Checkout error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Fehler beim Checkout'
-      // Demo-Modus Fallback
-      if (errorMessage.includes('nicht konfiguriert') || errorMessage.includes('not configured')) {
-        toast.info('Demo-Modus: Stripe ist nicht konfiguriert', { duration: 3000 })
-        onClose()
-      } else {
-        toast.error(errorMessage)
-      }
-    } finally {
-      setIsCheckingOut(false)
-    }
+    // Navigation zur Embedded Checkout Seite
+    const checkoutPath = userType === 'SALON_OWNER' 
+      ? '/salon/checkout' 
+      : '/stylist/checkout'
+    
+    onClose()
+    router.push(`${checkoutPath}?plan=${selectedPlan}&interval=${selectedInterval}`)
   }
 
-  const selectedPlanData = plans.find(p => p.id === selectedPlan)
+  const selectedPlanData = visiblePlans.find(p => p.id === selectedPlan)
 
-  // Preis berechnen Helper
+  // Preis berechnen Helper (für Rendering)
   const getPriceForInterval = (plan: ExtendedPlan): number => {
-    switch (selectedInterval) {
-      case 'QUARTERLY': return plan.priceQuarterly
-      case 'SIX_MONTHS': return plan.priceSixMonths
-      case 'YEARLY': return plan.priceYearly
-      default: return plan.priceMonthly
-    }
+    return getPriceForIntervalStatic(plan, selectedInterval)
   }
 
   const getMonthsForInterval = (): number => {
@@ -209,7 +292,7 @@ export function PaywallModal({ isOpen, onClose, userType, trigger }: PaywallModa
 
   // Dynamische Grid-Klassen basierend auf Plananzahl
   const getGridClass = () => {
-    const count = plans.length
+    const count = visiblePlans.length
     if (count === 1) return 'max-w-md mx-auto'
     if (count === 2) return 'grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto'
     if (count === 3) return 'grid-cols-1 md:grid-cols-3 max-w-5xl mx-auto'
@@ -499,26 +582,39 @@ export function PaywallModal({ isOpen, onClose, userType, trigger }: PaywallModa
           "px-6 py-6 space-y-6",
           designVariant === 'modern' && "bg-gradient-to-b from-background to-muted/30"
         )}>
-          {/* Interval Selector */}
-          <IntervalSelector 
-            selected={selectedInterval} 
-            onChange={setSelectedInterval} 
-          />
+          {/* Interval Selector - zeigt nur Intervalle mit verfügbaren Plänen */}
+          {activeIntervals.length > 1 && (
+            <IntervalSelector 
+              selected={selectedInterval} 
+              onChange={setSelectedInterval}
+              activeIntervals={activeIntervals}
+            />
+          )}
 
           {/* Plans Grid */}
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : plans.length === 0 ? (
+          ) : visiblePlans.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">
-                Keine Pläne verfügbar. Bitte kontaktiere den Support.
-              </p>
+              <div className="flex flex-col items-center gap-3">
+                <AlertCircle className="h-10 w-10 text-muted-foreground/50" />
+                <p className="text-muted-foreground">
+                  {plans.length === 0 
+                    ? 'Keine Pläne verfügbar. Bitte kontaktiere den Support.'
+                    : 'Keine Preispläne für dieses Intervall verfügbar.'}
+                </p>
+                {plans.length > 0 && activeIntervals.length > 0 && (
+                  <p className="text-sm text-muted-foreground/70">
+                    Wähle ein anderes Intervall, um verfügbare Pläne zu sehen.
+                  </p>
+                )}
+              </div>
             </div>
           ) : (
             <div className={cn("grid gap-4", getGridClass())}>
-              {plans.map(plan => renderPlanCard(plan))}
+              {visiblePlans.map(plan => renderPlanCard(plan))}
             </div>
           )}
         </div>

@@ -19,13 +19,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  eslint: {
-    // Temporär ESLint-Fehler während Build ignorieren
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     // Temporär TypeScript-Fehler während Build ignorieren  
     ignoreBuildErrors: true,
+  },
+  // Turbopack root directory explizit setzen
+  turbopack: {
+    root: process.cwd(),
   },
 };
 

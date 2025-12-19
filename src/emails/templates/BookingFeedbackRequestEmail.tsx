@@ -2,9 +2,11 @@ import { Heading, Hr, Text } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface BookingFeedbackRequestEmailProps {
   customerName: string
+  salutation?: Salutation
   stylistName: string
   serviceName: string
   serviceDate: string
@@ -25,6 +27,7 @@ interface BookingFeedbackRequestEmailProps {
 
 export function BookingFeedbackRequestEmail({
   customerName,
+  salutation,
   stylistName,
   serviceName,
   serviceDate,
@@ -54,7 +57,7 @@ export function BookingFeedbackRequestEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{customerName}</strong>,
+        {getSalutationText(salutation, customerName)},
       </Text>
       
       <Text style={paragraph}>{bodyText}</Text>

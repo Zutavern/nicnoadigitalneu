@@ -218,7 +218,8 @@ export async function POST(request: Request) {
     // Erstelle Checkout Session
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
-      payment_method_types: ['card', 'sepa_debit'],
+      // Link für schnellen 1-Klick-Checkout + SEPA für deutsche Kunden
+      payment_method_types: ['card', 'link', 'sepa_debit'],
       line_items: [
         {
           price: priceId,
@@ -240,6 +241,14 @@ export async function POST(request: Request) {
       ...(couponId && { discounts: [{ coupon: couponId }] }),
       allow_promotion_codes: !couponId, // Erlaube Promo-Codes wenn kein Referral
       billing_address_collection: 'required',
+      // Speichere die Adresse automatisch auf dem Customer
+      customer_update: {
+        address: 'auto',
+        name: 'auto',
+      },
+      // Stripe Tax für automatische MwSt-Berechnung
+      automatic_tax: { enabled: true },
+      tax_id_collection: { enabled: true },
       locale: 'de'
     })
 

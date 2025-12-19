@@ -2,9 +2,11 @@ import { Heading, Hr, Text } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface ChairVacancyEmailProps {
   salonOwnerName: string
+  salutation?: Salutation
   salonName: string
   chairName: string
   previousStylist: string
@@ -25,6 +27,7 @@ interface ChairVacancyEmailProps {
 
 export function ChairVacancyEmail({
   salonOwnerName,
+  salutation,
   salonName,
   chairName,
   previousStylist,
@@ -54,7 +57,7 @@ export function ChairVacancyEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{salonOwnerName}</strong>,
+        {getSalutationText(salutation, salonOwnerName)},
       </Text>
       
       <Text style={paragraph}>{bodyText}</Text>

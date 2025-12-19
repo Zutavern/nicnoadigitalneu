@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Tooltip,
   TooltipContent,
@@ -343,6 +344,7 @@ export function StylistOnboardingDialog({ open, onOpenChange, onComplete }: Styl
 
   // Business Data State
   const [businessData, setBusinessData] = useState({
+    salutation: '' as '' | 'FRAU' | 'HERR' | 'DIVERS' | 'KEINE_ANGABE',
     companyName: '',
     taxId: '',
     vatId: '',
@@ -436,6 +438,7 @@ export function StylistOnboardingDialog({ open, onOpenChange, onComplete }: Styl
           if (data.businessData) {
             setBusinessData(prev => ({
               ...prev,
+              salutation: data.businessData.salutation || '',
               companyName: data.businessData.companyName || '',
               taxId: data.businessData.taxId || '',
               vatId: data.businessData.vatId || '',
@@ -897,7 +900,25 @@ export function StylistOnboardingDialog({ open, onOpenChange, onComplete }: Styl
                       </div>
 
                       <div className="grid gap-4 md:grid-cols-2">
-                        <div className="space-y-2 md:col-span-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="salutation">Anrede</Label>
+                          <Select
+                            value={businessData.salutation}
+                            onValueChange={(value) => setBusinessData(prev => ({ ...prev, salutation: value as typeof prev.salutation }))}
+                          >
+                            <SelectTrigger className="bg-white/5 border-white/10">
+                              <SelectValue placeholder="Bitte wählen" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="FRAU">Frau</SelectItem>
+                              <SelectItem value="HERR">Herr</SelectItem>
+                              <SelectItem value="DIVERS">Divers</SelectItem>
+                              <SelectItem value="KEINE_ANGABE">Keine Angabe</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
                           <Label htmlFor="companyName">Firmenname / Einzelunternehmer-Name *</Label>
                           <Input
                             id="companyName"

@@ -20,3 +20,6 @@ export default function NewsletterDetailPage({ params }: NewsletterDetailPagePro
   return null
 }
 
+
+
+

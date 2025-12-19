@@ -25,6 +25,7 @@ import {
   Share2,
   Sparkles,
   Store,
+  Globe,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -90,6 +91,7 @@ const menuItems = [
       { label: 'Social Media', href: '/stylist/marketing/social-media', icon: Share2 },
       { label: 'Google Business', href: '/stylist/marketing/google-business', icon: Store },
       { label: 'Preislisten', href: '/stylist/pricelist', icon: FileText },
+      { label: 'Meine Homepage', href: '/stylist/marketing/homepage', icon: Globe },
     ],
   },
   {

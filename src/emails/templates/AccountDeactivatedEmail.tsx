@@ -2,9 +2,11 @@ import { Heading, Hr, Text } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface AccountDeactivatedEmailProps {
   userName: string
+  salutation?: Salutation
   deactivationDate: string
   reason?: 'subscription_expired' | 'compliance_issue' | 'user_request' | 'admin_action' | 'inactivity'
   dataRetentionDays: number
@@ -23,6 +25,7 @@ interface AccountDeactivatedEmailProps {
 
 export function AccountDeactivatedEmail({
   userName,
+  salutation,
   deactivationDate,
   reason = 'admin_action',
   dataRetentionDays = 30,
@@ -65,7 +68,7 @@ export function AccountDeactivatedEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{userName}</strong>,
+        {getSalutationText(salutation, userName)},
       </Text>
       
       <Text style={paragraph}>{bodyText}</Text>

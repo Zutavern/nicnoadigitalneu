@@ -2,6 +2,33 @@ import { Hr, Section, Text, Row, Column, Img, Link } from '@react-email/componen
 import * as React from 'react'
 
 // ============================================
+// Salutation Type & Helper
+// ============================================
+export type Salutation = 'FRAU' | 'HERR' | 'DIVERS' | 'KEINE_ANGABE' | null | undefined
+
+/**
+ * Extrahiert den Vornamen aus dem vollständigen Namen
+ * @example getFirstName('Maria Schmidt') → 'Maria'
+ */
+export function getFirstName(name: string | null | undefined): string {
+  return name?.split(' ')[0] || ''
+}
+
+/**
+ * Generiert die personalisierte Anrede - immer "Hallo [Vorname]"
+ * Verwendet die informelle "Du"-Form
+ * @example getSalutationText('FRAU', 'Maria Schmidt') → 'Hallo Maria'
+ * @example getSalutationText('HERR', 'Thomas Müller') → 'Hallo Thomas'
+ * @example getSalutationText(null, 'Alex') → 'Hallo Alex'
+ */
+export function getSalutationText(salutation: Salutation, name: string | null | undefined): string {
+  const firstName = getFirstName(name)
+  
+  // Immer "Hallo [Name]" - informell und einheitlich
+  return firstName ? `Hallo ${firstName}` : 'Hallo'
+}
+
+// ============================================
 // Email Badge Component
 // ============================================
 interface EmailBadgeProps {
@@ -92,6 +119,37 @@ export function EmailParagraph({ children, muted, small, center }: EmailParagrap
     textAlign: center ? 'center' : 'left',
   }
   return <Text style={style}>{children}</Text>
+}
+
+// ============================================
+// Email Greeting Component (personalisierte Anrede)
+// ============================================
+interface EmailGreetingProps {
+  userName: string | null | undefined
+  salutation?: Salutation
+}
+
+/**
+ * Personalisierte Anrede für E-Mails
+ * Verwendet immer "Hallo [Vorname]" - informell und einheitlich
+ * 
+ * @example <EmailGreeting userName="Maria Schmidt" />  → "Hallo Maria,"
+ * @example <EmailGreeting userName="Thomas Müller" />  → "Hallo Thomas,"
+ * @example <EmailGreeting userName="Alex" />           → "Hallo Alex,"
+ */
+export function EmailGreeting({ userName, salutation }: EmailGreetingProps) {
+  const firstName = getFirstName(userName)
+  
+  return (
+    <Text style={{
+      color: '#334155',
+      fontSize: '16px',
+      lineHeight: '26px',
+      margin: '0 0 16px',
+    }}>
+      Hallo {firstName ? <strong>{firstName}</strong> : 'dort'},
+    </Text>
+  )
 }
 
 // ============================================

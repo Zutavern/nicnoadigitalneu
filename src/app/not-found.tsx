@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { FileQuestion, Home, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
 export default function NotFound() {
+  const router = useRouter()
   const [errorMessage, setErrorMessage] = useState('Die angeforderte Seite existiert nicht oder wurde verschoben.')
 
   useEffect(() => {
@@ -43,11 +45,9 @@ export default function NotFound() {
                 Zur Startseite
               </Link>
             </Button>
-            <Button variant="outline" asChild>
-              <Link href="javascript:history.back()">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Zurück
-              </Link>
+            <Button variant="outline" onClick={() => router.back()}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Zurück
             </Button>
           </div>
         </div>

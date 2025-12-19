@@ -7,6 +7,28 @@
 import { stripe, isStripeConfigured } from '@/lib/stripe-server'
 import { prisma } from '@/lib/prisma'
 
+// Cache für Demo-Modus
+let cachedDemoMode: boolean | null = null
+let cacheExpiry: number = 0
+const CACHE_DURATION = 60 * 1000 // 1 minute
+
+async function isDemoModeForBilling(): Promise<boolean> {
+  if (cachedDemoMode !== null && Date.now() < cacheExpiry) {
+    return cachedDemoMode
+  }
+  try {
+    const settings = await prisma.platformSettings.findUnique({
+      where: { id: 'default' },
+      select: { useDemoMode: true },
+    })
+    cachedDemoMode = settings?.useDemoMode ?? true
+    cacheExpiry = Date.now() + CACHE_DURATION
+    return cachedDemoMode
+  } catch {
+    return true
+  }
+}
+
 interface UsageReportParams {
   userId: string
   subscriptionItemId: string
@@ -222,8 +244,10 @@ export async function trackAndReportAIUsage(params: {
     chargedToStripe = priceEur
   }
 
-  // Melde nur den Überschuss an Stripe
-  if (chargedToStripe > 0) {
+  // Melde nur den Überschuss an Stripe (nicht im Demo-Modus)
+  const isDemoMode = await isDemoModeForBilling()
+  
+  if (chargedToStripe > 0 && !isDemoMode) {
     const subscriptionItemId = await getMeteredSubscriptionItemId(userId)
 
     if (subscriptionItemId) {
@@ -237,6 +261,8 @@ export async function trackAndReportAIUsage(params: {
         idempotencyKey: `${userId}-${Date.now()}-${feature}`,
       })
     }
+  } else if (isDemoMode && chargedToStripe > 0) {
+    console.log(`[DEMO MODE] Skipping Stripe report for ${feature}: €${chargedToStripe.toFixed(4)}`)
   }
 
   // Update SpendingLimit
@@ -280,6 +306,9 @@ export async function trackAndReportAIUsage(params: {
 /**
  * Prüft ob ein User sein Spending Limit erreicht hat
  * Gibt auch Infos über inkludierte Credits zurück
+ * 
+ * Prüft auch den Subscription-Status - gekündigte User haben keinen AI-Zugang
+ * Im Demo-Modus haben alle User unbegrenzten Zugang (Kosten werden trotzdem getrackt)
  */
 export async function checkSpendingLimit(userId: string): Promise<{
   canUseAI: boolean
@@ -289,14 +318,78 @@ export async function checkSpendingLimit(userId: string): Promise<{
   includedCreditsEur: number
   includedCreditsRemaining: number
   message?: string
+  subscriptionStatus?: string
+  isDemo?: boolean
 }> {
+  // Demo-Modus prüfen - Im Demo-Modus haben alle User unbegrenzten Zugang
+  const isDemoMode = await isDemoModeForBilling()
+  
+  // 1. Subscription-Status prüfen (wichtig für gekündigte Abos)
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { 
+      stripeSubscriptionStatus: true,
+      stripeSubscriptionId: true,
+      role: true,
+    }
+  })
+
+  // Admin-Rolle hat immer Zugang
+  const isAdmin = user?.role === 'ADMIN'
+  
+  // Im Demo-Modus: Alle User haben Zugang (aber Kosten werden trotzdem getrackt)
+  if (isDemoMode) {
+    // Lade trotzdem SpendingLimit für Tracking
+    const [spendingLimit, includedCreditsEur] = await Promise.all([
+      prisma.spendingLimit.findUnique({ where: { userId } }),
+      getUserIncludedAiCredits(userId),
+    ])
+    
+    const currentMonthSpent = spendingLimit ? Number(spendingLimit.currentMonthSpent) : 0
+    
+    return {
+      canUseAI: true,
+      percentageUsed: 0,
+      remainingEur: 999999,
+      currentMonthSpent,
+      includedCreditsEur,
+      includedCreditsRemaining: Math.max(0, includedCreditsEur - currentMonthSpent),
+      subscriptionStatus: 'demo',
+      isDemo: true,
+      message: 'Demo-Modus aktiv - Unbegrenzter AI-Zugang',
+    }
+  }
+  
+  // Gültige Subscription-Status für AI-Nutzung
+  const validSubscriptionStatuses = ['active', 'trialing', 'past_due']
+  const hasActiveSubscription = user?.stripeSubscriptionStatus && 
+    validSubscriptionStatuses.includes(user.stripeSubscriptionStatus)
+
+  // Wenn keine aktive Subscription und kein Admin → kein Zugang
+  if (!isAdmin && !hasActiveSubscription) {
+    return {
+      canUseAI: false,
+      percentageUsed: 0,
+      remainingEur: 0,
+      currentMonthSpent: 0,
+      includedCreditsEur: 0,
+      includedCreditsRemaining: 0,
+      subscriptionStatus: user?.stripeSubscriptionStatus || 'none',
+      isDemo: false,
+      message: user?.stripeSubscriptionStatus === 'canceled'
+        ? 'Dein Abonnement wurde gekündigt. Bitte wähle einen neuen Plan, um AI-Features zu nutzen.'
+        : 'Kein aktives Abonnement. Bitte wähle einen Plan, um AI-Features zu nutzen.',
+    }
+  }
+
+  // 2. SpendingLimit und inkludierte Credits laden
   const [spendingLimit, includedCreditsEur] = await Promise.all([
     prisma.spendingLimit.findUnique({ where: { userId } }),
     getUserIncludedAiCredits(userId),
   ])
 
   if (!spendingLimit) {
-    // Kein Limit gesetzt
+    // Kein Limit gesetzt (aber Subscription aktiv) → erlauben
     return {
       canUseAI: true,
       percentageUsed: 0,
@@ -304,6 +397,8 @@ export async function checkSpendingLimit(userId: string): Promise<{
       currentMonthSpent: 0,
       includedCreditsEur,
       includedCreditsRemaining: includedCreditsEur,
+      subscriptionStatus: user?.stripeSubscriptionStatus || 'active',
+      isDemo: false,
     }
   }
 
@@ -315,6 +410,7 @@ export async function checkSpendingLimit(userId: string): Promise<{
   // Berechne verbleibende inkludierte Credits
   const includedCreditsRemaining = Math.max(0, includedCreditsEur - currentMonthSpent)
 
+  // 3. HardLimit prüfen
   if (spendingLimit.hardLimit && percentageUsed >= 100) {
     return {
       canUseAI: false,
@@ -323,6 +419,8 @@ export async function checkSpendingLimit(userId: string): Promise<{
       currentMonthSpent,
       includedCreditsEur,
       includedCreditsRemaining,
+      subscriptionStatus: user?.stripeSubscriptionStatus || 'active',
+      isDemo: false,
       message: 'Du hast dein monatliches AI-Limit erreicht. Erhöhe dein Limit in den Einstellungen.',
     }
   }
@@ -334,6 +432,8 @@ export async function checkSpendingLimit(userId: string): Promise<{
     currentMonthSpent,
     includedCreditsEur,
     includedCreditsRemaining,
+    subscriptionStatus: user?.stripeSubscriptionStatus || 'active',
+    isDemo: false,
     message: percentageUsed >= spendingLimit.alertThreshold
       ? `Du hast bereits ${percentageUsed.toFixed(0)}% deines Limits verwendet.`
       : undefined,

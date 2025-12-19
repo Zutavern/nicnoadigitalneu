@@ -27,6 +27,7 @@ import {
   Share2,
   Coins,
   Store,
+  Globe,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -94,6 +95,7 @@ const menuItems = [
       { label: 'Social Media', href: '/salon/marketing/social-media', icon: Share2 },
       { label: 'Google Business', href: '/salon/marketing/google-business', icon: Store },
       { label: 'Preislisten', href: '/salon/marketing/pricelist', icon: FileText },
+      { label: 'Salon Homepage', href: '/salon/marketing/homepage', icon: Globe },
     ],
   },
   {

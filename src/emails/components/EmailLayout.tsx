@@ -15,7 +15,7 @@ interface EmailLayoutProps {
   preview?: string
   logoUrl?: string
   primaryColor?: string
-  footerText?: string
+  footerText?: string // Wird nicht mehr verwendet (doppelter Footer vermeiden), aber für Kompatibilität beibehalten
 }
 
 export function EmailLayout({
@@ -23,7 +23,7 @@ export function EmailLayout({
   preview = '',
   logoUrl,
   primaryColor = '#ec4899',
-  footerText,
+  footerText: _footerText, // Prefix mit _ um "unused variable" Warnung zu vermeiden
 }: EmailLayoutProps) {
   return (
     <Html>
@@ -54,9 +54,6 @@ export function EmailLayout({
 
           {/* Footer */}
           <Section style={footer}>
-            {footerText && (
-              <Text style={footerTextStyle}>{footerText}</Text>
-            )}
             <Text style={footerLinks}>
               <a href="https://www.nicnoa.online/datenschutz" style={footerLink}>Datenschutz</a>
               {' | '}
@@ -67,7 +64,7 @@ export function EmailLayout({
               <a href="https://www.nicnoa.online/login" style={footerLink}>Login</a>
             </Text>
             <Text style={copyright}>
-              © {new Date().getFullYear()} NICNOA&CO. Alle Rechte vorbehalten.
+              © {new Date().getFullYear()} NICNOA&CO.online. Alle Rechte vorbehalten.
             </Text>
           </Section>
         </Container>
@@ -129,13 +126,6 @@ const footer: React.CSSProperties = {
   textAlign: 'center',
 }
 
-const footerTextStyle: React.CSSProperties = {
-  color: '#6b7280',
-  fontSize: '13px',
-  lineHeight: '20px',
-  margin: '0 0 16px',
-}
-
 const footerLinks: React.CSSProperties = {
   color: '#6b7280',
   fontSize: '13px',
@@ -144,7 +134,7 @@ const footerLinks: React.CSSProperties = {
 }
 
 const footerLink: React.CSSProperties = {
-  color: '#3b82f6',
+  color: '#374151',
   textDecoration: 'none',
 }
 

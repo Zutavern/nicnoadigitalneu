@@ -99,6 +99,9 @@ model User {
   phoneVerifiedAt    DateTime?           @map("phone_verified_at") @db.Timestamptz
   phoneVerifications PhoneVerification[]
 
+  // Anrede (für personalisierte Kommunikation)
+  salutation Salutation? @map("salutation")
+
   // Kontaktdaten (Registrierung)
   street  String? @db.VarChar(255)
   zipCode String? @map("zip_code") @db.VarChar(10)
@@ -132,6 +135,10 @@ model User {
 
   // Newsletter
   createdNewsletters Newsletter[]
+
+  // Homepage Builder
+  homepageProjects HomepageProject[]
+  customDomains    CustomDomain[]
 
   @@map("users")
 }
@@ -209,6 +216,13 @@ enum UserRole {
   ADMIN
   SALON_OWNER
   STYLIST
+}
+
+enum Salutation {
+  FRAU
+  HERR
+  DIVERS
+  KEINE_ANGABE
 }
 
 enum DocumentStatus {
@@ -4207,11 +4221,13 @@ enum AIModelCategory {
   TEXT
   IMAGE
   VIDEO
+  GENERATION // V0 Homepage Builder
 }
 
 enum AIModelProvider {
   OPENROUTER
   REPLICATE
+  V0 // Vercel V0 API
 }
 
 model AIModelConfig {
@@ -4405,4 +4421,183 @@ model NewsletterTemplate {
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("newsletter_templates")
+}
+
+// ============================================
+// Homepage Builder
+// ============================================
+
+enum HomepageTemplate {
+  // Für Stuhlmieter
+  STYLIST_CLASSIC   // Klassisches Stylist-Portfolio
+  STYLIST_MODERN    // Modernes Design
+  STYLIST_MINIMAL   // Minimalistisches Design
+  // Für Salons
+  SALON_PROFESSIONAL // Professionelles Salon-Design
+  SALON_ELEGANT      // Elegantes Design
+  SALON_VIBRANT      // Lebendiges Design
+}
+
+enum HomepagePageConfig {
+  ONE_PAGER  // Alles auf einer Seite (inkl. Impressum/Datenschutz im Footer)
+  BASIC      // Home, Kontakt, Impressum, Datenschutz
+  STANDARD   // Home, Über mich/uns, Preisliste, Kontakt, Impressum
+  FULL       // Home, Über mich/uns, Team/Portfolio, Preisliste, Galerie, Kontakt, Impressum
+}
+
+enum HomepageDesignStyle {
+  MODERN      // Klare Linien, mutige Farben, viel Weißraum
+  CLASSIC     // Elegant, zeitlos, professionell
+  MINIMALIST  // Reduziert, fokussiert, clean
+  CREATIVE    // Einzigartig, künstlerisch, auffällig
+}
+
+enum HomepageStatus {
+  DRAFT       // Noch nicht generiert
+  GENERATING  // V0 generiert gerade
+  READY       // Fertig, kann veröffentlicht werden
+  PUBLISHED   // Veröffentlicht und live
+  ERROR       // Fehler bei der Generierung
+}
+
+model HomepageProject {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  
+  // Projekt-Metadaten
+  name        String   @db.VarChar(200)
+  slug        String   @unique @db.VarChar(200) // Subdomain: slug.nicnoa.online
+  
+  // Wizard-Konfiguration
+  templateType   HomepageTemplate    @map("template_type")
+  pageConfig     HomepagePageConfig  @map("page_config")
+  designStyle    HomepageDesignStyle @map("design_style")
+  
+  // Kontaktdaten (Kopie aus User-Daten, editierbar im Wizard)
+  contactData    Json?   @map("contact_data")
+  
+  // V0 Generierung
+  v0GenerationId String?  @map("v0_generation_id") @db.VarChar(255)
+  v0Error        String?  @map("v0_error") @db.Text
+  
+  // Seiten als JSON (jede Seite hat slug, title, content, generatedCode)
+  pages          Json     @default("[]")
+  
+  // Branding (überschreibt das Standard-Branding)
+  brandingColor   String?  @map("branding_color") @db.VarChar(20)
+  brandingLogoUrl String?  @map("branding_logo_url")
+  
+  // Schriftarten
+  fontHeading    String?  @map("font_heading") @db.VarChar(100)
+  fontBody       String?  @map("font_body") @db.VarChar(100)
+  
+  // Status
+  status      HomepageStatus @default(DRAFT)
+  isPublished Boolean        @default(false) @map("is_published")
+  publishedAt DateTime?      @map("published_at") @db.Timestamptz
+  publishedUrl String?       @map("published_url") @db.VarChar(255)
+  
+  // Analytics
+  viewCount   Int @default(0) @map("view_count")
+  
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Custom Domain (optional)
+  customDomainId String? @unique @map("custom_domain_id") @db.Uuid
+  
+  // Relations
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customDomain CustomDomain?  @relation(fields: [customDomainId], references: [id])
+  
+  @@index([userId])
+  @@index([slug])
+  @@index([status])
+  @@map("homepage_projects")
+}
+
+// Custom Domain für Homepages
+model CustomDomain {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  
+  // Domain-Infos
+  domain         String   @unique @db.VarChar(255)  // z.B. "meinsalon.de"
+  subdomain      String?  @db.VarChar(100)          // Optional: "www"
+  
+  // Vercel-Konfiguration
+  vercelDomainId String?  @map("vercel_domain_id") @db.VarChar(100)
+  vercelProjectId String? @map("vercel_project_id") @db.VarChar(100)
+  
+  // Registrierung (wenn über uns gekauft)
+  isPurchased       Boolean   @default(false) @map("is_purchased")
+  purchasedAt       DateTime? @map("purchased_at") @db.Timestamptz
+  purchasePriceUsd  Decimal?  @map("purchase_price_usd") @db.Decimal(10, 2)
+  renewalPriceUsd   Decimal?  @map("renewal_price_usd") @db.Decimal(10, 2)
+  expiresAt         DateTime? @map("expires_at") @db.Timestamptz
+  autoRenew         Boolean   @default(true) @map("auto_renew")
+  
+  // Stripe für Weiterberechnung
+  stripeInvoiceId   String?   @map("stripe_invoice_id") @db.VarChar(100)
+  customerPriceEur  Decimal?  @map("customer_price_eur") @db.Decimal(10, 2)
+  
+  // Verifizierung
+  verificationStatus DomainVerificationStatus @default(PENDING) @map("verification_status")
+  verificationMethod String?  @map("verification_method") @db.VarChar(20)  // TXT, CNAME
+  verificationToken  String?  @map("verification_token") @db.VarChar(255)
+  verifiedAt        DateTime? @map("verified_at") @db.Timestamptz
+  
+  // DNS-Status
+  dnsConfigured     Boolean   @default(false) @map("dns_configured")
+  sslCertificateId  String?   @map("ssl_certificate_id") @db.VarChar(100)
+  
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Relations
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  homepageProject HomepageProject?
+  
+  @@index([userId])
+  @@index([domain])
+  @@index([verificationStatus])
+  @@map("custom_domains")
+}
+
+enum DomainVerificationStatus {
+  PENDING
+  VERIFYING
+  VERIFIED
+  FAILED
+}
+
+// Homepage-Prompt Library
+model HomepagePrompt {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Kategorisierung
+  pageType    String   @map("page_type") @db.VarChar(50)    // home, ueber-mich, kontakt, etc.
+  targetRole  String   @map("target_role") @db.VarChar(20)  // STYLIST, SALON_OWNER, BOTH
+  category    String   @db.VarChar(100)                     // Hero, Header, Layout, etc.
+  
+  // Prompt-Daten
+  title       String   @db.VarChar(200)                     // Kurztitel für UI
+  prompt      String   @db.Text                             // Der vollständige Prompt-Text
+  description String?  @db.Text                             // Optionale Beschreibung
+  icon        String?  @db.VarChar(50)                      // Lucide Icon Name
+  
+  // Sortierung & Status
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  @@index([pageType])
+  @@index([targetRole])
+  @@index([isActive])
+  @@map("homepage_prompts")
 }

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { 
   Settings, 
@@ -256,6 +257,7 @@ export default function SalonSettingsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [activeTab, setActiveTab] = useState<'salon' | 'notifications' | 'security'>('salon')
   const [settings, setSettings] = useState({
+    salutation: '' as '' | 'FRAU' | 'HERR' | 'DIVERS' | 'KEINE_ANGABE',
     salonName: '',
     description: '',
     address: '',
@@ -390,13 +392,32 @@ export default function SalonSettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="salonName">Salon-Name</Label>
-                  <Input
-                    id="salonName"
-                    value={settings.salonName}
-                    onChange={(e) => setSettings(prev => ({ ...prev, salonName: e.target.value }))}
-                  />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="salutation">Anrede</Label>
+                    <Select
+                      value={settings.salutation}
+                      onValueChange={(v) => setSettings(prev => ({ ...prev, salutation: v as typeof prev.salutation }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Bitte wählen" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="FRAU">Frau</SelectItem>
+                        <SelectItem value="HERR">Herr</SelectItem>
+                        <SelectItem value="DIVERS">Divers</SelectItem>
+                        <SelectItem value="KEINE_ANGABE">Keine Angabe</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="salonName">Salon-Name</Label>
+                    <Input
+                      id="salonName"
+                      value={settings.salonName}
+                      onChange={(e) => setSettings(prev => ({ ...prev, salonName: e.target.value }))}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Beschreibung</Label>

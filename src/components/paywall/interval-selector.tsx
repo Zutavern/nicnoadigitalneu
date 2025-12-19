@@ -11,26 +11,68 @@ interface IntervalOption {
   discount?: number
 }
 
-const intervals: IntervalOption[] = [
+// Default-Intervalle (werden verwendet wenn keine activeIntervals übergeben werden)
+const defaultIntervals: IntervalOption[] = [
   { id: 'MONTHLY', label: '1 Monat', months: 1 },
   { id: 'QUARTERLY', label: '3 Monate', months: 3, discount: 10 },
   { id: 'SIX_MONTHS', label: '6 Monate', months: 6, discount: 15 },
   { id: 'YEARLY', label: '12 Monate', months: 12, discount: 25 },
 ]
 
+// Mapping von Config-IDs zu BillingInterval
+const intervalIdMap: Record<string, BillingInterval> = {
+  monthly: 'MONTHLY',
+  quarterly: 'QUARTERLY',
+  sixMonths: 'SIX_MONTHS',
+  yearly: 'YEARLY'
+}
+
+interface ActiveInterval {
+  id: string
+  label: string
+  months: number
+  enabled: boolean
+}
+
 interface IntervalSelectorProps {
   selected: BillingInterval
   onChange: (interval: BillingInterval) => void
   className?: string
+  /** Optionale Liste aktiver Intervalle (gefiltert nach Plänen mit Preis > 0) */
+  activeIntervals?: ActiveInterval[]
 }
 
-export function IntervalSelector({ selected, onChange, className }: IntervalSelectorProps) {
+export function IntervalSelector({ selected, onChange, className, activeIntervals }: IntervalSelectorProps) {
+  // Wenn activeIntervals übergeben werden, nur diese anzeigen
+  const displayIntervals: IntervalOption[] = activeIntervals && activeIntervals.length > 0
+    ? activeIntervals
+        .filter(ai => intervalIdMap[ai.id]) // Nur bekannte Intervalle
+        .map(ai => ({
+          id: intervalIdMap[ai.id],
+          label: ai.label,
+          months: ai.months,
+          discount: ai.months > 1 
+            ? Math.round(((ai.months - 1) / ai.months) * 25) // Dynamische Berechnung
+            : undefined
+        }))
+    : defaultIntervals
+
+  // Wenn keine Intervalle verfügbar sind, nichts anzeigen
+  if (displayIntervals.length === 0) {
+    return null
+  }
+
+  // Wenn nur ein Intervall verfügbar ist, versteckten State setzen aber nichts anzeigen
+  if (displayIntervals.length === 1) {
+    return null
+  }
+
   return (
     <div className={cn(
       "flex flex-wrap justify-center gap-1 p-1 bg-muted/50 rounded-xl",
       className
     )}>
-      {intervals.map(interval => (
+      {displayIntervals.map(interval => (
         <button
           key={interval.id}
           type="button"
@@ -65,6 +107,6 @@ export function IntervalSelector({ selected, onChange, className }: IntervalSele
   )
 }
 
-export { intervals }
+export { defaultIntervals as intervals }
 export type { IntervalOption }
 

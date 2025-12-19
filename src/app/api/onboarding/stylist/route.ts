@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { yearsExperience, specialties, street, city, zipCode, phone, bio } = body
+    const { salutation, yearsExperience, specialties, street, city, zipCode, phone, bio } = body
 
     // Parse specialties
     const specialtiesArray = specialties 
@@ -55,10 +55,13 @@ export async function POST(request: Request) {
       },
     })
 
-    // Mark onboarding as completed
+    // Mark onboarding as completed + save salutation
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { onboardingCompleted: true },
+      data: { 
+        onboardingCompleted: true,
+        ...(salutation && { salutation }),
+      },
     })
 
     return NextResponse.json({ success: true })

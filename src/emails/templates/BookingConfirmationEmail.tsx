@@ -10,10 +10,13 @@ import {
   EmailInfoCard,
   EmailButtonContainer,
   EmailFooterNote,
+  EmailGreeting,
+  type Salutation,
 } from '../components/EmailComponents'
 
 interface BookingConfirmationEmailProps {
   userName: string
+  salutation?: Salutation
   stylistName: string
   salonName?: string
   serviceName: string
@@ -35,6 +38,7 @@ interface BookingConfirmationEmailProps {
 
 export function BookingConfirmationEmail({
   userName,
+  salutation,
   stylistName,
   salonName,
   serviceName,
@@ -67,9 +71,7 @@ export function BookingConfirmationEmail({
 
       <EmailHeading as="h1">{content.headline}</EmailHeading>
 
-      <EmailParagraph>
-        Hallo <strong>{userName}</strong>,
-      </EmailParagraph>
+      <EmailGreeting userName={userName} salutation={salutation} />
 
       <EmailParagraph>{bodyText}</EmailParagraph>
 
@@ -135,7 +137,7 @@ export function BookingConfirmationEmail({
       </div>
 
       <EmailButtonContainer>
-        <EmailButton href={bookingUrl} primaryColor={primaryColor} size="lg">
+        <EmailButton href={bookingUrl} primaryColor={primaryColor}>
           {content.buttonText || 'Termin verwalten'}
         </EmailButton>
       </EmailButtonContainer>

@@ -2,9 +2,11 @@ import { Heading, Text, Section } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface SubscriptionRenewedEmailProps {
   userName: string
+  salutation?: Salutation
   planName: string
   nextBillingDate: string
   amount?: string
@@ -22,6 +24,7 @@ interface SubscriptionRenewedEmailProps {
 
 export function SubscriptionRenewedEmail({
   userName,
+  salutation,
   planName,
   nextBillingDate,
   amount,
@@ -48,7 +51,7 @@ export function SubscriptionRenewedEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{userName}</strong>,
+        {getSalutationText(salutation, userName)},
       </Text>
       
       <Text style={paragraph}>{bodyText}</Text>

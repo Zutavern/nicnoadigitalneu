@@ -2,9 +2,11 @@ import { Heading, Hr, Text } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface SecurityAlertEmailProps {
   adminName: string
+  salutation?: Salutation
   alertType: 'login_attempt' | 'password_change' | 'suspicious_activity' | 'api_abuse' | 'data_breach'
   severity: 'low' | 'medium' | 'high' | 'critical'
   timestamp: string
@@ -31,6 +33,7 @@ interface SecurityAlertEmailProps {
 
 export function SecurityAlertEmail({
   adminName,
+  salutation,
   alertType,
   severity,
   timestamp,
@@ -92,7 +95,7 @@ export function SecurityAlertEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{adminName}</strong>,
+        {getSalutationText(salutation, adminName)},
       </Text>
       
       <Text style={paragraph}>{description}</Text>

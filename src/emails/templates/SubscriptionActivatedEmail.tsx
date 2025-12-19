@@ -2,9 +2,11 @@ import { Heading, Text, Hr } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface SubscriptionActivatedEmailProps {
   userName: string
+  salutation?: Salutation
   planName: string
   dashboardUrl?: string
   content: {
@@ -20,6 +22,7 @@ interface SubscriptionActivatedEmailProps {
 
 export function SubscriptionActivatedEmail({
   userName,
+  salutation,
   planName,
   dashboardUrl = 'https://nicnoa.online/dashboard',
   content,
@@ -43,7 +46,7 @@ export function SubscriptionActivatedEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{userName}</strong>,
+        {getSalutationText(salutation, userName)},
       </Text>
       
       <Text style={paragraph}>{bodyText}</Text>

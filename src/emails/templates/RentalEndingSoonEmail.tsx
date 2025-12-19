@@ -2,9 +2,11 @@ import { Heading, Hr, Text } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface RentalEndingSoonEmailProps {
   userName: string
+  salutation?: Salutation
   salonName: string
   chairName: string
   endDate: string
@@ -23,6 +25,7 @@ interface RentalEndingSoonEmailProps {
 
 export function RentalEndingSoonEmail({
   userName,
+  salutation,
   salonName,
   chairName,
   endDate,
@@ -51,7 +54,7 @@ export function RentalEndingSoonEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{userName}</strong>,
+        {getSalutationText(salutation, userName)},
       </Text>
       
       <Text style={paragraph}>{bodyText}</Text>

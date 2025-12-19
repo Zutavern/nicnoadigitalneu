@@ -9,10 +9,13 @@ import {
   EmailInfoCard,
   EmailButtonContainer,
   EmailFooterNote,
+  EmailGreeting,
+  type Salutation,
 } from '../components/EmailComponents'
 
 interface PasswordResetEmailProps {
   userName: string
+  salutation?: Salutation
   resetUrl: string
   content: {
     headline: string
@@ -27,6 +30,7 @@ interface PasswordResetEmailProps {
 
 export function PasswordResetEmail({
   userName,
+  salutation,
   resetUrl,
   content,
   logoUrl,
@@ -46,14 +50,12 @@ export function PasswordResetEmail({
 
       <EmailHeading as="h1">{content.headline}</EmailHeading>
 
-      <EmailParagraph>
-        Hallo <strong>{userName}</strong>,
-      </EmailParagraph>
+      <EmailGreeting userName={userName} salutation={salutation} />
 
       <EmailParagraph>{content.body}</EmailParagraph>
 
       <EmailButtonContainer>
-        <EmailButton href={resetUrl} primaryColor={primaryColor} size="lg">
+        <EmailButton href={resetUrl} primaryColor={primaryColor}>
           {content.buttonText || 'Neues Passwort setzen'}
         </EmailButton>
       </EmailButtonContainer>

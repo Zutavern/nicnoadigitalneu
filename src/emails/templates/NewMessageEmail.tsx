@@ -2,9 +2,11 @@ import { Heading, Text, Section } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface NewMessageEmailProps {
   userName: string
+  salutation?: Salutation
   senderName: string
   messagePreview: string
   conversationUrl: string
@@ -22,6 +24,7 @@ interface NewMessageEmailProps {
 
 export function NewMessageEmail({
   userName,
+  salutation,
   senderName,
   messagePreview,
   conversationUrl,
@@ -51,7 +54,7 @@ export function NewMessageEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{userName}</strong>,
+        {getSalutationText(salutation, userName)},
       </Text>
       
       <Text style={paragraph}>{bodyText}</Text>

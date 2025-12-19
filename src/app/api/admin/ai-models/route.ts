@@ -90,6 +90,7 @@ export async function GET(req: NextRequest) {
       text: models.filter(m => m.category === 'TEXT'),
       image: models.filter(m => m.category === 'IMAGE'),
       video: models.filter(m => m.category === 'VIDEO'),
+      v0: models.filter(m => m.category === 'GENERATION'),
     }
 
     // Füge Stats zu Modellen hinzu
@@ -112,6 +113,7 @@ export async function GET(req: NextRequest) {
         text: grouped.text.length,
         image: grouped.image.length,
         video: grouped.video.length,
+        v0: grouped.v0.length,
       },
       totalProfit: Array.from(modelStats.values()).reduce((sum, s) => sum + s.profit, 0),
       totalRequests: Array.from(modelStats.values()).reduce((sum, s) => sum + s.totalRequests, 0),
@@ -123,6 +125,7 @@ export async function GET(req: NextRequest) {
         text: modelsWithStats.filter(m => m.category === 'TEXT'),
         image: modelsWithStats.filter(m => m.category === 'IMAGE'),
         video: modelsWithStats.filter(m => m.category === 'VIDEO'),
+        v0: modelsWithStats.filter(m => m.category === 'GENERATION'),
       },
       stats: totalStats,
     })

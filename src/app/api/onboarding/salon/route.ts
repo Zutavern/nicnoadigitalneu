@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { salonName, street, city, zipCode, phone, employeeCount, chairCount, description } = body
+    const { salutation, salonName, street, city, zipCode, phone, employeeCount, chairCount, description } = body
 
     // Update or create salon profile
     await prisma.salonProfile.upsert({
@@ -60,10 +60,13 @@ export async function POST(request: Request) {
       },
     })
 
-    // Mark onboarding as completed
+    // Mark onboarding as completed + save salutation
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { onboardingCompleted: true },
+      data: { 
+        onboardingCompleted: true,
+        ...(salutation && { salutation }),
+      },
     })
 
     return NextResponse.json({ success: true })

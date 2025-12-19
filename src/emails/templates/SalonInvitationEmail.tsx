@@ -2,12 +2,14 @@ import { Heading, Text, Section, Hr } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface SalonInvitationEmailProps {
   salonName: string
   inviterName: string
   invitationUrl: string
   recipientName: string
+  salutation?: Salutation
   message?: string | null
   content: {
     headline: string
@@ -25,6 +27,7 @@ export function SalonInvitationEmail({
   inviterName,
   invitationUrl,
   recipientName,
+  salutation,
   message,
   content,
   logoUrl,
@@ -47,7 +50,7 @@ export function SalonInvitationEmail({
 
       <Heading style={heading}>{content.headline}</Heading>
       
-      <Text style={paragraph}>Hallo {recipientName},</Text>
+      <Text style={paragraph}>{getSalutationText(salutation, recipientName)},</Text>
       
       <Text style={paragraph}>{bodyText}</Text>
 

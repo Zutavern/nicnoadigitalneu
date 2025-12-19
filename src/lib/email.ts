@@ -79,7 +79,7 @@ export async function renderEmailPreview(
     const defaultPreviewData: PreviewData = {
       userName: 'Max Mustermann',
       userEmail: 'max@example.com',
-      companyName: settings?.companyName || 'NICNOA',
+      companyName: settings?.companyName || 'NICNOA&CO.online',
       resetLink: 'https://example.com/reset?token=abc123',
       verifyLink: 'https://example.com/verify?token=abc123',
       loginLink: 'https://example.com/login',
@@ -127,8 +127,7 @@ export async function renderEmailPreview(
     const brandedHtml = wrapWithBranding(htmlContent, {
       logoUrl: settings?.emailLogoUrl,
       primaryColor: template.primaryColor || settings?.emailPrimaryColor || '#10b981',
-      footerText: processedContent.footer || settings?.emailFooterText || `© ${new Date().getFullYear()} ${settings?.companyName || 'NICNOA'}. Alle Rechte vorbehalten.`,
-      companyName: settings?.companyName || 'NICNOA',
+      companyName: settings?.companyName || 'NICNOA&CO.online',
     })
 
     // Generate plain text version
@@ -284,20 +283,19 @@ function wrapWithBranding(
   branding: {
     logoUrl?: string | null
     primaryColor: string
-    footerText: string
     companyName: string
   }
 ): string {
-  const { logoUrl, primaryColor, footerText, companyName } = branding
+  const { logoUrl, primaryColor, companyName } = branding
 
   // Generate logo HTML - either image or styled text
   const logoHtml = logoUrl 
     ? `<img src="${logoUrl}" alt="${companyName}" style="max-height: 48px; width: auto;" />`
     : generateTextLogo(companyName, primaryColor)
 
-  // Generate footer links HTML
+  // Generate footer links HTML - using dark gray for better readability
   const footerLinksHtml = FOOTER_LINKS
-    .map(link => `<a href="${link.href}" style="color: ${primaryColor}; text-decoration: none;">${link.label}</a>`)
+    .map(link => `<a href="${link.href}" style="color: #374151; text-decoration: none;">${link.label}</a>`)
     .join(' &nbsp;|&nbsp; ')
 
   return `
@@ -370,7 +368,7 @@ function wrapWithBranding(
       color: #71717a;
     }
     .footer a {
-      color: ${primaryColor};
+      color: #374151;
       text-decoration: none;
     }
     .footer-links {
@@ -397,9 +395,11 @@ function wrapWithBranding(
         ${content}
       </div>
       <div class="footer">
-        <p style="margin: 0 0 8px 0;">${footerText}</p>
-        <p class="footer-links" style="margin: 0;">
+        <p class="footer-links" style="margin: 0 0 8px 0;">
           ${footerLinksHtml}
+        </p>
+        <p style="margin: 0; font-size: 11px;">
+          © ${new Date().getFullYear()} ${companyName}. Alle Rechte vorbehalten.
         </p>
       </div>
     </div>

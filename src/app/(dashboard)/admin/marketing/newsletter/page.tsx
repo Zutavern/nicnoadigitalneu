@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -11,18 +13,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Card } from '@/components/ui/card'
-import { NewsletterCard } from '@/components/newsletter'
-import { 
-  Plus, 
-  Search, 
-  Mail,
-  FileEdit,
-  Send,
-  CheckCircle,
-  Loader2
-} from 'lucide-react'
-import { toast } from 'sonner'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +38,29 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { 
+  Plus, 
+  Search, 
+  Mail,
+  FileEdit,
+  Send,
+  CheckCircle,
+  Loader2,
+  RefreshCw,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  Eye,
+  Copy,
+  Clock,
+} from 'lucide-react'
+import { toast } from 'sonner'
+import { formatDistanceToNow } from 'date-fns'
+import { de } from 'date-fns/locale'
+import { NewsletterThumbnail } from '@/components/newsletter-builder/newsletter-thumbnail'
+import { EmailPreview } from '@/components/newsletter-builder/email-preview'
+import { CreateNewsletterDialog } from '@/components/newsletter-builder/create-newsletter-dialog'
+import type { NewsletterBlock, NewsletterBranding } from '@/lib/newsletter-builder/types'
 
 type NewsletterStatus = 'DRAFT' | 'SCHEDULED' | 'SENDING' | 'SENT' | 'FAILED'
 type NewsletterSegment = 'ALL' | 'STYLISTS' | 'SALON_OWNERS' | 'CUSTOM'
@@ -48,6 +76,10 @@ interface Newsletter {
   openCount: number
   clickCount: number
   createdAt: string
+  updatedAt: string
+  designJson?: {
+    contentBlocks?: NewsletterBlock[]
+  }
   creator?: {
     name: string | null
     email: string
@@ -62,6 +94,21 @@ const statusFilters = [
   { value: 'FAILED', label: 'Fehlgeschlagen' }
 ]
 
+const STATUS_BADGES: Record<NewsletterStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  DRAFT: { label: 'Entwurf', variant: 'secondary' },
+  SCHEDULED: { label: 'Geplant', variant: 'outline' },
+  SENDING: { label: 'Wird gesendet', variant: 'default' },
+  SENT: { label: 'Gesendet', variant: 'default' },
+  FAILED: { label: 'Fehlgeschlagen', variant: 'destructive' },
+}
+
+// Default Branding für Thumbnails
+const DEFAULT_BRANDING: NewsletterBranding = {
+  primaryColor: '#10b981',
+  companyName: 'NICNOA',
+  websiteUrl: 'https://nicnoa.online',
+}
+
 export default function NewsletterPage() {
   const router = useRouter()
   const [newsletters, setNewsletters] = useState<Newsletter[]>([])
@@ -70,6 +117,12 @@ export default function NewsletterPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [previewId, setPreviewId] = useState<string | null>(null)
+  const [branding, setBranding] = useState<NewsletterBranding>(DEFAULT_BRANDING)
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
+
+  // Finde den Newsletter für die Vorschau
+  const previewNewsletter = previewId ? newsletters.find(n => n.id === previewId) : null
 
   // Stats
   const stats = {
@@ -78,6 +131,24 @@ export default function NewsletterPage() {
     sent: newsletters.filter(n => n.status === 'SENT').length,
     totalSent: newsletters.reduce((acc, n) => acc + n.sentCount, 0)
   }
+
+  const fetchBranding = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/newsletter/base-template')
+      if (response.ok) {
+        const data = await response.json()
+        setBranding({
+          logoUrl: data.branding?.emailLogoUrl,
+          primaryColor: data.branding?.emailPrimaryColor || '#10b981',
+          footerText: data.branding?.emailFooterText,
+          companyName: 'NICNOA',
+          websiteUrl: 'https://nicnoa.online',
+        })
+      }
+    } catch (error) {
+      console.error('Branding fetch error:', error)
+    }
+  }, [])
 
   const fetchNewsletters = useCallback(async () => {
     try {
@@ -100,8 +171,9 @@ export default function NewsletterPage() {
   }, [statusFilter])
 
   useEffect(() => {
+    fetchBranding()
     fetchNewsletters()
-  }, [fetchNewsletters])
+  }, [fetchBranding, fetchNewsletters])
 
   // Filtered newsletters
   const filteredNewsletters = newsletters.filter(newsletter => {
@@ -112,10 +184,6 @@ export default function NewsletterPage() {
       newsletter.subject.toLowerCase().includes(query)
     )
   })
-
-  const handleEdit = (id: string) => {
-    router.push(`/admin/marketing/newsletter/${id}/edit`)
-  }
 
   const handleDelete = async () => {
     if (!deleteId) return
@@ -132,7 +200,7 @@ export default function NewsletterPage() {
       }
       
       toast.success('Newsletter gelöscht')
-      fetchNewsletters()
+      setNewsletters(prev => prev.filter(n => n.id !== deleteId))
     } catch (error) {
       console.error('Delete error:', error)
       toast.error(error instanceof Error ? error.message : 'Fehler beim Löschen')
@@ -144,13 +212,11 @@ export default function NewsletterPage() {
 
   const handleDuplicate = async (id: string) => {
     try {
-      // Newsletter laden
       const response = await fetch(`/api/admin/newsletter/${id}`)
       if (!response.ok) throw new Error('Laden fehlgeschlagen')
       
       const { newsletter } = await response.json()
       
-      // Als neuen Newsletter erstellen
       const createResponse = await fetch('/api/admin/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -173,20 +239,35 @@ export default function NewsletterPage() {
     }
   }
 
+  // Hilfsfunktion um Blöcke aus designJson zu extrahieren
+  const getBlocks = (newsletter: Newsletter): NewsletterBlock[] => {
+    if (!newsletter.designJson) return []
+    return newsletter.designJson.contentBlocks || []
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Newsletter</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Mail className="h-6 w-6 text-primary" />
+            Newsletter
+          </h1>
           <p className="text-muted-foreground">
             Erstelle und versende Newsletter an deine Nutzer
           </p>
         </div>
-        <Button onClick={() => router.push('/admin/marketing/newsletter/create')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Neuer Newsletter
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={fetchNewsletters}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Aktualisieren
+          </Button>
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Neuer Newsletter
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -264,7 +345,7 @@ export default function NewsletterPage() {
         </Select>
       </div>
 
-      {/* Newsletter List */}
+      {/* Newsletter Grid mit Thumbnails */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -279,7 +360,7 @@ export default function NewsletterPage() {
               : 'Erstelle deinen ersten Newsletter.'}
           </p>
           {!searchQuery && statusFilter === 'all' && (
-            <Button onClick={() => router.push('/admin/marketing/newsletter/create')}>
+            <Button onClick={() => setShowCreateDialog(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Neuer Newsletter
             </Button>
@@ -287,15 +368,122 @@ export default function NewsletterPage() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredNewsletters.map(newsletter => (
-            <NewsletterCard
-              key={newsletter.id}
-              newsletter={newsletter}
-              onEdit={handleEdit}
-              onDelete={(id) => setDeleteId(id)}
-              onDuplicate={handleDuplicate}
-            />
-          ))}
+          <AnimatePresence mode="popLayout">
+            {filteredNewsletters.map((newsletter, index) => {
+              const statusBadge = STATUS_BADGES[newsletter.status]
+              const blocks = getBlocks(newsletter)
+              
+              return (
+                <motion.div
+                  key={newsletter.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: index * 0.05 }}
+                  layout
+                >
+                  <Card className="group hover:shadow-lg transition-all">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-lg truncate">
+                            {newsletter.name}
+                          </CardTitle>
+                          <CardDescription className="flex items-center gap-2 mt-1">
+                            <Badge variant={statusBadge.variant} className="text-xs">
+                              {statusBadge.label}
+                            </Badge>
+                            {newsletter.status === 'SENT' && newsletter.sentCount > 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                {newsletter.sentCount} gesendet
+                              </span>
+                            )}
+                          </CardDescription>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <Link href={`/admin/marketing/newsletter/${newsletter.id}/edit`}>
+                              <DropdownMenuItem>
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Bearbeiten
+                              </DropdownMenuItem>
+                            </Link>
+                            <DropdownMenuItem onClick={() => setPreviewId(newsletter.id)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Vorschau
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDuplicate(newsletter.id)}>
+                              <Copy className="h-4 w-4 mr-2" />
+                              Duplizieren
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setDeleteId(newsletter.id)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Löschen
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      {/* Thumbnail Preview */}
+                      <Link href={`/admin/marketing/newsletter/${newsletter.id}/edit`}>
+                        <div className="group/preview relative bg-muted/50 rounded-xl p-4 mb-3 cursor-pointer transition-all hover:shadow-lg hover:bg-muted/70">
+                          <div className="relative flex justify-center">
+                            <div 
+                              className="transition-transform group-hover/preview:scale-[1.02]"
+                              style={{
+                                filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.12)) drop-shadow(0 3px 8px rgba(0,0,0,0.08))',
+                              }}
+                            >
+                              <NewsletterThumbnail
+                                blocks={blocks}
+                                branding={branding}
+                                className="w-[140px]"
+                              />
+                            </div>
+                          </div>
+                          
+                          {/* Hover Overlay */}
+                          <div className="absolute inset-0 rounded-xl flex items-center justify-center opacity-0 group-hover/preview:opacity-100 transition-opacity">
+                            <div className="bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
+                              <Pencil className="h-3.5 w-3.5 inline mr-1.5" />
+                              Bearbeiten
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                      
+                      {/* Subject */}
+                      <p className="text-sm text-muted-foreground truncate mb-2">
+                        {newsletter.subject}
+                      </p>
+                      
+                      {/* Meta */}
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {formatDistanceToNow(new Date(newsletter.updatedAt || newsletter.createdAt), {
+                            addSuffix: true,
+                            locale: de,
+                          })}
+                        </span>
+                        <span>{blocks.length} Blöcke</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )
+            })}
+          </AnimatePresence>
         </div>
       )}
 
@@ -324,7 +512,48 @@ export default function NewsletterPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={!!previewId} onOpenChange={(open) => !open && setPreviewId(null)}>
+        <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg">
+                {previewNewsletter?.name || 'Vorschau'}
+              </DialogTitle>
+            </div>
+          </DialogHeader>
+          
+          {/* Preview Content */}
+          <div className="flex-1 overflow-auto">
+            {previewNewsletter && (
+              <EmailPreview
+                blocks={getBlocks(previewNewsletter)}
+                branding={branding}
+              />
+            )}
+          </div>
+
+          {/* Footer mit Aktionen */}
+          <div className="px-6 py-4 border-t flex-shrink-0 flex items-center justify-between bg-background">
+            <div className="text-sm text-muted-foreground">
+              {previewNewsletter && `${getBlocks(previewNewsletter).length} Blöcke`}
+            </div>
+            <Link href={`/admin/marketing/newsletter/${previewId}/edit`}>
+              <Button>
+                <Pencil className="h-4 w-4 mr-2" />
+                Bearbeiten
+              </Button>
+            </Link>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Newsletter Dialog */}
+      <CreateNewsletterDialog 
+        open={showCreateDialog} 
+        onOpenChange={setShowCreateDialog} 
+      />
     </div>
   )
 }
-

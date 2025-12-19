@@ -2,9 +2,11 @@ import { Heading, Hr, Text } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface NewReviewSalonEmailProps {
   salonOwnerName: string
+  salutation?: Salutation
   salonName: string
   reviewerName: string
   rating: number
@@ -25,6 +27,7 @@ interface NewReviewSalonEmailProps {
 
 export function NewReviewSalonEmail({
   salonOwnerName,
+  salutation,
   salonName,
   reviewerName,
   rating,
@@ -56,7 +59,7 @@ export function NewReviewSalonEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{salonOwnerName}</strong>,
+        {getSalutationText(salutation, salonOwnerName)},
       </Text>
       
       <Text style={paragraph}>{bodyText}</Text>

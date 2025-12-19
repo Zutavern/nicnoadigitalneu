@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
   Loader2, 
   MapPin, 
@@ -81,6 +82,7 @@ export default function OnboardingPage() {
 
   // Salon Owner form data
   const [salonData, setSalonData] = useState({
+    salutation: '' as '' | 'FRAU' | 'HERR' | 'DIVERS' | 'KEINE_ANGABE',
     salonName: '',
     street: '',
     city: '',
@@ -97,6 +99,7 @@ export default function OnboardingPage() {
 
   // Stylist form data
   const [stylistData, setStylistData] = useState({
+    salutation: '' as '' | 'FRAU' | 'HERR' | 'DIVERS' | 'KEINE_ANGABE',
     yearsExperience: '',
     street: '',
     city: '',
@@ -529,6 +532,25 @@ export default function OnboardingPage() {
                   </div>
 
                   <div className="space-y-6">
+                    {/* Anrede */}
+                    <div className="space-y-2">
+                      <Label className="text-white">Anrede</Label>
+                      <Select
+                        value={salonData.salutation}
+                        onValueChange={(v) => setSalonData({ ...salonData, salutation: v as typeof salonData.salutation })}
+                      >
+                        <SelectTrigger className="h-12 bg-white/5 border-white/10 text-white">
+                          <SelectValue placeholder="Bitte wählen" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="FRAU">Frau</SelectItem>
+                          <SelectItem value="HERR">Herr</SelectItem>
+                          <SelectItem value="DIVERS">Divers</SelectItem>
+                          <SelectItem value="KEINE_ANGABE">Keine Angabe</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     <InputWithError
                       id="salonName"
                       label="Salonname"
@@ -732,6 +754,25 @@ export default function OnboardingPage() {
                   </div>
 
                   <div className="space-y-6">
+                    {/* Anrede */}
+                    <div className="space-y-2">
+                      <Label className="text-white">Anrede</Label>
+                      <Select
+                        value={stylistData.salutation}
+                        onValueChange={(v) => setStylistData({ ...stylistData, salutation: v as typeof stylistData.salutation })}
+                      >
+                        <SelectTrigger className="h-12 bg-white/5 border-white/10 text-white">
+                          <SelectValue placeholder="Bitte wählen" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="FRAU">Frau</SelectItem>
+                          <SelectItem value="HERR">Herr</SelectItem>
+                          <SelectItem value="DIVERS">Divers</SelectItem>
+                          <SelectItem value="KEINE_ANGABE">Keine Angabe</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     <InputWithError
                       id="yearsExperience"
                       label="Wie viele Jahre Erfahrung hast du?"

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -262,6 +263,7 @@ export default function StylistSettingsPage() {
     // Profile
     name: '',
     email: '',
+    salutation: '' as '' | 'FRAU' | 'HERR' | 'DIVERS' | 'KEINE_ANGABE',
     phone: '',
     bio: '',
     address: '',
@@ -440,7 +442,24 @@ export default function StylistSettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="salutation">Anrede</Label>
+                    <Select
+                      value={settings.salutation}
+                      onValueChange={(v) => setSettings(prev => ({ ...prev, salutation: v as typeof prev.salutation }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Bitte wählen" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="FRAU">Frau</SelectItem>
+                        <SelectItem value="HERR">Herr</SelectItem>
+                        <SelectItem value="DIVERS">Divers</SelectItem>
+                        <SelectItem value="KEINE_ANGABE">Keine Angabe</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="name">Name</Label>
                     <Input

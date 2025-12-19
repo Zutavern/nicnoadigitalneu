@@ -27,14 +27,19 @@ export async function GET() {
       return NextResponse.json({ error: 'Salon nicht gefunden' }, { status: 404 })
     }
 
-    // Get the user's notification settings from SalonProfile
-    const salonProfile = await prisma.salonProfile.findUnique({
-      where: {
-        userId: session.user.id,
-      },
-    })
+    // Get the user's notification settings from SalonProfile and salutation
+    const [salonProfile, user] = await Promise.all([
+      prisma.salonProfile.findUnique({
+        where: { userId: session.user.id },
+      }),
+      prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { salutation: true },
+      }),
+    ])
 
     return NextResponse.json({
+      salutation: user?.salutation || '',
       salonName: salon.name,
       description: salon.description || '',
       address: salon.address,
@@ -67,6 +72,7 @@ export async function PUT(request: Request) {
 
     const body = await request.json()
     const {
+      salutation,
       salonName,
       description,
       address,
@@ -80,6 +86,14 @@ export async function PUT(request: Request) {
       bookingReminders,
       marketingEmails,
     } = body
+
+    // Update user salutation if provided
+    if (salutation) {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { salutation },
+      })
+    }
 
     // Find the salon owned by this user
     const salon = await prisma.salon.findFirst({

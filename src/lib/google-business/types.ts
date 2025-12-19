@@ -195,3 +195,6 @@ export interface UpdateHoursRequest {
   specialHours?: SpecialHours[]
 }
 
+
+
+

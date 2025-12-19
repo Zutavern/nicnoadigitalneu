@@ -2,9 +2,11 @@ import { Heading, Text, Section } from '@react-email/components'
 import * as React from 'react'
 import { EmailLayout } from '../components/EmailLayout'
 import { EmailButton } from '../components/EmailButton'
+import { getSalutationText, type Salutation } from '../components/EmailComponents'
 
 interface PaymentFailedEmailProps {
   userName: string
+  salutation?: Salutation
   amount: string
   retryUrl: string
   failureReason?: string
@@ -21,6 +23,7 @@ interface PaymentFailedEmailProps {
 
 export function PaymentFailedEmail({
   userName,
+  salutation,
   amount,
   retryUrl,
   failureReason,
@@ -45,7 +48,7 @@ export function PaymentFailedEmail({
       <Heading style={heading}>{content.headline}</Heading>
       
       <Text style={paragraph}>
-        Hallo <strong>{userName}</strong>,
+        {getSalutationText(salutation, userName)},
       </Text>
       
       <Text style={paragraph}>{bodyText}</Text>

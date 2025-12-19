@@ -2,8 +2,8 @@
 
 ## 📐 System-Architektur Dokumentation
 
-**Version:** 1.3  
-**Datum:** 14. Dezember 2025  
+**Version:** 1.4  
+**Datum:** 18. Dezember 2025  
 **Status:** Produktiv
 
 ---
@@ -1211,25 +1211,285 @@ Das Admin-Dashboard bietet:
 - [x] Video Calls mit Daily.co
 - [x] PostHog Analytics Integration
 
-### 17.2 Kurzfristig (Phase 5)
+### 17.2 Abgeschlossen (Phase 5)
+- [x] **Newsletter-Builder** (Drag & Drop, 16+ Block-Typen)
+- [x] **Newsletter-Vorlagen** (5 professionelle Templates)
+- [x] **Newsletter-Scheduling** (Zeitplanung)
+- [x] **Newsletter-Analytics** (Opens, Clicks, Bounces via Webhooks)
+- [x] **Personalisierung** ({{name}}, {{email}}, {{anrede}}, etc.)
+- [x] **GDPR-konformer Unsubscribe-Link** (automatisch im Footer)
+- [x] **Anrede-System** (Salutation in User-Modell)
+- [x] **System-E-Mail Updates** (Einheitliche "Hallo [Name]" Anrede)
+
+### 17.3 Kurzfristig (Phase 6)
 - [ ] Stripe Produkte/Preise synchronisieren
 - [ ] Kalender-Integration (Google/Outlook)
 - [ ] Push-Benachrichtigungen (Web Push)
+- [ ] Domain-Verifizierung UI in Admin-Einstellungen
 
-### 17.3 Mittelfristig (Phase 6)
+### 17.4 Mittelfristig (Phase 7)
 - [ ] Mobile App (React Native)
 - [ ] KI-gestützte Terminplanung
 - [ ] Multi-Sprachen-Support
 
-### 17.4 Langfristig (Phase 7)
+### 17.5 Langfristig (Phase 8)
 - [ ] White-Label für große Ketten
 - [ ] Marketplace für Stylisten-Produkte
 - [ ] AI Chatbot für Kundenservice
 
 ---
 
+## 18. Newsletter-Builder
+
+### 18.1 Übersicht
+
+Der Newsletter-Builder ist ein vollständig selbst-gehosteter, Custom Drag-and-Drop Editor ohne externe Abhängigkeiten (kein iframe, keine kommerzielle Bibliothek).
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         NEWSLETTER-BUILDER ARCHITEKTUR                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                              ┌───────────────────┐
+                              │  NewsletterEditor │
+                              │    (Main UI)      │
+                              └─────────┬─────────┘
+                                        │
+              ┌─────────────────────────┼─────────────────────────┐
+              │                         │                         │
+              ▼                         ▼                         ▼
+     ┌───────────────┐        ┌───────────────┐        ┌───────────────┐
+     │  BlockToolbar │        │  BlockEditor  │        │  EmailPreview │
+     │               │        │   (@dnd-kit)  │        │               │
+     │ - Add Blocks  │        │               │        │ - Live Preview│
+     │ - Categories  │        │ - Drag & Drop │        │ - Desktop/    │
+     │ - Personalize │        │ - Sort        │        │   Mobile      │
+     └───────────────┘        │ - Edit        │        │ - Branding    │
+                              └───────┬───────┘        └───────────────┘
+                                      │
+                    ┌─────────────────┼─────────────────┐
+                    │                 │                 │
+                    ▼                 ▼                 ▼
+           ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+           │   BlockItem   │  │   BlockItem   │  │   BlockItem   │
+           │   (Text)      │  │   (Image)     │  │   (Button)    │
+           └───────────────┘  └───────────────┘  └───────────────┘
+```
+
+### 18.2 Block-Typen
+
+| Block-Typ | Beschreibung | Icon |
+|-----------|--------------|------|
+| `TEXT` | Formatierter Text mit Alignment | Type |
+| `HEADING` | Überschriften (H1-H3) | Heading |
+| `IMAGE` | Bilder mit Upload zu Vercel Blob | Image |
+| `BUTTON` | Call-to-Action Buttons | MousePointer |
+| `DIVIDER` | Horizontale Trennlinie | Minus |
+| `SPACER` | Vertikaler Abstand | Space |
+| `TWO_COLUMN` | Zwei-Spalten Layout | Columns |
+| `THREE_COLUMN` | Drei-Spalten Layout | LayoutGrid |
+| `SOCIAL_LINKS` | Social Media Icons | Share2 |
+| `QUOTE` | Zitat-Block | Quote |
+| `LIST` | Listen (Punkte, Nummern, Checks) | List |
+| `VIDEO` | Video-Thumbnail mit Link | Video |
+| `PRODUCT_CARD` | Produktkarte | Package |
+| `COUPON` | Gutschein-Block | Tag |
+| `PROFILE` | Profilkarte | User |
+| `UNSUBSCRIBE` | Abmelde-Link (GDPR) | UserMinus |
+
+### 18.3 Editor-Features
+
+| Feature | Beschreibung | Implementierung |
+|---------|--------------|-----------------|
+| **Drag & Drop** | Blöcke per Drag & Drop sortieren | `@dnd-kit/core`, `@dnd-kit/sortable` |
+| **Live-Preview** | Echtzeit-Vorschau des Newsletters | `EmailPreview` Komponente |
+| **Mobile Preview** | Umschaltbar zwischen Desktop/Mobile | `previewMode` State |
+| **Undo/Redo** | Historie der Änderungen | History-Stack mit max. 50 Einträgen |
+| **Auto-Save** | Automatisches Speichern alle 30s | `useEffect` mit `setInterval` |
+| **Test-E-Mail** | Newsletter als Test-Mail senden | `/api/admin/newsletter/[id]/send-test` |
+| **Scheduling** | Newsletter für später planen | `ScheduleDialog` Komponente |
+| **Personalisierung** | Platzhalter wie `{{name}}` einfügen | `PersonalizationPalette` |
+| **Block-Duplizierung** | Blöcke kopieren | `handleDuplicateBlock` |
+| **Keyboard Shortcuts** | Cmd/Ctrl+Z (Undo), Cmd/Ctrl+S (Save) | `useEffect` Event Listener |
+
+### 18.4 Personalisierungs-Tokens
+
+| Token | Beschreibung | Fallback |
+|-------|--------------|----------|
+| `{{name}}` | Vollständiger Name | "Kunde" |
+| `{{firstName}}` | Vorname | "Kunde" |
+| `{{email}}` | E-Mail-Adresse | - |
+| `{{company}}` | Firmenname / Salonname | - |
+| `{{date}}` | Aktuelles Datum | - |
+| `{{year}}` | Aktuelles Jahr | - |
+| `{{anrede}}` | Personalisierte Anrede | "Hallo" |
+
+### 18.5 Vorlagen
+
+5 professionelle Newsletter-Vorlagen sind verfügbar:
+
+| Template | Use Case |
+|----------|----------|
+| **Willkommen** | Begrüßung neuer Abonnenten |
+| **Produkt-Ankündigung** | Neue Produkte/Services |
+| **Sale & Promotion** | Rabattaktionen |
+| **Monatlicher Update** | Regelmäßige Newsletter |
+| **Event-Einladung** | Events & Workshops |
+
+### 18.6 API-Endpunkte
+
+```
+/api/admin/newsletter/
+├── route.ts                    # GET (Liste), POST (Erstellen)
+├── [id]/
+│   ├── route.ts               # GET, PUT, DELETE
+│   ├── send/route.ts          # POST (Newsletter versenden)
+│   └── send-test/route.ts     # POST (Test-E-Mail)
+├── upload/route.ts            # POST (Bilder zu Vercel Blob)
+└── base-template/route.ts     # GET (Branding laden)
+```
+
+### 18.7 Resend Webhooks für Analytics
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       NEWSLETTER ANALYTICS FLOW                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    Newsletter gesendet           Resend                    NICNOA
+           │                        │                         │
+           │  1. E-Mail an          │                         │
+           │  Empfänger             │                         │
+           │───────────────────────>│                         │
+           │                        │                         │
+           │                        │  2. Empfänger öffnet    │
+           │                        │  E-Mail                 │
+           │                        │                         │
+           │                        │  3. Webhook:            │
+           │                        │  email.opened           │
+           │                        │────────────────────────>│
+           │                        │                         │
+           │                        │                         │  4. Update DB:
+           │                        │                         │  openCount++
+           │                        │                         │
+           │                        │  5. Empfänger klickt    │
+           │                        │  Link                   │
+           │                        │                         │
+           │                        │  6. Webhook:            │
+           │                        │  email.clicked          │
+           │                        │────────────────────────>│
+           │                        │                         │
+           │                        │                         │  7. Update DB:
+           │                        │                         │  clickCount++
+```
+
+#### Webhook-Events
+
+| Event | DB-Update |
+|-------|-----------|
+| `email.sent` | sentCount++ |
+| `email.delivered` | deliveredCount++ |
+| `email.opened` | openCount++ |
+| `email.clicked` | clickCount++ |
+| `email.bounced` | bounceCount++ |
+| `email.complained` | Log complaint |
+
+---
+
+## 19. Salutation (Anrede) System
+
+### 19.1 Übersicht
+
+Das System unterstützt personalisierte Anreden für Benutzer, die in E-Mails und Newslettern verwendet werden.
+
+### 19.2 Datenbank-Schema
+
+```prisma
+enum Salutation {
+  HERR
+  FRAU
+  DIVERS
+  KEINE_ANGABE
+}
+
+model User {
+  // ...
+  salutation  Salutation?  @map("salutation")
+}
+```
+
+### 19.3 Integration
+
+| Stelle | Beschreibung |
+|--------|--------------|
+| **Onboarding** | Abfrage bei Registrierung (Salon & Stylist) |
+| **Einstellungen** | Änderbar in Profil-Einstellungen |
+| **Newsletter** | Token `{{anrede}}` für personalisierte Anrede |
+| **System-E-Mails** | `EmailGreeting` Komponente verwendet Anrede |
+
+### 19.4 E-Mail-Anrede
+
+Die Anrede in E-Mails ist immer **informell (Du-Form)**:
+
+```typescript
+// src/emails/components/EmailComponents.tsx
+export function getSalutationText(salutation: Salutation, name: string): string {
+  const firstName = getFirstName(name)
+  // Immer "Hallo [Vorname]" - informell und einheitlich
+  return firstName ? `Hallo ${firstName}` : 'Hallo'
+}
+```
+
+---
+
+## 20. Aktualisierte Projektstruktur
+
+### 20.1 Newsletter-Builder Komponenten
+
+```
+src/
+├── components/newsletter-builder/
+│   ├── newsletter-editor.tsx      # Haupt-Editor-Komponente
+│   ├── block-editor.tsx           # Drag & Drop Container
+│   ├── block-toolbar.tsx          # Toolbar zum Hinzufügen von Blöcken
+│   ├── block-item.tsx             # Einzelner Block im Editor
+│   ├── email-preview.tsx          # Live-Vorschau
+│   ├── newsletter-thumbnail.tsx   # Mini-Vorschau für Übersicht
+│   ├── create-newsletter-dialog.tsx # Vorlage-Auswahl
+│   ├── image-upload.tsx           # Bild-Upload Komponente
+│   ├── personalization-palette.tsx # Token-Auswahl
+│   ├── schedule-dialog.tsx        # Zeitplanung
+│   ├── index.ts                   # Exports
+│   └── blocks/
+│       ├── text-block.tsx
+│       ├── heading-block.tsx
+│       ├── image-block.tsx
+│       ├── button-block.tsx
+│       ├── divider-block.tsx
+│       ├── spacer-block.tsx
+│       ├── two-column-block.tsx
+│       ├── three-column-block.tsx
+│       ├── social-links-block.tsx
+│       ├── quote-block.tsx
+│       ├── list-block.tsx
+│       ├── video-block.tsx
+│       ├── product-card-block.tsx
+│       ├── coupon-block.tsx
+│       ├── profile-block.tsx
+│       ├── unsubscribe-block.tsx
+│       └── index.ts
+├── lib/newsletter-builder/
+│   ├── types.ts                   # TypeScript Typen & Enums
+│   ├── constants.ts               # Block-Konfigurationen
+│   ├── render-email.ts            # HTML-Generierung
+│   ├── templates.ts               # Vordefinierte Templates
+│   └── index.ts                   # Exports
+```
+
+---
+
 **Dokumentation gepflegt von:** NICNOA Development Team  
-**Letzte Aktualisierung:** 14. Dezember 2025
+**Letzte Aktualisierung:** 18. Dezember 2025
 
 
 

@@ -17,7 +17,16 @@ export async function GET() {
       ]
     })
 
-    return NextResponse.json({ templates })
+    // Transform to include contentBlocks at top level
+    const transformedTemplates = templates.map(template => {
+      const designJson = template.designJson as Record<string, unknown> | null
+      return {
+        ...template,
+        contentBlocks: designJson?.contentBlocks || [],
+      }
+    })
+
+    return NextResponse.json({ templates: transformedTemplates })
   } catch (error) {
     console.error('Templates GET error:', error)
     return NextResponse.json(
@@ -36,14 +45,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description, designJson, thumbnail, category, isDefault } = body
+    const { name, description, designJson, contentBlocks, thumbnail, category, isDefault } = body
 
-    if (!name || !designJson) {
+    if (!name) {
       return NextResponse.json(
-        { error: 'Name und Design sind erforderlich' },
+        { error: 'Name ist erforderlich' },
         { status: 400 }
       )
     }
+
+    // Store contentBlocks inside designJson
+    const finalDesignJson = contentBlocks 
+      ? { contentBlocks, ...designJson }
+      : designJson || { contentBlocks: [] }
 
     // Wenn isDefault, andere Templates auf false setzen
     if (isDefault) {
@@ -57,14 +71,21 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         description: description || null,
-        designJson,
+        designJson: finalDesignJson,
         thumbnail: thumbnail || null,
         category: category || 'general',
         isDefault: isDefault || false
       }
     })
 
-    return NextResponse.json({ template }, { status: 201 })
+    // Return with contentBlocks at top level
+    const resultDesignJson = template.designJson as Record<string, unknown> | null
+    return NextResponse.json({ 
+      template: {
+        ...template,
+        contentBlocks: resultDesignJson?.contentBlocks || [],
+      }
+    }, { status: 201 })
   } catch (error) {
     console.error('Template POST error:', error)
     return NextResponse.json(
@@ -103,4 +124,3 @@ export async function DELETE(request: NextRequest) {
     )
   }
 }
-

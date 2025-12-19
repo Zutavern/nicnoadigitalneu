@@ -21,6 +21,7 @@ import {
   Zap,
   Check,
   Shield,
+  Globe,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
@@ -92,6 +93,12 @@ interface ExtraUsage {
   hasExtraUsage: boolean
 }
 
+interface SubscriptionStatus {
+  status: string
+  isActive: boolean
+  message: string | null
+}
+
 interface UsageData {
   summary: {
     totalRequests: number
@@ -104,6 +111,7 @@ interface UsageData {
       days: number
     }
   }
+  subscription?: SubscriptionStatus
   spendingLimit: SpendingLimit | null
   includedCredits: IncludedCredits | null
   extraUsage: ExtraUsage | null
@@ -154,6 +162,19 @@ const featureConfig: Record<string, { label: string; icon: typeof MessageSquare;
     icon: Sparkles, 
     color: 'text-amber-500',
     bgColor: 'bg-amber-500/10'
+  },
+  // V0 Homepage Builder Features
+  homepage_generation: { 
+    label: 'Homepage Builder', 
+    icon: Globe, 
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500/10'
+  },
+  homepage_prompt: { 
+    label: 'Homepage Änderungen', 
+    icon: Globe, 
+    color: 'text-teal-500',
+    bgColor: 'bg-teal-500/10'
   },
 }
 
@@ -307,9 +328,46 @@ export function UsageDashboard({ onOpenOnboarding, showOnboarding }: UsageDashbo
   const creditsRemaining = data.includedCredits?.remainingEur || 0
   const creditsUsed = data.includedCredits?.usedEur || 0
   const creditsTotal = data.includedCredits?.totalEur || 0
+  
+  // Subscription-Status Check
+  const subscriptionInactive = data.subscription && !data.subscription.isActive
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
+      {/* Subscription Warnung */}
+      {subscriptionInactive && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-destructive/10 border border-destructive/20 rounded-2xl p-4"
+        >
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-destructive/20 rounded-xl shrink-0">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-destructive">
+                {data.subscription?.status === 'canceled' 
+                  ? 'Abonnement gekündigt' 
+                  : 'Kein aktives Abonnement'}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {data.subscription?.message || 'AI-Features sind deaktiviert. Wähle einen Plan, um fortzufahren.'}
+              </p>
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                className="mt-3"
+                onClick={() => window.location.href = '/pricing'}
+              >
+                <Zap className="h-4 w-4 mr-2" />
+                Plan wählen
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+      
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

@@ -2,9 +2,10 @@
 
 ## 📡 REST API Reference
 
-**Version:** 1.3  
+**Version:** 1.4  
 **Base URL:** `https://nicnoa.vercel.app/api`  
-**Authentifizierung:** NextAuth.js Session Cookie
+**Authentifizierung:** NextAuth.js Session Cookie  
+**Letzte Aktualisierung:** 18. Dezember 2025
 
 ---
 
@@ -26,8 +27,9 @@
 14. [Video Call APIs (Daily.co)](#14-video-call-apis-dailyco)
 15. [Analytics APIs (PostHog)](#15-analytics-apis-posthog)
 16. [E-Mail Analytics APIs](#16-e-mail-analytics-apis)
-17. [Webhooks](#17-webhooks)
-18. [Error Handling](#18-error-handling)
+17. [**Newsletter APIs**](#165-newsletter-apis) *(NEU)*
+18. [Webhooks](#17-webhooks)
+19. [Error Handling](#18-error-handling)
 
 ---
 
@@ -1244,6 +1246,163 @@ Vollständige E-Mail-Analytics-Daten abrufen.
   "configUrl": "/admin/settings/integrations"
 }
 ```
+
+---
+
+## 16.5 Newsletter APIs
+
+### GET /api/admin/newsletter
+Alle Newsletter auflisten.
+
+**Query Parameters:**
+| Parameter | Typ | Beschreibung |
+|-----------|-----|--------------|
+| `status` | string | Filter: DRAFT, SCHEDULED, SENT |
+| `search` | string | Suche nach Titel |
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "subject": "Monatlicher Newsletter",
+      "status": "DRAFT",
+      "sentCount": 0,
+      "openCount": 0,
+      "clickCount": 0,
+      "createdAt": "2025-12-18T10:00:00Z"
+    }
+  ]
+}
+```
+
+### POST /api/admin/newsletter
+Neuen Newsletter erstellen.
+
+**Request Body:**
+```json
+{
+  "subject": "Willkommens-Newsletter",
+  "previewText": "Entdecken Sie unsere neuen Services...",
+  "contentBlocks": [
+    {
+      "id": "block-1",
+      "type": "HEADING",
+      "content": "Willkommen!",
+      "headingLevel": "h1"
+    },
+    {
+      "id": "block-2",
+      "type": "TEXT",
+      "content": "Vielen Dank für Ihre Anmeldung..."
+    }
+  ],
+  "segment": "ALL"
+}
+```
+
+### GET /api/admin/newsletter/:id
+Einzelnen Newsletter laden.
+
+### PUT /api/admin/newsletter/:id
+Newsletter aktualisieren.
+
+### DELETE /api/admin/newsletter/:id
+Newsletter löschen.
+
+### POST /api/admin/newsletter/:id/send
+Newsletter an Empfänger versenden.
+
+**Request Body:**
+```json
+{
+  "segment": "ALL",
+  "scheduledAt": null
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "sentCount": 150,
+  "message": "Newsletter wurde an 150 Empfänger gesendet"
+}
+```
+
+### POST /api/admin/newsletter/:id/send-test
+Test-E-Mail versenden (mit automatischem Fallback auf Resend Test-Domain).
+
+**Request Body:**
+```json
+{
+  "email": "test@example.com",
+  "contentBlocks": [...]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Test-E-Mail wurde an test@example.com gesendet",
+  "usedTestDomain": true
+}
+```
+
+### POST /api/admin/newsletter/upload
+Bilder für Newsletter zu Vercel Blob hochladen.
+
+**Request:** `multipart/form-data`
+| Field | Typ | Beschreibung |
+|-------|-----|--------------|
+| `file` | File | Bilddatei (max. 5MB) |
+
+**Response:**
+```json
+{
+  "url": "https://blob.vercel-storage.com/...",
+  "filename": "image.jpg"
+}
+```
+
+### GET /api/admin/newsletter/base-template
+Branding-Informationen für den Editor laden.
+
+**Response:**
+```json
+{
+  "branding": {
+    "logoUrl": "https://...",
+    "primaryColor": "#10b981",
+    "companyName": "NICNOA",
+    "footerText": "© 2025 NICNOA. Alle Rechte vorbehalten.",
+    "websiteUrl": "https://www.nicnoa.online"
+  }
+}
+```
+
+### Newsletter Block-Typen
+
+| Typ | Beschreibung | Felder |
+|-----|--------------|--------|
+| `TEXT` | Formatierter Text | content, textAlign, fontSize |
+| `HEADING` | Überschrift | content, headingLevel (h1-h3) |
+| `IMAGE` | Bild | imageUrl, altText, linkUrl |
+| `BUTTON` | CTA-Button | buttonText, buttonUrl, buttonColor |
+| `DIVIDER` | Trennlinie | - |
+| `SPACER` | Abstand | spacerSize (small/medium/large) |
+| `TWO_COLUMN` | Zwei-Spalten | columnWidths, childBlocks |
+| `THREE_COLUMN` | Drei-Spalten | columnWidths, childBlocks |
+| `SOCIAL_LINKS` | Social Icons | socialLinks[] |
+| `QUOTE` | Zitat | quoteText, authorName |
+| `LIST` | Liste | listItems[], listStyle |
+| `VIDEO` | Video | videoUrl, posterImageUrl |
+| `PRODUCT_CARD` | Produktkarte | productName, productPrice, imageUrl |
+| `COUPON` | Gutschein | couponCode, description |
+| `PROFILE` | Profilkarte | profileName, profileImageUrl |
+| `UNSUBSCRIBE` | Abmelde-Link | unsubscribeText, unsubscribeLinkText |
 
 ---
 
