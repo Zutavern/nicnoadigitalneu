@@ -26,6 +26,7 @@ import {
   Sparkles,
   Store,
   Globe,
+  ShoppingBag,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -72,6 +73,7 @@ const menuItems = [
     items: [
       { label: 'Einnahmen', href: '/stylist/earnings', icon: Euro },
       { label: 'Abrechnungen', href: '/stylist/invoices', icon: Euro },
+      { label: 'Shop', href: '/stylist/shop', icon: ShoppingBag },
     ],
   },
   {

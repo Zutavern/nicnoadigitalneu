@@ -140,6 +140,12 @@ model User {
   homepageProjects HomepageProject[]
   customDomains    CustomDomain[]
 
+  // Shop System
+  shopCarts        ShopCart[]
+  shopOrders       ShopOrder[]
+  affiliateOrders  AffiliateOrder[]
+  affiliatePayouts AffiliatePayout[]
+
   @@map("users")
 }
 
@@ -714,6 +720,14 @@ model Salon {
   stylistConnections SalonStylistConnection[]
   invitations        SalonInvitation[]
 
+  // Shop System
+  shopifyConnection ShopifyConnection?
+  shopSettings      ShopSettings?
+  shopCarts         ShopCart[]
+  shopOrders        ShopOrder[]
+  affiliateOrders   AffiliateOrder[]
+  affiliatePayouts  AffiliatePayout[]
+
   @@index([ownerId])
   @@index([city])
   @@index([isActive, isVerified])
@@ -1193,7 +1207,7 @@ model PlatformSettings {
   sevenIoTestNumbers String? @map("seven_io_test_numbers") @db.Text // Komma-getrennte Liste von Testnummern
 
   // Browserless (Headless Chrome as a Service für PDF-Generierung)
-  browserlessApiKey String? @map("browserless_api_key") @db.VarChar(500)
+  browserlessApiKey  String? @map("browserless_api_key") @db.VarChar(500)
   browserlessEnabled Boolean @default(false) @map("browserless_enabled")
 
   // Timestamps
@@ -2046,18 +2060,18 @@ model ReferralCampaign {
   marketingText      String @default("Empfehle uns weiter und spare!") @map("marketing_text") @db.VarChar(500)
 
   // Status
-  isActive    Boolean   @default(false) @map("is_active") // Nur eine kann aktiv sein
-  isDefault   Boolean   @default(false) @map("is_default") // Standard-Kampagne
-  validFrom   DateTime? @map("valid_from") @db.Timestamptz
-  validUntil  DateTime? @map("valid_until") @db.Timestamptz
+  isActive   Boolean   @default(false) @map("is_active") // Nur eine kann aktiv sein
+  isDefault  Boolean   @default(false) @map("is_default") // Standard-Kampagne
+  validFrom  DateTime? @map("valid_from") @db.Timestamptz
+  validUntil DateTime? @map("valid_until") @db.Timestamptz
 
   // Stripe Coupons (werden automatisch erstellt)
   stripeReferrerCouponId String? @map("stripe_referrer_coupon_id") @db.VarChar(100)
   stripeReferredCouponId String? @map("stripe_referred_coupon_id") @db.VarChar(100)
 
   // Limits
-  maxRedemptions    Int? @map("max_redemptions") // Max Einlösungen gesamt
-  currentRedemptions Int @default(0) @map("current_redemptions")
+  maxRedemptions     Int? @map("max_redemptions") // Max Einlösungen gesamt
+  currentRedemptions Int  @default(0) @map("current_redemptions")
 
   // Statistiken
   totalReferrals      Int @default(0) @map("total_referrals")
@@ -3806,10 +3820,10 @@ model BillingSetting {
   id String @id @default("default") @db.VarChar(50) // Singleton, immer "default"
 
   // Aktive Billing-Intervalle
-  monthlyEnabled    Boolean @default(true) @map("monthly_enabled")
-  quarterlyEnabled  Boolean @default(true) @map("quarterly_enabled")
-  sixMonthsEnabled  Boolean @default(true) @map("six_months_enabled")
-  yearlyEnabled     Boolean @default(true) @map("yearly_enabled")
+  monthlyEnabled   Boolean @default(true) @map("monthly_enabled")
+  quarterlyEnabled Boolean @default(true) @map("quarterly_enabled")
+  sixMonthsEnabled Boolean @default(true) @map("six_months_enabled")
+  yearlyEnabled    Boolean @default(true) @map("yearly_enabled")
 
   // Rabatte pro Intervall (in Prozent)
   monthlyDiscount   Int @default(0) @map("monthly_discount")
@@ -3837,7 +3851,7 @@ model BillingSetting {
   currencySign String @default("€") @map("currency_sign") @db.VarChar(5)
 
   // Coupon/Promo-Code Einstellungen
-  couponsEnabled    Boolean @default(true) @map("coupons_enabled")
+  couponsEnabled      Boolean @default(true) @map("coupons_enabled")
   showCouponOnPricing Boolean @default(false) @map("show_coupon_on_pricing")
 
   // Geld-zurück-Garantie
@@ -3845,9 +3859,9 @@ model BillingSetting {
   moneyBackDays    Int     @default(30) @map("money_back_days")
 
   // Stripe Webhook Status
-  webhookSecret     String?   @map("webhook_secret") @db.VarChar(255)
-  webhookLastPing   DateTime? @map("webhook_last_ping") @db.Timestamptz
-  webhookStatus     String    @default("unknown") @map("webhook_status") @db.VarChar(20)
+  webhookSecret   String?   @map("webhook_secret") @db.VarChar(255)
+  webhookLastPing DateTime? @map("webhook_last_ping") @db.Timestamptz
+  webhookStatus   String    @default("unknown") @map("webhook_status") @db.VarChar(20)
 
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -3864,42 +3878,42 @@ model PricingPageConfig {
   id String @id @default("default") @db.VarChar(50) // Singleton, immer "default"
 
   // Hero Section - Stuhlmieter
-  stylistBadgeText     String? @default("Für Stuhlmieter") @map("stylist_badge_text") @db.VarChar(100)
-  stylistTitle         String  @default("Der perfekte Plan für deinen Erfolg") @map("stylist_title") @db.Text
-  stylistDescription   String? @default("Starte jetzt durch mit NICNOA – alle Tools für moderne Stylisten") @map("stylist_description") @db.Text
+  stylistBadgeText   String? @default("Für Stuhlmieter") @map("stylist_badge_text") @db.VarChar(100)
+  stylistTitle       String  @default("Der perfekte Plan für deinen Erfolg") @map("stylist_title") @db.Text
+  stylistDescription String? @default("Starte jetzt durch mit NICNOA – alle Tools für moderne Stylisten") @map("stylist_description") @db.Text
 
   // Hero Section - Salonbesitzer
-  salonBadgeText       String? @default("Für Salonbesitzer") @map("salon_badge_text") @db.VarChar(100)
-  salonTitle           String  @default("Dein Salon, dein Erfolg, deine Plattform") @map("salon_title") @db.Text
-  salonDescription     String? @default("Verwalte dein Team, optimiere Abläufe und steigere deinen Umsatz") @map("salon_description") @db.Text
+  salonBadgeText   String? @default("Für Salonbesitzer") @map("salon_badge_text") @db.VarChar(100)
+  salonTitle       String  @default("Dein Salon, dein Erfolg, deine Plattform") @map("salon_title") @db.Text
+  salonDescription String? @default("Verwalte dein Team, optimiere Abläufe und steigere deinen Umsatz") @map("salon_description") @db.Text
 
   // CTA Section
-  ctaTitle             String? @default("Bereit für den nächsten Schritt?") @map("cta_title") @db.Text
-  ctaDescription       String? @default("Starte jetzt kostenlos und überzeuge dich selbst") @map("cta_description") @db.Text
-  ctaButtonText        String? @default("Jetzt kostenlos testen") @map("cta_button_text") @db.VarChar(100)
-  ctaButtonUrl         String? @default("/register") @map("cta_button_url") @db.VarChar(255)
+  ctaTitle       String? @default("Bereit für den nächsten Schritt?") @map("cta_title") @db.Text
+  ctaDescription String? @default("Starte jetzt kostenlos und überzeuge dich selbst") @map("cta_description") @db.Text
+  ctaButtonText  String? @default("Jetzt kostenlos testen") @map("cta_button_text") @db.VarChar(100)
+  ctaButtonUrl   String? @default("/register") @map("cta_button_url") @db.VarChar(255)
 
   // Trust Elements
-  showTrustElements    Boolean @default(true) @map("show_trust_elements")
-  trustElement1Text    String? @default("14 Tage kostenlos") @map("trust_element_1_text") @db.VarChar(100)
-  trustElement2Text    String? @default("Jederzeit kündbar") @map("trust_element_2_text") @db.VarChar(100)
-  trustElement3Text    String? @default("Keine Kreditkarte nötig") @map("trust_element_3_text") @db.VarChar(100)
-  trustElement4Text    String? @default("30 Tage Geld-zurück-Garantie") @map("trust_element_4_text") @db.VarChar(100)
+  showTrustElements Boolean @default(true) @map("show_trust_elements")
+  trustElement1Text String? @default("14 Tage kostenlos") @map("trust_element_1_text") @db.VarChar(100)
+  trustElement2Text String? @default("Jederzeit kündbar") @map("trust_element_2_text") @db.VarChar(100)
+  trustElement3Text String? @default("Keine Kreditkarte nötig") @map("trust_element_3_text") @db.VarChar(100)
+  trustElement4Text String? @default("30 Tage Geld-zurück-Garantie") @map("trust_element_4_text") @db.VarChar(100)
 
   // FAQ Section
-  showFAQ              Boolean @default(true) @map("show_faq")
-  faqTitle             String? @default("Häufige Fragen") @map("faq_title") @db.VarChar(255)
-  faqDescription       String? @default("Alles was du über unsere Preise wissen musst") @map("faq_description") @db.Text
+  showFAQ        Boolean @default(true) @map("show_faq")
+  faqTitle       String? @default("Häufige Fragen") @map("faq_title") @db.VarChar(255)
+  faqDescription String? @default("Alles was du über unsere Preise wissen musst") @map("faq_description") @db.Text
 
   // Testimonials Section
-  showTestimonials     Boolean @default(true) @map("show_testimonials")
-  testimonialsTitle    String? @default("Das sagen unsere Kunden") @map("testimonials_title") @db.VarChar(255)
+  showTestimonials  Boolean @default(true) @map("show_testimonials")
+  testimonialsTitle String? @default("Das sagen unsere Kunden") @map("testimonials_title") @db.VarChar(255)
 
   // SEO
-  metaTitle            String? @default("Preise & Pläne | NICNOA") @map("meta_title") @db.VarChar(120)
-  metaDescription      String? @default("Finde den perfekten Plan für dein Salon-Business. Flexible Preise, kostenlose Testphase und jederzeit kündbar.") @map("meta_description") @db.VarChar(320)
-  metaKeywords         String? @map("meta_keywords") @db.Text
-  ogImage              String? @map("og_image") @db.Text
+  metaTitle       String? @default("Preise & Pläne | NICNOA") @map("meta_title") @db.VarChar(120)
+  metaDescription String? @default("Finde den perfekten Plan für dein Salon-Business. Flexible Preise, kostenlose Testphase und jederzeit kündbar.") @map("meta_description") @db.VarChar(320)
+  metaKeywords    String? @map("meta_keywords") @db.Text
+  ogImage         String? @map("og_image") @db.Text
 
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -3932,10 +3946,10 @@ model Coupon {
   description String? @db.VarChar(500)
 
   // Rabatt-Typ
-  type            CouponType     @default(PERCENTAGE)
-  discountPercent Int?           @map("discount_percent") // Für PERCENTAGE
-  discountAmount  Decimal?       @map("discount_amount") @db.Decimal(10, 2) // Für FIXED_AMOUNT
-  currency        String         @default("EUR") @db.VarChar(3) // Für FIXED_AMOUNT
+  type            CouponType @default(PERCENTAGE)
+  discountPercent Int?       @map("discount_percent") // Für PERCENTAGE
+  discountAmount  Decimal?   @map("discount_amount") @db.Decimal(10, 2) // Für FIXED_AMOUNT
+  currency        String     @default("EUR") @db.VarChar(3) // Für FIXED_AMOUNT
 
   // Dauer
   duration       CouponDuration @default(ONCE)
@@ -4240,9 +4254,9 @@ model AIModelConfig {
 
   // Anzeige
   name        String
-  description String?       @db.Text
+  description String?         @db.Text
   category    AIModelCategory
-  subcategory String?       @db.VarChar(50) // 'recommended' | 'pro' | 'fast' | 'coding'
+  subcategory String?         @db.VarChar(50) // 'recommended' | 'pro' | 'fast' | 'coding'
 
   // Kosten (Einkauf) - USD
   costPerInputToken  Decimal? @map("cost_per_input_token") @db.Decimal(12, 8) // Pro 1M Tokens
@@ -4309,47 +4323,47 @@ model RevenueDashboardConfig {
   id String @id @default("default") @db.VarChar(50) // Singleton, immer "default"
 
   // Panel Visibility
-  showOverviewStats   Boolean @default(true) @map("show_overview_stats")
-  showRevenueChart    Boolean @default(true) @map("show_revenue_chart")
-  showRevenueByPlan   Boolean @default(true) @map("show_revenue_by_plan")
-  showTransactions    Boolean @default(true) @map("show_transactions")
-  showPaymentMethods  Boolean @default(true) @map("show_payment_methods")
-  showChurnMetrics    Boolean @default(true) @map("show_churn_metrics")
+  showOverviewStats       Boolean @default(true) @map("show_overview_stats")
+  showRevenueChart        Boolean @default(true) @map("show_revenue_chart")
+  showRevenueByPlan       Boolean @default(true) @map("show_revenue_by_plan")
+  showTransactions        Boolean @default(true) @map("show_transactions")
+  showPaymentMethods      Boolean @default(true) @map("show_payment_methods")
+  showChurnMetrics        Boolean @default(true) @map("show_churn_metrics")
   showSubscriptionMetrics Boolean @default(true) @map("show_subscription_metrics")
-  
+
   // AI/Metered Billing Panels
-  showAiRevenuePanel    Boolean @default(true) @map("show_ai_revenue_panel")
-  showAiUsageBreakdown  Boolean @default(true) @map("show_ai_usage_breakdown")
-  showAiTopConsumers    Boolean @default(true) @map("show_ai_top_consumers")
+  showAiRevenuePanel       Boolean @default(true) @map("show_ai_revenue_panel")
+  showAiUsageBreakdown     Boolean @default(true) @map("show_ai_usage_breakdown")
+  showAiTopConsumers       Boolean @default(true) @map("show_ai_top_consumers")
   showIncludedCreditsUsage Boolean @default(true) @map("show_included_credits_usage")
-  
+
   // Pricing Plans Revenue
   showPlanPerformance   Boolean @default(true) @map("show_plan_performance")
   showIntervalBreakdown Boolean @default(true) @map("show_interval_breakdown")
   showTrialConversions  Boolean @default(true) @map("show_trial_conversions")
-  
+
   // Credit Packages entfernt - Metered Pricing wird verwendet
-  
+
   // Coupon Analytics
   showCouponRedemptions Boolean @default(true) @map("show_coupon_redemptions")
   showCouponRevenueLoss Boolean @default(true) @map("show_coupon_revenue_loss")
-  
+
   // Referral Revenue
-  showReferralRevenue   Boolean @default(true) @map("show_referral_revenue")
-  
+  showReferralRevenue Boolean @default(true) @map("show_referral_revenue")
+
   // Stripe Direct
-  showStripeBalance     Boolean @default(true) @map("show_stripe_balance")
-  showStripeFees        Boolean @default(true) @map("show_stripe_fees")
-  showStripeDisputes    Boolean @default(false) @map("show_stripe_disputes")
-  
+  showStripeBalance  Boolean @default(true) @map("show_stripe_balance")
+  showStripeFees     Boolean @default(true) @map("show_stripe_fees")
+  showStripeDisputes Boolean @default(false) @map("show_stripe_disputes")
+
   // Panel Order (JSON array of panel keys for custom ordering)
   panelOrder Json @default("[]") @map("panel_order")
-  
+
   // Display Settings
-  defaultPeriod      String @default("30d") @map("default_period") @db.VarChar(10) // 7d, 30d, 90d, 1y
+  defaultPeriod      String  @default("30d") @map("default_period") @db.VarChar(10) // 7d, 30d, 90d, 1y
   autoRefreshEnabled Boolean @default(false) @map("auto_refresh_enabled")
   autoRefreshSeconds Int     @default(60) @map("auto_refresh_seconds")
-  
+
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -4385,40 +4399,40 @@ model Newsletter {
   htmlContent String?           @map("html_content") @db.Text
   status      NewsletterStatus  @default(DRAFT)
   segment     NewsletterSegment @default(ALL)
-  
+
   // Scheduling
-  scheduledAt DateTime?         @map("scheduled_at") @db.Timestamptz
-  sentAt      DateTime?         @map("sent_at") @db.Timestamptz
-  
+  scheduledAt DateTime? @map("scheduled_at") @db.Timestamptz
+  sentAt      DateTime? @map("sent_at") @db.Timestamptz
+
   // Statistics
-  sentCount   Int               @default(0) @map("sent_count")
-  openCount   Int               @default(0) @map("open_count")
-  clickCount  Int               @default(0) @map("click_count")
-  bounceCount Int               @default(0) @map("bounce_count")
-  
+  sentCount   Int @default(0) @map("sent_count")
+  openCount   Int @default(0) @map("open_count")
+  clickCount  Int @default(0) @map("click_count")
+  bounceCount Int @default(0) @map("bounce_count")
+
   // Relations
-  createdBy   String?           @map("created_by") @db.Uuid
-  creator     User?             @relation(fields: [createdBy], references: [id])
-  
+  createdBy String? @map("created_by") @db.Uuid
+  creator   User?   @relation(fields: [createdBy], references: [id])
+
   // Timestamps
-  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("newsletters")
 }
 
 model NewsletterTemplate {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String   @db.VarChar(255)
-  description String?  @db.Text
-  designJson  Json     @map("design_json") // Unlayer Editor JSON
-  thumbnail   String?  @db.Text // Base64 or URL
-  category    String   @default("general") @db.VarChar(50) // general, welcome, promo, update
-  isDefault   Boolean  @default(false) @map("is_default")
-  
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String  @db.VarChar(255)
+  description String? @db.Text
+  designJson  Json    @map("design_json") // Unlayer Editor JSON
+  thumbnail   String? @db.Text // Base64 or URL
+  category    String  @default("general") @db.VarChar(50) // general, welcome, promo, update
+  isDefault   Boolean @default(false) @map("is_default")
+
   // Timestamps
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("newsletter_templates")
 }
@@ -4429,88 +4443,88 @@ model NewsletterTemplate {
 
 enum HomepageTemplate {
   // Für Stuhlmieter
-  STYLIST_CLASSIC   // Klassisches Stylist-Portfolio
-  STYLIST_MODERN    // Modernes Design
-  STYLIST_MINIMAL   // Minimalistisches Design
+  STYLIST_CLASSIC // Klassisches Stylist-Portfolio
+  STYLIST_MODERN // Modernes Design
+  STYLIST_MINIMAL // Minimalistisches Design
   // Für Salons
   SALON_PROFESSIONAL // Professionelles Salon-Design
-  SALON_ELEGANT      // Elegantes Design
-  SALON_VIBRANT      // Lebendiges Design
+  SALON_ELEGANT // Elegantes Design
+  SALON_VIBRANT // Lebendiges Design
 }
 
 enum HomepagePageConfig {
-  ONE_PAGER  // Alles auf einer Seite (inkl. Impressum/Datenschutz im Footer)
-  BASIC      // Home, Kontakt, Impressum, Datenschutz
-  STANDARD   // Home, Über mich/uns, Preisliste, Kontakt, Impressum
-  FULL       // Home, Über mich/uns, Team/Portfolio, Preisliste, Galerie, Kontakt, Impressum
+  ONE_PAGER // Alles auf einer Seite (inkl. Impressum/Datenschutz im Footer)
+  BASIC // Home, Kontakt, Impressum, Datenschutz
+  STANDARD // Home, Über mich/uns, Preisliste, Kontakt, Impressum
+  FULL // Home, Über mich/uns, Team/Portfolio, Preisliste, Galerie, Kontakt, Impressum
 }
 
 enum HomepageDesignStyle {
-  MODERN      // Klare Linien, mutige Farben, viel Weißraum
-  CLASSIC     // Elegant, zeitlos, professionell
-  MINIMALIST  // Reduziert, fokussiert, clean
-  CREATIVE    // Einzigartig, künstlerisch, auffällig
+  MODERN // Klare Linien, mutige Farben, viel Weißraum
+  CLASSIC // Elegant, zeitlos, professionell
+  MINIMALIST // Reduziert, fokussiert, clean
+  CREATIVE // Einzigartig, künstlerisch, auffällig
 }
 
 enum HomepageStatus {
-  DRAFT       // Noch nicht generiert
-  GENERATING  // V0 generiert gerade
-  READY       // Fertig, kann veröffentlicht werden
-  PUBLISHED   // Veröffentlicht und live
-  ERROR       // Fehler bei der Generierung
+  DRAFT // Noch nicht generiert
+  GENERATING // V0 generiert gerade
+  READY // Fertig, kann veröffentlicht werden
+  PUBLISHED // Veröffentlicht und live
+  ERROR // Fehler bei der Generierung
 }
 
 model HomepageProject {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
   // Projekt-Metadaten
-  name        String   @db.VarChar(200)
-  slug        String   @unique @db.VarChar(200) // Subdomain: slug.nicnoa.online
-  
+  name String @db.VarChar(200)
+  slug String @unique @db.VarChar(200) // Subdomain: slug.nicnoa.online
+
   // Wizard-Konfiguration
-  templateType   HomepageTemplate    @map("template_type")
-  pageConfig     HomepagePageConfig  @map("page_config")
-  designStyle    HomepageDesignStyle @map("design_style")
-  
+  templateType HomepageTemplate    @map("template_type")
+  pageConfig   HomepagePageConfig  @map("page_config")
+  designStyle  HomepageDesignStyle @map("design_style")
+
   // Kontaktdaten (Kopie aus User-Daten, editierbar im Wizard)
-  contactData    Json?   @map("contact_data")
-  
+  contactData Json? @map("contact_data")
+
   // V0 Generierung
-  v0GenerationId String?  @map("v0_generation_id") @db.VarChar(255)
-  v0Error        String?  @map("v0_error") @db.Text
-  
+  v0GenerationId String? @map("v0_generation_id") @db.VarChar(255)
+  v0Error        String? @map("v0_error") @db.Text
+
   // Seiten als JSON (jede Seite hat slug, title, content, generatedCode)
-  pages          Json     @default("[]")
-  
+  pages Json @default("[]")
+
   // Branding (überschreibt das Standard-Branding)
-  brandingColor   String?  @map("branding_color") @db.VarChar(20)
-  brandingLogoUrl String?  @map("branding_logo_url")
-  
+  brandingColor   String? @map("branding_color") @db.VarChar(20)
+  brandingLogoUrl String? @map("branding_logo_url")
+
   // Schriftarten
-  fontHeading    String?  @map("font_heading") @db.VarChar(100)
-  fontBody       String?  @map("font_body") @db.VarChar(100)
-  
+  fontHeading String? @map("font_heading") @db.VarChar(100)
+  fontBody    String? @map("font_body") @db.VarChar(100)
+
   // Status
-  status      HomepageStatus @default(DRAFT)
-  isPublished Boolean        @default(false) @map("is_published")
-  publishedAt DateTime?      @map("published_at") @db.Timestamptz
-  publishedUrl String?       @map("published_url") @db.VarChar(255)
-  
+  status       HomepageStatus @default(DRAFT)
+  isPublished  Boolean        @default(false) @map("is_published")
+  publishedAt  DateTime?      @map("published_at") @db.Timestamptz
+  publishedUrl String?        @map("published_url") @db.VarChar(255)
+
   // Analytics
-  viewCount   Int @default(0) @map("view_count")
-  
+  viewCount Int @default(0) @map("view_count")
+
   // Timestamps
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
-  
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
   // Custom Domain (optional)
   customDomainId String? @unique @map("custom_domain_id") @db.Uuid
-  
+
   // Relations
-  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  customDomain CustomDomain?  @relation(fields: [customDomainId], references: [id])
-  
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customDomain CustomDomain? @relation(fields: [customDomainId], references: [id])
+
   @@index([userId])
   @@index([slug])
   @@index([status])
@@ -4519,47 +4533,47 @@ model HomepageProject {
 
 // Custom Domain für Homepages
 model CustomDomain {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
   // Domain-Infos
-  domain         String   @unique @db.VarChar(255)  // z.B. "meinsalon.de"
-  subdomain      String?  @db.VarChar(100)          // Optional: "www"
-  
+  domain    String  @unique @db.VarChar(255) // z.B. "meinsalon.de"
+  subdomain String? @db.VarChar(100) // Optional: "www"
+
   // Vercel-Konfiguration
-  vercelDomainId String?  @map("vercel_domain_id") @db.VarChar(100)
+  vercelDomainId  String? @map("vercel_domain_id") @db.VarChar(100)
   vercelProjectId String? @map("vercel_project_id") @db.VarChar(100)
-  
+
   // Registrierung (wenn über uns gekauft)
-  isPurchased       Boolean   @default(false) @map("is_purchased")
-  purchasedAt       DateTime? @map("purchased_at") @db.Timestamptz
-  purchasePriceUsd  Decimal?  @map("purchase_price_usd") @db.Decimal(10, 2)
-  renewalPriceUsd   Decimal?  @map("renewal_price_usd") @db.Decimal(10, 2)
-  expiresAt         DateTime? @map("expires_at") @db.Timestamptz
-  autoRenew         Boolean   @default(true) @map("auto_renew")
-  
+  isPurchased      Boolean   @default(false) @map("is_purchased")
+  purchasedAt      DateTime? @map("purchased_at") @db.Timestamptz
+  purchasePriceUsd Decimal?  @map("purchase_price_usd") @db.Decimal(10, 2)
+  renewalPriceUsd  Decimal?  @map("renewal_price_usd") @db.Decimal(10, 2)
+  expiresAt        DateTime? @map("expires_at") @db.Timestamptz
+  autoRenew        Boolean   @default(true) @map("auto_renew")
+
   // Stripe für Weiterberechnung
-  stripeInvoiceId   String?   @map("stripe_invoice_id") @db.VarChar(100)
-  customerPriceEur  Decimal?  @map("customer_price_eur") @db.Decimal(10, 2)
-  
+  stripeInvoiceId  String?  @map("stripe_invoice_id") @db.VarChar(100)
+  customerPriceEur Decimal? @map("customer_price_eur") @db.Decimal(10, 2)
+
   // Verifizierung
   verificationStatus DomainVerificationStatus @default(PENDING) @map("verification_status")
-  verificationMethod String?  @map("verification_method") @db.VarChar(20)  // TXT, CNAME
-  verificationToken  String?  @map("verification_token") @db.VarChar(255)
-  verifiedAt        DateTime? @map("verified_at") @db.Timestamptz
-  
+  verificationMethod String?                  @map("verification_method") @db.VarChar(20) // TXT, CNAME
+  verificationToken  String?                  @map("verification_token") @db.VarChar(255)
+  verifiedAt         DateTime?                @map("verified_at") @db.Timestamptz
+
   // DNS-Status
-  dnsConfigured     Boolean   @default(false) @map("dns_configured")
-  sslCertificateId  String?   @map("ssl_certificate_id") @db.VarChar(100)
-  
+  dnsConfigured    Boolean @default(false) @map("dns_configured")
+  sslCertificateId String? @map("ssl_certificate_id") @db.VarChar(100)
+
   // Timestamps
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
-  
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
   // Relations
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   homepageProject HomepageProject?
-  
+
   @@index([userId])
   @@index([domain])
   @@index([verificationStatus])
@@ -4575,29 +4589,400 @@ enum DomainVerificationStatus {
 
 // Homepage-Prompt Library
 model HomepagePrompt {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
   // Kategorisierung
-  pageType    String   @map("page_type") @db.VarChar(50)    // home, ueber-mich, kontakt, etc.
-  targetRole  String   @map("target_role") @db.VarChar(20)  // STYLIST, SALON_OWNER, BOTH
-  category    String   @db.VarChar(100)                     // Hero, Header, Layout, etc.
-  
+  pageType   String @map("page_type") @db.VarChar(50) // home, ueber-mich, kontakt, etc.
+  targetRole String @map("target_role") @db.VarChar(20) // STYLIST, SALON_OWNER, BOTH
+  category   String @db.VarChar(100) // Hero, Header, Layout, etc.
+
   // Prompt-Daten
-  title       String   @db.VarChar(200)                     // Kurztitel für UI
-  prompt      String   @db.Text                             // Der vollständige Prompt-Text
-  description String?  @db.Text                             // Optionale Beschreibung
-  icon        String?  @db.VarChar(50)                      // Lucide Icon Name
-  
+  title       String  @db.VarChar(200) // Kurztitel für UI
+  prompt      String  @db.Text // Der vollständige Prompt-Text
+  description String? @db.Text // Optionale Beschreibung
+  icon        String? @db.VarChar(50) // Lucide Icon Name
+
   // Sortierung & Status
-  sortOrder   Int      @default(0) @map("sort_order")
-  isActive    Boolean  @default(true) @map("is_active")
-  
+  sortOrder Int     @default(0) @map("sort_order")
+  isActive  Boolean @default(true) @map("is_active")
+
   // Timestamps
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
-  
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
   @@index([pageType])
   @@index([targetRole])
   @@index([isActive])
   @@map("homepage_prompts")
+}
+
+// ============================================
+// Shop / E-Commerce Models
+// ============================================
+
+// Shopify-Verbindung pro Salon
+model ShopifyConnection {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  salonId      String    @unique @map("salon_id") @db.Uuid
+  shopDomain   String    @map("shop_domain") @db.VarChar(255) // myshop.myshopify.com
+  accessToken  String    @map("access_token") @db.Text // Verschlüsselt
+  apiKey       String?   @map("api_key") @db.VarChar(255) // Für Webhooks
+  apiSecretKey String?   @map("api_secret_key") @db.Text // Verschlüsselt, für Webhook-Verifizierung
+  storeName    String?   @map("store_name") @db.VarChar(255)
+  isActive     Boolean   @default(true) @map("is_active")
+  lastSyncAt   DateTime? @map("last_sync_at") @db.Timestamptz
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  salon    Salon         @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  products ShopProduct[]
+
+  @@index([salonId])
+  @@map("shopify_connections")
+}
+
+// Shop-Einstellungen pro Salon
+model ShopSettings {
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  salonId String @unique @map("salon_id") @db.Uuid
+
+  // Globale Marge für B2B (Stylist-Preis)
+  defaultMarginType  String  @default("PERCENTAGE") @map("default_margin_type") @db.VarChar(20) // PERCENTAGE | FIXED
+  defaultMarginValue Decimal @default(20) @map("default_margin_value") @db.Decimal(10, 2)
+
+  // Globale Affiliate-Provision
+  defaultCommissionType  String  @default("PERCENTAGE") @map("default_commission_type") @db.VarChar(20)
+  defaultCommissionValue Decimal @default(10) @map("default_commission_value") @db.Decimal(10, 2)
+
+  // Zahlungsoptionen für Stylisten
+  allowStripePayment Boolean @default(true) @map("allow_stripe_payment")
+  allowRentAddition  Boolean @default(true) @map("allow_rent_addition")
+
+  // Affiliate aktiviert?
+  affiliateEnabled Boolean @default(false) @map("affiliate_enabled")
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  salon Salon @relation(fields: [salonId], references: [id], onDelete: Cascade)
+
+  @@index([salonId])
+  @@map("shop_settings")
+}
+
+// Produkte (aus Shopify synchronisiert + NICNOA-Erweiterungen)
+model ShopProduct {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  connectionId String @map("connection_id") @db.Uuid
+
+  // Shopify-Daten (GID-Format: gid://shopify/Product/123)
+  shopifyProductId   String  @map("shopify_product_id") @db.VarChar(100)
+  shopifyVariantId   String? @map("shopify_variant_id") @db.VarChar(100)
+  shopifyInventoryId String? @map("shopify_inventory_id") @db.VarChar(100) // InventoryItem GID
+  title              String  @db.VarChar(500)
+  description      String?  @db.Text
+  vendor           String?  @db.VarChar(255)
+  productType      String?  @map("product_type") @db.VarChar(255)
+  imageUrl         String?  @map("image_url") @db.Text
+  images           String[] @default([])
+  handle           String?  @db.VarChar(255) // Shopify URL handle
+
+  // Shopify-Preise
+  shopifyPrice   Decimal  @map("shopify_price") @db.Decimal(10, 2) // VK für Endkunden
+  compareAtPrice Decimal? @map("compare_at_price") @db.Decimal(10, 2)
+  currencyCode   String   @default("EUR") @map("currency_code") @db.VarChar(3)
+
+  // NICNOA-Preislogik
+  purchasePrice Decimal? @map("purchase_price") @db.Decimal(10, 2) // EK (optional)
+
+  // Überschreibung der globalen Marge (für B2B Stylist-Preis)
+  customMarginType  String?  @map("custom_margin_type") @db.VarChar(20) // null = global
+  customMarginValue Decimal? @map("custom_margin_value") @db.Decimal(10, 2)
+
+  // Überschreibung der globalen Provision (für Affiliate)
+  customCommissionType  String?  @map("custom_commission_type") @db.VarChar(20)
+  customCommissionValue Decimal? @map("custom_commission_value") @db.Decimal(10, 2)
+
+  // Inventar
+  inventoryQuantity Int     @default(0) @map("inventory_quantity")
+  trackInventory    Boolean @default(true) @map("track_inventory")
+  lowStockThreshold Int     @default(5) @map("low_stock_threshold")
+
+  // Status
+  isActive           Boolean @default(true) @map("is_active")
+  isAffiliateEnabled Boolean @default(true) @map("is_affiliate_enabled")
+
+  // Timestamps
+  lastSyncAt DateTime? @map("last_sync_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  connection ShopifyConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  orderItems ShopOrderItem[]
+  cartItems  ShopCartItem[]
+
+  @@unique([connectionId, shopifyProductId, shopifyVariantId])
+  @@index([connectionId])
+  @@index([shopifyProductId])
+  @@index([isActive])
+  @@index([inventoryQuantity])
+  @@map("shop_products")
+}
+
+// Warenkorb für Stylisten
+model ShopCart {
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stylistId String @map("stylist_id") @db.Uuid
+  salonId   String @map("salon_id") @db.Uuid
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  stylist User           @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+  salon   Salon          @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  items   ShopCartItem[]
+
+  @@unique([stylistId, salonId])
+  @@index([stylistId])
+  @@index([salonId])
+  @@map("shop_carts")
+}
+
+model ShopCartItem {
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cartId    String @map("cart_id") @db.Uuid
+  productId String @map("product_id") @db.Uuid
+  quantity  Int    @default(1)
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  cart    ShopCart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product ShopProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, productId])
+  @@index([cartId])
+  @@index([productId])
+  @@map("shop_cart_items")
+}
+
+// Bestellungen (B2B: Stylist kauft vom Salon)
+model ShopOrder {
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  salonId   String @map("salon_id") @db.Uuid
+  stylistId String @map("stylist_id") @db.Uuid
+
+  // Bestellnummer (für Anzeige)
+  orderNumber String @unique @map("order_number") @db.VarChar(50)
+
+  // Totals
+  subtotal Decimal @db.Decimal(10, 2)
+  tax      Decimal @default(0) @db.Decimal(10, 2)
+  total    Decimal @db.Decimal(10, 2)
+
+  // Zahlungsmethode
+  paymentMethod   String  @map("payment_method") @db.VarChar(20) // STRIPE | RENT_ADDITION
+  stripePaymentId String? @map("stripe_payment_id") @db.VarChar(100)
+
+  // Status
+  status      ShopOrderStatus @default(PENDING)
+  paidAt      DateTime?       @map("paid_at") @db.Timestamptz
+  readyAt     DateTime?       @map("ready_at") @db.Timestamptz
+  pickedUpAt  DateTime?       @map("picked_up_at") @db.Timestamptz
+  cancelledAt DateTime?       @map("cancelled_at") @db.Timestamptz
+
+  // Notizen
+  notes         String? @db.Text
+  internalNotes String? @map("internal_notes") @db.Text
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  salon   Salon           @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  stylist User            @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+  items   ShopOrderItem[]
+
+  @@index([salonId])
+  @@index([stylistId])
+  @@index([status])
+  @@index([orderNumber])
+  @@index([createdAt])
+  @@map("shop_orders")
+}
+
+enum ShopOrderStatus {
+  PENDING // Warten auf Zahlung
+  PAID // Bezahlt, warten auf Abholung
+  READY // Bereit zur Abholung
+  PICKED_UP // Abgeholt
+  CANCELLED // Storniert
+}
+
+model ShopOrderItem {
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId   String @map("order_id") @db.Uuid
+  productId String @map("product_id") @db.Uuid
+
+  // Snapshot der Produktdaten zum Bestellzeitpunkt
+  productTitle    String  @map("product_title") @db.VarChar(500)
+  productImageUrl String? @map("product_image_url") @db.Text
+
+  quantity  Int
+  unitPrice Decimal @map("unit_price") @db.Decimal(10, 2) // Stylist-Preis zum Kaufzeitpunkt
+  total     Decimal @db.Decimal(10, 2)
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  order   ShopOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product ShopProduct @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("shop_order_items")
+}
+
+// Affiliate-Bestellungen (Endkunde kauft über Stylist-Link)
+model AffiliateOrder {
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  salonId   String @map("salon_id") @db.Uuid
+  stylistId String @map("stylist_id") @db.Uuid
+
+  // Shopify-Bestelldaten
+  shopifyOrderId     String @map("shopify_order_id") @db.VarChar(100)
+  shopifyOrderNumber String @map("shopify_order_number") @db.VarChar(50)
+
+  // Kunde
+  customerEmail   String? @map("customer_email") @db.VarChar(255)
+  customerName    String? @map("customer_name") @db.VarChar(255)
+  shippingAddress Json?   @map("shipping_address")
+
+  // Totals
+  orderTotal Decimal @map("order_total") @db.Decimal(10, 2)
+  commission Decimal @db.Decimal(10, 2) // Berechnete Provision
+
+  // Status
+  status           AffiliateOrderStatus      @default(PENDING)
+  commissionStatus AffiliateCommissionStatus @default(PENDING) @map("commission_status")
+
+  // Versand
+  shippedAt   DateTime? @map("shipped_at") @db.Timestamptz
+  deliveredAt DateTime? @map("delivered_at") @db.Timestamptz
+
+  // Auszahlung
+  payoutMethod String?   @map("payout_method") @db.VarChar(20) // BANK_TRANSFER | RENT_DEDUCTION
+  paidOutAt    DateTime? @map("paid_out_at") @db.Timestamptz
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  salon   Salon                @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  stylist User                 @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+  items   AffiliateOrderItem[]
+
+  @@unique([shopifyOrderId])
+  @@index([salonId])
+  @@index([stylistId])
+  @@index([status])
+  @@index([commissionStatus])
+  @@index([createdAt])
+  @@map("affiliate_orders")
+}
+
+enum AffiliateOrderStatus {
+  PENDING // Bestellt
+  SHIPPED // Versendet
+  DELIVERED // Zugestellt
+  REFUNDED // Erstattet
+}
+
+enum AffiliateCommissionStatus {
+  PENDING // Noch nicht freigegeben
+  APPROVED // Freigegeben (nach Lieferung)
+  PAID // Ausgezahlt
+  VOID // Storniert (z.B. bei Retoure)
+}
+
+model AffiliateOrderItem {
+  id               String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  affiliateOrderId String @map("affiliate_order_id") @db.Uuid
+
+  // Shopify-Produkt-Daten
+  shopifyProductId String  @map("shopify_product_id") @db.VarChar(100)
+  shopifyVariantId String? @map("shopify_variant_id") @db.VarChar(100)
+  title            String  @db.VarChar(500)
+  imageUrl         String? @map("image_url") @db.Text
+
+  quantity   Int
+  unitPrice  Decimal @map("unit_price") @db.Decimal(10, 2)
+  total      Decimal @db.Decimal(10, 2)
+  commission Decimal @db.Decimal(10, 2) // Provision für dieses Item
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  affiliateOrder AffiliateOrder @relation(fields: [affiliateOrderId], references: [id], onDelete: Cascade)
+
+  @@index([affiliateOrderId])
+  @@map("affiliate_order_items")
+}
+
+// Affiliate-Auszahlungen (monatliche Sammelauszahlung)
+model AffiliatePayout {
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stylistId String @map("stylist_id") @db.Uuid
+  salonId   String @map("salon_id") @db.Uuid
+
+  // Zeitraum
+  periodStart DateTime @map("period_start") @db.Date
+  periodEnd   DateTime @map("period_end") @db.Date
+
+  // Betrag
+  totalCommission Decimal @map("total_commission") @db.Decimal(10, 2)
+  orderCount      Int     @map("order_count")
+
+  // Auszahlungsmethode
+  payoutMethod String @map("payout_method") @db.VarChar(20) // BANK_TRANSFER | RENT_DEDUCTION
+
+  // Status
+  status   AffiliatePayoutStatus @default(PENDING)
+  paidAt   DateTime?             @map("paid_at") @db.Timestamptz
+  paidNote String?               @map("paid_note") @db.Text
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  stylist User  @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+  salon   Salon @relation(fields: [salonId], references: [id], onDelete: Cascade)
+
+  @@index([stylistId])
+  @@index([salonId])
+  @@index([status])
+  @@index([periodStart, periodEnd])
+  @@map("affiliate_payouts")
+}
+
+enum AffiliatePayoutStatus {
+  PENDING // Ausstehend
+  SCHEDULED // Eingeplant
+  PAID // Ausgezahlt
+  CANCELLED // Storniert
 }

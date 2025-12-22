@@ -28,6 +28,7 @@ import {
   Coins,
   Store,
   Globe,
+  ShoppingBag,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -70,6 +71,7 @@ const menuItems = [
     items: [
       { label: 'Einnahmen', href: '/salon/revenue', icon: Euro },
       { label: 'Rechnungen', href: '/salon/invoices', icon: Euro },
+      { label: 'Shop', href: '/salon/shop', icon: ShoppingBag },
     ],
   },
   {
