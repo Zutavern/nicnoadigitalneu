@@ -181,7 +181,7 @@ ${isGenerateType
 
     const userPrompt = `Verbessere diesen Text:\n\n${text}`
 
-    const result = await chatCompletion(
+    const improvedText = await chatCompletion(
       [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -195,8 +195,7 @@ ${isGenerateType
     )
 
     return NextResponse.json({
-      improvedText: result.content.trim(),
-      usage: result.usage,
+      improvedText: improvedText.trim(),
     })
   } catch (error) {
     console.error('Error improving text:', error)
