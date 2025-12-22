@@ -25,6 +25,7 @@ import {
   Eye,
   Loader2,
   Globe,
+  Image as ImageIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
