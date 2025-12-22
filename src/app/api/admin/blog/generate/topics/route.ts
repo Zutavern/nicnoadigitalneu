@@ -86,18 +86,18 @@ Gib NUR das JSON-Array zurück, keine weiteren Erklärungen.`
       }
     )
 
-    // Parse JSON Response
+    // Parse JSON Response - result is directly the string content
     let topics
     try {
       // Versuche JSON zu extrahieren (manchmal kommt es mit Markdown-Codeblöcken)
-      const jsonMatch = result.content.match(/\[[\s\S]*\]/)
+      const jsonMatch = result.match(/\[[\s\S]*\]/)
       if (jsonMatch) {
         topics = JSON.parse(jsonMatch[0])
       } else {
-        topics = JSON.parse(result.content)
+        topics = JSON.parse(result)
       }
     } catch (parseError) {
-      console.error('Failed to parse topics JSON:', result.content)
+      console.error('Failed to parse topics JSON:', result)
       return NextResponse.json(
         { error: 'Fehler beim Parsen der Themenvorschläge' },
         { status: 500 }
@@ -106,7 +106,6 @@ Gib NUR das JSON-Array zurück, keine weiteren Erklärungen.`
 
     return NextResponse.json({
       topics,
-      usage: result.usage,
     })
   } catch (error) {
     console.error('Error generating topics:', error)

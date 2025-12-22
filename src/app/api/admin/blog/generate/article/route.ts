@@ -149,18 +149,18 @@ Gib NUR das JSON-Objekt zurück, keine weiteren Erklärungen.`
       }
     )
 
-    // Parse JSON Response
+    // Parse JSON Response - result is directly the string content
     let article
     try {
       // Versuche JSON zu extrahieren
-      const jsonMatch = result.content.match(/\{[\s\S]*\}/)
+      const jsonMatch = result.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
         article = JSON.parse(jsonMatch[0])
       } else {
-        article = JSON.parse(result.content)
+        article = JSON.parse(result)
       }
     } catch (parseError) {
-      console.error('Failed to parse article JSON:', result.content)
+      console.error('Failed to parse article JSON:', result)
       return NextResponse.json(
         { error: 'Fehler beim Parsen des Artikels' },
         { status: 500 }
@@ -177,7 +177,6 @@ Gib NUR das JSON-Objekt zurück, keine weiteren Erklärungen.`
         ...article,
         unsplashLinks,
       },
-      usage: result.usage,
     })
   } catch (error) {
     console.error('Error generating article:', error)
