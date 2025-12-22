@@ -29,7 +29,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { ArrowLeft, Plus, Edit, Trash2, Loader2, Linkedin, Instagram, Globe } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ImageUploader } from '@/components/ui/image-uploader'
+import { ArrowLeft, Plus, Edit, Trash2, Loader2, Linkedin, Instagram, Globe, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface Author {
@@ -238,19 +240,66 @@ export default function AdminBlogAuthorsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="avatar">Avatar URL</Label>
-                  <Input
-                    id="avatar"
-                    placeholder="https://..."
-                    value={avatar}
-                    onChange={(e) => setAvatar(e.target.value)}
-                  />
+                  <Label>Avatar</Label>
+                  {/* Aktuelles Bild anzeigen */}
                   {avatar && (
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage src={avatar} alt={name} />
-                      <AvatarFallback>{name.slice(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
+                    <div className="flex items-center gap-3 p-2 bg-muted rounded-lg">
+                      <Avatar className="h-14 w-14">
+                        <AvatarImage src={avatar} alt={name} />
+                        <AvatarFallback>{name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground truncate">{avatar}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive"
+                        onClick={() => setAvatar('')}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
                   )}
+                  
+                  {/* Upload/URL Tabs */}
+                  <Tabs defaultValue="upload" className="w-full">
+                    <TabsList className="w-full">
+                      <TabsTrigger value="upload" className="flex-1">
+                        {avatar ? 'Neues Bild' : 'Upload'}
+                      </TabsTrigger>
+                      <TabsTrigger value="url" className="flex-1">
+                        {avatar ? 'Neue URL' : 'URL'}
+                      </TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="upload" className="mt-2">
+                      <ImageUploader
+                        onUpload={(url) => {
+                          setAvatar(url)
+                          toast.success('Avatar hochgeladen!')
+                        }}
+                        onRemove={() => {}}
+                        uploadEndpoint="/api/admin/blog/authors/upload-image"
+                        aspectRatio={1}
+                        placeholder={avatar ? "Neuen Avatar hochladen" : "Avatar hochladen"}
+                        description="JPEG, PNG, WebP • Empfohlen: 400x400px"
+                        previewHeight="aspect-square"
+                      />
+                    </TabsContent>
+                    <TabsContent value="url" className="mt-2">
+                      <Input
+                        placeholder="https://example.com/avatar.jpg"
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            setAvatar(e.target.value)
+                          }
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Gib eine Bild-URL ein
+                      </p>
+                    </TabsContent>
+                  </Tabs>
                 </div>
               </div>
               <div className="space-y-4">
