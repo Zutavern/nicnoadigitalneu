@@ -28,6 +28,7 @@ import {
   ExternalLink,
   Trash2,
   Image as ImageIcon,
+  X,
 } from 'lucide-react'
 import {
   AlertDialog,
@@ -533,59 +534,75 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Tabs defaultValue="url">
-                <TabsList className="w-full">
-                  <TabsTrigger value="url" className="flex-1">URL</TabsTrigger>
-                  <TabsTrigger value="upload" className="flex-1">Upload</TabsTrigger>
-                </TabsList>
-                <TabsContent value="url" className="space-y-2">
-                  <Input
-                    placeholder="https://example.com/image.jpg"
-                    value={featuredImage}
-                    onChange={(e) => setFeaturedImage(e.target.value)}
-                  />
-                </TabsContent>
-                <TabsContent value="upload" className="space-y-2">
-                  <ImageUploader
-                    value={featuredImage || undefined}
-                    onUpload={(url) => {
-                      setFeaturedImage(url)
-                      toast.success('Bild hochgeladen!')
-                    }}
-                    onRemove={() => setFeaturedImage('')}
-                    uploadEndpoint="/api/admin/blog/posts/upload-image"
-                    aspectRatio={16/9}
-                    placeholder="Featured Image hochladen"
-                    description="JPEG, PNG, WebP • Empfohlen: 1200x630px"
-                  />
-                </TabsContent>
-              </Tabs>
-              
+              {/* Aktuelles Bild anzeigen */}
               {featuredImage && (
-                <div className="space-y-2">
-                  <img
-                    src={featuredImage}
-                    alt="Preview"
-                    className="w-full aspect-video object-cover rounded-lg"
-                  />
+                <div className="space-y-3">
+                  <div className="relative">
+                    <img
+                      src={featuredImage}
+                      alt="Preview"
+                      className="w-full aspect-video object-cover rounded-lg"
+                    />
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-8 w-8"
+                      onClick={() => {
+                        setFeaturedImage('')
+                        setFeaturedImageAlt('')
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <Input
                     placeholder="Alt-Text für das Bild"
                     value={featuredImageAlt}
                     onChange={(e) => setFeaturedImageAlt(e.target.value)}
                   />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      setFeaturedImage('')
-                      setFeaturedImageAlt('')
-                    }}
-                  >
-                    Bild entfernen
-                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Um das Bild zu ändern, lade unten ein neues hoch oder gib eine neue URL ein.
+                  </p>
                 </div>
               )}
+              
+              {/* Immer Upload/URL-Optionen anzeigen */}
+              <Tabs defaultValue={featuredImage ? "upload" : "url"}>
+                <TabsList className="w-full">
+                  <TabsTrigger value="url" className="flex-1">
+                    {featuredImage ? 'Neue URL' : 'URL'}
+                  </TabsTrigger>
+                  <TabsTrigger value="upload" className="flex-1">
+                    {featuredImage ? 'Neues Bild' : 'Upload'}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="url" className="space-y-2 pt-2">
+                  <Input
+                    placeholder="https://example.com/image.jpg"
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setFeaturedImage(e.target.value)
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Gib eine Bild-URL ein (Unsplash, etc.)
+                  </p>
+                </TabsContent>
+                <TabsContent value="upload" className="space-y-2 pt-2">
+                  <ImageUploader
+                    onUpload={(url) => {
+                      setFeaturedImage(url)
+                      toast.success('Neues Bild hochgeladen!')
+                    }}
+                    onRemove={() => {}}
+                    uploadEndpoint="/api/admin/blog/posts/upload-image"
+                    aspectRatio={16/9}
+                    placeholder={featuredImage ? "Neues Bild hochladen" : "Featured Image hochladen"}
+                    description="JPEG, PNG, WebP • Empfohlen: 1200x630px"
+                  />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </div>
