@@ -27,6 +27,7 @@ import {
   Globe,
   ExternalLink,
   Trash2,
+  Image as ImageIcon,
 } from 'lucide-react'
 import {
   AlertDialog,
