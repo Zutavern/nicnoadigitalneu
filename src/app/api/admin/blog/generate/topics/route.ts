@@ -74,21 +74,33 @@ ${subheadline ? `Zusätzlicher Kontext: ${subheadline}` : ''}
 
 Gib NUR das JSON-Array zurück, keine weiteren Erklärungen.`
 
-    const result = await chatCompletion(
-      [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      {
-        model: 'anthropic/claude-3.5-sonnet',
-        temperature: 0.8,
-        requestType: 'completion',
-      }
-    )
+    let result: string
+    try {
+      result = await chatCompletion(
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        {
+          model: 'anthropic/claude-3.5-sonnet',
+          temperature: 0.8,
+          requestType: 'completion',
+        }
+      )
+    } catch (aiError) {
+      console.error('OpenRouter API error:', aiError)
+      return NextResponse.json(
+        { error: aiError instanceof Error ? aiError.message : 'KI-Fehler bei der Themengenerierung' },
+        { status: 500 }
+      )
+    }
 
     // Parse JSON Response - result is directly the string content
     let topics
     try {
+      if (!result || typeof result !== 'string') {
+        throw new Error('Leere Antwort von der KI')
+      }
       // Versuche JSON zu extrahieren (manchmal kommt es mit Markdown-Codeblöcken)
       const jsonMatch = result.match(/\[[\s\S]*\]/)
       if (jsonMatch) {
@@ -99,7 +111,7 @@ Gib NUR das JSON-Array zurück, keine weiteren Erklärungen.`
     } catch (parseError) {
       console.error('Failed to parse topics JSON:', result)
       return NextResponse.json(
-        { error: 'Fehler beim Parsen der Themenvorschläge' },
+        { error: 'Fehler beim Parsen der Themenvorschläge. Bitte erneut versuchen.' },
         { status: 500 }
       )
     }

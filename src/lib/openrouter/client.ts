@@ -122,7 +122,19 @@ export async function chatCompletion(
 
     const data: OpenRouterResponse = await response.json()
     const responseTime = Date.now() - startTime
-    const content = data.choices[0]?.message?.content || ''
+    
+    // Validate response structure
+    if (!data.choices || data.choices.length === 0) {
+      console.error('OpenRouter returned empty choices:', JSON.stringify(data))
+      throw new Error('OpenRouter returned empty response')
+    }
+    
+    const content = data.choices[0]?.message?.content
+    
+    if (content === undefined || content === null) {
+      console.error('OpenRouter returned no content:', JSON.stringify(data))
+      throw new Error('OpenRouter returned no content in response')
+    }
 
     // Berechne Kosten
     const pricing = MODEL_PRICING[model] || { prompt: 0, completion: 0 }

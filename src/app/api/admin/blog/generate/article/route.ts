@@ -136,22 +136,34 @@ ${topic.keywords?.length ? `KEYWORDS: ${topic.keywords.join(', ')}` : ''}
 
 Gib NUR das JSON-Objekt zurück, keine weiteren Erklärungen.`
 
-    const result = await chatCompletion(
-      [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      {
-        model: 'anthropic/claude-3.5-sonnet',
-        temperature: 0.7,
-        maxTokens: 8000, // Mehr Tokens für lange Artikel
-        requestType: 'completion',
-      }
-    )
+    let result: string
+    try {
+      result = await chatCompletion(
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        {
+          model: 'anthropic/claude-3.5-sonnet',
+          temperature: 0.7,
+          maxTokens: 8000, // Mehr Tokens für lange Artikel
+          requestType: 'completion',
+        }
+      )
+    } catch (aiError) {
+      console.error('OpenRouter API error:', aiError)
+      return NextResponse.json(
+        { error: aiError instanceof Error ? aiError.message : 'KI-Fehler bei der Artikelgenerierung' },
+        { status: 500 }
+      )
+    }
 
     // Parse JSON Response - result is directly the string content
     let article
     try {
+      if (!result || typeof result !== 'string') {
+        throw new Error('Leere Antwort von der KI')
+      }
       // Versuche JSON zu extrahieren
       const jsonMatch = result.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
@@ -162,7 +174,7 @@ Gib NUR das JSON-Objekt zurück, keine weiteren Erklärungen.`
     } catch (parseError) {
       console.error('Failed to parse article JSON:', result)
       return NextResponse.json(
-        { error: 'Fehler beim Parsen des Artikels' },
+        { error: 'Fehler beim Parsen des Artikels. Bitte erneut versuchen.' },
         { status: 500 }
       )
     }
