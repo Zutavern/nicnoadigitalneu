@@ -23,7 +23,6 @@ import { AIArticleGenerator } from '@/components/editor/ai-article-generator'
 import {
   ArrowLeft,
   Save,
-  Eye,
   Loader2,
   Globe,
   Image as ImageIcon,
@@ -224,99 +223,65 @@ export default function NewBlogPostPage() {
   // Mode Selection Screen
   if (mode === 'selection') {
     return (
-      <div className="space-y-6">
+      <div className="min-h-[60vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/admin/blog/posts">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Neuer Artikel</h1>
-            <p className="text-muted-foreground mt-1">
-              Wie möchtest du deinen Artikel erstellen?
+            <h1 className="text-2xl font-semibold tracking-tight">Neuer Artikel</h1>
+            <p className="text-muted-foreground text-sm">
+              Wähle wie du deinen Artikel erstellen möchtest
             </p>
           </div>
         </div>
 
-        {/* Mode Selection Cards */}
-        <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
-          {/* Manual Writing */}
-          <Card 
-            className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/50 group"
-            onClick={() => setMode('manual')}
-          >
-            <CardHeader className="pb-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-600/20 flex items-center justify-center mb-4 group-hover:from-blue-500/20 group-hover:to-blue-600/30 transition-colors">
-                <PenTool className="h-7 w-7 text-blue-600" />
+        {/* Centered Mode Selection */}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex gap-4 max-w-2xl w-full">
+            {/* Manual Writing */}
+            <button
+              onClick={() => setMode('manual')}
+              className="flex-1 group relative p-6 rounded-xl border-2 border-border/50 bg-card hover:border-blue-500/50 hover:bg-blue-500/5 transition-all duration-200 text-left"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0 group-hover:bg-blue-500/20 transition-colors">
+                  <PenTool className="h-6 w-6 text-blue-500" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-semibold text-base">Selbst schreiben</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Rich-Text-Editor mit KI-Textverbesserung
+                  </p>
+                </div>
               </div>
-              <CardTitle className="text-xl">Eigenen Artikel schreiben</CardTitle>
-              <CardDescription className="text-base">
-                Schreibe deinen Artikel komplett selbst mit dem Rich-Text-Editor
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                  Volle Kontrolle über Inhalt & Stil
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                  KI-Unterstützung bei Textverbesserungen
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                  Ideal für persönliche Geschichten
-                </li>
-              </ul>
-              <Button className="w-full mt-6" variant="outline">
-                <PenTool className="mr-2 h-4 w-4" />
-                Selbst schreiben
-              </Button>
-            </CardContent>
-          </Card>
+            </button>
 
-          {/* AI Generation */}
-          <Card 
-            className="cursor-pointer transition-all hover:shadow-lg hover:border-orange-500/50 group relative overflow-hidden"
-            onClick={() => {
-              setMode('ai')
-              setShowAIGenerator(true)
-            }}
-          >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-purple-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
-            <CardHeader className="pb-4 relative">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500/10 to-purple-500/20 flex items-center justify-center mb-4 group-hover:from-orange-500/20 group-hover:to-purple-500/30 transition-colors">
-                <Sparkles className="h-7 w-7 text-orange-500" />
+            {/* AI Generation */}
+            <button
+              onClick={() => {
+                setMode('ai')
+                setShowAIGenerator(true)
+              }}
+              className="flex-1 group relative p-6 rounded-xl border-2 border-border/50 bg-card hover:border-orange-500/50 hover:bg-orange-500/5 transition-all duration-200 text-left overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-orange-500/5 to-purple-500/5 rounded-full blur-2xl -mr-12 -mt-12" />
+              <div className="flex items-start gap-4 relative">
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500/10 to-orange-600/20 flex items-center justify-center shrink-0 group-hover:from-orange-500/20 group-hover:to-orange-600/30 transition-colors">
+                  <Sparkles className="h-6 w-6 text-orange-500" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-semibold text-base">Mit KI generieren</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    SEO-optimierte Artikel automatisch erstellen
+                  </p>
+                </div>
               </div>
-              <CardTitle className="text-xl">Mit KI generieren</CardTitle>
-              <CardDescription className="text-base">
-                Lass die KI einen professionellen Artikel für dich erstellen
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="relative">
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                  Themenvorschläge & Gliederung
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                  SEO-optimierte Texte
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                  Verschiedene Artikelformate
-                </li>
-              </ul>
-              <Button className="w-full mt-6 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white border-0">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Mit KI starten
-              </Button>
-            </CardContent>
-          </Card>
+            </button>
+          </div>
         </div>
 
         {/* AI Generator Dialog */}
@@ -367,21 +332,13 @@ export default function NewBlogPostPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Neuer Artikel</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-2xl font-semibold tracking-tight">Neuer Artikel</h1>
+            <p className="text-muted-foreground text-sm">
               Erstelle einen neuen Blog-Artikel
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowAIGenerator(true)}
-            className="border-orange-500/30 text-orange-600 hover:bg-orange-500/10"
-          >
-            <Sparkles className="mr-2 h-4 w-4" />
-            KI-Generator
-          </Button>
           <Button
             variant="outline"
             onClick={() => handleSave()}
@@ -401,7 +358,7 @@ export default function NewBlogPostPage() {
             {isSaving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <Eye className="mr-2 h-4 w-4" />
+              <Globe className="mr-2 h-4 w-4" />
             )}
             Veröffentlichen
           </Button>
@@ -685,14 +642,6 @@ export default function NewBlogPostPage() {
           </Card>
         </div>
       </div>
-
-      {/* AI Generator Dialog - available from editor too */}
-      <AIArticleGenerator
-        open={showAIGenerator}
-        onOpenChange={setShowAIGenerator}
-        onArticleGenerated={handleAIArticleGenerated}
-        categoryId={categoryId || undefined}
-      />
     </div>
   )
 }

@@ -272,6 +272,19 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
           </AlertDialog>
           <Button
             variant="outline"
+            onClick={() => {
+              const previewUrl = status === 'PUBLISHED' 
+                ? `/blog/${slug}` 
+                : `/blog/preview/${slug}?draft=true`
+              window.open(previewUrl, '_blank')
+            }}
+            disabled={!slug}
+          >
+            <Eye className="mr-2 h-4 w-4" />
+            Vorschau
+          </Button>
+          <Button
+            variant="outline"
             onClick={() => handleSave()}
             disabled={isSaving}
           >
@@ -290,7 +303,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
               {isSaving ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <Eye className="mr-2 h-4 w-4" />
+                <Globe className="mr-2 h-4 w-4" />
               )}
               Veröffentlichen
             </Button>
