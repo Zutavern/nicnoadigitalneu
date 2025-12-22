@@ -339,17 +339,17 @@ export function AITextImprover({ editor }: AITextImproverProps) {
               <button
                 className={cn(
                   "flex items-center justify-center rounded-full shadow-lg transition-all",
-                  "bg-background border border-border hover:border-violet-500/50 hover:bg-violet-500/10",
+                  "bg-background border-2 border-orange-400 hover:border-orange-500 hover:bg-orange-500/10",
                   "animate-in fade-in zoom-in-95 duration-150",
                   isOpen 
-                    ? "h-8 w-8 bg-violet-500/10 border-violet-500/50" 
-                    : "h-7 w-7"
+                    ? "h-10 w-10 bg-orange-500/10 border-orange-500" 
+                    : "h-9 w-9"
                 )}
                 title="KI Text verbessern"
               >
                 <Sparkles className={cn(
-                  "transition-colors",
-                  isOpen ? "h-4 w-4 text-violet-500" : "h-3.5 w-3.5 text-muted-foreground hover:text-violet-500"
+                  "transition-colors text-orange-500",
+                  isOpen ? "h-5 w-5" : "h-5 w-5"
                 )} />
               </button>
             </PopoverTrigger>
