@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select'
 import { TiptapEditor } from '@/components/editor/tiptap-editor'
 import { ImageUploader } from '@/components/ui/image-uploader'
+import { AIArticleGenerator } from '@/components/editor/ai-article-generator'
 import {
   ArrowLeft,
   Save,
@@ -26,6 +27,8 @@ import {
   Loader2,
   Globe,
   Image as ImageIcon,
+  Sparkles,
+  PenTool,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -50,6 +53,10 @@ export default function NewBlogPostPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  
+  // Mode Selection: null = not selected, 'manual' = write yourself, 'ai' = use AI
+  const [mode, setMode] = useState<'selection' | 'manual' | 'ai'>('selection')
+  const [showAIGenerator, setShowAIGenerator] = useState(false)
   
   // Form State
   const [title, setTitle] = useState('')
@@ -161,6 +168,51 @@ export default function NewBlogPostPage() {
     }
   }
 
+  // Handle AI Generated Article
+  const handleAIArticleGenerated = (article: {
+    title: string
+    slug: string
+    excerpt: string
+    content: string
+    metaTitle?: string
+    metaDescription?: string
+    suggestedTags?: string[]
+    suggestedCategory?: string
+  }) => {
+    setTitle(article.title)
+    setSlug(article.slug)
+    setExcerpt(article.excerpt)
+    setContent(article.content)
+    if (article.metaTitle) setMetaTitle(article.metaTitle)
+    if (article.metaDescription) setMetaDescription(article.metaDescription)
+    
+    // Find matching category
+    if (article.suggestedCategory) {
+      const matchingCategory = categories.find(
+        (cat) => cat.name.toLowerCase() === article.suggestedCategory?.toLowerCase()
+      )
+      if (matchingCategory) {
+        setCategoryId(matchingCategory.id)
+      }
+    }
+    
+    // Find matching tags
+    if (article.suggestedTags?.length) {
+      const matchingTagIds = tags
+        .filter((tag) =>
+          article.suggestedTags?.some(
+            (st) => st.toLowerCase() === tag.name.toLowerCase()
+          )
+        )
+        .map((tag) => tag.id)
+      setSelectedTagIds(matchingTagIds)
+    }
+
+    setShowAIGenerator(false)
+    setMode('manual') // Switch to manual mode for editing
+    toast.success('KI-Artikel übernommen! Du kannst ihn jetzt bearbeiten.')
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -169,10 +221,11 @@ export default function NewBlogPostPage() {
     )
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+  // Mode Selection Screen
+  if (mode === 'selection') {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/admin/blog/posts">
@@ -182,11 +235,153 @@ export default function NewBlogPostPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Neuer Artikel</h1>
             <p className="text-muted-foreground mt-1">
+              Wie möchtest du deinen Artikel erstellen?
+            </p>
+          </div>
+        </div>
+
+        {/* Mode Selection Cards */}
+        <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
+          {/* Manual Writing */}
+          <Card 
+            className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/50 group"
+            onClick={() => setMode('manual')}
+          >
+            <CardHeader className="pb-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-600/20 flex items-center justify-center mb-4 group-hover:from-blue-500/20 group-hover:to-blue-600/30 transition-colors">
+                <PenTool className="h-7 w-7 text-blue-600" />
+              </div>
+              <CardTitle className="text-xl">Eigenen Artikel schreiben</CardTitle>
+              <CardDescription className="text-base">
+                Schreibe deinen Artikel komplett selbst mit dem Rich-Text-Editor
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                  Volle Kontrolle über Inhalt & Stil
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                  KI-Unterstützung bei Textverbesserungen
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                  Ideal für persönliche Geschichten
+                </li>
+              </ul>
+              <Button className="w-full mt-6" variant="outline">
+                <PenTool className="mr-2 h-4 w-4" />
+                Selbst schreiben
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* AI Generation */}
+          <Card 
+            className="cursor-pointer transition-all hover:shadow-lg hover:border-orange-500/50 group relative overflow-hidden"
+            onClick={() => {
+              setMode('ai')
+              setShowAIGenerator(true)
+            }}
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-purple-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
+            <CardHeader className="pb-4 relative">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500/10 to-purple-500/20 flex items-center justify-center mb-4 group-hover:from-orange-500/20 group-hover:to-purple-500/30 transition-colors">
+                <Sparkles className="h-7 w-7 text-orange-500" />
+              </div>
+              <CardTitle className="text-xl">Mit KI generieren</CardTitle>
+              <CardDescription className="text-base">
+                Lass die KI einen professionellen Artikel für dich erstellen
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="relative">
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                  Themenvorschläge & Gliederung
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                  SEO-optimierte Texte
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                  Verschiedene Artikelformate
+                </li>
+              </ul>
+              <Button className="w-full mt-6 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white border-0">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Mit KI starten
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* AI Generator Dialog */}
+        <AIArticleGenerator
+          open={showAIGenerator}
+          onOpenChange={(open) => {
+            setShowAIGenerator(open)
+            if (!open) setMode('selection')
+          }}
+          onArticleGenerated={handleAIArticleGenerated}
+          categoryId={categoryId || undefined}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => {
+              // If content exists, confirm before going back
+              if (title || content) {
+                if (confirm('Möchtest du wirklich zurück? Ungespeicherte Änderungen gehen verloren.')) {
+                  setMode('selection')
+                  // Reset form
+                  setTitle('')
+                  setSlug('')
+                  setExcerpt('')
+                  setContent('')
+                  setFeaturedImage('')
+                  setFeaturedImageAlt('')
+                  setAuthorId('')
+                  setCategoryId('')
+                  setSelectedTagIds([])
+                  setMetaTitle('')
+                  setMetaDescription('')
+                }
+              } else {
+                setMode('selection')
+              }
+            }}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Neuer Artikel</h1>
+            <p className="text-muted-foreground mt-1">
               Erstelle einen neuen Blog-Artikel
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowAIGenerator(true)}
+            className="border-orange-500/30 text-orange-600 hover:bg-orange-500/10"
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            KI-Generator
+          </Button>
           <Button
             variant="outline"
             onClick={() => handleSave()}
@@ -490,6 +685,14 @@ export default function NewBlogPostPage() {
           </Card>
         </div>
       </div>
+
+      {/* AI Generator Dialog - available from editor too */}
+      <AIArticleGenerator
+        open={showAIGenerator}
+        onOpenChange={setShowAIGenerator}
+        onArticleGenerated={handleAIArticleGenerated}
+        categoryId={categoryId || undefined}
+      />
     </div>
   )
 }
