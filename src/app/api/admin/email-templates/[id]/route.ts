@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { isDemoModeActive, getMockAdminEmailTemplates } from '@/lib/mock-data'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -9,12 +10,27 @@ interface RouteParams {
 // GET - Einzelnes Template abrufen
 export async function GET(request: Request, { params }: RouteParams) {
   try {
+    const { id } = await params
+    
+    // Demo-Modus prüfen
+    if (await isDemoModeActive()) {
+      const mockTemplates = getMockAdminEmailTemplates()
+      const mockTemplate = mockTemplates.find(t => t.id === id)
+      
+      if (!mockTemplate) {
+        return NextResponse.json(
+          { error: 'Template nicht gefunden' },
+          { status: 404 }
+        )
+      }
+      
+      return NextResponse.json(mockTemplate)
+    }
+    
     const session = await auth()
     if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
     }
-
-    const { id } = await params
 
     const template = await prisma.emailTemplate.findUnique({
       where: { id },
@@ -57,6 +73,14 @@ export async function GET(request: Request, { params }: RouteParams) {
 // PUT - Template aktualisieren
 export async function PUT(request: Request, { params }: RouteParams) {
   try {
+    // Demo-Modus prüfen - Speichern nicht erlaubt
+    if (await isDemoModeActive()) {
+      return NextResponse.json(
+        { error: 'Im Demo-Modus können keine Änderungen gespeichert werden. Deaktiviere den Demo-Modus in den Plattform-Einstellungen.' },
+        { status: 403 }
+      )
+    }
+    
     const session = await auth()
     if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })

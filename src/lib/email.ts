@@ -34,6 +34,108 @@ interface TemplateContent {
   footer?: string
 }
 
+interface MockEmailTemplate {
+  id: string
+  slug: string
+  name: string
+  subject: string
+  content: {
+    headline: string
+    body: string
+    buttonText?: string
+    buttonUrl?: string
+    footer?: string
+  }
+  primaryColor?: string | null
+}
+
+/**
+ * Renders an email template preview from mock data (for Demo Mode)
+ */
+export async function renderEmailPreviewFromMock(
+  template: MockEmailTemplate,
+  customContent?: {
+    subject?: string
+    content?: TemplateContent
+  },
+  previewData?: PreviewData
+): Promise<EmailPreviewResult | EmailPreviewError> {
+  try {
+    // Default preview data
+    const defaultPreviewData: PreviewData = {
+      userName: 'Max Mustermann',
+      userEmail: 'max@example.com',
+      companyName: 'NICNOA&CO.online',
+      resetLink: 'https://example.com/reset?token=abc123',
+      verifyLink: 'https://example.com/verify?token=abc123',
+      loginLink: 'https://example.com/login',
+      bookingDate: '15. Januar 2025',
+      bookingTime: '14:00 Uhr',
+      salonName: 'Salon Schönheit',
+      stylistName: 'Anna Schmidt',
+      serviceName: 'Haarschnitt & Styling',
+      amount: '45,00 €',
+      currentYear: new Date().getFullYear().toString(),
+    }
+
+    // Merge with custom preview data
+    const data = { ...defaultPreviewData, ...previewData }
+
+    // Parse template content
+    const templateContent: TemplateContent = template.content ? {
+      headline: template.content.headline || '',
+      body: template.content.body || '',
+      buttonText: template.content.buttonText,
+      buttonUrl: template.content.buttonUrl,
+      footer: template.content.footer,
+    } : { headline: '', body: '' }
+    
+    // Use custom content or template content
+    let subject = customContent?.subject || template.subject || 'Keine Betreffzeile'
+    const content: TemplateContent = {
+      headline: customContent?.content?.headline ?? templateContent.headline ?? '',
+      body: customContent?.content?.body ?? templateContent.body ?? '',
+      buttonText: customContent?.content?.buttonText ?? templateContent.buttonText,
+      buttonUrl: customContent?.content?.buttonUrl ?? templateContent.buttonUrl,
+      footer: customContent?.content?.footer ?? templateContent.footer,
+    }
+
+    // Replace placeholders in subject
+    subject = replacePlaceholders(subject, data)
+
+    // Replace placeholders in content fields
+    const processedContent: TemplateContent = {
+      headline: content.headline ? replacePlaceholders(content.headline, data) : undefined,
+      body: content.body ? replacePlaceholders(content.body, data) : undefined,
+      buttonText: content.buttonText ? replacePlaceholders(content.buttonText, data) : undefined,
+      buttonUrl: content.buttonUrl ? replacePlaceholders(content.buttonUrl, data) : undefined,
+      footer: content.footer ? replacePlaceholders(content.footer, data) : undefined,
+    }
+
+    // Generate HTML from content
+    const htmlContent = generateHtmlFromContent(processedContent)
+
+    // Add branding wrapper
+    const brandedHtml = wrapWithBranding(htmlContent, {
+      logoUrl: null,
+      primaryColor: template.primaryColor || '#10b981',
+      companyName: 'NICNOA&CO.online',
+    })
+
+    // Generate plain text version
+    const text = generatePlainText(processedContent, subject)
+
+    return {
+      subject,
+      html: brandedHtml,
+      text,
+    }
+  } catch (error) {
+    console.error('Error rendering email preview from mock:', error)
+    return { error: 'Fehler beim Rendern der Vorschau' }
+  }
+}
+
 /**
  * Renders an email template preview with placeholder data
  */
@@ -95,17 +197,24 @@ export async function renderEmailPreview(
     // Merge with custom preview data
     const data = { ...defaultPreviewData, ...previewData }
 
-    // Parse template content (JSON field)
-    const templateContent = template.content as TemplateContent | null
+    // Parse template content (JSON field) - handle null, undefined, or empty object
+    const rawTemplateContent = template.content as Record<string, unknown> | null
+    const templateContent: TemplateContent = rawTemplateContent ? {
+      headline: typeof rawTemplateContent.headline === 'string' ? rawTemplateContent.headline : '',
+      body: typeof rawTemplateContent.body === 'string' ? rawTemplateContent.body : '',
+      buttonText: typeof rawTemplateContent.buttonText === 'string' ? rawTemplateContent.buttonText : undefined,
+      buttonUrl: typeof rawTemplateContent.buttonUrl === 'string' ? rawTemplateContent.buttonUrl : undefined,
+      footer: typeof rawTemplateContent.footer === 'string' ? rawTemplateContent.footer : undefined,
+    } : { headline: '', body: '' }
     
     // Use custom content or template content
-    let subject = customContent?.subject || template.subject
+    let subject = customContent?.subject || template.subject || 'Keine Betreffzeile'
     const content: TemplateContent = {
-      headline: customContent?.content?.headline || templateContent?.headline || '',
-      body: customContent?.content?.body || templateContent?.body || '',
-      buttonText: customContent?.content?.buttonText || templateContent?.buttonText,
-      buttonUrl: customContent?.content?.buttonUrl || templateContent?.buttonUrl,
-      footer: customContent?.content?.footer || templateContent?.footer,
+      headline: customContent?.content?.headline ?? templateContent.headline ?? '',
+      body: customContent?.content?.body ?? templateContent.body ?? '',
+      buttonText: customContent?.content?.buttonText ?? templateContent.buttonText,
+      buttonUrl: customContent?.content?.buttonUrl ?? templateContent.buttonUrl,
+      footer: customContent?.content?.footer ?? templateContent.footer,
     }
 
     // Replace placeholders in subject

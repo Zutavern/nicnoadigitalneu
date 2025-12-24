@@ -978,7 +978,7 @@ export function RealtimeChat({
                         transition={{ duration: 0.2 }}
                         className={cn('flex gap-2', isOwn && 'justify-end')}
                       >
-                        {!isOwn && showAvatar && (
+                        {!isOwn && showAvatar && message.sender && (
                           <Avatar className="h-8 w-8">
                             <AvatarImage src={message.sender.image || ''} />
                             <AvatarFallback className="text-xs">

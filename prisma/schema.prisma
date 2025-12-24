@@ -130,6 +130,12 @@ model User {
   // Pricelist System
   priceLists PriceList[]
 
+  // Print Materials System
+  printMaterials PrintMaterial[]
+
+  // Media Library
+  mediaFiles MediaFile[]
+
   // Google Business Profile
   googleBusinessConnections GoogleBusinessConnection[]
 
@@ -4985,4 +4991,179 @@ enum AffiliatePayoutStatus {
   SCHEDULED // Eingeplant
   PAID // Ausgezahlt
   CANCELLED // Storniert
+}
+
+// ============================================
+// Print Materials System (Drucksachen)
+// ============================================
+
+model PrintMaterial {
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
+  // Basis-Informationen
+  name String @db.VarChar(100)
+  type PrintMaterialType @default(BUSINESS_CARD)
+
+  // Größe in mm (Standard: Visitenkarte 89x59)
+  width  Float @default(89)
+  height Float @default(59)
+
+  // Beschnitt in mm (1 oder 3)
+  bleed Float @default(3)
+
+  // Theming
+  theme           String  @default("minimal") @db.VarChar(50)
+  fontFamily      String  @default("inter") @map("font_family") @db.VarChar(50)
+  primaryColor    String  @default("#000000") @map("primary_color") @db.VarChar(20)
+  secondaryColor  String  @default("#666666") @map("secondary_color") @db.VarChar(20)
+  backgroundColor String  @default("#ffffff") @map("background_color") @db.VarChar(20)
+
+  // Hintergrundbilder (separat für Vorder- und Rückseite)
+  frontBackgroundUrl String? @map("front_background_url") @db.Text
+  backBackgroundUrl  String? @map("back_background_url") @db.Text
+
+  // Status
+  isPublished Boolean @default(false) @map("is_published")
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blocks PrintBlock[]
+
+  @@index([userId])
+  @@index([type])
+  @@map("print_materials")
+}
+
+model PrintBlock {
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  printMaterialId String @map("print_material_id") @db.Uuid
+
+  // Position
+  side      PrintSide      @default(FRONT)
+  sortOrder Int            @default(0) @map("sort_order")
+  type      PrintBlockType
+
+  // Position & Größe in mm (relativ zum sicheren Bereich)
+  x      Float @default(0)
+  y      Float @default(0)
+  width  Float @default(30)
+  height Float @default(10)
+
+  // Rotation in Grad
+  rotation Float @default(0)
+
+  // Gemeinsame Block-Eigenschaften
+  content   String? @db.Text
+  textAlign String  @default("left") @map("text_align") @db.VarChar(10) // left, center, right
+  fontSize  Float   @default(10) @map("font_size") // in pt
+  fontWeight String @default("normal") @map("font_weight") @db.VarChar(20) // normal, medium, semibold, bold
+  color     String  @default("#000000") @db.VarChar(20)
+
+  // Bild/Logo-spezifisch
+  imageUrl    String? @map("image_url") @db.Text
+  objectFit   String  @default("contain") @map("object_fit") @db.VarChar(20) // contain, cover, fill
+  borderRadius Float  @default(0) @map("border_radius") // in mm
+
+  // QR-Code-spezifisch
+  qrCodeUrl   String? @map("qr_code_url") @db.Text
+  qrCodeLabel String? @map("qr_code_label") @db.VarChar(100)
+  qrCodeSize  Float   @default(15) @map("qr_code_size") // in mm
+
+  // Kontakt-spezifisch
+  showPhone   Boolean @default(true) @map("show_phone")
+  showEmail   Boolean @default(true) @map("show_email")
+  showAddress Boolean @default(true) @map("show_address")
+  showWebsite Boolean @default(true) @map("show_website")
+
+  // Layout-Optionen
+  spacing Float @default(2) // Abstand zwischen Elementen in mm
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  printMaterial PrintMaterial @relation(fields: [printMaterialId], references: [id], onDelete: Cascade)
+
+  @@index([printMaterialId])
+  @@index([side])
+  @@map("print_blocks")
+}
+
+enum PrintMaterialType {
+  BUSINESS_CARD // Visitenkarte 89x59mm
+  BUSINESS_CARD_SQUARE // Quadratische Visitenkarte 55x55mm
+  FLYER_A6 // DIN A6 Flyer 105x148mm
+  FLYER_A5 // DIN A5 Flyer 148x210mm
+  POSTCARD // Postkarte 148x105mm
+  GIFT_CARD // Geschenkkarte 85x55mm
+}
+
+enum PrintSide {
+  FRONT
+  BACK
+}
+
+enum PrintBlockType {
+  TEXT // Freier Text
+  LOGO // Logo aus Brand oder hochgeladen
+  QR_CODE // QR-Code (Booking, Website, etc.)
+  CONTACT_INFO // Kontaktdaten (Tel, Mail, Adresse)
+  IMAGE // Bild
+  SHAPE // Form (Linie, Rechteck, Kreis)
+  SOCIAL_LINKS // Social Media Icons
+  NAME // Name/Firmenname
+  TAGLINE // Slogan/Untertitel
+}
+
+// ============================================
+// Media Library System
+// ============================================
+
+model MediaFile {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String        @map("user_id") @db.Uuid
+  filename      String        @db.VarChar(255) // Pfad im Blob Storage
+  originalName  String        @map("original_name") @db.VarChar(255) // Ursprünglicher Dateiname
+  mimeType      String        @map("mime_type") @db.VarChar(100)
+  size          Int           // Größe in Bytes
+  url           String        @unique @db.Text // Vollständige Blob-URL
+  category      MediaCategory @default(GENERAL)
+  uploadContext String?       @map("upload_context") @db.VarChar(100) // z.B. "blog-post", "print-material"
+  alt           String?       @db.VarChar(255) // Alt-Text für Barrierefreiheit
+  width         Int?          // Bildbreite in Pixel
+  height        Int?          // Bildhöhe in Pixel
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Soft Delete
+  deletedAt     DateTime?     @map("deleted_at") @db.Timestamptz
+  deletedBy     String?       @map("deleted_by") @db.Uuid // Admin/User der gelöscht hat
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([category])
+  @@index([url])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("media_files")
+}
+
+enum MediaCategory {
+  GENERAL       // Allgemein
+  BLOG          // Blog-Bilder
+  BRANDING      // Logos, Markenbilder
+  PRINT_MATERIALS // Drucksachen
+  SOCIAL_MEDIA  // Social Media Posts
+  DOCUMENTS     // Dokumente
+  AVATARS       // Profilbilder
+  BACKGROUNDS   // Hintergrundbilder
+  PRODUCTS      // Produktbilder
 }

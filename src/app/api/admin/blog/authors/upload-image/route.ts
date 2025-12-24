@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { put } from '@vercel/blob'
+import { trackUpload } from '@/lib/media/track-upload'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,6 +45,18 @@ export async function POST(request: Request) {
     // Upload to Vercel Blob
     const blob = await put(filename, file, {
       access: 'public',
+    })
+
+    // Track in Media Library
+    await trackUpload({
+      userId: session.user.id,
+      filename,
+      originalName: file.name,
+      mimeType: file.type,
+      size: file.size,
+      url: blob.url,
+      category: 'AVATARS',
+      uploadContext: 'blog-author',
     })
 
     return NextResponse.json({ url: blob.url })

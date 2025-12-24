@@ -2797,8 +2797,8 @@ export function getMockAdminSecurity() {
 // ============================================
 export function getMockAdminEmailTemplates() {
   // Default content für alle Templates
-  const defaultContent = (headline: string, body: string, buttonText: string = 'Jetzt ansehen', footer: string = 'Bei Fragen stehen wir dir jederzeit zur Verfügung.') => ({
-    headline, body, buttonText, footer
+  const defaultContent = (headline: string, body: string, buttonText: string = 'Jetzt ansehen', footer: string = 'Bei Fragen stehen wir dir jederzeit zur Verfügung.', buttonUrl: string = 'https://www.nicnoa.online/dashboard') => ({
+    headline, body, buttonText, footer, buttonUrl
   })
 
   return [

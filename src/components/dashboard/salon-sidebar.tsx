@@ -29,6 +29,8 @@ import {
   Store,
   Globe,
   ShoppingBag,
+  Printer,
+  FolderOpen,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -97,7 +99,9 @@ const menuItems = [
       { label: 'Social Media', href: '/salon/marketing/social-media', icon: Share2 },
       { label: 'Google Business', href: '/salon/marketing/google-business', icon: Store },
       { label: 'Preislisten', href: '/salon/marketing/pricelist', icon: FileText },
+      { label: 'Drucksachen', href: '/salon/marketing/print-materials', icon: Printer },
       { label: 'Salon Homepage', href: '/salon/marketing/homepage', icon: Globe },
+      { label: 'Medienbibliothek', href: '/salon/media', icon: FolderOpen },
     ],
   },
   {

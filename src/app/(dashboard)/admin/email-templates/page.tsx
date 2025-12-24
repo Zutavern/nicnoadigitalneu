@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -115,23 +115,26 @@ export default function EmailTemplatesPage() {
 
   // Template auswählen
   const selectTemplate = (template: EmailTemplate) => {
-    // Sicherstellen, dass content existiert (Fallback für Datenbank-Templates ohne content)
-    const content = template.content || { headline: '', body: '', buttonText: '', footer: '' }
+    // Sicherstellen, dass content existiert und alle Felder vorhanden sind
+    // Fallback für Datenbank-Templates ohne oder mit leerem content
+    const rawContent = template.content || {}
+    const content = {
+      headline: rawContent.headline || '',
+      body: rawContent.body || '',
+      buttonText: rawContent.buttonText || '',
+      buttonUrl: rawContent.buttonUrl || '',
+      footer: rawContent.footer || '',
+    }
     
     setSelectedTemplate(template)
-    setEditedSubject(template.subject)
-    setEditedHeadline(content.headline || '')
-    setEditedBody(content.body || '')
-    setEditedButtonText(content.buttonText || '')
-    setEditedFooter(content.footer || '')
+    setEditedSubject(template.subject || '')
+    setEditedHeadline(content.headline)
+    setEditedBody(content.body)
+    setEditedButtonText(content.buttonText)
+    setEditedFooter(content.footer)
     setEditedPrimaryColor(template.primaryColor || '#10b981')
     setEditedIsActive(template.isActive)
-    generatePreview(template.slug, {
-      headline: content.headline || '',
-      body: content.body || '',
-      buttonText: content.buttonText,
-      footer: content.footer,
-    })
+    generatePreview(template.slug, content)
   }
 
   // Preview generieren - verwendet das globale Branding aus Platform-Settings
@@ -146,22 +149,38 @@ export default function EmailTemplatesPage() {
           // customContent muss im korrekten Format sein: { subject?, content? }
           customContent: content ? {
             content: {
-              headline: content.headline,
-              body: content.body,
-              buttonText: content.buttonText,
-              buttonUrl: content.buttonUrl,
-              footer: content.footer,
+              headline: content.headline || '',
+              body: content.body || '',
+              buttonText: content.buttonText || undefined,
+              buttonUrl: content.buttonUrl || undefined,
+              footer: content.footer || undefined,
             }
           } : undefined,
         }),
       })
       
-      if (!res.ok) throw new Error('Failed to generate preview')
-      
       const data = await res.json()
+      
+      if (!res.ok) {
+        const errorMessage = data.error || 'Fehler beim Generieren der Vorschau'
+        console.error('Preview generation failed:', errorMessage)
+        toast.error(errorMessage)
+        setPreviewHtml('')
+        return
+      }
+      
+      if (!data.html) {
+        console.error('Preview response missing HTML')
+        toast.error('Vorschau enthält keinen HTML-Inhalt')
+        setPreviewHtml('')
+        return
+      }
+      
       setPreviewHtml(data.html)
-    } catch {
+    } catch (error) {
+      console.error('Preview generation error:', error)
       toast.error('Preview konnte nicht generiert werden')
+      setPreviewHtml('')
     } finally {
       setIsGeneratingPreview(false)
     }
@@ -189,7 +208,13 @@ export default function EmailTemplatesPage() {
         }),
       })
       
-      if (!res.ok) throw new Error('Failed to save')
+      const data = await res.json()
+      
+      if (!res.ok) {
+        // Zeige die Server-Fehlermeldung an
+        toast.error(data.error || 'Fehler beim Speichern')
+        return
+      }
       
       toast.success('Änderungen gespeichert')
       loadTemplates()
@@ -200,14 +225,47 @@ export default function EmailTemplatesPage() {
     }
   }
 
-  // Live-Preview bei Änderungen - nutzt globales Branding (Logo, Farbe, Footer-Links)
+  // Debounce-Referenz für Live-Preview
+  const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Live-Preview bei Änderungen - automatisch mit Debouncing
+  useEffect(() => {
+    if (!selectedTemplate) return
+    
+    // Clear previous timeout
+    if (previewTimeoutRef.current) {
+      clearTimeout(previewTimeoutRef.current)
+    }
+    
+    // Debounce: 500ms nach der letzten Änderung Preview aktualisieren
+    previewTimeoutRef.current = setTimeout(() => {
+      const rawContent = selectedTemplate.content || {}
+      generatePreview(selectedTemplate.slug, {
+        headline: editedHeadline,
+        body: editedBody,
+        buttonText: editedButtonText,
+        buttonUrl: rawContent.buttonUrl || 'https://www.nicnoa.online/dashboard',
+        footer: editedFooter,
+      })
+    }, 500)
+    
+    // Cleanup
+    return () => {
+      if (previewTimeoutRef.current) {
+        clearTimeout(previewTimeoutRef.current)
+      }
+    }
+  }, [selectedTemplate, editedHeadline, editedBody, editedButtonText, editedFooter])
+
+  // Manuelle Preview-Aktualisierung (für den Button)
   const updatePreview = useCallback(() => {
     if (!selectedTemplate) return
+    const rawContent = selectedTemplate.content || {}
     generatePreview(selectedTemplate.slug, {
       headline: editedHeadline,
       body: editedBody,
       buttonText: editedButtonText,
-      buttonUrl: selectedTemplate.content?.buttonUrl || '#',
+      buttonUrl: rawContent.buttonUrl || 'https://www.nicnoa.online/dashboard',
       footer: editedFooter,
     })
   }, [selectedTemplate, editedHeadline, editedBody, editedButtonText, editedFooter])

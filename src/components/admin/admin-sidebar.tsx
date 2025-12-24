@@ -239,6 +239,7 @@ const menuItems: MenuSection[] = [
         icon: Settings,
         children: [
           { label: 'Systemeinstellungen', href: '/admin/settings', icon: Settings },
+          { label: 'Medienbibliothek', href: '/admin/media', icon: FolderOpen },
           { label: 'Integrationen', href: '/admin/settings/integrations', icon: Zap },
           { label: 'Backups', href: '/admin/backup', icon: Database },
           { label: 'Sicherheit', href: '/admin/security', icon: Shield },

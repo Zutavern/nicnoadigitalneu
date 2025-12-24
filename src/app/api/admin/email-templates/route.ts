@@ -7,7 +7,7 @@ import { isDemoModeActive, getMockAdminEmailTemplates } from '@/lib/mock-data'
 export async function GET(request: Request) {
   try {
     // Demo-Modus prüfen
-    if (await isDemoModeActive({ ignoreForAdmin: true })) {
+    if (await isDemoModeActive()) {
       return NextResponse.json(getMockAdminEmailTemplates())
     }
 
@@ -29,7 +29,22 @@ export async function GET(request: Request) {
       }
     })
 
-    return NextResponse.json(templates)
+    // Ensure each template has a valid content object
+    const normalizedTemplates = templates.map(template => {
+      const rawContent = template.content as Record<string, unknown> | null
+      return {
+        ...template,
+        content: {
+          headline: typeof rawContent?.headline === 'string' ? rawContent.headline : '',
+          body: typeof rawContent?.body === 'string' ? rawContent.body : '',
+          buttonText: typeof rawContent?.buttonText === 'string' ? rawContent.buttonText : '',
+          buttonUrl: typeof rawContent?.buttonUrl === 'string' ? rawContent.buttonUrl : '',
+          footer: typeof rawContent?.footer === 'string' ? rawContent.footer : '',
+        }
+      }
+    })
+
+    return NextResponse.json(normalizedTemplates)
   } catch (error) {
     console.error('Error fetching email templates:', error)
     return NextResponse.json(
